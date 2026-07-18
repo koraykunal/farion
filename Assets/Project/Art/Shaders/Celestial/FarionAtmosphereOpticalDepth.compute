@@ -1,0 +1,81 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> Result;
+int textureSize;
+int numOutScatteringSteps;
+float atmosphereRadius;
+float densityFalloff;
+float4 params;
+
+#define PI 3.14159265358979323846
+#define FARION_MAX_FLOAT 3.402823466e+38
+
+float2 RaySphere(float3 centre, float radius, float3 rayOrigin, float3 rayDirection)
+{
+    float3 offset = rayOrigin - centre;
+    float b = dot(offset, rayDirection);
+    float c = dot(offset, offset) - radius * radius;
+    float discriminant = b * b - c;
+    if (discriminant < 0.0)
+    {
+        return float2(FARION_MAX_FLOAT, 0.0);
+    }
+
+    float s = sqrt(discriminant);
+    float dstToSphere = max(-b - s, 0.0);
+    float dstOutSphere = -b + s;
+    if (dstOutSphere < 0.0)
+    {
+        return float2(FARION_MAX_FLOAT, 0.0);
+    }
+
+    return float2(dstToSphere, dstOutSphere - dstToSphere);
+}
+
+float DensityAtPoint(float2 densitySamplePoint)
+{
+    float planetRadius = 1.0;
+    float2 planetCentre = 0.0;
+    float heightAboveSurface = length(densitySamplePoint - planetCentre) - planetRadius;
+    float height01 = heightAboveSurface / (atmosphereRadius - planetRadius);
+    return exp(-height01 * densityFalloff) * (1.0 - height01);
+}
+
+float OpticalDepth(float2 rayOrigin, float2 rayDirection, float rayLength)
+{
+    int numOpticalDepthPoints = numOutScatteringSteps;
+    float2 densitySamplePoint = rayOrigin;
+    float stepSize = rayLength / (numOpticalDepthPoints - 1);
+    float opticalDepth = 0.0;
+
+    for (int i = 0; i < numOpticalDepthPoints; i++)
+    {
+        opticalDepth += DensityAtPoint(densitySamplePoint) * stepSize;
+        densitySamplePoint += rayDirection * stepSize;
+    }
+
+    return opticalDepth;
+}
+
+[numthreads(8, 8, 1)]
+void CSMain(uint2 id : SV_DispatchThreadID)
+{
+    uint safeTextureSize = (uint)textureSize;
+    if (id.x >= safeTextureSize || id.y >= safeTextureSize)
+    {
+        return;
+    }
+
+    const float planetRadius = 1.0;
+    float2 uv = (float2)id / (float)safeTextureSize;
+    float height01 = uv.y;
+    float y = -2.0 * uv.x + 1.0;
+    float x = sin(acos(y));
+    float2 direction = float2(x, y);
+
+    float2 inPoint = float2(0.0, lerp(planetRadius, atmosphereRadius, height01));
+    float dstThroughAtmosphere = RaySphere(0.0, atmosphereRadius, float3(inPoint, 0.0), float3(direction, 0.0)).y;
+    float outScattering = OpticalDepth(inPoint + direction * 0.0001, direction, dstThroughAtmosphere - 0.0002);
+
+    Result[id.xy] = float4(outScattering, outScattering, outScattering, 1.0);
+}

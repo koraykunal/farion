@@ -42,6 +42,12 @@
 # Visual Studio cache directory
 .vs/
 
+# Local AI/agent workspace state
+.agents/
+.codex/
+.cursor/
+.windsurf/
+
 # Gradle cache directory
 .gradle/
 

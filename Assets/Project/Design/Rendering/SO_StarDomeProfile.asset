@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c2ffd589f974bfcb3f36dab89027ac1, type: 3}
+  m_Name: SO_StarDomeProfile
+  m_EditorClassIdentifier: 
+  skyboxMaterial: {fileID: 2100000, guid: bf8fff59b40549ddae7aa92d7f6c96ba, type: 2}
+  baseColor: {r: 0.0015, g: 0.0018, b: 0.0024, a: 1}
+  zenithColor: {r: 0.004, g: 0.005, b: 0.007, a: 1}
+  exposure: 1
+  starColorA: {r: 0.9, g: 0.94, b: 1, a: 1}
+  starColorB: {r: 1, g: 0.78, b: 0.55, a: 1}
+  seed: 19
+  starDensity: 0.10547505
+  starBrightness: 1.8
+  starScale: 260
+  starSize: 0.045
+  nebulaColor: {r: 0.22, g: 0.3, b: 0.42, a: 1}
+  nebulaStrength: 1
+  nebulaScale: 15
+  nebulaSharpness: 5.57
+  nebulaAxis: {x: 0.41, y: 0.85, z: 0.25}
