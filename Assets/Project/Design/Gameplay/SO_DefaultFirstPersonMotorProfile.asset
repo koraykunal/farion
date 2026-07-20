@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9efe13234b84b80b23650e508c22a4a, type: 3}
+  m_Name: SO_DefaultFirstPersonMotorProfile
+  m_EditorClassIdentifier: 
+  walkSpeed: 5
+  sprintSpeed: 8
+  groundAcceleration: 28
+  airAcceleration: 8
+  brakingAcceleration: 16
+  steepSlopeControlAcceleration: 16
+  steepSlopeSlideAcceleration: 8
+  underwaterMoveSpeed: 2.8
+  underwaterAcceleration: 10
+  underwaterAscendAcceleration: 14
+  underwaterGravityScale: 0.35
+  underwaterLinearDrag: 4
+  jumpHeight: 1.4
+  maximumJumpSpeed: 5
+  minimumJumpSpeed: 1.2
+  maxJumpEscapeSpeedRatio: 0.45
+  jumpCooldown: 0.15
+  jumpBufferTime: 0.12
+  coyoteTime: 0.1
+  postJumpGroundingSuppressionTime: 0.16
+  maxWalkableSlopeAngle: 48
+  groundProbeDistance: 0.35
+  groundProbeRadius: 0.32
+  groundStickAcceleration: 18
+  groundStickGravityMultiplier: 2
+  groundedVerticalDamping: 18
+  groundNormalResponsiveness: 22
+  yawDegreesPerMouseUnit: 3
+  uprightResponsiveness: 14

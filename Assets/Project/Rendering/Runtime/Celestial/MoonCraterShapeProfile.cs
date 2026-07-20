@@ -6,6 +6,15 @@ namespace Farion.Rendering.Celestial
     [CreateAssetMenu(menuName = "Farion/Rendering/Moon Crater Shape Profile", fileName = "SO_MoonCraterShapeProfile")]
     public sealed class MoonCraterShapeProfile : CelestialShapeProfile
     {
+        const float BiomeWarpStrength = 0.1f;
+        const float BiomeWarpScale = 1.88f;
+        const int BiomeWarpOctaves = 4;
+        const float DetailWarpStrength = 0.1f;
+        const float DetailWarpScale = 2.5f;
+        const int DetailWarpOctaves = 4;
+        const float DetailNoisePersistence = 0.5f;
+        const float DetailNoiseLacunarity = 2.34f;
+
         [Header("Seed")]
         [SerializeField] int seed = 1;
         [SerializeField] int craterSeed = 17;
@@ -53,7 +62,7 @@ namespace Farion.Rendering.Celestial
         [SerializeField] int biomePointCount = 24;
         [SerializeField] Vector2 biomeRadiusMinMax = new(0.02f, 0.1f);
         [Min(0.001f)]
-        [SerializeField] float detailNoiseScale = 7f;
+        [SerializeField] float detailNoiseScale = 1.35f;
         [Range(1, 8)]
         [SerializeField] int detailNoiseOctaves = 4;
 
@@ -62,7 +71,7 @@ namespace Farion.Rendering.Celestial
         [Range(0.01f, 1f)]
         [SerializeField] float ejectaCandidatePoolSize = 0.2f;
         [Range(0, 12)]
-        [SerializeField] int desiredEjectaCraterCount = 2;
+        [SerializeField] int desiredEjectaCraterCount = 5;
         [SerializeField] int ejectaRaySeed = 101;
         [Min(0.1f)]
         [SerializeField] float ejectaRayScale = 10f;
@@ -89,7 +98,7 @@ namespace Farion.Rendering.Celestial
 
         float EvaluateUnitDisplacement(Vector3 unitDirection)
         {
-            EnsureCraters();
+            EnsureCachedData();
 
             float unitDisplacement = 0f;
             if (cratersEnabled)
@@ -109,16 +118,37 @@ namespace Farion.Rendering.Celestial
 
         Vector4 EvaluateShadingData(Vector3 unitDirection)
         {
-            EnsureCraters();
+            EnsureCachedData();
 
             Vector2 ejectaUv = CalculateEjectaUv(unitDirection);
-            float detailNoise = FractalNoise(unitDirection, detailNoiseScale, detailNoiseOctaves, 0.5f, 2f, seed + 3000);
-            float biomeNoise = CalculateBiomeNoise(unitDirection);
+            Vector3 biomeDirection = WarpDirection(
+                unitDirection,
+                BiomeWarpStrength,
+                BiomeWarpScale,
+                BiomeWarpOctaves,
+                seed + 3000);
+
+            Vector3 detailDirection = WarpDirection(
+                unitDirection,
+                DetailWarpStrength,
+                DetailWarpScale,
+                DetailWarpOctaves,
+                seed + 4000);
+
+            float detailNoise = FractalNoise(
+                detailDirection,
+                detailNoiseScale,
+                detailNoiseOctaves,
+                DetailNoisePersistence,
+                DetailNoiseLacunarity,
+                seed + 5000);
+
+            float biomeNoise = CalculateBiomeNoise(biomeDirection);
 
             return new Vector4(ejectaUv.x, ejectaUv.y, detailNoise, biomeNoise);
         }
 
-        void EnsureCraters()
+        void EnsureCachedData()
         {
             int hash = CalculateSettingsHash();
             if (cachedCraters != null && cachedHash == hash)
@@ -259,22 +289,24 @@ namespace Farion.Rendering.Celestial
 
                 minScaledDistance = scaledDistance;
                 Vector3 craterUp = crater.Centre.normalized;
-                Vector3 craterForward = Vector3.Cross(craterUp, Vector3.up);
-                if (craterForward.sqrMagnitude < 0.0001f)
+                Vector3 craterRight = Vector3.Cross(Vector3.up, craterUp);
+                if (craterRight.sqrMagnitude < 0.0001f)
                 {
-                    craterForward = Vector3.Cross(craterUp, Vector3.right);
+                    craterRight = Vector3.Cross(Vector3.right, craterUp);
                 }
 
-                craterForward.Normalize();
-                Vector3 forward = Vector3.Cross(unitDirection, craterUp);
-                if (forward.sqrMagnitude < 0.0001f)
+                craterRight.Normalize();
+                Vector3 craterForward = Vector3.Cross(craterUp, craterRight).normalized;
+                Vector3 sampleTangent = unitDirection - craterUp * Vector3.Dot(unitDirection, craterUp);
+                if (sampleTangent.sqrMagnitude < 0.0001f)
                 {
-                    forward = craterForward;
+                    sampleTangent = craterForward;
                 }
 
-                forward.Normalize();
-                float angleSign = Mathf.Sign(Vector3.Dot(craterUp, Vector3.Cross(craterForward, forward)));
-                angle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(craterForward, forward), -1f, 1f)) * angleSign;
+                sampleTangent.Normalize();
+                angle = Mathf.Atan2(
+                    Vector3.Dot(sampleTangent, craterRight),
+                    Vector3.Dot(sampleTangent, craterForward));
             }
 
             return new Vector2(angle, minScaledDistance);
@@ -422,6 +454,27 @@ namespace Farion.Rendering.Celestial
 
             float normalized = amplitudeTotal > 0f ? total / amplitudeTotal : 0f;
             return normalized * 2f - 1f;
+        }
+
+        static Vector3 WarpDirection(
+            Vector3 direction,
+            float strength,
+            float scale,
+            int octaves,
+            int noiseSeed)
+        {
+            if (strength <= 0f)
+            {
+                return direction;
+            }
+
+            Vector3 warp = new(
+                FractalNoise(direction + new Vector3(11.3f, -7.1f, 3.8f), scale, octaves, 0.5f, 2f, noiseSeed),
+                FractalNoise(direction + new Vector3(-5.9f, 13.7f, 2.4f), scale, octaves, 0.5f, 2f, noiseSeed + 211),
+                FractalNoise(direction + new Vector3(4.1f, -2.6f, 17.9f), scale, octaves, 0.5f, 2f, noiseSeed + 421));
+
+            Vector3 warpedDirection = direction + warp * strength;
+            return warpedDirection.sqrMagnitude > 0f ? warpedDirection.normalized : direction;
         }
 
         static float SampleSignedNoise(Vector3 direction, float frequency, int sampleSeed)

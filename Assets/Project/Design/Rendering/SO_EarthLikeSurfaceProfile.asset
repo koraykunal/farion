@@ -15,7 +15,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 310287156d04410f92928d6675c1283c, type: 2}
   metallic: 0
   landSmoothness: 0.2
-  oceanSmoothness: 0.823
+  oceanSmoothness: 0.882
   oceanLow: {r: 0.015, g: 0.08, b: 0.16, a: 1}
   oceanHigh: {r: 0.05, g: 0.32, b: 0.48, a: 1}
   shoreLow: {r: 0.98, g: 1, b: 0.67, a: 1}
@@ -31,20 +31,20 @@ MonoBehaviour:
   rockNormal: {fileID: 2800000, guid: 91953f100d69a394c8bc744423b684fa, type: 3}
   snowNormal: {fileID: 2800000, guid: 1451216b734e75746ae659105e4e0dc2, type: 3}
   noiseScale: 10
-  noiseScale2: 50
-  rockNormalScale: 21
-  snowNormalScale: 21
-  normalStrength: 0.5
+  noiseScale2: 24
+  rockNormalScale: 12
+  snowNormalScale: 12
+  normalStrength: 0.28
   flatColorBlend: 1.5
   flatColorBlendNoise: 0.3
   shoreHeight: 0.058
   shoreBlend: 0.089
   maxFlatHeight: 0.52
-  steepBands: 8
-  steepBandStrength: 0.5
+  steepBands: 4
+  steepBandStrength: 0.22
   steepnessThreshold: 0.378
   flatToSteepBlend: 0.051
-  flatToSteepNoise: 0.026
+  flatToSteepNoise: 0.015
   useSnowyPoles: 0
   snowLongitude: 0.94
   snowBlend: 0.03

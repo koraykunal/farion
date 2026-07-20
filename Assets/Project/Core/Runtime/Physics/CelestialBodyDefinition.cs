@@ -12,20 +12,22 @@ namespace Farion.Core.Physics
         [Min(0f)]
         [SerializeField] float surfaceGravity = 9.81f;
         [SerializeField] Vector3 initialVelocity;
+        [SerializeField] Vector3 initialAngularVelocityDegreesPerSecond;
         [SerializeField] bool deriveMassFromSurfaceGravity = true;
         [Min(0f)]
         [SerializeField] float explicitMass = 1000000000f;
         [SerializeField] bool participatesInNBody = true;
-        [SerializeField] bool lockPosition;
+        [SerializeField] CelestialBodyMotionMode motionMode = CelestialBodyMotionMode.DynamicNBody;
 
         public string BodyName => bodyName;
         public CelestialBodyType BodyType => bodyType;
         public float Radius => radius;
         public float SurfaceGravity => surfaceGravity;
         public Vector3 InitialVelocity => initialVelocity;
+        public Vector3 InitialAngularVelocityDegreesPerSecond => initialAngularVelocityDegreesPerSecond;
         public bool DeriveMassFromSurfaceGravity => deriveMassFromSurfaceGravity;
         public float ExplicitMass => explicitMass;
         public bool ParticipatesInNBody => participatesInNBody;
-        public bool LockPosition => lockPosition;
+        public CelestialBodyMotionMode MotionMode => motionMode;
     }
 }

@@ -3,7 +3,8 @@
     "rootNamespace": "Farion.Gameplay",
     "references": [
         "Farion.Core.Runtime",
-        "Farion.Simulation.Runtime"
+        "Farion.Simulation.Runtime",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -7,28 +7,20 @@ namespace Farion.Rendering.Lighting
     [DisallowMultipleComponent]
     public sealed class CelestialLightingRig : MonoBehaviour
     {
-        static readonly int StarPositionId = Shader.PropertyToID("_FarionStarPositionWS");
-        static readonly int StarColorId = Shader.PropertyToID("_FarionStarColor");
-        static readonly int StarIntensityId = Shader.PropertyToID("_FarionStarIntensity");
-        static readonly int AmbientColorId = Shader.PropertyToID("_FarionAmbientColor");
-
         [Header("Profile")]
         [SerializeField] CelestialLightingProfile profile;
 
         [Header("Source And Focus")]
         [SerializeField] CelestialLightSource primarySource;
         [SerializeField] Transform lightingFocus;
-        [SerializeField] bool autoFindPrimarySource = true;
-        [SerializeField] bool useMainCameraAsFallbackFocus = true;
+        [SerializeField] bool useMainCameraAsFallbackFocus;
 
         [Header("Scene Light")]
         [SerializeField] Light mainDirectionalLight;
-        [SerializeField] bool autoFindMainDirectionalLight = true;
         [SerializeField] bool syncLightPositionToSource = true;
 
         [Header("Camera")]
         [SerializeField] Camera sceneCamera;
-        [SerializeField] bool autoFindMainCamera = true;
 
         [Header("Runtime")]
         [SerializeField] bool updateInEditMode = true;
@@ -81,7 +73,7 @@ namespace Farion.Rendering.Lighting
 
             if (source != null)
             {
-                ApplyGlobalStarShaderProperties(source, directionalLight, focus);
+                CelestialLightingGlobals.Apply(profile, source, directionalLight, focus);
             }
 
             ApplyRenderSettings(directionalLight);
@@ -116,22 +108,6 @@ namespace Farion.Rendering.Lighting
             directionalLight.shadowNearPlane = profile.ShadowNearPlane;
             directionalLight.shadowAngle = profile.DirectionalShadowAngle;
             directionalLight.bounceIntensity = profile.BounceIntensity;
-        }
-
-        void ApplyGlobalStarShaderProperties(CelestialLightSource source, Light directionalLight, Transform focus)
-        {
-            float distance = focus != null ? Vector3.Distance(source.Position, focus.position) : 0f;
-            float intensity = distance > 0f
-                ? profile.EvaluateIntensity(distance)
-                : directionalLight != null
-                    ? directionalLight.intensity
-                    : 1f;
-
-            Color starColor = directionalLight != null ? directionalLight.color : profile.LightColor;
-            Shader.SetGlobalVector(StarPositionId, new Vector4(source.Position.x, source.Position.y, source.Position.z, 1f));
-            Shader.SetGlobalColor(StarColorId, starColor);
-            Shader.SetGlobalFloat(StarIntensityId, intensity);
-            Shader.SetGlobalColor(AmbientColorId, profile.AmbientLight);
         }
 
         void ApplyRenderSettings(Light directionalLight)
@@ -177,39 +153,12 @@ namespace Farion.Rendering.Lighting
 
         CelestialLightSource ResolvePrimarySource()
         {
-            if (primarySource != null || !autoFindPrimarySource)
-            {
-                return primarySource;
-            }
-
-            primarySource = FindAnyObjectByType<CelestialLightSource>(FindObjectsInactive.Exclude);
             return primarySource;
         }
 
         Light ResolveMainDirectionalLight()
         {
-            if (mainDirectionalLight != null || !autoFindMainDirectionalLight)
-            {
-                return mainDirectionalLight;
-            }
-
-            if (RenderSettings.sun != null && RenderSettings.sun.type == LightType.Directional)
-            {
-                mainDirectionalLight = RenderSettings.sun;
-                return mainDirectionalLight;
-            }
-
-            Light[] lights = FindObjectsByType<Light>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < lights.Length; i++)
-            {
-                if (lights[i].type == LightType.Directional)
-                {
-                    mainDirectionalLight = lights[i];
-                    return mainDirectionalLight;
-                }
-            }
-
-            return null;
+            return mainDirectionalLight;
         }
 
         Transform ResolveFocus()
@@ -230,23 +179,84 @@ namespace Farion.Rendering.Lighting
 
         Camera ResolveSceneCamera()
         {
-            if (sceneCamera != null || !autoFindMainCamera)
-            {
-                return sceneCamera;
-            }
-
-            sceneCamera = Camera.main;
-            if (sceneCamera == null)
-            {
-                sceneCamera = FindAnyObjectByType<Camera>(FindObjectsInactive.Exclude);
-            }
-
             return sceneCamera;
         }
 
         static Vector3 ResolveStableUp(Vector3 forward)
         {
             return Mathf.Abs(Vector3.Dot(forward, Vector3.up)) > 0.98f ? Vector3.forward : Vector3.up;
+        }
+
+#if UNITY_EDITOR
+        [ContextMenu("Resolve Missing Scene References")]
+        void ResolveMissingSceneReferences()
+        {
+            if (primarySource == null)
+            {
+                primarySource = FindAnyObjectByType<CelestialLightSource>(FindObjectsInactive.Exclude);
+            }
+
+            if (mainDirectionalLight == null)
+            {
+                mainDirectionalLight = RenderSettings.sun != null && RenderSettings.sun.type == LightType.Directional
+                    ? RenderSettings.sun
+                    : FindFirstDirectionalLight();
+            }
+
+            if (sceneCamera == null)
+            {
+                sceneCamera = Camera.main != null
+                    ? Camera.main
+                    : FindAnyObjectByType<Camera>(FindObjectsInactive.Exclude);
+            }
+        }
+
+        static Light FindFirstDirectionalLight()
+        {
+            Light[] lights = FindObjectsByType<Light>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < lights.Length; i++)
+            {
+                if (lights[i].type == LightType.Directional)
+                {
+                    return lights[i];
+                }
+            }
+
+            return null;
+        }
+#endif
+    }
+
+    static class CelestialLightingGlobals
+    {
+        static readonly int StarPositionId = Shader.PropertyToID("_FarionStarPositionWS");
+        static readonly int StarColorId = Shader.PropertyToID("_FarionStarColor");
+        static readonly int StarIntensityId = Shader.PropertyToID("_FarionStarIntensity");
+        static readonly int AmbientColorId = Shader.PropertyToID("_FarionAmbientColor");
+
+        public static void Apply(
+            CelestialLightingProfile profile,
+            CelestialLightSource source,
+            Light directionalLight,
+            Transform focus)
+        {
+            if (profile == null || source == null)
+            {
+                return;
+            }
+
+            float distance = focus != null ? Vector3.Distance(source.Position, focus.position) : 0f;
+            float intensity = distance > 0f
+                ? profile.EvaluateIntensity(distance)
+                : directionalLight != null
+                    ? directionalLight.intensity
+                    : 1f;
+
+            Color starColor = directionalLight != null ? directionalLight.color : profile.LightColor;
+            Shader.SetGlobalVector(StarPositionId, new Vector4(source.Position.x, source.Position.y, source.Position.z, 1f));
+            Shader.SetGlobalColor(StarColorId, starColor);
+            Shader.SetGlobalFloat(StarIntensityId, intensity);
+            Shader.SetGlobalColor(AmbientColorId, profile.AmbientLight);
         }
     }
 }

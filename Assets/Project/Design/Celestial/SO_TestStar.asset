@@ -17,7 +17,8 @@ MonoBehaviour:
   radius: 120
   surfaceGravity: 35
   initialVelocity: {x: 0, y: 0, z: 0}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1000000000
   participatesInNBody: 1
-  lockPosition: 1
+  motionMode: 0

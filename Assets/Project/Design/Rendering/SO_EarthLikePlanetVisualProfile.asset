@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
   surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
+  hasOcean: 1
   oceanProfile: {fileID: 11400000, guid: 3ddebd284e064af68694d7de6f18bc15, type: 2}
-  oceanLevel: 0.358
+  oceanLevel: 0.729
   atmosphereProfile: {fileID: 11400000, guid: 2401f55183b644558c6768db30d80c9f, type: 2}

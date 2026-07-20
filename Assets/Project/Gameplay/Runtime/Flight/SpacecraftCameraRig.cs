@@ -2,16 +2,45 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Flight
 {
+    [DefaultExecutionOrder(200)]
     [DisallowMultipleComponent]
     public sealed class SpacecraftCameraRig : MonoBehaviour
     {
+        [Header("Target")]
         [SerializeField] Transform target;
+
+        [Header("Camera Payload")]
+        [SerializeField] Transform cameraTransform;
+        [SerializeField] bool resetCameraLocalPose = true;
+
+        [Header("Follow")]
         [SerializeField] Vector3 localOffset = new(0f, 4f, -14f);
         [SerializeField] bool snapToTarget = true;
         [Min(0f)]
         [SerializeField] float positionResponsiveness = 8f;
         [Min(0f)]
         [SerializeField] float rotationResponsiveness = 10f;
+        [Min(0f)]
+        [SerializeField] float snapDistance = 40f;
+        [Min(0f)]
+        [SerializeField] float maxPositionLag = 1.5f;
+
+        bool snapNextFrame = true;
+
+        void OnEnable()
+        {
+            ResolveCameraTransform();
+            ResetCameraPayloadPose();
+            snapNextFrame = true;
+        }
+
+        void OnValidate()
+        {
+            positionResponsiveness = Mathf.Max(0f, positionResponsiveness);
+            rotationResponsiveness = Mathf.Max(0f, rotationResponsiveness);
+            snapDistance = Mathf.Max(0f, snapDistance);
+            maxPositionLag = Mathf.Max(0f, maxPositionLag);
+        }
 
         void LateUpdate()
         {
@@ -21,6 +50,12 @@ namespace Farion.Gameplay.Flight
         public void SetTarget(Transform newTarget)
         {
             target = newTarget;
+            snapNextFrame = true;
+        }
+
+        public void SnapToTarget()
+        {
+            ApplyCamera(forceSnap: true);
         }
 
         void ApplyCamera(bool forceSnap)
@@ -29,6 +64,9 @@ namespace Farion.Gameplay.Flight
             {
                 return;
             }
+
+            ResolveCameraTransform();
+            ResetCameraPayloadPose();
 
             Vector3 desiredPosition = target.TransformPoint(localOffset);
             Vector3 viewDirection = target.position - desiredPosition;
@@ -39,9 +77,10 @@ namespace Farion.Gameplay.Flight
 
             Quaternion desiredRotation = Quaternion.LookRotation(viewDirection, target.up);
 
-            if (snapToTarget || forceSnap)
+            if (snapToTarget || forceSnap || snapNextFrame || Vector3.Distance(transform.position, desiredPosition) > snapDistance)
             {
                 transform.SetPositionAndRotation(desiredPosition, desiredRotation);
+                snapNextFrame = false;
                 return;
             }
 
@@ -49,7 +88,47 @@ namespace Farion.Gameplay.Flight
             float rotationT = ResponsivenessToLerp(rotationResponsiveness);
 
             transform.position = Vector3.Lerp(transform.position, desiredPosition, positionT);
+            if (maxPositionLag > 0f)
+            {
+                Vector3 lag = transform.position - desiredPosition;
+                if (lag.sqrMagnitude > maxPositionLag * maxPositionLag)
+                {
+                    transform.position = desiredPosition + lag.normalized * maxPositionLag;
+                }
+            }
+
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationT);
+        }
+
+        void ResolveCameraTransform()
+        {
+            if (cameraTransform != null)
+            {
+                return;
+            }
+
+            if (TryGetComponent(out Camera localCamera))
+            {
+                cameraTransform = localCamera.transform;
+                return;
+            }
+
+            Camera childCamera = GetComponentInChildren<Camera>(true);
+            if (childCamera != null)
+            {
+                cameraTransform = childCamera.transform;
+            }
+        }
+
+        void ResetCameraPayloadPose()
+        {
+            if (!resetCameraLocalPose || cameraTransform == null || cameraTransform == transform)
+            {
+                return;
+            }
+
+            cameraTransform.localPosition = Vector3.zero;
+            cameraTransform.localRotation = Quaternion.identity;
         }
 
         static float ResponsivenessToLerp(float responsiveness)

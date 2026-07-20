@@ -27,6 +27,7 @@ Shader "Farion/Celestial/Earth Triplanar"
 
         [Header(Blending)]
         _OceanLevel("Ocean Level", Range(0, 1)) = 1
+        _HasOcean("Has Ocean", Float) = 1
         _FlatColorBlend("Flat Color Blend", Range(0, 3)) = 1.5
         _FlatColorBlendNoise("Flat Color Blend Noise", Range(0, 1)) = 0.3
         _ShoreHeight("Shore Height", Range(0, 0.25)) = 0.058
@@ -107,6 +108,7 @@ Shader "Farion/Celestial/Earth Triplanar"
                 float _SnowNormalScale;
                 half _NormalStrength;
                 half _OceanLevel;
+                half _HasOcean;
                 half _FlatColorBlend;
                 half _FlatColorBlendNoise;
                 half _ShoreHeight;
@@ -225,6 +227,7 @@ Shader "Farion/Celestial/Earth Triplanar"
                 float3 radialOS = normalize(input.positionOS);
                 float terrainRadius = length(input.positionOS);
                 float heightRange = max(_RadiusMinMax.y - _RadiusMinMax.x, 0.0001);
+                half hasOcean = saturate(_HasOcean);
                 float oceanRadius = lerp(_RadiusMinMax.x, _BodyRadius, _OceanLevel);
                 half aboveOcean01 = FarionRemap01(terrainRadius, oceanRadius, _RadiusMinMax.y);
                 half oceanDepth01 = 1.0h - FarionRemap01(terrainRadius, _RadiusMinMax.x, oceanRadius);
@@ -251,7 +254,7 @@ Shader "Farion/Celestial/Earth Triplanar"
                 half shoreBlendWeight = 1.0h - FarionBlend(_ShoreHeight, _ShoreBlend, flatHeight01);
                 half3 shoreColor = lerp(_ShoreLow.rgb, _ShoreHigh.rgb, FarionRemap01(aboveOcean01, 0.0h, max(_ShoreHeight, 0.0001h)));
                 shoreColor = lerp(shoreColor, (_ShoreLow.rgb + _ShoreHigh.rgb) * 0.5h, texNoise.g);
-                flatTerrain = lerp(flatTerrain, shoreColor, shoreBlendWeight);
+                flatTerrain = lerp(flatTerrain, shoreColor, shoreBlendWeight * hasOcean);
 
                 float3 sphereTangent = float3(-radialOS.z, 0, radialOS.x);
                 if (dot(sphereTangent, sphereTangent) < 0.0001)
@@ -283,10 +286,10 @@ Shader "Farion/Celestial/Earth Triplanar"
                 landColor = lerp(landColor, snow, snowWeight);
                 landColor *= lerp(0.9h, 1.12h, saturate(smallNoise + detailNoise * 0.2h));
 
-                half oceanMask = 1.0h - smoothstep(oceanRadius - heightRange * 0.01, oceanRadius + heightRange * 0.01, terrainRadius);
-                half3 oceanColor = lerp(_OceanHigh.rgb, _OceanLow.rgb, saturate(oceanDepth01));
-                oceanColor *= lerp(0.88h, 1.1h, texNoise.b);
-                half3 albedo = lerp(landColor, oceanColor, oceanMask);
+                half oceanMask = hasOcean * (1.0h - smoothstep(oceanRadius - heightRange * 0.01, oceanRadius + heightRange * 0.01, terrainRadius));
+                half3 seabedColor = lerp(shoreColor * 0.62h, steepTerrain * 0.72h, saturate(oceanDepth01));
+                seabedColor *= lerp(0.86h, 1.04h, texNoise.b);
+                half3 albedo = lerp(landColor, seabedColor, oceanMask);
 
                 half3 rockNormalOS = FarionUnpackTriplanarNormalOS(TEXTURE2D_ARGS(_RockNormal, sampler_RockNormal), input.positionOS, normalOS, _RockNormalScale);
                 half3 snowNormalOS = FarionUnpackTriplanarNormalOS(TEXTURE2D_ARGS(_SnowNormal, sampler_SnowNormal), input.positionOS, normalOS, _SnowNormalScale);

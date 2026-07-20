@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 567d8a7d2ca628d48932e834dd7a0c84, type: 3}
   m_Name: SO_MoonCraterShapeProfile
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.MoonCraterShapeProfile
-  seed: 22
-  craterSeed: 22
+  seed: 108
+  craterSeed: 14
   cratersEnabled: 1
   craterCount: 400
   craterRadiusMinMax: {x: 0.01, y: 0.1}
-  sizeDistribution: 0.399
+  sizeDistribution: 0.6
   floorHeightMinMax: {x: -1.2, y: -0.2}
   smoothnessMinMax: {x: 0.4, y: 1.5}
   rimSteepness: 0.13
@@ -26,7 +26,7 @@ MonoBehaviour:
   lowFrequencyAmplitude: 0.01
   lowFrequencyScale: 2
   lowFrequencyOctaves: 4
-  ridgeAmplitude: 0
+  ridgeAmplitude: 0.006
   ridgeScale: 2.5
   ridgeOctaves: 4
   ridgePower: 2.5
@@ -34,10 +34,10 @@ MonoBehaviour:
   ridgeLacunarity: 2
   biomePointCount: 24
   biomeRadiusMinMax: {x: 0.02, y: 0.1}
-  detailNoiseScale: 7
+  detailNoiseScale: 1.35
   detailNoiseOctaves: 4
   ejectaEnabled: 1
   ejectaCandidatePoolSize: 0.22
-  desiredEjectaCraterCount: 1
+  desiredEjectaCraterCount: 5
   ejectaRaySeed: 101
-  ejectaRayScale: 6
+  ejectaRayScale: 10

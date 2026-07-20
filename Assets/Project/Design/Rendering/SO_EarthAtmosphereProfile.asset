@@ -12,17 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d6cc7670e7f4655a8f31b63a27c1f43, type: 3}
   m_Name: SO_EarthAtmosphereProfile
   m_EditorClassIdentifier: 
-  atmosphereScale: 0.322
+  atmosphereScale: 0.21872583
   radiusOffset: 0
   opticalDepthCompute: {fileID: 7200000, guid: 45124f49f67a475f8dd17b0f6e0d0cdd, type: 3}
   textureSize: 256
-  inScatteringSteps: 10
-  opticalDepthSteps: 100
+  inScatteringSteps: 16
+  opticalDepthSteps: 98
   densityFalloff: 4.3
   wavelengths: {x: 700, y: 530, z: 460}
   scatteringStrength: 21.23
-  intensity: 1
+  intensity: 0.78
+  referenceLightIntensity: 3.46
   ditherStrength: 1
   ditherScale: 3.89
   blueNoise: {fileID: 2800000, guid: 8886a14b14a1b44089f789c0b8c05643, type: 3}
-  testParams: {x: 3, y: 0.15, z: 6.4, w: 1.5}

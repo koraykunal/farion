@@ -13,14 +13,16 @@ namespace Farion.Core.Physics
         [Min(0f)]
         [SerializeField] float surfaceGravity = 9.81f;
         [SerializeField] Vector3 initialVelocity;
+        [SerializeField] Vector3 initialAngularVelocityDegreesPerSecond;
         [SerializeField] bool deriveMassFromSurfaceGravity = true;
         [Min(0f)]
         [SerializeField] float explicitMass = 1000000000f;
         [SerializeField] bool participatesInNBody = true;
-        [SerializeField] bool lockPosition;
+        [SerializeField] CelestialBodyMotionMode motionMode = CelestialBodyMotionMode.DynamicNBody;
 
         Rigidbody cachedRigidbody;
         Vector3 simulatedVelocity;
+        Vector3 simulatedAngularVelocity;
         float mass;
 
         public string BodyName => bodyName;
@@ -28,10 +30,15 @@ namespace Farion.Core.Physics
         public float Radius => radius;
         public float SurfaceGravity => surfaceGravity;
         public Vector3 InitialVelocity => initialVelocity;
+        public Vector3 InitialAngularVelocityDegreesPerSecond => initialAngularVelocityDegreesPerSecond;
         public Vector3 Velocity => simulatedVelocity;
+        public Vector3 AngularVelocity => simulatedAngularVelocity;
         public float Mass => mass;
         public bool ParticipatesInNBody => participatesInNBody;
-        public bool LockPosition => lockPosition;
+        public CelestialBodyMotionMode MotionMode => motionMode;
+        public bool IsKinematicBody => motionMode != CelestialBodyMotionMode.DynamicNBody;
+        public bool IntegratesOrbit => motionMode != CelestialBodyMotionMode.Static;
+        public bool SupportsNonConvexSurfaceCollider => IsKinematicBody;
         public Vector3 Position => Rigidbody.position;
 
         public Rigidbody Rigidbody
@@ -59,10 +66,11 @@ namespace Farion.Core.Physics
             radius = Mathf.Max(0.01f, definition.Radius);
             surfaceGravity = Mathf.Max(0f, definition.SurfaceGravity);
             initialVelocity = definition.InitialVelocity;
+            initialAngularVelocityDegreesPerSecond = definition.InitialAngularVelocityDegreesPerSecond;
             deriveMassFromSurfaceGravity = definition.DeriveMassFromSurfaceGravity;
             explicitMass = Mathf.Max(0f, definition.ExplicitMass);
             participatesInNBody = definition.ParticipatesInNBody;
-            lockPosition = definition.LockPosition;
+            motionMode = definition.MotionMode;
 
             if (!string.IsNullOrWhiteSpace(bodyName))
             {
@@ -115,13 +123,14 @@ namespace Farion.Core.Physics
 
             rb.useGravity = false;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.isKinematic = lockPosition;
+            rb.isKinematic = IsKinematicBody;
             rb.mass = Mathf.Max(0.0001f, mass);
         }
 
         public void ResetSimulationState()
         {
             simulatedVelocity = initialVelocity;
+            simulatedAngularVelocity = initialAngularVelocityDegreesPerSecond * Mathf.Deg2Rad;
         }
 
         public void RecalculateMass(float gravitationalConstant)
@@ -152,7 +161,7 @@ namespace Farion.Core.Physics
 
         public void IntegrateVelocity(Vector3 acceleration, float deltaTime)
         {
-            if (lockPosition)
+            if (!IntegratesOrbit)
             {
                 simulatedVelocity = Vector3.zero;
                 return;
@@ -163,12 +172,23 @@ namespace Farion.Core.Physics
 
         public void IntegratePosition(float deltaTime)
         {
-            if (lockPosition)
+            if (!IntegratesOrbit)
             {
                 return;
             }
 
             Rigidbody.MovePosition(Rigidbody.position + simulatedVelocity * deltaTime);
+
+            if (simulatedAngularVelocity.sqrMagnitude > 0.000001f)
+            {
+                Quaternion deltaRotation = Quaternion.Euler(simulatedAngularVelocity * Mathf.Rad2Deg * deltaTime);
+                Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
+            }
+        }
+
+        public Vector3 GetVelocityAtPoint(Vector3 point)
+        {
+            return simulatedVelocity + Vector3.Cross(simulatedAngularVelocity, point - Position);
         }
     }
 }

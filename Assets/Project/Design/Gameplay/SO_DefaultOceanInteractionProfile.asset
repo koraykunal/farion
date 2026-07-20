@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5148c76a6a4240449af85fb4fcbcffe2, type: 3}
+  m_Name: SO_DefaultOceanInteractionProfile
+  m_EditorClassIdentifier: 
+  effectiveHullRadius: 1.5
+  buoyancyToGravityRatio: 1.08
+  verticalDrag: 5
+  tangentialDrag: 2
+  quadraticDrag: 0.08
+  maxDragAcceleration: 80
+  angularDamping: 3
+  pressureWarningDepth: 6
+  crushDepth: 18
+  safeWaterEntrySpeed: 10

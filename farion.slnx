@@ -1,6 +1,6 @@
 ﻿<Solution>
-  <Project Path="Farion.Rendering.Runtime.csproj" />
-  <Project Path="Farion.Simulation.Runtime.csproj" />
   <Project Path="Farion.Gameplay.Runtime.csproj" />
+  <Project Path="Farion.Simulation.Runtime.csproj" />
+  <Project Path="Farion.Rendering.Runtime.csproj" />
   <Project Path="Farion.Core.Runtime.csproj" />
 </Solution>

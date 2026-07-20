@@ -25,6 +25,11 @@ high-end celestial rendering.
 - `Assets/Project/Gameplay/Runtime`
   - Player, spacecraft, survival, interaction, automation, and co-op gameplay
     systems. This layer consumes Core and Simulation; Core must not depend on it.
+- `Assets/Project/Gameplay/Runtime/Actors`
+  - Shared actor telemetry that is not specific to spacecraft or on-foot
+    characters.
+- `Assets/Project/Gameplay/Runtime/Character`
+  - On-foot first-person movement, view, and later suit/survival interaction.
 - `Assets/Project/Rendering/Runtime`
   - URP-specific visual systems such as procedural celestial presentation,
     ocean, atmosphere, stars, and camera render passes.
@@ -72,21 +77,47 @@ The simulation uses:
   no visual, material, ocean, atmosphere, or procedural generation references.
 - `CelestialBodyDefinitionAuthoring` can apply a definition to one scene body.
   It is not a scene builder and must not instantiate or arrange systems.
+- `CelestialFrameProvider` samples the active gravity simulation and explicit
+  environment providers to describe one actor's local celestial frame: dominant
+  body, altitude, surface normal, relative velocity, radial velocity,
+  tangential speed, ocean level, and atmosphere state. Landing, HUD, flight
+  assist, and later co-op prediction should consume this sampled context rather
+  than recalculate body-relative state independently.
+- `ICelestialEnvironmentProvider` is the narrow bridge from render-authored
+  planet data into simulation context. Rendering can provide ocean and
+  atmosphere radii, but Simulation does not depend on Rendering.
+- `ICelestialSurfaceProvider` is the equivalent bridge for authored procedural
+  terrain height, geometric surface normal, and slope angle. It lets gameplay
+  sample the same shaped surface used by the visual mesh without making
+  Simulation depend on Rendering.
 - `GravityActor` applies the active simulation's gravity to ordinary
   Rigidbodies and can align their up axis against the gravity vector.
 - `WorldOriginRebaser` follows an authored target such as the ship or camera and
-  shifts authored scene roots by the same offset when the local scene drifts too
-  far from `(0, 0, 0)`. It preserves Rigidbody velocities and only changes local
-  scene coordinates. Future co-op state should still use an authoritative world
-  coordinate model above this render/physics origin layer.
+  shifts explicit authored scene roots by the same offset when the local scene
+  drifts too far from `(0, 0, 0)`. It does not walk every Rigidbody and does not
+  auto-resolve missing targets; origin rebasing is a local coordinate operation,
+  not a gameplay event or discovery service. Future co-op state should still use
+  an authoritative world coordinate model above this render/physics origin
+  layer.
 - `CelestialBodyVisual` owns the generated visual mesh set. It creates a child
   `Terrain Mesh` object, prebuilds full-sphere LOD meshes from the same
   shape/surface profiles, and keeps the physical body root at identity scale.
+  Static/locked bodies can also generate a separate baked collision mesh at its
+  own resolution. It also implements `ICelestialSurfaceProvider`, so altitude
+  and landing telemetry can read procedural terrain height and local terrain
+  slope instead of only the spherical physics radius. Moving N-body planets keep
+  spherical collision until a local terrain-collision patch system exists.
 - `CelestialLodProfile` owns screen-height thresholds and mesh resolutions for
   the reference-style full-sphere LOD baseline.
-- `CelestialLodController` reads the active camera and applies LOD levels to
-  authored `CelestialBodyVisual` components. It does not generate bodies,
-  create scenes, or own procedural shape data.
+- `CelestialLodController` reads an explicitly assigned camera and authored
+  `CelestialBodyVisual` targets, then applies LOD levels. Runtime LOD must not
+  discover scene objects on a timer; collecting targets is an authoring action.
+  It does not generate bodies, create scenes, or own procedural shape data.
+- `CelestialOrbitLineRenderer` is a rendering/debug aid for visualizing current
+  osculating body orbits from the authored `GravitySimulation`. It owns only
+  transient `LineRenderer` objects and can be disabled through `Show Orbit
+  Lines`. It is not an authoritative trajectory predictor and should not drive
+  gameplay decisions.
 - `CelestialSurfaceProfileBase` is the shared contract for applying per-body
   material properties. Moon and earth-like bodies use separate profile classes
   instead of sharing unrelated crater, ocean, and biome fields.
@@ -99,24 +130,43 @@ The simulation uses:
 - `CelestialOceanProfile` owns reusable ocean color, transparency, fresnel, and
   specular settings plus the referenced wave normal textures for the
   screen-space ocean pass.
+- The ocean shader must treat above-water, underwater, horizon, and seabed
+  views as outcomes of one ray/volume/interface model. It should derive water
+  colour from the ray segment inside the ocean sphere, Beer-Lambert style
+  volume extinction, Schlick Fresnel, and water-air total internal reflection
+  rather than adding separate visual branches for each camera state.
 - `CelestialAtmosphereProfile` owns reusable atmosphere radius, density,
   optical-depth LUT generation, scattering coefficients, and dither inputs for
   the screen-space atmosphere pass.
+- The atmosphere shader must treat sky, horizon, and terrain-backed pixels as
+  the same ray-marched medium. Depth can choose where the view ray stops, but it
+  must not switch to separate sky-only or surface-only colour clamps. The final
+  colour should come from view transmittance and in-scattered star light.
 - `EarthLikePlanetVisualProfile` is the high-level authored rendering profile
   for an earth-like body. It references the terrain shape, land surface, and
   ocean profile, and owns shared values such as sea level.
 - `EarthLikePlanetVisual` binds that high-level profile to authored terrain
   rendering and registers screen-space ocean/atmosphere data for the URP
   renderer features. It is not a scene builder and does not instantiate a solar
-  system. Ocean and atmosphere are not component slots or child meshes in the
-  default architecture.
+  system. It also exposes ocean and atmosphere bounds through
+  `ICelestialEnvironmentProvider` so gameplay can reason about entry and water
+  level without referencing Rendering directly. Ocean and atmosphere are not
+  component slots or child meshes in the default architecture.
 - `FarionOceanRendererFeature` and `FarionAtmosphereRendererFeature` render
-  registered bodies as ordered full-screen passes. Each body uses its own
-  runtime material instance so per-profile textures such as wave normals,
-  optical-depth LUTs, and blue-noise textures cannot leak between planets.
+  registered bodies as ordered full-screen passes with an explicit maximum body
+  count. Each body uses its own runtime material instance so per-profile textures
+  such as wave normals, optical-depth LUTs, and blue-noise textures cannot leak
+  between planets.
 - `CelestialShapeProfile` owns procedural height generation. Moon craters,
   ridges, asteroid deformation, and earth-like terrain should live in shape
   profiles instead of physical body definitions.
+- `MoonCraterShapeProfile` is the current CPU moon terrain baseline. It owns
+  crater height, low-frequency deformation, ridge relief, and mesh shading data
+  for biome/ejecta masks behind one `CelestialShapeSample` contract. Keep moon
+  colours, triplanar textures, smoothness, and lighting response in
+  `CelestialSurfaceProfile`; do not add per-view moon visual hacks to the shape
+  path. A future GPU compute implementation can replace the internals only if
+  it preserves the same shape sample boundary.
 - `EarthLikeShapeProfile` ports the reference earth-like continent/ocean-floor
   and mountain-mask shape model into the authored profile system.
 - `CelestialLightSource` marks an authored star/body as a physical light
@@ -124,18 +174,98 @@ The simulation uses:
 - `CelestialLightingProfile` owns reusable lighting/exposure defaults such as
   color temperature, inverse-square intensity, shadows, ambient space light, and
   camera clipping.
-- `CelestialLightingRig` applies one profile to the scene's authored
-  Directional Light, render settings, and camera. It can follow a camera or ship
-  focus, but it must not instantiate solar-system objects. It also publishes
-  global star shader properties so celestial materials can shade from the real
-  star position instead of relying only on Directional Light rotation.
+- `CelestialLightingRig` applies one profile to explicitly authored light,
+  focus, and camera references. Runtime lighting must not auto-find scene
+  objects; missing references can be resolved through manual authoring tools.
+  It can follow a camera or ship focus, but it must not instantiate solar-system
+  objects. It also publishes global star shader properties so celestial
+  materials can shade from the real star position instead of relying only on
+  Directional Light rotation.
 - `StarDomeProfile` and `StarDomeController` own the procedural skybox star
   field. The star dome is render-only background context; it must not create
   physical stars, gravity bodies, gameplay navigation points, or scene objects.
 - Visual terrain does not modify physical gravity. Runtime collision is
   spherical by default because dynamic celestial bodies have Rigidbodies. Mesh
-  collision should be used only for locked/static bodies until terrain collision
-  has a dedicated design.
+  collision is generated only for locked/static bodies and uses the same
+  shape/surface profile pipeline at a lower resolution. Landing-quality terrain
+  collision still needs a dedicated design before gameplay depends on it.
+- `CelestialActorProbe` is the shared gameplay consumer of the celestial frame.
+  It exposes dominant body, surface altitude/slope, local up, radial and
+  surface-relative velocities, ocean state, and atmosphere state for any
+  Rigidbody actor. Spacecraft and on-foot characters must consume this contract
+  instead of duplicating body-relative calculations.
+- `SpacecraftCelestialProbe` is a compatibility wrapper for existing authored
+  spacecraft scene references. New systems should use `CelestialActorProbe`
+  directly.
+- `SpacecraftLandingProfile` owns the current landing policy thresholds:
+  altitude bands, safe touchdown speeds, high-descent limits, and deorbit
+  descent speed, and safe touchdown slope. Tune landing difficulty through this
+  asset before changing code.
+- `SpacecraftLandingComputer` evaluates the active `CelestialActorProbe`
+  against a landing profile and emits a phase plus risk flags. It must not apply
+  thrust, lock controls, snap the ship, or create landing triggers. Future HUD,
+  flight assist, warning audio, and co-op prediction should read this assessment
+  first.
+- `SpacecraftOrbitComputer` evaluates the active celestial frame as a local
+  two-body orbit around the dominant body. It reports regime, circular speed,
+  escape speed, specific orbital energy, eccentricity, periapsis, apoapsis,
+  orbital period, and flight-path angle. It is telemetry only; it must not apply
+  burns, steer the ship, or replace the N-body gravity simulation.
+- `SpacecraftEntryCorridorProfile` owns tunable atmosphere-entry limits such as
+  minimum/maximum entry angle, speed ratios, and periapsis bands.
+- `SpacecraftEntryCorridorComputer` reads `CelestialActorProbe` and
+  `SpacecraftOrbitComputer` to classify the current atmospheric entry as safe,
+  shallow, steep, overspeed, impacting, escaping, or outside the corridor. It is
+  a navigation/warning layer only and must not apply burns.
+- `SpacecraftSurfaceContactProbe` listens to Rigidbody collision contacts and
+  records the contacted celestial body, contact normal, normal speed, and
+  tangential speed. `SpacecraftLandingComputer` uses this data to distinguish a
+  valid touchdown from merely being close to the surface.
+- `SpacecraftSurfaceContactStabilizer` removes low-speed into-surface velocity,
+  damps contact sliding/spin, and recovers small penetrations while a spacecraft
+  is touching a celestial surface. It is not an autopilot or fake landing lock;
+  high-speed impacts still remain unsafe.
+- `SpacecraftOceanInteractionProfile` owns tunable water interaction values:
+  effective hull radius, buoyancy acceleration, water drag, angular damping,
+  safe water-entry speed, pressure warning depth, and crush depth.
+- `SpacecraftOceanInteractor` reads the active `CelestialActorProbe` and
+  applies water buoyancy/drag from the mathematical ocean volume. It does not
+  use an ocean collider and does not belong to Rendering. Damage, alarms, and
+  underwater controls should consume its sample later instead of duplicating
+  water-depth logic.
+- `SpacecraftLandingGuidanceComputer` converts landing assessment and contact
+  state into pilot-facing guidance: severity level, command, advisory text, and
+  normalized speed/stress ratios. It can warn the pilot to seek a flatter
+  surface, but it still does not steer the ship or own UI.
+- `SpacecraftLandingDebugHud` is a sandbox-only IMGUI presenter for reading the
+  active landing guidance in Play Mode. It can be replaced by a cockpit UI
+  without changing the landing computer or guidance computer.
+- `FirstPersonMotorProfile` owns on-foot movement tuning: walk/sprint speed,
+  acceleration, jump speed, ground probe, slope limit, and upright response.
+- `FirstPersonMotor` is a Rigidbody/CapsuleCollider first-person movement
+  controller aligned to `CelestialActorProbe.LocalUp`. It applies project
+  gravity, projects movement onto the current surface frame, and does not use
+  Unity `CharacterController` so custom gravity, terrain mesh collision, and
+  future network authority remain explicit.
+- `FirstPersonCameraRig` follows a `FirstPersonMotor` eye position and applies
+  pitch while the motor owns yaw/upright alignment. It is a camera presenter,
+  not a gameplay authority.
+- `KeyboardBoardingInput`, `VehicleBoardingPoint`, and
+  `PlayerPossessionController` own the first ship/on-foot handoff. The
+  controller switches active input and camera presenters, but keeps
+  `SpacecraftMotor` enabled so gravity and vehicle physics continue while the
+  player is outside the ship.
+
+The current landing/orbit telemetry is intentionally a first authoritative
+baseline: it is correct for spherical-body altitude, body-relative radial
+velocity, tangential velocity, atmosphere/ocean membership, procedural
+terrain-aware surface altitude, approximate local surface slope, water
+submersion, first-pass buoyancy/drag, contact-speed validation, osculating
+two-body orbit estimates around the dominant body, and first-pass atmosphere
+entry classification. It is not yet a full landing-site, damage, or
+terrain-collision model. The next flight layer should add burn-window guidance
+and local terrain patch collision before any automated landing assist or co-op
+prediction depends on it.
 
 ## Current Rule
 
@@ -153,6 +283,25 @@ Do not add atmospheres, survival systems, automation, or co-op networking until
 7. The scene is authored by hand, not rebuilt by a tool.
 8. Large-distance travel keeps the active ship/camera near local origin through
    explicit world-origin rebasing.
+9. The active ship can report a valid celestial frame sample: dominant body,
+   surface altitude, radial velocity, tangential speed, atmosphere state, and
+   ocean state.
+10. The active ship can report a landing assessment phase and risk flags without
+    applying control assistance.
+11. Surface contact is reported separately from altitude and confirms touchdown
+    only when contact speed is inside the landing profile limits.
+12. Atmosphere entry state can be classified from orbit and frame telemetry
+    without applying burns or control assistance.
+13. Landing telemetry reads procedural surface slope and rejects steep
+    touchdown candidates through the landing profile.
+14. Ocean physics reads the same screen-space ocean bounds as gameplay
+    telemetry, applies water forces without a water collider, and exposes
+    pressure/entry risk separately from landing contact.
+15. A first-person test actor can stand, walk, sprint, jump, and align to the
+    local procedural planet surface using `CelestialActorProbe`.
+16. A single possession controller can switch between piloting the active ship
+    and controlling the on-foot explorer without leaving both input stacks
+    active.
 
 ## Roadmap
 
@@ -165,6 +314,15 @@ Do not add atmospheres, survival systems, automation, or co-op networking until
 7. Procedural star dome and space presentation baseline.
 8. Reference-style full-sphere celestial LOD.
 9. Local world-origin rebasing for ship-scale travel.
-10. Player/ship interaction loop.
-11. Survival and automation gameplay.
-12. Co-op authority and replication.
+10. Celestial frame sampling for ship/body-relative gameplay.
+11. Landing assessment, warning states, and flight constraints.
+12. Surface contact and touchdown validation.
+13. Landing guidance and debug cockpit feedback.
+14. Atmosphere entry corridor telemetry.
+15. First-person on-foot movement baseline.
+16. Player/ship possession and boarding loop.
+17. Burn-window and deorbit maneuver guidance.
+18. Local terrain patch collision for landing/exploration scale.
+19. Underwater damage, controls, and resource interaction.
+20. Survival and automation gameplay.
+21. Co-op authority and replication.

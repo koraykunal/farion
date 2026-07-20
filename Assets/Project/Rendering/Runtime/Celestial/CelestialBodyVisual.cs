@@ -1,4 +1,5 @@
 using Farion.Core.Physics;
+using Farion.Simulation.Celestial;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -10,7 +11,7 @@ namespace Farion.Rendering.Celestial
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CelestialBody))]
-    public sealed class CelestialBodyVisual : MonoBehaviour
+    public sealed class CelestialBodyVisual : MonoBehaviour, ICelestialSurfaceProvider
     {
         const string DefaultMeshObjectName = "Terrain Mesh";
 
@@ -26,12 +27,15 @@ namespace Farion.Rendering.Celestial
         [SerializeField] CelestialLodProfile lodProfile;
         [Range(0, 2)]
         [SerializeField] int editModePreviewLod;
+        [Range(0.0005f, 0.05f)]
+        [SerializeField] float surfaceNormalSampleStep = 0.004f;
 
         [Header("Collision")]
         [SerializeField] bool syncSphereCollider = true;
         [SerializeField] bool generateMeshCollider;
         [Range(0, 64)]
         [SerializeField] int meshColliderResolution = 12;
+        [SerializeField] bool bakeMeshCollider = true;
 
         [Header("Material Override")]
         [SerializeField] Material material;
@@ -51,6 +55,8 @@ namespace Farion.Rendering.Celestial
         MeshFilter terrainMeshFilter;
         MeshRenderer terrainMeshRenderer;
         int activeLodIndex = -1;
+        [Header("Runtime Collision")]
+        [SerializeField] bool meshColliderSkippedBecauseBodyIsDynamic;
 #if UNITY_EDITOR
         bool editorRebuildQueued;
 #endif
@@ -59,21 +65,56 @@ namespace Farion.Rendering.Celestial
         public Vector2 RenderRadiusMinMax => renderRadiusMinMax;
         public bool HasRenderRadiusRange => renderRadiusMinMax.x > 0f && renderRadiusMinMax.y >= renderRadiusMinMax.x;
         public int ActiveLodIndex => activeLodIndex;
+        public bool MeshColliderSkippedBecauseBodyIsDynamic => meshColliderSkippedBecauseBodyIsDynamic;
         public event System.Action Rebuilt;
+
+        public bool TrySampleSurface(CelestialBody sourceBody, Vector3 position, out CelestialSurfaceSample sample)
+        {
+            sample = default;
+            if (sourceBody == null || sourceBody != Body)
+            {
+                return false;
+            }
+
+            Vector3 centerToPoint = position - sourceBody.Position;
+            float centerDistance = centerToPoint.magnitude;
+            Vector3 radialNormal = centerDistance > 0.0001f ? centerToPoint / centerDistance : transform.up;
+            float surfaceRadius = EvaluateSurfaceRadius(sourceBody.Radius, radialNormal);
+            Vector3 surfacePoint = sourceBody.Position + radialNormal * surfaceRadius;
+            Vector3 surfaceNormal = EvaluateSurfaceNormal(sourceBody.Radius, radialNormal);
+            float slopeAngle = Vector3.Angle(radialNormal, surfaceNormal);
+            sample = new CelestialSurfaceSample(
+                sourceBody,
+                surfacePoint,
+                surfaceNormal,
+                centerDistance,
+                centerDistance - surfaceRadius,
+                slopeAngle);
+            return true;
+        }
 
         public void Configure(
             CelestialShapeProfile newShapeProfile,
             CelestialSurfaceProfileBase newSurfaceProfile,
             bool rebuild = true)
         {
+            bool profilesChanged = shapeProfile != newShapeProfile || surfaceProfile != newSurfaceProfile;
             shapeProfile = newShapeProfile;
             surfaceProfile = newSurfaceProfile;
-            material = null;
+            if (profilesChanged)
+            {
+                material = null;
+            }
+
             SyncProfileSubscriptions();
 
-            if (rebuild)
+            if (rebuild && profilesChanged)
             {
                 Rebuild();
+            }
+            else if (terrainMeshRenderer != null)
+            {
+                RefreshMaterialProperties();
             }
         }
 
@@ -101,6 +142,7 @@ namespace Farion.Rendering.Celestial
 
             renderResolution = Mathf.Clamp(renderResolution, 0, 128);
             editModePreviewLod = Mathf.Clamp(editModePreviewLod, 0, GetLodCount() - 1);
+            surfaceNormalSampleStep = Mathf.Clamp(surfaceNormalSampleStep, 0.0005f, 0.05f);
             SyncProfileSubscriptions();
 
             if (!Application.isPlaying && rebuildInEditMode)
@@ -147,7 +189,7 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            SetLodLevel(lodProfile.SelectLod(screenHeight));
+            SetLodLevel(lodProfile.SelectLod(screenHeight, activeLodIndex));
         }
 
         public void SetLodLevel(int lodIndex)
@@ -166,6 +208,16 @@ namespace Farion.Rendering.Celestial
             terrainMeshFilter ??= GetOrCreateMeshObject().GetComponent<MeshFilter>();
             activeLodIndex = lodIndex;
             terrainMeshFilter.sharedMesh = renderMeshes[lodIndex];
+        }
+
+        public void RefreshMaterialProperties()
+        {
+            if (terrainMeshRenderer == null)
+            {
+                terrainMeshRenderer = GetOrCreateMeshObject().GetComponent<MeshRenderer>();
+            }
+
+            ApplyMaterialProperties(terrainMeshRenderer);
         }
 
         void BuildRenderMeshes(CelestialBody sourceBody)
@@ -201,14 +253,67 @@ namespace Farion.Rendering.Celestial
             return lodProfile != null ? lodProfile.GetResolution(lodIndex) : renderResolution;
         }
 
+        float EvaluateSurfaceRadius(float bodyRadius, Vector3 unitDirection)
+        {
+            if (shapeProfile != null)
+            {
+                return shapeProfile.EvaluateSample(bodyRadius, unitDirection).Radius;
+            }
+
+            return surfaceProfile != null
+                ? surfaceProfile.EvaluateRadius(bodyRadius, unitDirection)
+                : bodyRadius;
+        }
+
+        Vector3 EvaluateSurfaceNormal(float bodyRadius, Vector3 unitDirection)
+        {
+            Vector3 tangentA = Vector3.ProjectOnPlane(Vector3.forward, unitDirection);
+            if (tangentA.sqrMagnitude <= 0.0001f)
+            {
+                tangentA = Vector3.ProjectOnPlane(Vector3.right, unitDirection);
+            }
+
+            if (tangentA.sqrMagnitude <= 0.0001f)
+            {
+                return unitDirection;
+            }
+
+            tangentA.Normalize();
+            Vector3 tangentB = Vector3.Cross(unitDirection, tangentA).normalized;
+            float step = Mathf.Clamp(surfaceNormalSampleStep, 0.0005f, 0.05f);
+
+            Vector3 pointA0 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection - tangentA * step).normalized);
+            Vector3 pointA1 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection + tangentA * step).normalized);
+            Vector3 pointB0 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection - tangentB * step).normalized);
+            Vector3 pointB1 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection + tangentB * step).normalized);
+            Vector3 derivativeA = pointA1 - pointA0;
+            Vector3 derivativeB = pointB1 - pointB0;
+            Vector3 normal = Vector3.Cross(derivativeA, derivativeB);
+
+            if (normal.sqrMagnitude <= 0.0001f)
+            {
+                return unitDirection;
+            }
+
+            normal.Normalize();
+            return Vector3.Dot(normal, unitDirection) >= 0f ? normal : -normal;
+        }
+
+        Vector3 EvaluateRelativeSurfacePoint(float bodyRadius, Vector3 unitDirection)
+        {
+            return unitDirection * EvaluateSurfaceRadius(bodyRadius, unitDirection);
+        }
+
         void ConfigureMeshCollider(GameObject meshObject, CelestialBody sourceBody)
         {
             MeshCollider meshCollider = meshObject.GetComponent<MeshCollider>();
-            bool canUseMeshCollider = generateMeshCollider && sourceBody.LockPosition;
+            bool canUseMeshCollider = generateMeshCollider && sourceBody.SupportsNonConvexSurfaceCollider;
+            meshColliderSkippedBecauseBodyIsDynamic = generateMeshCollider && !sourceBody.SupportsNonConvexSurfaceCollider;
             if (!canUseMeshCollider)
             {
                 if (meshCollider != null)
                 {
+                    meshCollider.sharedMesh = null;
                     meshCollider.enabled = false;
                 }
 
@@ -222,8 +327,20 @@ namespace Farion.Rendering.Celestial
             }
 
             meshCollider.enabled = true;
+            meshCollider.convex = false;
             ReplaceMesh(ref collisionMesh);
-            collisionMesh = CelestialSphereMeshBuilder.Build(sourceBody.Radius, meshColliderResolution, $"{sourceBody.BodyName} Collision Mesh");
+            collisionMesh = CelestialSphereMeshBuilder.Build(
+                sourceBody.Radius,
+                meshColliderResolution,
+                $"{sourceBody.BodyName} Collision Mesh",
+                shapeProfile,
+                surfaceProfile);
+            meshCollider.sharedMesh = null;
+            if (bakeMeshCollider)
+            {
+                CelestialMeshColliderBaker.BakeImmediate(collisionMesh);
+            }
+
             meshCollider.sharedMesh = collisionMesh;
         }
 
@@ -274,10 +391,10 @@ namespace Farion.Rendering.Celestial
                 rootRenderer.enabled = false;
             }
 
-            SphereCollider sphereCollider = null;
-            if (syncSphereCollider)
+            bool canUseMeshCollider = generateMeshCollider && sourceBody.SupportsNonConvexSurfaceCollider;
+            SphereCollider sphereCollider = GetComponent<SphereCollider>();
+            if (syncSphereCollider && !canUseMeshCollider)
             {
-                sphereCollider = GetComponent<SphereCollider>();
                 if (sphereCollider == null)
                 {
                     sphereCollider = gameObject.AddComponent<SphereCollider>();
@@ -286,6 +403,10 @@ namespace Farion.Rendering.Celestial
                 sphereCollider.enabled = true;
                 sphereCollider.center = Vector3.zero;
                 sphereCollider.radius = sourceBody.Radius;
+            }
+            else if (sphereCollider != null)
+            {
+                sphereCollider.enabled = false;
             }
 
             if (!disableRootColliders)
@@ -296,7 +417,7 @@ namespace Farion.Rendering.Celestial
             Collider[] rootColliders = GetComponents<Collider>();
             for (int i = 0; i < rootColliders.Length; i++)
             {
-                if (rootColliders[i] == sphereCollider)
+                if (syncSphereCollider && !canUseMeshCollider && rootColliders[i] == sphereCollider)
                 {
                     continue;
                 }
@@ -384,13 +505,13 @@ namespace Farion.Rendering.Celestial
             {
                 if (subscribedShapeProfile != null)
                 {
-                    subscribedShapeProfile.Changed -= HandleProfileChanged;
+                    subscribedShapeProfile.Changed -= HandleShapeProfileChanged;
                 }
 
                 subscribedShapeProfile = shapeProfile;
                 if (subscribedShapeProfile != null)
                 {
-                    subscribedShapeProfile.Changed += HandleProfileChanged;
+                    subscribedShapeProfile.Changed += HandleShapeProfileChanged;
                 }
             }
 
@@ -401,13 +522,13 @@ namespace Farion.Rendering.Celestial
 
             if (subscribedSurfaceProfile != null)
             {
-                subscribedSurfaceProfile.Changed -= HandleProfileChanged;
+                subscribedSurfaceProfile.Changed -= HandleSurfaceProfileChanged;
             }
 
             subscribedSurfaceProfile = surfaceProfile;
             if (subscribedSurfaceProfile != null)
             {
-                subscribedSurfaceProfile.Changed += HandleProfileChanged;
+                subscribedSurfaceProfile.Changed += HandleSurfaceProfileChanged;
             }
         }
 
@@ -415,18 +536,18 @@ namespace Farion.Rendering.Celestial
         {
             if (subscribedShapeProfile != null)
             {
-                subscribedShapeProfile.Changed -= HandleProfileChanged;
+                subscribedShapeProfile.Changed -= HandleShapeProfileChanged;
                 subscribedShapeProfile = null;
             }
 
             if (subscribedSurfaceProfile != null)
             {
-                subscribedSurfaceProfile.Changed -= HandleProfileChanged;
+                subscribedSurfaceProfile.Changed -= HandleSurfaceProfileChanged;
                 subscribedSurfaceProfile = null;
             }
         }
 
-        void HandleProfileChanged()
+        void HandleShapeProfileChanged()
         {
             if (!isActiveAndEnabled)
             {
@@ -443,6 +564,29 @@ namespace Farion.Rendering.Celestial
             {
                 QueueEditorRebuild();
             }
+        }
+
+        void HandleSurfaceProfileChanged()
+        {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            if (SurfaceProfileCanAffectGeometry())
+            {
+                HandleShapeProfileChanged();
+                return;
+            }
+
+            RefreshMaterialProperties();
+        }
+
+        bool SurfaceProfileCanAffectGeometry()
+        {
+            return shapeProfile == null &&
+                surfaceProfile is CelestialSurfaceProfile simpleSurfaceProfile &&
+                simpleSurfaceProfile.HasDisplacement;
         }
 
         void QueueEditorRebuild()

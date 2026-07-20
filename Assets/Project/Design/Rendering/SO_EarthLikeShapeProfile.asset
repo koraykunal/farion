@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c162fe0f9e840c4b3f6a5064484e6cd, type: 3}
   m_Name: SO_EarthLikeShapeProfile
   m_EditorClassIdentifier: 
-  seed: 5748
-  oceanDepthMultiplier: 4.91
-  oceanFloorDepth: 1.31
-  oceanFloorSmoothing: 0.45
-  mountainBlend: 1.73
+  seed: 4065
+  oceanDepthMultiplier: 5
+  oceanFloorDepth: 1.36
+  oceanFloorSmoothing: 0.5
+  mountainBlend: 1.16
   continentNoise:
-    Octaves: 1
+    Octaves: 6
     Lacunarity: 2
     Persistence: 0.5
     Scale: 1
@@ -26,12 +26,12 @@ MonoBehaviour:
     VerticalShift: -0.63
     Offset: {x: 0, y: 0, z: 0}
   mountainMaskNoise:
-    Octaves: 3
+    Octaves: 4
     Lacunarity: 1.66
     Persistence: 0.55
     Scale: 1.09
     Elevation: 1
-    VerticalShift: 0.02
+    VerticalShift: 2
     Offset: {x: 0, y: 0, z: 0}
   ridgeNoise:
     Octaves: 5
@@ -39,7 +39,7 @@ MonoBehaviour:
     Persistence: 0.5
     Scale: 1.5
     Power: 2.18
-    Elevation: 8.7
+    Elevation: 4.2
     Gain: 0.8
     VerticalShift: 0.09
     PeakSmoothing: 1

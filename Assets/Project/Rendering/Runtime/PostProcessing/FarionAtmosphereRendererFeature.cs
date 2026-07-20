@@ -15,6 +15,8 @@ namespace Farion.Rendering.PostProcessing
 
         [SerializeField] Shader atmosphereShader;
         [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing + 1;
+        [Range(1, MaxAtmosphereBodies)]
+        [SerializeField] int maxRenderedBodies = MaxAtmosphereBodies;
 
         Material atmosphereMaterial;
         AtmospherePass atmospherePass;
@@ -39,7 +41,7 @@ namespace Farion.Rendering.PostProcessing
                 return;
             }
 
-            atmospherePass.Setup(material);
+            atmospherePass.Setup(material, maxRenderedBodies);
             renderer.EnqueuePass(atmospherePass);
         }
 
@@ -74,7 +76,7 @@ namespace Farion.Rendering.PostProcessing
             static readonly int EffectCountId = Shader.PropertyToID("_FarionAtmosphereEffectCount");
             static readonly int AtmosphereSpheresId = Shader.PropertyToID("_FarionAtmosphereSpheres");
             static readonly int PlanetSpheresId = Shader.PropertyToID("_FarionAtmospherePlanetSpheres");
-            static readonly int OceanRadiiId = Shader.PropertyToID("_FarionAtmosphereOceanRadii");
+            static readonly int SurfaceRadiiId = Shader.PropertyToID("_FarionAtmosphereSurfaceRadii");
             static readonly int ScatteringCoefficientsId = Shader.PropertyToID("_FarionAtmosphereScatteringCoefficients");
             static readonly int OpticalParamsId = Shader.PropertyToID("_FarionAtmosphereOpticalParams");
             static readonly int SampleParamsId = Shader.PropertyToID("_FarionAtmosphereSampleParams");
@@ -84,13 +86,14 @@ namespace Farion.Rendering.PostProcessing
             static readonly List<CelestialAtmosphereEffectData> AtmosphereEffects = new();
             static readonly Vector4[] AtmosphereSpheres = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] PlanetSpheres = new Vector4[MaxAtmosphereBodies];
-            static readonly Vector4[] OceanRadii = new Vector4[MaxAtmosphereBodies];
+            static readonly Vector4[] SurfaceRadii = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] ScatteringCoefficients = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] OpticalParams = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] SampleParams = new Vector4[MaxAtmosphereBodies];
 
             readonly List<Material> materialPool = new();
             Material templateMaterial;
+            int maxRenderedBodies = MaxAtmosphereBodies;
 
             public AtmospherePass()
             {
@@ -98,9 +101,10 @@ namespace Farion.Rendering.PostProcessing
                 requiresIntermediateTexture = true;
             }
 
-            public void Setup(Material atmosphereMaterial)
+            public void Setup(Material atmosphereMaterial, int bodyLimit)
             {
                 templateMaterial = atmosphereMaterial;
+                maxRenderedBodies = Mathf.Clamp(bodyLimit, 1, MaxAtmosphereBodies);
                 requiresIntermediateTexture = true;
             }
 
@@ -129,7 +133,7 @@ namespace Farion.Rendering.PostProcessing
 
                 UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
                 CelestialAtmosphereEffectRegistry.Collect(cameraData.camera, AtmosphereEffects);
-                int effectCount = Mathf.Min(AtmosphereEffects.Count, MaxAtmosphereBodies);
+                int effectCount = Mathf.Min(AtmosphereEffects.Count, maxRenderedBodies);
                 if (effectCount == 0)
                 {
                     return;
@@ -173,8 +177,8 @@ namespace Farion.Rendering.PostProcessing
                 Vector3 scattering = profile.GetScatteringCoefficients();
 
                 AtmosphereSpheres[0] = new Vector4(center.x, center.y, center.z, effectData.AtmosphereRadius);
-                PlanetSpheres[0] = new Vector4(center.x, center.y, center.z, effectData.BodyRadius);
-                OceanRadii[0] = new Vector4(effectData.OceanRadius, 0f, 0f, 0f);
+                PlanetSpheres[0] = new Vector4(center.x, center.y, center.z, effectData.SurfaceRadius);
+                SurfaceRadii[0] = new Vector4(effectData.SurfaceRadius, 0f, 0f, 0f);
                 ScatteringCoefficients[0] = new Vector4(scattering.x, scattering.y, scattering.z, 0f);
                 OpticalParams[0] = new Vector4(
                     profile.DensityFalloff,
@@ -184,7 +188,7 @@ namespace Farion.Rendering.PostProcessing
                 SampleParams[0] = new Vector4(
                     profile.InScatteringSteps,
                     profile.OpticalDepthSteps,
-                    0f,
+                    profile.ReferenceLightIntensity,
                     0f);
 
                 RenderTexture opticalDepthTexture = profile.GetOpticalDepthTexture();
@@ -194,7 +198,7 @@ namespace Farion.Rendering.PostProcessing
                 material.SetInt(EffectCountId, 1);
                 material.SetVectorArray(AtmosphereSpheresId, AtmosphereSpheres);
                 material.SetVectorArray(PlanetSpheresId, PlanetSpheres);
-                material.SetVectorArray(OceanRadiiId, OceanRadii);
+                material.SetVectorArray(SurfaceRadiiId, SurfaceRadii);
                 material.SetVectorArray(ScatteringCoefficientsId, ScatteringCoefficients);
                 material.SetVectorArray(OpticalParamsId, OpticalParams);
                 material.SetVectorArray(SampleParamsId, SampleParams);

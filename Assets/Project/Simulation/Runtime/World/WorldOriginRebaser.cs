@@ -7,36 +7,44 @@ namespace Farion.Simulation.World
     [DisallowMultipleComponent]
     public sealed class WorldOriginRebaser : MonoBehaviour
     {
+        [Header("Settings")]
         [SerializeField] WorldOriginSettings settings;
+
+        [Header("Tracking")]
         [SerializeField] Transform trackingTarget;
-        [SerializeField] bool useMainCameraWhenTargetMissing = true;
-        [SerializeField] bool includeTrackingTargetWhenMissing = true;
+
+        [Header("Shifted Scene Roots")]
         [SerializeField] List<Transform> shiftedRoots = new();
 
-        readonly List<Transform> uniqueShiftRoots = new();
-        readonly List<Rigidbody> rigidbodies = new();
-        readonly HashSet<Rigidbody> shiftedRigidbodies = new();
-        [SerializeField, HideInInspector] int serializedVersion;
+        [Header("Runtime Debug")]
+        [SerializeField] Vector3 accumulatedOriginOffset;
+        [SerializeField] Vector3 lastOriginOffset;
+        [SerializeField] int shiftCount;
+        [SerializeField] int lastShiftFrame = -1;
+        [SerializeField] float trackingDistanceFromOrigin;
 
-        public Vector3 AccumulatedOriginOffset { get; private set; }
-        public int ShiftCount { get; private set; }
+        readonly List<Transform> uniqueShiftRoots = new();
+
+        public Vector3 AccumulatedOriginOffset => accumulatedOriginOffset;
+        public Vector3 LastOriginOffset => lastOriginOffset;
+        public int ShiftCount => shiftCount;
+        public int LastShiftFrame => lastShiftFrame;
+        public float TrackingDistanceFromOrigin => trackingDistanceFromOrigin;
+        public Transform TrackingTarget => trackingTarget;
 
         void Awake()
         {
-            UpgradeSerializedData();
-            ResolveFallbackTarget();
             RefreshShiftRoots();
+            ValidateSetup(logWarnings: true);
         }
 
         void FixedUpdate()
         {
-            ResolveFallbackTarget();
             RebaseIfNeeded();
         }
 
         void OnValidate()
         {
-            UpgradeSerializedData();
             shiftedRoots ??= new List<Transform>();
         }
 
@@ -49,11 +57,12 @@ namespace Farion.Simulation.World
             {
                 AddShiftRoot(root);
             }
+        }
 
-            if (includeTrackingTargetWhenMissing)
-            {
-                AddShiftRoot(trackingTarget);
-            }
+        [ContextMenu("Validate Setup")]
+        public bool ValidateSetup()
+        {
+            return ValidateSetup(logWarnings: true);
         }
 
         [ContextMenu("Rebase Now")]
@@ -65,7 +74,6 @@ namespace Farion.Simulation.World
                 return;
             }
 
-            ResolveFallbackTarget();
             if (trackingTarget == null)
             {
                 return;
@@ -78,6 +86,7 @@ namespace Farion.Simulation.World
         {
             if (trackingTarget == null)
             {
+                trackingDistanceFromOrigin = 0f;
                 return false;
             }
 
@@ -87,6 +96,7 @@ namespace Farion.Simulation.World
                 offset.y = 0f;
             }
 
+            trackingDistanceFromOrigin = offset.magnitude;
             float rebaseDistance = settings != null ? settings.RebaseDistance : 1000f;
             if (offset.sqrMagnitude <= rebaseDistance * rebaseDistance)
             {
@@ -108,43 +118,72 @@ namespace Farion.Simulation.World
 
             foreach (Transform root in uniqueShiftRoots)
             {
-                if (root == null)
+                if (root != null)
                 {
-                    continue;
+                    root.position -= originOffset;
                 }
-
-                ShiftRoot(root, originOffset);
             }
 
             UnityEngine.Physics.SyncTransforms();
 
-            AccumulatedOriginOffset += originOffset;
-            ShiftCount++;
+            accumulatedOriginOffset += originOffset;
+            lastOriginOffset = originOffset;
+            shiftCount++;
+            lastShiftFrame = Time.frameCount;
+            trackingDistanceFromOrigin = 0f;
         }
 
-        void ResolveFallbackTarget()
+        public void SetTrackingTarget(Transform target)
         {
-            if (trackingTarget != null || !useMainCameraWhenTargetMissing)
+            trackingTarget = target;
+            if (Application.isPlaying)
             {
-                return;
-            }
-
-            Camera mainCamera = Camera.main;
-            if (mainCamera != null)
-            {
-                trackingTarget = mainCamera.transform;
+                ValidateSetup(logWarnings: false);
             }
         }
 
-        void UpgradeSerializedData()
+        bool ValidateSetup(bool logWarnings)
         {
-            if (serializedVersion >= 1)
+            RefreshShiftRoots();
+
+            bool valid = true;
+            if (settings == null)
             {
-                return;
+                valid = false;
+                if (logWarnings)
+                {
+                    Debug.LogWarning($"{nameof(WorldOriginRebaser)} has no {nameof(WorldOriginSettings)} assigned.", this);
+                }
             }
 
-            includeTrackingTargetWhenMissing = true;
-            serializedVersion = 1;
+            if (trackingTarget == null)
+            {
+                valid = false;
+                if (logWarnings)
+                {
+                    Debug.LogWarning($"{nameof(WorldOriginRebaser)} has no tracking target assigned.", this);
+                }
+            }
+
+            if (uniqueShiftRoots.Count == 0)
+            {
+                valid = false;
+                if (logWarnings)
+                {
+                    Debug.LogWarning($"{nameof(WorldOriginRebaser)} has no shifted roots. Add authored scene roots such as Bodies, Actors, CameraRig, and Lighting.", this);
+                }
+            }
+
+            if (trackingTarget != null && !IsTrackingTargetCovered())
+            {
+                valid = false;
+                if (logWarnings)
+                {
+                    Debug.LogWarning($"{nameof(WorldOriginRebaser)} tracking target is not under any shifted root. Add the target's authored root to shifted roots.", this);
+                }
+            }
+
+            return valid;
         }
 
         void AddShiftRoot(Transform candidate)
@@ -177,80 +216,21 @@ namespace Farion.Simulation.World
             uniqueShiftRoots.Add(candidate);
         }
 
-        void ShiftRoot(Transform root, Vector3 originOffset)
+        bool IsTrackingTargetCovered()
         {
-            rigidbodies.Clear();
-            shiftedRigidbodies.Clear();
-            root.GetComponentsInChildren(true, rigidbodies);
-
-            if (rigidbodies.Count == 0)
+            if (trackingTarget == null)
             {
-                root.position -= originOffset;
-                return;
+                return false;
             }
 
-            foreach (Rigidbody rb in rigidbodies)
+            foreach (Transform root in uniqueShiftRoots)
             {
-                if (rb == null || shiftedRigidbodies.Contains(rb))
-                {
-                    continue;
-                }
-
-                rb.transform.position -= originOffset;
-                shiftedRigidbodies.Add(rb);
-            }
-
-            ShiftNonRigidbodyBranches(root, originOffset);
-        }
-
-        void ShiftNonRigidbodyBranches(Transform root, Vector3 originOffset)
-        {
-            if (TryGetShiftedRigidbody(root, out _))
-            {
-                return;
-            }
-
-            for (int i = 0; i < root.childCount; i++)
-            {
-                Transform child = root.GetChild(i);
-                if (ContainsShiftedRigidbody(child))
-                {
-                    ShiftNonRigidbodyBranches(child, originOffset);
-                }
-                else
-                {
-                    child.position -= originOffset;
-                }
-            }
-        }
-
-        bool ContainsShiftedRigidbody(Transform root)
-        {
-            if (TryGetShiftedRigidbody(root, out _))
-            {
-                return true;
-            }
-
-            for (int i = 0; i < root.childCount; i++)
-            {
-                if (ContainsShiftedRigidbody(root.GetChild(i)))
+                if (root != null && trackingTarget.IsChildOf(root))
                 {
                     return true;
                 }
             }
 
-            return false;
-        }
-
-        bool TryGetShiftedRigidbody(Transform target, out Rigidbody shiftedRigidbody)
-        {
-            if (target.TryGetComponent(out Rigidbody rb) && shiftedRigidbodies.Contains(rb))
-            {
-                shiftedRigidbody = rb;
-                return true;
-            }
-
-            shiftedRigidbody = null;
             return false;
         }
 

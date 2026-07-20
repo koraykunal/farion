@@ -11,7 +11,7 @@ namespace Farion.Core.Physics
         public const float DefaultGravitationalConstant = 0.0001f;
 
         [SerializeField] GravitySettings settings;
-        [SerializeField] bool autoDiscoverBodies = true;
+        [SerializeField] bool autoDiscoverBodies;
         [SerializeField] List<CelestialBody> registeredBodies = new();
 
         static GravitySimulation active;

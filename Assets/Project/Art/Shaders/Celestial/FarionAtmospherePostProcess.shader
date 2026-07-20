@@ -38,12 +38,14 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
             int _FarionAtmosphereEffectCount;
             float4 _FarionAtmosphereSpheres[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmospherePlanetSpheres[FARION_MAX_ATMOSPHERE_EFFECTS];
-            float4 _FarionAtmosphereOceanRadii[FARION_MAX_ATMOSPHERE_EFFECTS];
+            float4 _FarionAtmosphereSurfaceRadii[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmosphereScatteringCoefficients[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmosphereOpticalParams[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmosphereSampleParams[FARION_MAX_ATMOSPHERE_EFFECTS];
 
             float4 _FarionStarPositionWS;
+            half4 _FarionStarColor;
+            float _FarionStarIntensity;
 
             TEXTURE2D(_FarionAtmosphereBakedOpticalDepth);
             SAMPLER(sampler_FarionAtmosphereBakedOpticalDepth);
@@ -140,7 +142,7 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                 float3 centre = _FarionAtmosphereSpheres[index].xyz;
                 float atmosphereRadius = _FarionAtmosphereSpheres[index].w;
                 float planetRadius = max(_FarionAtmospherePlanetSpheres[index].w, 0.001);
-                float oceanRadius = max(_FarionAtmosphereOceanRadii[index].x, planetRadius);
+                float surfaceRadius = max(_FarionAtmosphereSurfaceRadii[index].x, planetRadius);
 
                 float2 atmosphereHit = RaySphere(centre, atmosphereRadius, rayOrigin, rayDirection);
                 if (atmosphereHit.y <= 0.0)
@@ -148,8 +150,8 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                     return sourceColor;
                 }
 
-                float2 oceanHit = RaySphere(centre, oceanRadius, rayOrigin, rayDirection);
-                float surfaceDistance = min(sceneDistance, oceanHit.x);
+                float2 surfaceHit = RaySphere(centre, surfaceRadius, rayOrigin, rayDirection);
+                float surfaceDistance = min(sceneDistance, surfaceHit.x);
 
                 float dstToAtmosphere = atmosphereHit.x;
                 float dstThroughAtmosphere = min(atmosphereHit.y, surfaceDistance - dstToAtmosphere);
@@ -191,23 +193,24 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                     float sunRayOpticalDepth = OpticalDepthBaked(index, samplePoint + dirToStar * ditherStrength, dirToStar);
                     viewRayOpticalDepth = OpticalDepthBakedBetweenPoints(index, scatterOrigin, rayDirection, stepSize * i);
 
-                    float3 transmittance = exp(-(sunRayOpticalDepth + viewRayOpticalDepth) * scatteringCoefficients);
+                    float3 transmittance = exp(-(sunRayOpticalDepth + viewRayOpticalDepth) * scatteringCoefficients / planetRadius);
                     inScatteredLight += localDensity * transmittance;
                     samplePoint += rayDirection * stepSize;
                 }
 
-                inScatteredLight *= scatteringCoefficients * intensity * stepSize / planetRadius;
+                float referenceLightIntensity = max(_FarionAtmosphereSampleParams[index].z, 0.001);
+                float3 starRadiance = _FarionStarColor.rgb * (max(_FarionStarIntensity, 0.0) / referenceLightIntensity);
+                inScatteredLight *= scatteringCoefficients * intensity * starRadiance * stepSize / planetRadius;
+
+                float maxScatter = max(max(scatteringCoefficients.x, scatteringCoefficients.y), scatteringCoefficients.z);
+                float3 scatterTint = scatteringCoefficients / max(maxScatter, 0.001);
+                float finalViewOpticalDepth = OpticalDepthBakedBetweenPoints(index, scatterOrigin, rayDirection, scatterLength);
+                float3 viewTransmittance = exp(-finalViewOpticalDepth * scatteringCoefficients * intensity / planetRadius);
+                float airMass = 1.0 - saturate(dot(viewTransmittance, float3(0.2126, 0.7152, 0.0722)));
+                inScatteredLight += scatterTint * starRadiance * airMass * 0.018;
                 inScatteredLight += float3(dither, dither, dither) * 0.01;
 
-                const float brightnessAdaptionStrength = 0.15;
-                const float reflectedLightOutScatterStrength = 3.0;
-                float brightnessAdaption = dot(inScatteredLight, float3(1.0, 1.0, 1.0)) * brightnessAdaptionStrength;
-                float brightnessSum = viewRayOpticalDepth * intensity * reflectedLightOutScatterStrength + brightnessAdaption;
-                float reflectedLightStrength = exp(-brightnessSum);
-                float hdrStrength = saturate(dot(sourceColor, half3(1.0h, 1.0h, 1.0h)) / 3.0 - 1.0);
-                reflectedLightStrength = lerp(reflectedLightStrength, 1.0, hdrStrength);
-
-                return sourceColor * reflectedLightStrength + inScatteredLight;
+                return sourceColor * viewTransmittance + inScatteredLight;
             }
 
             half4 Fragment(Varyings input) : SV_Target
@@ -218,11 +221,12 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
 
                 float rawDepth = SampleSceneDepth(uv);
-                float depthForPosition = IsSkyDepth(rawDepth) ? UNITY_RAW_FAR_CLIP_VALUE : rawDepth;
+                bool depthIsSky = IsSkyDepth(rawDepth);
+                float depthForPosition = depthIsSky ? UNITY_RAW_FAR_CLIP_VALUE : rawDepth;
                 float3 scenePositionWS = ComputeWorldSpacePosition(uv, depthForPosition, UNITY_MATRIX_I_VP);
                 float3 rayOrigin = _WorldSpaceCameraPos.xyz;
                 float3 rayDirection = normalize(scenePositionWS - rayOrigin);
-                float sceneDistance = IsSkyDepth(rawDepth)
+                float sceneDistance = depthIsSky
                     ? _ProjectionParams.z
                     : length(scenePositionWS - rayOrigin);
 

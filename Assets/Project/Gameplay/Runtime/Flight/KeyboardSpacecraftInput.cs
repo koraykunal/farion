@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 namespace Farion.Gameplay.Flight
 {
@@ -6,17 +8,17 @@ namespace Farion.Gameplay.Flight
     public sealed class KeyboardSpacecraftInput : MonoBehaviour, ISpacecraftInputSource
     {
         [Header("Translation")]
-        [SerializeField] KeyCode forwardKey = KeyCode.W;
-        [SerializeField] KeyCode backwardKey = KeyCode.S;
-        [SerializeField] KeyCode leftKey = KeyCode.A;
-        [SerializeField] KeyCode rightKey = KeyCode.D;
-        [SerializeField] KeyCode ascendKey = KeyCode.Space;
-        [SerializeField] KeyCode descendKey = KeyCode.LeftControl;
-        [SerializeField] KeyCode boostKey = KeyCode.LeftShift;
+        [SerializeField] Key inputSystemForwardKey = Key.W;
+        [SerializeField] Key inputSystemBackwardKey = Key.S;
+        [SerializeField] Key inputSystemLeftKey = Key.A;
+        [SerializeField] Key inputSystemRightKey = Key.D;
+        [SerializeField] Key inputSystemAscendKey = Key.Space;
+        [SerializeField] Key inputSystemDescendKey = Key.LeftCtrl;
+        [SerializeField] Key inputSystemBoostKey = Key.LeftShift;
 
         [Header("Rotation")]
-        [SerializeField] KeyCode rollLeftKey = KeyCode.Q;
-        [SerializeField] KeyCode rollRightKey = KeyCode.E;
+        [SerializeField] Key inputSystemRollLeftKey = Key.Q;
+        [SerializeField] Key inputSystemRollRightKey = Key.E;
         [SerializeField] float mouseSensitivity = 1f;
         [SerializeField] bool lockCursorOnPlay = true;
 
@@ -33,6 +35,8 @@ namespace Farion.Gameplay.Flight
 
         void OnDisable()
         {
+            CurrentInput = SpacecraftInputState.None;
+
             if (Application.isPlaying && lockCursorOnPlay)
             {
                 Cursor.lockState = CursorLockMode.None;
@@ -42,36 +46,49 @@ namespace Farion.Gameplay.Flight
 
         void Update()
         {
-            Vector3 translation = new(
-                Axis(leftKey, rightKey),
-                Axis(descendKey, ascendKey),
-                Axis(backwardKey, forwardKey));
+            Keyboard keyboard = Keyboard.current;
+            Mouse mouse = Mouse.current;
+            if (keyboard == null)
+            {
+                CurrentInput = SpacecraftInputState.None;
+                return;
+            }
 
-            Vector2 look = new(
-                Input.GetAxisRaw("Mouse X") * mouseSensitivity,
-                Input.GetAxisRaw("Mouse Y") * mouseSensitivity);
+            Vector3 translation = new(
+                Axis(keyboard, inputSystemLeftKey, inputSystemRightKey),
+                Axis(keyboard, inputSystemDescendKey, inputSystemAscendKey),
+                Axis(keyboard, inputSystemBackwardKey, inputSystemForwardKey));
+
+            Vector2 mouseDelta = mouse != null ? mouse.delta.ReadValue() : Vector2.zero;
+            Vector2 look = mouseDelta * mouseSensitivity;
 
             CurrentInput = new SpacecraftInputState(
                 translation,
                 look,
-                Axis(rollLeftKey, rollRightKey),
-                Input.GetKey(boostKey));
+                Axis(keyboard, inputSystemRollLeftKey, inputSystemRollRightKey),
+                IsPressed(keyboard, inputSystemBoostKey));
         }
 
-        static int Axis(KeyCode negative, KeyCode positive)
+        static int Axis(Keyboard keyboard, Key negative, Key positive)
         {
             int value = 0;
-            if (Input.GetKey(positive))
+            if (IsPressed(keyboard, positive))
             {
                 value++;
             }
 
-            if (Input.GetKey(negative))
+            if (IsPressed(keyboard, negative))
             {
                 value--;
             }
 
             return value;
+        }
+
+        static bool IsPressed(Keyboard keyboard, Key key)
+        {
+            KeyControl control = keyboard[key];
+            return control != null && control.isPressed;
         }
     }
 }

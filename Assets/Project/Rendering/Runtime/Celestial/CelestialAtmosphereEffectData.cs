@@ -7,21 +7,21 @@ namespace Farion.Rendering.Celestial
         public CelestialAtmosphereEffectData(
             Vector3 center,
             float bodyRadius,
+            float surfaceRadius,
             float atmosphereRadius,
-            float oceanRadius,
             CelestialAtmosphereProfile profile)
         {
             Center = center;
             BodyRadius = bodyRadius;
+            SurfaceRadius = surfaceRadius;
             AtmosphereRadius = atmosphereRadius;
-            OceanRadius = oceanRadius;
             Profile = profile;
         }
 
         public Vector3 Center { get; }
         public float BodyRadius { get; }
+        public float SurfaceRadius { get; }
         public float AtmosphereRadius { get; }
-        public float OceanRadius { get; }
         public CelestialAtmosphereProfile Profile { get; }
 
         public float GetCameraSortDistance(Vector3 cameraPosition)

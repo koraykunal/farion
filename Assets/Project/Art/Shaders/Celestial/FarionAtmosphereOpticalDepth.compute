@@ -5,7 +5,6 @@ int textureSize;
 int numOutScatteringSteps;
 float atmosphereRadius;
 float densityFalloff;
-float4 params;
 
 #define PI 3.14159265358979323846
 #define FARION_MAX_FLOAT 3.402823466e+38

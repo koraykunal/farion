@@ -19,7 +19,37 @@ On `Simulation`:
 
 1. Add `GravitySimulation`.
 2. Assign `Assets/Project/Design/Physics/DefaultGravitySettings.asset`.
-3. Leave `Auto Discover Bodies` enabled for the first sandbox.
+3. Add `Test Star`, `Test Planet`, and `Test Moon` to `Registered Bodies`.
+4. Keep `Auto Discover Bodies` disabled once those references are assigned.
+
+### Celestial Frame Provider
+
+`CelestialFrameProvider` is the bridge from gravity simulation to gameplay. It
+does not move objects and does not create scene content. It samples the dominant
+body, local surface frame, relative velocity, ocean level, and atmosphere state
+for actors such as the ship.
+
+On `Simulation`:
+
+1. Add `CelestialFrameProvider`.
+2. Assign the scene `GravitySimulation` to `Simulation`.
+3. Add `Test Planet > EarthLikePlanetVisual` to `Environment Sources`.
+4. Add terrain visuals that should affect gameplay altitude to `Surface
+   Sources`, such as:
+   - `Test Planet > CelestialBodyVisual`
+   - `Test Moon > CelestialBodyVisual`
+
+Keep `Environment Sources` explicit. If a later planet has ocean or atmosphere,
+add that planet's environment provider here. Moon-only bodies can be omitted
+until they expose terrain/environment gameplay data.
+
+Keep `Surface Sources` explicit as well. Without this list, `Surface Altitude`
+falls back to the body's perfect sphere radius and will not reflect mountains,
+craters, or procedural terrain displacement.
+
+`Surface Sources` also provide the sampled terrain normal and `Surface Slope`.
+If slope stays near `0 deg` everywhere on a visibly mountainous planet, confirm
+the planet's `CelestialBodyVisual` is in this list and rebuild the visual mesh.
 
 ### World Origin Rebase Setup
 
@@ -34,23 +64,25 @@ On `Simulation`:
 2. Assign `Assets/Project/Design/World/SO_WorldOriginSettings.asset` to
    `Settings`.
 3. Assign `Probe Ship` to `Tracking Target` while testing ship travel. If this
-   is empty, it can fall back to the main camera.
+   is empty, rebasing is disabled and the component will warn.
 4. Add these transforms to `Shifted Roots`:
    - `Bodies`
    - `Actors`
    - `CameraRig`
    - `Lighting`
-5. Keep `Use Main Camera When Target Missing` enabled for sandbox testing.
-6. Keep `Include Tracking Target When Missing` enabled. This prevents the ship
-   from being left behind if it is not currently under one of the shifted roots.
-7. Start with `Rebase Distance = 1000` on `SO_WorldOriginSettings`.
+5. Start with `Rebase Distance = 1000` on `SO_WorldOriginSettings`.
 
 Do not add `Simulation` itself to `Shifted Roots`. The simulation service has no
 world position ownership; only authored scene content should move. `Probe Ship`
-should normally live under `Actors`, but the rebaser can also include the
-tracking target directly as a safety net. Rebase shifts positions only and
-preserves Rigidbody velocities, so gravity/orbit math remains consistent after
-all bodies and actors receive the same offset.
+should live under `Actors`; do not rely on automatic target insertion. Rebase
+shifts positions only, preserves Rigidbody velocities, and runs in `FixedUpdate`
+so physics and camera follow do not fight each other.
+
+Use `WorldOriginRebaser > Validate Setup` after changing the hierarchy. In Play
+Mode, `Shift Count`, `Last Origin Offset`, and `Tracking Distance From Origin`
+show whether rebasing is actually happening. `Probe Ship` local values may stay
+large if it is nested under a shifted root; what matters is that its world
+position and camera remain near local origin after a shift.
 
 When the camera uses `SpacecraftCameraRig`, keep `CameraRig` in `Shifted Roots`.
 The camera rig should receive the same origin offset as the ship and world, then
@@ -98,12 +130,16 @@ visible and physics works, move to generated visual meshes:
    body was created from a Unity primitive sphere.
 6. Assign a `CelestialSurfaceProfile`.
 7. Assign a `CelestialShapeProfile` if the body should have procedural terrain.
-8. Keep `Sync Sphere Collider` enabled. This gives the body a correct spherical
-   collision surface while the gravity model is still radius-based.
+8. Keep `Sync Sphere Collider` enabled for moving planets and moons. This gives
+   the body a correct spherical collision surface while the gravity model is
+   still radius-based.
 9. Keep `Generate Mesh Collider` disabled for moving planets and moons. Use it
-   only on locked/static bodies.
-10. Start with `Render Resolution = 32`.
-11. Use the component context menu `Rebuild Visual Mesh` if the child mesh does
+   only on locked/static bodies. When mesh collision is active, the generated
+   `Terrain Mesh` child receives a separate baked `MeshCollider`, and the root
+   sphere collider is disabled so terrain shape owns surface contact.
+10. Keep `Bake Mesh Collider` enabled for static/locked body collision tests.
+11. Start with `Render Resolution = 32`.
+12. Use the component context menu `Rebuild Visual Mesh` if the child mesh does
    not update immediately.
 
 This creates or updates a child object named `Terrain Mesh`. Keep this child
@@ -132,8 +168,9 @@ On the scene `Lighting` root:
 
 1. Add or confirm `CelestialLodController`.
 2. Assign the main camera to `Target Camera`.
-3. Keep `Auto Discover Visuals` enabled.
-4. Keep `Update Every Frame` enabled for Play Mode.
+3. Add the authored planet/moon `CelestialBodyVisual` components to `Visuals`.
+4. Keep `Auto Discover Visuals` disabled once the list is assigned.
+5. Keep `Update Every Frame` enabled for Play Mode.
 
 Default profile values:
 
@@ -146,6 +183,24 @@ Default profile values:
 Raise `LOD0 Resolution` only after ocean, atmosphere, lighting, and camera
 movement are stable. Collision remains separate: moving planets and moons still
 use spherical collision by default.
+
+### Orbit Line Display
+
+Orbit lines are debug/piloting presentation, not gameplay authority. They draw
+the current osculating orbit from body position and velocity so you can reason
+about orbital insertion and deorbit burn direction.
+
+On the `Lighting` root:
+
+1. Add or confirm `CelestialOrbitLineRenderer`.
+2. Assign the scene `GravitySimulation` to `Simulation`.
+3. Use `Show Orbit Lines` to enable or disable the lines.
+4. Keep `Draw Locked Bodies` disabled so the star does not draw an orbit.
+5. Keep `Draw Unbound Trajectories` disabled for the current sandbox.
+
+The renderer creates transient `Orbit Lines` objects for `LineRenderer`
+instances. Do not edit those generated children; tune the component fields
+instead.
 
 ### Simple Surface Profile Setup
 
@@ -302,7 +357,9 @@ Renderer setup:
 3. Confirm `Farion Atmosphere Post Process` exists and is active after ocean.
 4. Keep ocean at `Before Rendering Post Processing`.
 5. Keep atmosphere immediately after ocean.
-6. Confirm `SO_EarthLikePlanetVisualProfile` has `SO_EarthOceanProfile`
+6. Keep `Max Rendered Bodies` at `8` for now. Lower it only for profiling, not
+   for visual tuning.
+7. Confirm `SO_EarthLikePlanetVisualProfile` has `SO_EarthOceanProfile`
    and `SO_EarthAtmosphereProfile` assigned.
 
 Texture inputs used by `SO_EarthOceanProfile` and sampled by the screen-space
@@ -335,7 +392,10 @@ Create a simple test actor under `Actors`:
 2. Add `Rigidbody`.
 3. Add `GravityActor`.
 4. Place it above the planet surface.
-5. Press Play and verify it accelerates toward the nearest body.
+5. Keep `Rigidbody > Use Gravity` disabled. `GravityActor` applies Farion
+   gravity from `GravitySimulation`; Unity's built-in gravity must not be mixed
+   into the sandbox.
+6. Press Play and verify it accelerates toward the nearest body.
 
 ## Camera And Lighting
 
@@ -388,7 +448,10 @@ Create an authored lighting setup:
    - `Lighting Focus`: `Probe Ship` while flying, or `CameraRig` while viewing
      the sandbox.
    - `Scene Camera`: the main camera.
-8. Use the component context menu `Apply Lighting Now`.
+8. Disable `Auto Find Primary Source`, `Auto Find Main Directional Light`, and
+   `Auto Find Main Camera` after the explicit references above are assigned.
+   Keep `Use Main Camera As Fallback Focus` disabled for the authored sandbox.
+9. Use the component context menu `Apply Lighting Now`.
 
 Useful first profile values:
 
@@ -481,13 +544,52 @@ After the gravity actor test works, create a spacecraft probe:
 2. Add `Rigidbody`.
 3. Add `KeyboardSpacecraftInput`.
 4. Add `SpacecraftMotor`.
-5. On `SpacecraftMotor`, leave `Simulation` empty unless you want to assign the
+5. Keep `Rigidbody > Use Gravity` disabled. `SpacecraftMotor` applies project
+   gravity when `Apply Gravity` is enabled.
+6. On `SpacecraftMotor`, leave `Simulation` empty unless you want to assign the
    scene `GravitySimulation` explicitly. Empty means it uses
    `GravitySimulation.Active`.
-6. Keep Unity's default `GravityActor` off this object. `SpacecraftMotor` already
+7. Keep Unity's default `GravityActor` off this object. `SpacecraftMotor` already
    applies project gravity.
-7. Move the probe near the planet, outside the surface. For the current test
+8. Move the probe near the planet, outside the surface. For the current test
    planet, a starting position around `(350, 70, -120)` is useful.
+9. Add `CelestialActorProbe`.
+10. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
+11. Add `SpacecraftSurfaceContactProbe`.
+12. Add `SpacecraftLandingComputer`.
+13. Assign `Assets/Project/Design/Gameplay/SO_DefaultLandingProfile.asset` to
+    `Profile`.
+14. Assign the same `CelestialActorProbe` component to `Celestial Probe`.
+15. Assign the same `SpacecraftSurfaceContactProbe` component to
+    `Surface Contact Probe`.
+16. Add `SpacecraftLandingGuidanceComputer`.
+17. Assign the same `SpacecraftLandingComputer` to `Landing Computer`.
+18. Assign the same `CelestialActorProbe` to `Celestial Probe`.
+19. On `SpacecraftMotor`, assign the same `SpacecraftSurfaceContactProbe` to
+    `Surface Contact Probe`.
+20. Keep `Suspend Rotation While In Surface Contact` enabled. This follows the
+    Solar-System reference approach of not forcing ship rotation through a
+    surface contact.
+21. Add `SpacecraftSurfaceContactStabilizer`.
+22. Assign the same `SpacecraftSurfaceContactProbe`.
+23. Add `SpacecraftOceanInteractor`.
+24. Assign `Assets/Project/Design/Gameplay/SO_DefaultOceanInteractionProfile.asset`
+    to `Profile`.
+25. Assign the same `CelestialActorProbe` to `Celestial Probe`.
+26. Keep `Apply Buoyancy`, `Apply Drag`, and `Damp Angular Velocity` enabled.
+27. Add `SpacecraftOrbitComputer`.
+28. Assign the same `CelestialActorProbe` to `Celestial Probe`.
+29. Leave `Simulation` empty unless you need an explicit scene reference; empty
+    means it uses `GravitySimulation.Active`.
+30. Add `SpacecraftEntryCorridorComputer`.
+31. Assign `Assets/Project/Design/Gameplay/SO_DefaultEntryCorridorProfile.asset`
+    to `Profile`.
+32. Assign the same `CelestialActorProbe` and `SpacecraftOrbitComputer`.
+33. Add `SpacecraftLandingDebugHud` while testing landing.
+34. Assign `Guidance Computer`, `Landing Computer`, `Orbit Computer`,
+    `Entry Corridor Computer`, `Celestial Probe`, `Surface Contact Probe`, and
+    `Ocean Interactor` from the same `Probe Ship`.
+35. Keep `Show Hud` enabled while tuning, or press `F9` in Play Mode to hide it.
 
 Controls:
 
@@ -509,3 +611,254 @@ For a camera:
 
 This is only the first ship-control sandbox. Do not add survival, inventory,
 automation, networking, HUD, or landing systems until this motion feels stable.
+
+While in Play Mode, select `Probe Ship` and watch
+`CelestialActorProbe > Runtime Sample`:
+
+- `Dominant Body Name` should become the nearest/highest-gravity body.
+- `Surface Altitude` should decrease as you approach the surface.
+- `Surface Slope` should rise on steep terrain and stay low on flatter terrain.
+- `Radial Velocity` is negative while descending and positive while climbing.
+- `Tangential Speed` is the body-relative orbital/horizontal speed.
+- `Inside Atmosphere` should enable inside the atmosphere radius.
+- `Below Ocean Level` should enable only under the ocean sphere.
+
+These values are the basis for the future landing loop. The next step is not to
+fake landing with a trigger, but to derive entry corridor, burn timing, safe
+vertical speed, and touchdown rules from this frame sample.
+
+Then check `SpacecraftLandingComputer > Runtime Assessment`:
+
+- `Phase` should move through `Orbit`, `Deorbiting`, `AtmosphericDescent`,
+  `LowApproach`, and finally `TouchdownWindow` or `UnsafeTouchdown` depending
+  on speed and altitude.
+- `Risks` should flag excessive vertical or tangential speed near the surface.
+- `Risks` should flag `ExcessiveSurfaceSlope` when the current sampled terrain
+  is steeper than `SO_DefaultLandingProfile > Safe Touchdown Slope Angle`.
+- `Normalized Stress` approaches `1` as the current descent becomes unsafe for
+  the active altitude.
+- `Safe Touchdown Window` should be true only very close to the surface with low
+  vertical speed, low tangential speed, and acceptable surface slope.
+- `Impact Risk` should be true when low-altitude speed is outside the profile
+  limits.
+- `Has Surface Contact` should become true only while the ship collider is
+  touching a celestial body collider.
+- `Touchdown Confirmed` should become true only when the ship has surface
+  contact and both normal/tangential speeds are inside the active profile
+  limits.
+- `Unsafe Surface Contact` means contact happened, but not inside safe
+  touchdown limits.
+
+Then check `SpacecraftLandingGuidanceComputer > Runtime Guidance`:
+
+- `Level` should move from `Advisory` or `Caution` into `Warning` or `Critical`
+  only when speed/contact risk crosses the landing profile limits.
+- `Command` should explain the next piloting priority without changing controls.
+- `Command` should show `SeekLevelSurface` when speed is acceptable but the
+  terrain slope is not safe for touchdown.
+- `Stress` should rise as descent or lateral speed approaches unsafe limits.
+
+Then check `SpacecraftOceanInteractor > Runtime Ocean`:
+
+- `Has Ocean` should be true while the dominant body exposes an ocean profile.
+- `Touching Water` becomes true before the ship center passes below sea level,
+  based on `Effective Hull Radius`.
+- `Center Below Water` becomes true only after the ship center is below the
+  ocean sphere.
+- `Submerged Fraction` should rise from `0` to `1` as the hull goes underwater.
+- `Buoyancy Acceleration` and `Drag Acceleration` should be non-zero only while
+  touching water.
+- `Water Entry Speed` is the ocean-radial impact speed into the water.
+- `Unsafe Water Entry` becomes true when entering water faster than
+  `SO_DefaultOceanInteractionProfile > Safe Water Entry Speed`.
+- `Pressure Stress` should rise with depth after `Pressure Warning Depth`.
+- `Crushing Depth` becomes true at or below `Crush Depth`; this is telemetry for
+  future damage, not damage by itself yet.
+
+The ocean has no collider. Water physics is derived from the same mathematical
+ocean sphere used by the screen-space renderer feature. The terrain mesh
+collider still owns sea-floor or land contact.
+
+Then check `SpacecraftOrbitComputer > Runtime Orbit`:
+
+- `Regime` should show `NearCircular` or `Elliptic` when the ship is in a bound
+  orbit, `Suborbital` when the current path intersects the body, and `Escape`
+  when velocity is above escape energy.
+- `Circular Velocity` and `Escape Velocity` are computed from the dominant
+  body's gravitational parameter at the ship's current radius.
+- `Periapsis` below `0 m` means the current trajectory intersects the body's
+  spherical collision surface.
+- `Flight Path Angle` is negative while descending, positive while climbing, and
+  near zero while moving mostly along the horizon.
+
+Then check `SpacecraftEntryCorridorComputer > Runtime Entry Corridor`:
+
+- `SafeEntry` means the current speed, entry angle, and periapsis are inside the
+  active profile limits.
+- `ShallowEntry` means the trajectory is too close to horizontal and may skip
+  the atmosphere.
+- `SteepEntry` or `Impacting` means periapsis/angle should be corrected before
+  descent.
+- `Overspeed` means the ship should slow down before committing to atmosphere
+  entry.
+
+`SpacecraftLandingDebugHud` mirrors these values in Game view. Treat it as
+temporary sandbox instrumentation, not the final survival/cockpit interface.
+
+## First-Person Explorer
+
+The first on-foot actor is a physics actor, not a `CharacterController`. It uses
+the same `CelestialActorProbe` contract as the spacecraft, so local up, surface
+slope, ocean state, and atmosphere state come from the authored celestial
+simulation.
+
+Create a test explorer under `Actors`:
+
+1. Create a capsule named `Player Explorer`.
+2. Add `Rigidbody`.
+3. Add `CapsuleCollider`.
+4. Add `KeyboardFirstPersonInput`.
+5. Add `CelestialActorProbe`.
+6. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
+7. Add `FirstPersonMotor`.
+8. Assign `Assets/Project/Design/Gameplay/SO_DefaultFirstPersonMotorProfile.asset`
+   to `Profile`.
+9. Assign the same `KeyboardFirstPersonInput` to `Input Source`.
+10. Assign the main camera transform to `View Reference` after adding the camera
+    rig below.
+11. Keep `Apply Celestial Gravity` enabled.
+12. On the `Rigidbody`, keep `Use Gravity` disabled.
+13. Start with `Rigidbody > Mass = 80`, `Drag = 0`, and `Angular Drag = 0.05`.
+14. Start with `CapsuleCollider > Radius = 0.35`, `Height = 1.8`, and
+    `Center = (0, 0, 0)`.
+15. Place the explorer slightly above a locked/static planet mesh collider.
+
+For the first-person camera:
+
+1. Select the scene camera or a camera under `CameraRig`.
+2. Disable or remove `SpacecraftCameraRig` while testing on-foot movement.
+3. Add `FirstPersonCameraRig`.
+4. Assign `Player Explorer > FirstPersonMotor` to `Target`.
+5. Assign `Player Explorer > KeyboardFirstPersonInput` to `Input Source`.
+6. Start with `Eye Height = 1.65`.
+7. Keep `Lock Cursor On Enable` enabled in Play Mode.
+
+On `Simulation > WorldOriginRebaser`, keep `Actors` and `CameraRig` in
+`Shifted Roots`. While testing the explorer alone, set `Tracking Target` to
+`Player Explorer`. When testing the ship again, set it back to `Probe Ship`.
+
+Controls:
+
+- `W/S`: forward/back along the local surface frame.
+- `A/D`: strafe along the local surface frame.
+- `Mouse`: yaw/pitch.
+- `Space`: jump.
+- `Left Shift`: sprint.
+- `E`: reserved for interaction/boarding; it is captured by input but does not
+  trigger gameplay until the boarding layer is added.
+
+In Play Mode, check `Player Explorer > CelestialActorProbe > Runtime Sample`:
+
+- `Dominant Body Name` should be the planet.
+- `Surface Altitude` should stay near the capsule foot clearance while grounded.
+- `Surface Slope` should change over terrain.
+- `Local Up` should follow the planet surface normal.
+
+Then check `FirstPersonMotor > Runtime Movement`:
+
+- `Grounded` should be true while standing on the terrain mesh collider.
+- `Walkable Ground` should become false on slopes above
+  `SO_DefaultFirstPersonMotorProfile > Max Walkable Slope Angle`.
+- `Surface Speed` should rise while walking or sprinting and fall when input is
+  released.
+- The capsule should rotate upright against the current celestial local up.
+
+Do not add inventory, tools, resource collection, health, or co-op replication
+until this basic explorer can walk, jump, and camera-look reliably on the
+planet surface. The next gameplay layer is possession/boarding: a single active
+control owner that switches between `Player Explorer` and `Probe Ship`.
+
+## Player Possession And Boarding
+
+Use this layer to switch between the spacecraft and the on-foot explorer. The
+ship motor stays enabled in both modes because it owns gravity and vehicle
+physics. Only the active input source and camera presenter change.
+
+Create the boarding point:
+
+1. Under `Probe Ship`, create an empty child named `Boarding Point`.
+2. Place it near the hatch/door where the player should stand to re-enter.
+3. Rotate its green axis/up away from the planet surface if it also acts as the
+   exit pose.
+4. Add `VehicleBoardingPoint`.
+5. Keep `Interaction Radius = 2.5` for the first test.
+6. Optional but recommended: create another child named `Exit Point`, place it
+   slightly outside the ship, and assign it to `VehicleBoardingPoint > Exit
+   Point`.
+
+Create the possession owner:
+
+1. Create an empty object under `Actors` named `Player Possession`.
+2. Add `KeyboardBoardingInput`.
+3. Add `PlayerPossessionController`.
+4. Set `Initial Mode = Spacecraft`.
+5. Assign `KeyboardBoardingInput` to `Boarding Input Source`.
+6. Assign `Probe Ship` to `Spacecraft Root`.
+7. Assign `Probe Ship > Rigidbody` to `Spacecraft Rigidbody`.
+8. Assign `Probe Ship > SpacecraftMotor` to `Spacecraft Motor`.
+9. Assign `Probe Ship > KeyboardSpacecraftInput` to `Spacecraft Input`.
+10. Assign the scene camera's `SpacecraftCameraRig` to `Spacecraft Camera Rig`.
+11. Assign `Probe Ship` or a camera target child to `Spacecraft Camera Target`.
+12. Assign `Probe Ship > Boarding Point` to `Boarding Point`.
+13. Assign `Player Explorer` to `Explorer Root`.
+14. Assign `Player Explorer > Rigidbody` to `Explorer Rigidbody`.
+15. Assign `Player Explorer > FirstPersonMotor` to `Explorer Motor`.
+16. Assign `Player Explorer > KeyboardFirstPersonInput` to `Explorer Input`.
+17. Assign the scene camera's `FirstPersonCameraRig` to `First Person Camera
+    Rig`.
+18. Assign `Simulation > WorldOriginRebaser` to `Origin Rebaser`.
+19. Keep `Update Origin Tracking Target` enabled.
+
+Controls:
+
+- `F`: exit the spacecraft.
+- `E`: enter the spacecraft while the explorer is inside the boarding radius.
+
+In Play Mode:
+
+1. Start in the ship.
+2. Press `F`. `Player Explorer` should activate at `Exit Point`.
+3. The ship should keep simulating physics, but `KeyboardSpacecraftInput` should
+   be disabled.
+4. `FirstPersonCameraRig` and `KeyboardFirstPersonInput` should be enabled.
+5. Walk back into `Boarding Point` radius and press `E`.
+6. `Player Explorer` should deactivate, `SpacecraftCameraRig` should re-enable,
+   and `WorldOriginRebaser > Tracking Target` should return to `Probe Ship`.
+
+### Terrain Mesh Collision
+
+The Solar-System reference generates a separate collision-resolution mesh and
+assigns it to a `MeshCollider`. Farion follows that idea only for locked/static
+celestial bodies because dynamic N-body planets should not use full concave
+terrain mesh colliders as the primary gameplay surface.
+
+For a static terrain-collision test:
+
+1. Select the target body definition, such as `SO_TestPlanet`.
+2. Enable `Lock Position`.
+3. Apply the definition to the scene body.
+4. Select the body's `CelestialBodyVisual`.
+5. Enable `Generate Mesh Collider`.
+6. Set `Mesh Collider Resolution` to `24` or `32` first.
+7. Keep `Bake Mesh Collider` enabled.
+8. Use `Rebuild Visual Mesh`.
+
+After rebuilding, the generated `Terrain Mesh` child should have an enabled
+`MeshCollider`. The root `SphereCollider` should be disabled while mesh
+collision is active. For moving planets, leave `Generate Mesh Collider`
+disabled until the future local terrain patch/surface query system exists.
+
+Tune `SO_DefaultLandingProfile` only after confirming the sample values make
+sense in Play Mode. For the current sandbox scale, low approach intentionally
+starts near the surface so atmospheric entry can be observed before final
+approach.

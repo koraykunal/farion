@@ -18,13 +18,17 @@ MonoBehaviour:
   fresnelColor: {r: 0.48, g: 0.82, b: 0.92, a: 1}
   waveNormalA: {fileID: 2800000, guid: b02c9a130120e9e4dad2a74378c20c32, type: 3}
   waveNormalB: {fileID: 2800000, guid: e99c0ca8435d8bd4294c48f4e9b9701c, type: 3}
-  waveNormalScale: 8.64
-  waveSpeed: 4.64
-  waveStrength: 0.378
-  depthMultiplier: 34.73
-  alphaMultiplier: 24.8
+  waveNormalScale: 16
+  waveSpeed: 0.35
+  waveStrength: 0.323
+  depthMultiplier: 18
+  alphaMultiplier: 48
+  underwaterColor: {r: 0.008, g: 0.105, b: 0.16, a: 1}
+  underwaterDensity: 18
+  underwaterSurfaceStrength: 0.42
+  underwaterSpecularStrength: 0.05
   smoothness: 0.8662945
-  specularStrength: 1.2643739
+  specularStrength: 1.54
   specularColor: {r: 0.96, g: 1, b: 0.88, a: 1}
-  fresnelPower: 3.03
-  fresnelStrength: 0.639
+  referenceLightIntensity: 6
+  fresnelStrength: 0.271

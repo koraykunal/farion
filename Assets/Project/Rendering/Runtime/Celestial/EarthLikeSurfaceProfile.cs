@@ -86,7 +86,7 @@ namespace Farion.Rendering.Celestial
             float bodyRadius,
             Vector2 radiusMinMax)
         {
-            ApplyMaterialProperties(propertyBlock, bodyRadius, radiusMinMax, 1f);
+            ApplyMaterialProperties(propertyBlock, bodyRadius, radiusMinMax, 0f, false);
         }
 
         public void ApplyMaterialProperties(
@@ -95,8 +95,19 @@ namespace Farion.Rendering.Celestial
             Vector2 radiusMinMax,
             float oceanLevelOverride)
         {
+            ApplyMaterialProperties(propertyBlock, bodyRadius, radiusMinMax, oceanLevelOverride, true);
+        }
+
+        public void ApplyMaterialProperties(
+            MaterialPropertyBlock propertyBlock,
+            float bodyRadius,
+            Vector2 radiusMinMax,
+            float oceanLevelOverride,
+            bool hasOcean)
+        {
             propertyBlock.SetFloat("_BodyRadius", bodyRadius);
             propertyBlock.SetVector("_RadiusMinMax", radiusMinMax);
+            propertyBlock.SetFloat("_HasOcean", hasOcean ? 1f : 0f);
             propertyBlock.SetFloat("_OceanLevel", Mathf.Clamp01(oceanLevelOverride));
             propertyBlock.SetFloat("_Metallic", metallic);
             propertyBlock.SetFloat("_LandSmoothness", landSmoothness);

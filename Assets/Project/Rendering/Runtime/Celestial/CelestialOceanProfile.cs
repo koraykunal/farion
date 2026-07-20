@@ -6,6 +6,7 @@ namespace Farion.Rendering.Celestial
     public sealed class CelestialOceanProfile : ScriptableObject
     {
         [Header("Radius")]
+        [Tooltip("Small absolute clearance added after Ocean Level is converted to a world radius. Keep this near zero; use Ocean Level for coastline and sea coverage.")]
         [Min(0f)]
         [SerializeField] float radiusOffset;
 
@@ -30,14 +31,23 @@ namespace Farion.Rendering.Celestial
         [Min(0f)]
         [SerializeField] float alphaMultiplier = 70f;
 
+        [Header("Underwater")]
+        [SerializeField] Color underwaterColor = new(0.01f, 0.12f, 0.18f, 1f);
+        [Min(0f)]
+        [SerializeField] float underwaterDensity = 16f;
+        [Range(0f, 1f)]
+        [SerializeField] float underwaterSurfaceStrength = 0.45f;
+        [Range(0f, 1f)]
+        [SerializeField] float underwaterSpecularStrength = 0.08f;
+
         [Header("Lighting")]
         [Range(0f, 1f)]
         [SerializeField] float smoothness = 0.92f;
         [Range(0f, 4f)]
         [SerializeField] float specularStrength = 1.35f;
         [SerializeField] Color specularColor = new(0.96f, 1f, 0.88f, 1f);
-        [Range(0.5f, 8f)]
-        [SerializeField] float fresnelPower = 4f;
+        [Min(0.001f)]
+        [SerializeField] float referenceLightIntensity = 6f;
         [Range(0f, 1f)]
         [SerializeField] float fresnelStrength = 0.45f;
 
@@ -53,10 +63,14 @@ namespace Farion.Rendering.Celestial
         public float WaveStrength => waveStrength;
         public float DepthMultiplier => depthMultiplier;
         public float AlphaMultiplier => alphaMultiplier;
+        public Color UnderwaterColor => underwaterColor;
+        public float UnderwaterDensity => underwaterDensity;
+        public float UnderwaterSurfaceStrength => underwaterSurfaceStrength;
+        public float UnderwaterSpecularStrength => underwaterSpecularStrength;
         public float Smoothness => smoothness;
         public float SpecularStrength => specularStrength;
         public Color SpecularColor => specularColor;
-        public float FresnelPower => fresnelPower;
+        public float ReferenceLightIntensity => referenceLightIntensity;
         public float FresnelStrength => fresnelStrength;
 
         public float GetOceanRadius(float bodyRadius, Vector2 terrainRadiusMinMax, float oceanLevel)
@@ -74,6 +88,8 @@ namespace Farion.Rendering.Celestial
             waveSpeed = Mathf.Max(0f, waveSpeed);
             depthMultiplier = Mathf.Max(0f, depthMultiplier);
             alphaMultiplier = Mathf.Max(0f, alphaMultiplier);
+            underwaterDensity = Mathf.Max(0f, underwaterDensity);
+            referenceLightIntensity = Mathf.Max(0.001f, referenceLightIntensity);
             Changed?.Invoke();
         }
     }

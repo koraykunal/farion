@@ -41,9 +41,12 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
             half4 _FarionOceanShallowColors[FARION_MAX_OCEAN_EFFECTS];
             half4 _FarionOceanFresnelColors[FARION_MAX_OCEAN_EFFECTS];
             half4 _FarionOceanSpecularColors[FARION_MAX_OCEAN_EFFECTS];
+            half4 _FarionOceanUnderwaterColors[FARION_MAX_OCEAN_EFFECTS];
             float4 _FarionOceanOpticalParams[FARION_MAX_OCEAN_EFFECTS];
+            float4 _FarionOceanUnderwaterParams[FARION_MAX_OCEAN_EFFECTS];
             float4 _FarionOceanWaveParams[FARION_MAX_OCEAN_EFFECTS];
             float4 _FarionOceanLightingParams[FARION_MAX_OCEAN_EFFECTS];
+            float4 _FarionOceanExposureParams[FARION_MAX_OCEAN_EFFECTS];
 
             float4 _FarionStarPositionWS;
             half4 _FarionStarColor;
@@ -118,23 +121,69 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 float speed = _FarionOceanWaveParams[index].y;
                 half strength = saturate(_FarionOceanWaveParams[index].z);
 
-                float2 waveOffsetA = float2(_Time.x * speed, _Time.x * speed * 0.8);
-                float2 waveOffsetB = float2(_Time.x * speed * -0.8, _Time.x * speed * -0.3);
+                float time = _Time.y * speed;
+                float2 waveOffsetA = float2(time, time * 0.8);
+                float2 waveOffsetB = float2(time * -0.8, time * -0.3);
 
-                half3 waveNormal = SampleTriplanarNormal(
+                half3 waveNormalA = SampleTriplanarNormal(
                     TEXTURE2D_ARGS(_FarionOceanWaveNormalA, sampler_FarionOceanWaveNormalA),
                     localOceanPosition,
                     sphereNormal,
                     scale,
                     waveOffsetA);
-                waveNormal = SampleTriplanarNormal(
+                half3 waveNormalB = SampleTriplanarNormal(
                     TEXTURE2D_ARGS(_FarionOceanWaveNormalB, sampler_FarionOceanWaveNormalB),
                     localOceanPosition,
-                    waveNormal,
+                    sphereNormal,
                     scale,
                     waveOffsetB);
+                half3 waveNormal = normalize(waveNormalA + waveNormalB - sphereNormal);
 
                 return normalize(lerp(sphereNormal, waveNormal, strength));
+            }
+
+            half SchlickFresnel(half cosTheta)
+            {
+                const half f0 = 0.0204h;
+                return f0 + (1.0h - f0) * pow(saturate(1.0h - cosTheta), 5.0h);
+            }
+
+            bool TryBuildWaterSegment(
+                float2 oceanHit,
+                bool cameraInsideOcean,
+                float sceneDistance,
+                out float segmentStart,
+                out float segmentEnd,
+                out float segmentLength,
+                out bool entersFromAir,
+                out bool exitsToAir)
+            {
+                float hitStart = oceanHit.x;
+                float hitEnd = oceanHit.x + oceanHit.y;
+                segmentStart = cameraInsideOcean ? 0.0 : hitStart;
+                segmentEnd = min(hitEnd, sceneDistance);
+                segmentLength = segmentEnd - segmentStart;
+                entersFromAir = !cameraInsideOcean;
+                exitsToAir = cameraInsideOcean && sceneDistance >= hitEnd - 0.01;
+                return segmentLength > 0.0;
+            }
+
+            half3 ApplyWaterVolume(
+                half3 sourceColor,
+                half3 waterColor,
+                half3 underwaterColor,
+                half3 waterVolumeLight,
+                float segmentLength,
+                float bodyRadius,
+                float extinctionMultiplier,
+                half surfaceTransmission)
+            {
+                half transmittance = saturate(exp(-segmentLength / bodyRadius * extinctionMultiplier));
+                half fog = 1.0h - transmittance;
+                half3 tint = saturate(lerp(waterColor, underwaterColor * 5.0h + 0.12h, 0.5h));
+                half3 transmittedScene = sourceColor * transmittance * tint * surfaceTransmission;
+                half3 inScatteredWater = waterColor * waterVolumeLight * fog;
+                return transmittedScene + inScatteredWater;
             }
 
             half3 ApplyOcean(
@@ -152,50 +201,111 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
 
                 float3 centre = _FarionOceanSpheres[index].xyz;
                 float bodyRadius = max(_FarionPlanetSpheres[index].w, 0.001);
+                bool cameraInsideOcean = length(rayOrigin - centre) < oceanRadius - 0.001;
                 float2 oceanHit = RaySphere(centre, oceanRadius, rayOrigin, rayDirection);
                 if (oceanHit.x < 0.0)
                 {
                     return sourceColor;
                 }
 
-                float oceanViewDepth = min(oceanHit.y, sceneDistance - oceanHit.x);
-                if (oceanViewDepth <= 0.0)
+                float segmentStart;
+                float segmentEnd;
+                float segmentLength;
+                bool entersFromAir;
+                bool exitsToAir;
+                if (!TryBuildWaterSegment(
+                    oceanHit,
+                    cameraInsideOcean,
+                    sceneDistance,
+                    segmentStart,
+                    segmentEnd,
+                    segmentLength,
+                    entersFromAir,
+                    exitsToAir))
                 {
                     return sourceColor;
                 }
 
-                float3 hitPosition = rayOrigin + rayDirection * oceanHit.x;
+                float surfaceDistance = entersFromAir ? segmentStart : segmentEnd;
+                float3 hitPosition = rayOrigin + rayDirection * surfaceDistance;
                 float3 localOceanPosition = hitPosition - centre;
                 float3 sphereNormal = normalize(localOceanPosition);
                 half3 waveNormal = SampleWaveNormal(index, localOceanPosition, sphereNormal, bodyRadius);
 
                 float depthMultiplier = _FarionOceanOpticalParams[index].x;
                 float alphaMultiplier = _FarionOceanOpticalParams[index].y;
+                float underwaterDensity = _FarionOceanUnderwaterParams[index].x;
+                half underwaterSurfaceStrength = saturate(_FarionOceanUnderwaterParams[index].y);
+                half underwaterSpecularStrength = saturate(_FarionOceanUnderwaterParams[index].z);
                 half smoothness = saturate(_FarionOceanLightingParams[index].x);
                 half specularStrength = _FarionOceanLightingParams[index].y;
-                half fresnelPower = max(_FarionOceanLightingParams[index].z, 0.5h);
-                half fresnelStrength = saturate(_FarionOceanLightingParams[index].w);
+                half fresnelStrength = saturate(_FarionOceanLightingParams[index].z);
 
-                half depth01 = saturate(1.0h - exp(-oceanViewDepth / bodyRadius * depthMultiplier));
-                half alpha = saturate(1.0h - exp(-oceanViewDepth / bodyRadius * alphaMultiplier));
+                float extinctionMultiplier = cameraInsideOcean ? underwaterDensity : alphaMultiplier;
+                half depth01 = saturate(1.0h - exp(-segmentLength / bodyRadius * depthMultiplier));
 
                 half3 starDirection = normalize(_FarionStarPositionWS.xyz - hitPosition);
                 half3 viewDirection = -rayDirection;
                 half diffuseLighting = saturate(dot(sphereNormal, starDirection));
-                half fresnel = pow(saturate(1.0h - dot(sphereNormal, viewDirection)), fresnelPower);
+                half waveDiffuseLighting = saturate(dot(waveNormal, starDirection));
 
                 half3 oceanColor = lerp(_FarionOceanShallowColors[index].rgb, _FarionOceanDeepColors[index].rgb, depth01);
-                oceanColor = lerp(oceanColor, _FarionOceanFresnelColors[index].rgb, fresnel * fresnelStrength);
-
                 half3 ambient = max(_FarionAmbientColor.rgb, 0.025h);
-                half3 starRadiance = _FarionStarColor.rgb * max(_FarionStarIntensity, 0.0);
+                float referenceLightIntensity = max(_FarionOceanExposureParams[index].x, 0.001);
+                half3 starRadiance = _FarionStarColor.rgb * (max(_FarionStarIntensity, 0.0) / referenceLightIntensity);
                 half3 halfDirection = normalize(starDirection + viewDirection);
                 half specularPower = lerp(64.0h, 512.0h, smoothness);
                 half specular = pow(saturate(dot(waveNormal, halfDirection)), specularPower) * specularStrength;
-                half3 litOcean = oceanColor * (ambient + starRadiance * diffuseLighting * 0.62h)
-                    + _FarionOceanSpecularColors[index].rgb * starRadiance * specular;
+                specular *= cameraInsideOcean ? underwaterSpecularStrength : 1.0h;
 
-                return lerp(sourceColor, litOcean, alpha);
+                half3 waterVolumeLight = ambient + starRadiance * (0.12h + diffuseLighting * 0.55h);
+                half3 surfaceReflectionLight = ambient + starRadiance * (0.14h + waveDiffuseLighting * 0.42h);
+                half3 reflectedSurface = _FarionOceanFresnelColors[index].rgb * surfaceReflectionLight
+                    + _FarionOceanSpecularColors[index].rgb * starRadiance * specular * 0.25h;
+
+                bool hasSurfaceInterface = entersFromAir || exitsToAir;
+                half interfaceCos = entersFromAir
+                    ? saturate(dot(waveNormal, viewDirection))
+                    : saturate(dot(waveNormal, rayDirection));
+                half interfaceFresnel = SchlickFresnel(interfaceCos);
+                half totalInternalReflection = 0.0h;
+
+                if (exitsToAir)
+                {
+                    half etaWaterToAir = 1.333h;
+                    half sin2Transmitted = etaWaterToAir * etaWaterToAir * (1.0h - interfaceCos * interfaceCos);
+                    totalInternalReflection = step(1.0h, sin2Transmitted);
+                }
+
+                half surfaceReflection = hasSurfaceInterface
+                    ? saturate(totalInternalReflection + (1.0h - totalInternalReflection) * interfaceFresnel * fresnelStrength)
+                    : 0.0h;
+                half surfaceTransmission = hasSurfaceInterface
+                    ? (1.0h - surfaceReflection)
+                    : 1.0h;
+                surfaceTransmission *= exitsToAir ? underwaterSurfaceStrength : 1.0h;
+                half specularVisibility = hasSurfaceInterface
+                    ? saturate(0.18h + interfaceFresnel * 2.5h)
+                    : 0.0h;
+                half3 surfaceGlint = _FarionOceanSpecularColors[index].rgb * starRadiance * specular * specularVisibility;
+
+                half3 volumeColor = cameraInsideOcean
+                    ? _FarionOceanUnderwaterColors[index].rgb
+                    : oceanColor;
+                half3 volumeLight = cameraInsideOcean
+                    ? ambient + starRadiance * (0.04h + diffuseLighting * 0.16h)
+                    : waterVolumeLight;
+                half3 transmittedWater = ApplyWaterVolume(
+                    sourceColor,
+                    volumeColor,
+                    _FarionOceanUnderwaterColors[index].rgb,
+                    volumeLight,
+                    segmentLength,
+                    bodyRadius,
+                    extinctionMultiplier,
+                    surfaceTransmission);
+
+                return lerp(transmittedWater, reflectedSurface, surfaceReflection) + surfaceGlint;
             }
 
             half4 Fragment(Varyings input) : SV_Target

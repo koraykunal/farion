@@ -124,7 +124,7 @@ Material:
     - _Metallic: 0.03
     - _NormalFlatScale: 39.94
     - _NormalSteepScale: 12
-    - _NormalStrength: 0.22
+    - _NormalStrength: 0.637
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _QueueOffset: 0

@@ -30,6 +30,10 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float rotationResponsiveness = 12f;
 
+        [Header("Surface Contact")]
+        [SerializeField] SpacecraftSurfaceContactProbe surfaceContactProbe;
+        [SerializeField] bool suspendRotationWhileInSurfaceContact = true;
+
         Rigidbody cachedRigidbody;
         ISpacecraftInputSource resolvedInput;
         SpacecraftInputState currentInput;
@@ -42,11 +46,15 @@ namespace Farion.Gameplay.Flight
         public Vector3 LastThrustAcceleration => lastThrustAcceleration;
         public Vector3 Velocity => Rigidbody.linearVelocity;
         public float Speed => Velocity.magnitude;
+        public bool RotationSuspendedByContact => suspendRotationWhileInSurfaceContact &&
+            surfaceContactProbe != null &&
+            surfaceContactProbe.HasContact;
 
         void Awake()
         {
             ConfigureRigidbody();
             ResolveInputSource();
+            ResolveContactProbe();
             targetRotation = Rigidbody.rotation;
         }
 
@@ -63,11 +71,14 @@ namespace Farion.Gameplay.Flight
             {
                 inputSource = null;
             }
+
+            ResolveContactProbe();
         }
 
         void Update()
         {
             ResolveInputSource();
+            ResolveContactProbe();
             currentInput = resolvedInput?.CurrentInput ?? SpacecraftInputState.None;
             IntegrateTargetRotation(UnityEngine.Time.deltaTime);
         }
@@ -102,6 +113,14 @@ namespace Farion.Gameplay.Flight
             }
 
             resolvedInput ??= GetComponent<ISpacecraftInputSource>();
+        }
+
+        void ResolveContactProbe()
+        {
+            if (surfaceContactProbe == null)
+            {
+                surfaceContactProbe = GetComponent<SpacecraftSurfaceContactProbe>();
+            }
         }
 
         void ApplyGravity()
@@ -144,6 +163,12 @@ namespace Farion.Gameplay.Flight
 
         void ApplyRotation()
         {
+            if (RotationSuspendedByContact)
+            {
+                targetRotation = Rigidbody.rotation;
+                return;
+            }
+
             if (rotationResponsiveness <= 0f)
             {
                 Rigidbody.MoveRotation(targetRotation);

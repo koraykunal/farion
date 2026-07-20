@@ -9,32 +9,25 @@ namespace Farion.Rendering.Celestial
     {
         [Header("Camera")]
         [SerializeField] Camera targetCamera;
-        [SerializeField] bool autoFindMainCamera = true;
 
         [Header("Targets")]
-        [SerializeField] bool autoDiscoverVisuals = true;
         [SerializeField] List<CelestialBodyVisual> visuals = new();
 
         [Header("Runtime")]
         [SerializeField] bool updateInEditMode = true;
         [SerializeField] bool updateEveryFrame = true;
-        [Min(0f)]
-        [SerializeField] float refreshInterval = 0.25f;
-
-        float nextRefreshTime;
 
         void OnEnable()
         {
-            RefreshTargets();
+            RemoveMissingTargets();
             ApplyLods();
         }
 
         void OnValidate()
         {
-            refreshInterval = Mathf.Max(0f, refreshInterval);
+            RemoveMissingTargets();
             if (!Application.isPlaying && updateInEditMode)
             {
-                RefreshTargets();
                 ApplyLods();
             }
         }
@@ -51,28 +44,28 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            if (ShouldRefreshTargets())
-            {
-                RefreshTargets();
-            }
-
             ApplyLods();
         }
 
-        [ContextMenu("Refresh LOD Targets")]
-        public void RefreshTargets()
+        public void SetCamera(Camera camera)
         {
-            ResolveCamera();
+            targetCamera = camera;
+        }
 
-            if (!autoDiscoverVisuals)
+        public void RegisterVisual(CelestialBodyVisual visual)
+        {
+            if (visual != null && !visuals.Contains(visual))
             {
-                visuals.RemoveAll(visual => visual == null);
-                return;
+                visuals.Add(visual);
             }
+        }
 
-            visuals.Clear();
-            CelestialBodyVisual[] discovered = FindObjectsByType<CelestialBodyVisual>(FindObjectsInactive.Exclude);
-            visuals.AddRange(discovered);
+        public void UnregisterVisual(CelestialBodyVisual visual)
+        {
+            if (visual != null)
+            {
+                visuals.Remove(visual);
+            }
         }
 
         [ContextMenu("Apply LODs Now")]
@@ -98,45 +91,13 @@ namespace Farion.Rendering.Celestial
             }
         }
 
-        bool ShouldRefreshTargets()
+        void RemoveMissingTargets()
         {
-            if (!autoDiscoverVisuals)
-            {
-                return false;
-            }
-
-            if (!Application.isPlaying)
-            {
-                return false;
-            }
-
-            if (refreshInterval <= 0f)
-            {
-                return true;
-            }
-
-            if (Time.unscaledTime < nextRefreshTime)
-            {
-                return false;
-            }
-
-            nextRefreshTime = Time.unscaledTime + refreshInterval;
-            return true;
+            visuals.RemoveAll(visual => visual == null);
         }
 
         Camera ResolveCamera()
         {
-            if (targetCamera != null || !autoFindMainCamera)
-            {
-                return targetCamera;
-            }
-
-            targetCamera = Camera.main;
-            if (targetCamera == null)
-            {
-                targetCamera = FindAnyObjectByType<Camera>(FindObjectsInactive.Exclude);
-            }
-
             return targetCamera;
         }
 
@@ -144,6 +105,12 @@ namespace Farion.Rendering.Celestial
         {
             Vector3 center = visual.transform.position;
             float radius = visual.HasRenderRadiusRange ? visual.RenderRadiusMinMax.y : visual.Body.Radius;
+            float distanceToCenter = Vector3.Distance(camera.transform.position, center);
+            if (distanceToCenter <= radius * 2.5f)
+            {
+                return 1f;
+            }
+
             Vector3 up = camera.transform.up * Mathf.Max(0.01f, radius);
             Vector3 viewportA = camera.WorldToViewportPoint(center - up);
             Vector3 viewportB = camera.WorldToViewportPoint(center + up);
@@ -155,5 +122,22 @@ namespace Farion.Rendering.Celestial
 
             return Mathf.Abs(viewportA.y - viewportB.y);
         }
+
+#if UNITY_EDITOR
+        [ContextMenu("Collect Scene Visuals")]
+        void CollectSceneVisuals()
+        {
+            visuals.Clear();
+            CelestialBodyVisual[] discovered = FindObjectsByType<CelestialBodyVisual>(FindObjectsInactive.Exclude);
+            visuals.AddRange(discovered);
+
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main != null
+                    ? Camera.main
+                    : FindAnyObjectByType<Camera>(FindObjectsInactive.Exclude);
+            }
+        }
+#endif
     }
 }

@@ -37,7 +37,7 @@ namespace Farion.Rendering.PostProcessing
             for (int i = Sources.Count - 1; i >= 0; i--)
             {
                 ICelestialAtmosphereEffectSource source = Sources[i];
-                if (source == null)
+                if (source is not Object unityObject || unityObject == null)
                 {
                     Sources.RemoveAt(i);
                     continue;
