@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6fd76718c69d20468e9d3f980e8767b, type: 3}
+  m_Name: SO_MoonSurfaceProfile
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialSurfaceProfile
+  material: {fileID: 2100000, guid: b342c76acff25e94bbe8a3b1a6c0e008, type: 2}
+  baseColor: {r: 0.9622642, g: 0.9622642, b: 0.9622642, a: 1}
+  secondaryColor: {r: 0.5754717, g: 0.5754717, b: 0.5754717, a: 1}
+  steepColor: {r: 0.21698111, g: 0.21595761, b: 0.21595761, a: 1}
+  ejectaColor: {r: 0.85, g: 0.82, b: 0.75, a: 1}
+  metallic: 0
+  smoothness: 0.2
+  albedoTexture: {fileID: 2800000, guid: 410a6d04427a91f44b3c19623fd252c4, type: 3}
+  ejectaRayTexture: {fileID: 2800000, guid: 9ea2a298caf216d4d86a7502233337c2, type: 3}
+  normalMapFlat: {fileID: 2800000, guid: 3a077b82f9f6da9409eb8d426d152312, type: 3}
+  normalMapSteep: {fileID: 2800000, guid: 008d1ed4f435ca94886796d421112870, type: 3}
+  albedoScale: 0.64
+  normalFlatScale: 12
+  normalSteepScale: 16
+  normalStrength: 0.493
+  steepColorStrength: 0.781
+  biomeBlendStrength: 0.8
+  ejectaStrength: 0.896
+  ejectaRayFrequency: 36
+  heightAmplitude: 0
+  noiseScale: 5.08
+  noiseOctaves: 4
+  noisePersistence: 0.299
+  noiseLacunarity: 2.51
+  seed: 1

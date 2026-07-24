@@ -34,8 +34,11 @@ high-end celestial rendering.
   - URP-specific visual systems such as procedural celestial presentation,
     ocean, atmosphere, stars, and camera render passes.
 - `Assets/Project/Design`
-  - ScriptableObject data for physics, celestial body profiles, rendering
-    profiles, spacecraft tuning, and later survival/automation definitions.
+  - ScriptableObject authoring data, grouped by the runtime domain that owns the
+    data contract. Physics body definitions live under `Design/Physics`,
+    procedural shape/radiation/planetary rules under `Design/Simulation`,
+    visual profiles under `Design/Rendering`, and gameplay tuning under
+    `Design/Gameplay`.
 - `Assets/Project/Art`
   - Shaders, textures, models, generated lookup textures, and transferred
     reference assets.
@@ -90,6 +93,19 @@ The simulation uses:
   terrain height, geometric surface normal, and slope angle. It lets gameplay
   sample the same shaped surface used by the visual mesh without making
   Simulation depend on Rendering.
+- `PlanetSurfaceModel` is the authoritative runtime surface, climate, biome,
+  and terrain-feature sampler for generated planets. It lives in Simulation,
+  owns the link between a physical `CelestialBody`, a
+  `PlanetaryGenerationProfile`, and a `CelestialShapeProfile`, and implements
+  `ICelestialSurfaceProvider`. Gameplay systems should prefer this model when
+  they need terrain height, slope, local temperature, moisture, radiation,
+  biome, or terrain-feature data. Rendering may consume the same model, but it
+  must not become the authority for surface gameplay.
+- `PlanetThermalProfile` derives surface temperature from the active stellar
+  radiation source. Sandbox star distance and `StellarRadiationProfile`
+  reference orbit must be calibrated together; if they are out of scale, biome
+  compatibility should fail visibly in reports instead of being hidden by a
+  gameplay-side temperature override.
 - `GravityActor` applies the active simulation's gravity to ordinary
   Rigidbodies and can align their up axis against the gravity vector.
 - `WorldOriginRebaser` follows an authored target such as the ship or camera and
@@ -99,14 +115,29 @@ The simulation uses:
   not a gameplay event or discovery service. Future co-op state should still use
   an authoritative world coordinate model above this render/physics origin
   layer.
+- `WorldCoordinate`, `WorldSectorCoordinate`, `GeneratedEntityId`, and
+  `UniverseGenerationContext` are the pure-data contracts for that authoritative
+  world layer. They do not generate scene objects or stream systems. Their job
+  is to keep persistent identity, sector-normalized position, stable hash-based
+  ids, and generation versioning separate from local Unity transforms.
+- `CelestialShapeProfile` owns authoritative procedural radius/shading samples
+  in Simulation. Moon crater and continent-ridge shape profiles are simulation
+  data now, not rendering-only data; renderers consume their samples to build
+  meshes and shaders.
+- `TerrainFeatureDistributionProfile` classifies authored/generated surface
+  samples into semantic geology/features such as crater fields or mountain
+  ridges. It does not deform the mesh. Real height, crater, ridge, or continent
+  displacement remains in `CelestialShapeProfile`; resources, POI, weather, and
+  future visual modifiers consume terrain-feature samples from
+  `PlanetSurfaceModel`.
 - `CelestialBodyVisual` owns the generated visual mesh set. It creates a child
   `Terrain Mesh` object, prebuilds full-sphere LOD meshes from the same
   shape/surface profiles, and keeps the physical body root at identity scale.
   Static/locked bodies can also generate a separate baked collision mesh at its
-  own resolution. It also implements `ICelestialSurfaceProvider`, so altitude
-  and landing telemetry can read procedural terrain height and local terrain
-  slope instead of only the spherical physics radius. Moving N-body planets keep
-  spherical collision until a local terrain-collision patch system exists.
+  own resolution. It does not provide gameplay surface samples; authored
+  planets that need landing, biome, resource, or survival data must expose a
+  `PlanetSurfaceModel`. Moving N-body planets keep spherical collision until a
+  local terrain-collision patch system exists.
 - `CelestialLodProfile` owns screen-height thresholds and mesh resolutions for
   the reference-style full-sphere LOD baseline.
 - `CelestialLodController` reads an explicitly assigned camera and authored
@@ -119,13 +150,13 @@ The simulation uses:
   Lines`. It is not an authoritative trajectory predictor and should not drive
   gameplay decisions.
 - `CelestialSurfaceProfileBase` is the shared contract for applying per-body
-  material properties. Moon and earth-like bodies use separate profile classes
+  material properties. Moon and terrestrial bodies use separate profile classes
   instead of sharing unrelated crater, ocean, and biome fields.
 - `CelestialSurfaceProfile` owns moon/simple visual surface data such as base
   material, per-body color, smoothness, triplanar normals, and simple fallback
   displacement. It must not contain gravity, orbit, mass, gameplay, or
   networking data.
-- `EarthLikeSurfaceProfile` owns earth-like land, shore, steep terrain, snow,
+- `TerrestrialSurfaceProfile` owns solid-surface land, shore, steep terrain, snow,
   texture, and triplanar normal settings.
 - `CelestialOceanProfile` owns reusable ocean color, transparency, fresnel, and
   specular settings plus the referenced wave normal textures for the
@@ -142,10 +173,10 @@ The simulation uses:
   the same ray-marched medium. Depth can choose where the view ray stops, but it
   must not switch to separate sky-only or surface-only colour clamps. The final
   colour should come from view transmittance and in-scattered star light.
-- `EarthLikePlanetVisualProfile` is the high-level authored rendering profile
-  for an earth-like body. It references the terrain shape, land surface, and
-  ocean profile, and owns shared values such as sea level.
-- `EarthLikePlanetVisual` binds that high-level profile to authored terrain
+- `TerrestrialPlanetVisualProfile` is the high-level authored rendering profile
+  for a solid-surface planet. It references the terrain shape, land surface,
+  ocean profile, and shared values such as sea level.
+- `TerrestrialPlanetVisual` binds that high-level profile to authored terrain
   rendering and registers screen-space ocean/atmosphere data for the URP
   renderer features. It is not a scene builder and does not instantiate a solar
   system. It also exposes ocean and atmosphere bounds through
@@ -158,7 +189,7 @@ The simulation uses:
   such as wave normals, optical-depth LUTs, and blue-noise textures cannot leak
   between planets.
 - `CelestialShapeProfile` owns procedural height generation. Moon craters,
-  ridges, asteroid deformation, and earth-like terrain should live in shape
+  ridges, asteroid deformation, and continent-ridge terrain should live in shape
   profiles instead of physical body definitions.
 - `MoonCraterShapeProfile` is the current CPU moon terrain baseline. It owns
   crater height, low-frequency deformation, ridge relief, and mesh shading data
@@ -167,8 +198,8 @@ The simulation uses:
   `CelestialSurfaceProfile`; do not add per-view moon visual hacks to the shape
   path. A future GPU compute implementation can replace the internals only if
   it preserves the same shape sample boundary.
-- `EarthLikeShapeProfile` ports the reference earth-like continent/ocean-floor
-  and mountain-mask shape model into the authored profile system.
+- `ContinentRidgeShapeProfile` ports the reference continent/ocean-floor and
+  mountain-mask shape model into the authored Simulation profile system.
 - `CelestialLightSource` marks an authored star/body as a physical light
   source. It does not create scene lights.
 - `CelestialLightingProfile` owns reusable lighting/exposure defaults such as
@@ -303,12 +334,18 @@ Do not add atmospheres, survival systems, automation, or co-op networking until
     and controlling the on-foot explorer without leaving both input stacks
     active.
 
+`PlanetSurfaceModel` is the source-of-truth boundary for survival and resource
+work. Resource generation, visual coverage reports, landing slope checks, and
+future suit survival should consume one planet surface sample instead of
+recomputing local temperature, moisture, biome, terrain feature, and terrain
+height in separate systems.
+
 ## Roadmap
 
 1. Physics sandbox.
 2. Spacecraft gravity/thrust sandbox.
 3. Procedural moon mesh generation.
-4. Procedural earth-like planet mesh generation.
+4. Procedural terrestrial planet mesh generation.
 5. URP celestial surface shaders.
 6. URP screen-space ocean and atmosphere baseline.
 7. Procedural star dome and space presentation baseline.

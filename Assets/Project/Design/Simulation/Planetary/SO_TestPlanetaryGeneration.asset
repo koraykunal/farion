@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69967534eac74b8e89a454162ff1fbe6, type: 3}
+  m_Name: SO_TestPlanetaryGeneration
+  m_EditorClassIdentifier: 
+  planetSeed: 1001
+  planetType: 0
+  climate: 1
+  hasAtmosphere: 1
+  atmosphereDensity: 1
+  hasStableLiquidSurface: 1
+  liquidCoverage: 0.25
+  meanTemperatureCelsius: 12
+  radiationLevel: 0.1
+  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  biomeDistribution: {fileID: 11400000, guid: 83c0574c55824b2a89de93b4961be369, type: 2}
+  terrainFeatureDistribution: {fileID: 11400000, guid: d3b790e53dc1477bade83a720ca33497, type: 2}

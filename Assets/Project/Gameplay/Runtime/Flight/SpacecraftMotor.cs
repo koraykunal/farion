@@ -20,6 +20,12 @@ namespace Farion.Gameplay.Flight
         [Min(1f)]
         [SerializeField] float boostMultiplier = 3f;
 
+        [Header("Response")]
+        [Min(0f)]
+        [SerializeField] float translationResponsiveness = 7f;
+        [Min(0f)]
+        [SerializeField] float boostResponsiveness = 3.5f;
+
         [Header("Rotation")]
         [Min(0f)]
         [SerializeField] float yawDegreesPerSecond = 90f;
@@ -38,6 +44,8 @@ namespace Farion.Gameplay.Flight
         ISpacecraftInputSource resolvedInput;
         SpacecraftInputState currentInput;
         Quaternion targetRotation;
+        Vector3 smoothedTranslation;
+        float smoothedBoostMultiplier = 1f;
         Vector3 lastGravityAcceleration;
         Vector3 lastThrustAcceleration;
 
@@ -62,6 +70,8 @@ namespace Farion.Gameplay.Flight
         {
             thrustAcceleration = Mathf.Max(0f, thrustAcceleration);
             boostMultiplier = Mathf.Max(1f, boostMultiplier);
+            translationResponsiveness = Mathf.Max(0f, translationResponsiveness);
+            boostResponsiveness = Mathf.Max(0f, boostResponsiveness);
             yawDegreesPerSecond = Mathf.Max(0f, yawDegreesPerSecond);
             pitchDegreesPerSecond = Mathf.Max(0f, pitchDegreesPerSecond);
             rollDegreesPerSecond = Mathf.Max(0f, rollDegreesPerSecond);
@@ -143,8 +153,21 @@ namespace Farion.Gameplay.Flight
 
         void ApplyThrust()
         {
-            float multiplier = currentInput.Boost ? boostMultiplier : 1f;
-            lastThrustAcceleration = transform.TransformDirection(currentInput.Translation) * (thrustAcceleration * multiplier);
+            float deltaTime = UnityEngine.Time.fixedDeltaTime;
+            Vector3 targetTranslation = Vector3.ClampMagnitude(currentInput.Translation, 1f);
+            float translationT = ResponsivenessToLerp(translationResponsiveness, deltaTime);
+            smoothedTranslation = Vector3.Lerp(smoothedTranslation, targetTranslation, translationT);
+            if (smoothedTranslation.sqrMagnitude < 0.000001f)
+            {
+                smoothedTranslation = Vector3.zero;
+            }
+
+            float targetBoostMultiplier = currentInput.Boost ? boostMultiplier : 1f;
+            float boostT = ResponsivenessToLerp(boostResponsiveness, deltaTime);
+            smoothedBoostMultiplier = Mathf.Lerp(smoothedBoostMultiplier, targetBoostMultiplier, boostT);
+
+            lastThrustAcceleration = transform.TransformDirection(smoothedTranslation) *
+                (thrustAcceleration * smoothedBoostMultiplier);
             Rigidbody.AddForce(lastThrustAcceleration, ForceMode.Acceleration);
         }
 
@@ -181,6 +204,13 @@ namespace Farion.Gameplay.Flight
                 rotationResponsiveness * UnityEngine.Time.fixedDeltaTime);
 
             Rigidbody.MoveRotation(nextRotation);
+        }
+
+        static float ResponsivenessToLerp(float responsiveness, float deltaTime)
+        {
+            return responsiveness <= 0f
+                ? 1f
+                : 1f - Mathf.Exp(-responsiveness * deltaTime);
         }
     }
 }

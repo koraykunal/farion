@@ -1,4 +1,4 @@
-using Farion.Gameplay.Actors;
+﻿using Farion.Gameplay.Actors;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -59,7 +59,7 @@ namespace Farion.Gameplay.Flight
                 !orbitComputer.HasOrbit)
             {
                 currentCorridor = SpacecraftEntryCorridorSample.NoFrame;
-                ApplyDebugFields();
+                ApplyRuntimeState();
                 return;
             }
 
@@ -67,7 +67,7 @@ namespace Farion.Gameplay.Flight
                 profile,
                 celestialProbe.CurrentSample,
                 orbitComputer.CurrentOrbit);
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
         void ResolveComponents()
@@ -240,7 +240,7 @@ namespace Farion.Gameplay.Flight
             };
         }
 
-        void ApplyDebugFields()
+        void ApplyRuntimeState()
         {
             state = currentCorridor.State;
             advisory = currentCorridor.Advisory;
@@ -253,3 +253,4 @@ namespace Farion.Gameplay.Flight
         }
     }
 }
+

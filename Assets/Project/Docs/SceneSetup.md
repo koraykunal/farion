@@ -18,7 +18,7 @@ Create these root objects:
 On `Simulation`:
 
 1. Add `GravitySimulation`.
-2. Assign `Assets/Project/Design/Physics/DefaultGravitySettings.asset`.
+2. Assign `Assets/Project/Design/Physics/Gravity/DefaultGravitySettings.asset`.
 3. Add `Test Star`, `Test Planet`, and `Test Moon` to `Registered Bodies`.
 4. Keep `Auto Discover Bodies` disabled once those references are assigned.
 
@@ -33,7 +33,7 @@ On `Simulation`:
 
 1. Add `CelestialFrameProvider`.
 2. Assign the scene `GravitySimulation` to `Simulation`.
-3. Add `Test Planet > EarthLikePlanetVisual` to `Environment Sources`.
+3. Add `Test Planet > TerrestrialPlanetVisual` to `Environment Sources`.
 4. Add terrain visuals that should affect gameplay altitude to `Surface
    Sources`, such as:
    - `Test Planet > CelestialBodyVisual`
@@ -97,9 +97,9 @@ For each body:
 3. Add `CelestialBody`.
 4. Add `CelestialBodyDefinitionAuthoring`.
 5. Assign one of:
-   - `Assets/Project/Design/Celestial/SO_TestStar.asset`
-   - `Assets/Project/Design/Celestial/SO_TestPlanet.asset`
-   - `Assets/Project/Design/Celestial/SO_TestMoon.asset`
+   - `Assets/Project/Design/Physics/CelestialBodies/SO_TestStar.asset`
+   - `Assets/Project/Design/Physics/CelestialBodies/SO_TestPlanet.asset`
+   - `Assets/Project/Design/Physics/CelestialBodies/SO_TestMoon.asset`
 6. Use the component context menu `Apply Definition` if the inspector values do
    not update immediately.
 7. Keep `Sync Transform Scale To Radius` enabled while using primitive
@@ -154,7 +154,7 @@ future landing-distance chunk terrain system.
 
 Assets created for the first pass:
 
-- `Assets/Project/Design/Rendering/SO_CelestialLodProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_CelestialLodProfile.asset`
 - `Assets/Project/Rendering/Runtime/Celestial/CelestialLodProfile.cs`
 - `Assets/Project/Rendering/Runtime/Celestial/CelestialLodController.cs`
 
@@ -204,13 +204,13 @@ instead.
 
 ### Simple Surface Profile Setup
 
-Use this only for moon-style or intentionally simple bodies. Earth-like planets
-should use the dedicated earth-like shape, surface, and ocean profiles below.
+Use this only for moon-style or intentionally simple bodies. Terrestrial planets
+should use the dedicated terrestrial shape, surface, and ocean profiles below.
 
 1. Create a URP/Lit material under `Assets/Project/Art/Materials/Celestial`.
 2. Create surface profiles with `Create > Farion > Rendering > Celestial Surface
    Profile`.
-3. Save them under `Assets/Project/Design/Rendering`.
+3. Save them under `Assets/Project/Design/Rendering/Celestial`.
 4. Assign the shared material to each profile.
 5. Tune profile values first, not the generated `Terrain Mesh` child.
 
@@ -232,9 +232,9 @@ Useful starting values:
 
 For a cratered moon:
 
-1. Create a profile with `Create > Farion > Rendering > Moon Crater Shape
-   Profile`.
-2. Save it under `Assets/Project/Design/Rendering`.
+1. Create a profile with `Create > Farion > Simulation > Celestial > Moon
+   Crater Shape Profile`.
+2. Save it under `Assets/Project/Design/Simulation/Celestial/Shapes`.
 3. Assign it to `CelestialBodyVisual > Shape Profile`.
 4. Start with:
    - `Crater Count`: `400`
@@ -284,29 +284,29 @@ as normal maps in Unity's texture importer before assigning them to
 `Normal Map Flat` or `Normal Map Steep`. If you do not assign normal maps yet,
 the shader still works, but it will rely mostly on geometry and color blending.
 
-### Earth-Like Planet Setup
+### Terrestrial Planet Setup
 
-The earth-like planet pass uses authored profiles, the generated `Terrain Mesh`,
+The terrestrial planet pass uses authored profiles, the generated `Terrain Mesh`,
 and the screen-space ocean/atmosphere renderer feature. Ocean and atmosphere are
 not authored as visible child meshes by default.
 
 Assets created for this pass:
 
-- `Assets/Project/Design/Rendering/SO_EarthLikePlanetVisualProfile.asset`
-- `Assets/Project/Design/Rendering/SO_EarthLikeShapeProfile.asset`
-- `Assets/Project/Design/Rendering/SO_EarthLikeSurfaceProfile.asset`
-- `Assets/Project/Design/Rendering/SO_EarthOceanProfile.asset`
-- `Assets/Project/Design/Rendering/SO_EarthAtmosphereProfile.asset`
-- `Assets/Project/Art/Materials/Celestial/Earth.mat`
-- `Assets/Project/Art/Shaders/Celestial/FarionEarthTriplanar.shader`
+- `Assets/Project/Design/Rendering/Celestial/SO_TerrestrialPlanetVisualProfile.asset`
+- `Assets/Project/Design/Simulation/Celestial/Shapes/SO_ContinentRidgeShapeProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_TerrestrialSurfaceProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_DefaultOceanProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_DefaultAtmosphereProfile.asset`
+- `Assets/Project/Art/Materials/Celestial/Terrestrial.mat`
+- `Assets/Project/Art/Shaders/Celestial/FarionTerrestrialTriplanar.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionOceanPostProcess.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionAtmospherePostProcess.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionAtmosphereOpticalDepth.compute`
 
 On `Test Planet`:
 
-1. Add `EarthLikePlanetVisual`.
-2. Assign `SO_EarthLikePlanetVisualProfile` to `Profile`.
+1. Add `TerrestrialPlanetVisual`.
+2. Assign `SO_TerrestrialPlanetVisualProfile` to `Profile`.
 3. Assign the same body's `CelestialBodyVisual` to `Terrain Visual`.
 4. Do not add ocean or atmosphere mesh children. Those are rendered by the URP
    full screen pass from the profile data.
@@ -315,16 +315,16 @@ On `Test Planet`:
 6. `CelestialBodyVisual > Render Resolution`: start at `64`; increase later
    only after shader import
    and profile tuning are stable.
-7. Use `EarthLikePlanetVisual > Apply Planet Visual Profile` if the linked
+7. Use `TerrestrialPlanetVisual > Apply Planet Visual Profile` if the linked
    profiles do not apply immediately.
 
-Texture inputs used by `SO_EarthLikeSurfaceProfile`:
+Texture inputs used by `SO_TerrestrialSurfaceProfile`:
 
-- `Noise Texture`: `Assets/Project/Art/Textures/Celestial/Earth Noise.psd`
+- `Noise Texture`: `Assets/Project/Art/Textures/Celestial/Terrestrial Noise.psd`
 - `Rock Normal`: `Assets/Project/Art/Textures/Celestial/Normals/Rock5.tif`
 - `Snow Normal`: `Assets/Project/Art/Textures/Celestial/Normals/Snow.tif`
 
-The earth-like shape profile follows the Solar-System reference structure:
+The continent-ridge shape profile follows the Solar-System reference structure:
 
 - `Continent Noise` creates landmass/ocean distribution.
 - `Ocean Floor Depth` and `Ocean Floor Smoothing` flatten deep ocean regions.
@@ -334,7 +334,7 @@ The earth-like shape profile follows the Solar-System reference structure:
 
 The land shader still colors terrain below sea level for continuity under the
 screen-space ocean pass. Sea level should be tuned on
-`SO_EarthLikePlanetVisualProfile`.
+`SO_TerrestrialPlanetVisualProfile`.
 
 ### Ocean And Atmosphere Post-Process Setup
 
@@ -344,8 +344,8 @@ and ray-sphere intersection decide where water and air are visible.
 
 Assets created for the first pass:
 
-- `Assets/Project/Design/Rendering/SO_EarthOceanProfile.asset`
-- `Assets/Project/Design/Rendering/SO_EarthAtmosphereProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_DefaultOceanProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_DefaultAtmosphereProfile.asset`
 - `Assets/Project/Art/Shaders/Celestial/FarionOceanPostProcess.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionAtmospherePostProcess.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionAtmosphereOpticalDepth.compute`
@@ -359,10 +359,10 @@ Renderer setup:
 5. Keep atmosphere immediately after ocean.
 6. Keep `Max Rendered Bodies` at `8` for now. Lower it only for profiling, not
    for visual tuning.
-7. Confirm `SO_EarthLikePlanetVisualProfile` has `SO_EarthOceanProfile`
-   and `SO_EarthAtmosphereProfile` assigned.
+7. Confirm `SO_TerrestrialPlanetVisualProfile` has `SO_DefaultOceanProfile`
+   and `SO_DefaultAtmosphereProfile` assigned.
 
-Texture inputs used by `SO_EarthOceanProfile` and sampled by the screen-space
+Texture inputs used by `SO_DefaultOceanProfile` and sampled by the screen-space
 ocean shader:
 
 - `Wave Normal A`: `Assets/Project/Art/Textures/Celestial/Normals/Wave A.png`
@@ -375,7 +375,7 @@ ocean mesh.
 
 Useful first tuning values:
 
-- `Ocean Level`: tune this on `SO_EarthLikePlanetVisualProfile`.
+- `Ocean Level`: tune this on `SO_TerrestrialPlanetVisualProfile`.
 - `Normal Strength`: `0.35` to `0.6`
 - `Smoothness`: `0.85` to `0.95`
 - `Specular Strength`: `1` to `2`
@@ -436,7 +436,7 @@ Create an authored lighting setup:
 2. Add `CelestialLightSource`.
 3. Create a profile with `Create > Farion > Rendering > Celestial Lighting
    Profile`.
-4. Save it under `Assets/Project/Design/Rendering` as
+4. Save it under `Assets/Project/Design/Rendering/Lighting` as
    `SO_SolarLightingProfile`.
 5. Select the `Lighting` root.
 6. Add `CelestialLightingRig`.
@@ -489,7 +489,7 @@ does not affect gravity, lighting, atmosphere scattering, or navigation.
 
 Assets created for the first pass:
 
-- `Assets/Project/Design/Rendering/SO_StarDomeProfile.asset`
+- `Assets/Project/Design/Rendering/Space/SO_StarDomeProfile.asset`
 - `Assets/Project/Art/Materials/Space/StarDome.mat`
 - `Assets/Project/Art/Shaders/Space/FarionProceduralStarDome.shader`
 
@@ -513,7 +513,8 @@ The scene can have a single `Global Volume` under `Lighting`:
 
 1. Create or select `Global Volume`.
 2. Enable `Is Global`.
-3. Create/assign a Volume Profile under `Assets/Project/Design/Rendering`.
+3. Create/assign a scene Volume Profile under
+   `Assets/Project/Scenes/SC_PhysicsSandbox`.
 4. Add these overrides:
    - `Bloom`: enabled, low threshold, moderate intensity for the star material.
    - `Tonemapping`: `ACES`.
@@ -557,7 +558,7 @@ After the gravity actor test works, create a spacecraft probe:
 10. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
 11. Add `SpacecraftSurfaceContactProbe`.
 12. Add `SpacecraftLandingComputer`.
-13. Assign `Assets/Project/Design/Gameplay/SO_DefaultLandingProfile.asset` to
+13. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultLandingProfile.asset` to
     `Profile`.
 14. Assign the same `CelestialActorProbe` component to `Celestial Probe`.
 15. Assign the same `SpacecraftSurfaceContactProbe` component to
@@ -573,7 +574,7 @@ After the gravity actor test works, create a spacecraft probe:
 21. Add `SpacecraftSurfaceContactStabilizer`.
 22. Assign the same `SpacecraftSurfaceContactProbe`.
 23. Add `SpacecraftOceanInteractor`.
-24. Assign `Assets/Project/Design/Gameplay/SO_DefaultOceanInteractionProfile.asset`
+24. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultOceanInteractionProfile.asset`
     to `Profile`.
 25. Assign the same `CelestialActorProbe` to `Celestial Probe`.
 26. Keep `Apply Buoyancy`, `Apply Drag`, and `Damp Angular Velocity` enabled.
@@ -582,7 +583,7 @@ After the gravity actor test works, create a spacecraft probe:
 29. Leave `Simulation` empty unless you need an explicit scene reference; empty
     means it uses `GravitySimulation.Active`.
 30. Add `SpacecraftEntryCorridorComputer`.
-31. Assign `Assets/Project/Design/Gameplay/SO_DefaultEntryCorridorProfile.asset`
+31. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultEntryCorridorProfile.asset`
     to `Profile`.
 32. Assign the same `CelestialActorProbe` and `SpacecraftOrbitComputer`.
 33. Add `SpacecraftLandingDebugHud` while testing landing.
@@ -721,7 +722,7 @@ Create a test explorer under `Actors`:
 5. Add `CelestialActorProbe`.
 6. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
 7. Add `FirstPersonMotor`.
-8. Assign `Assets/Project/Design/Gameplay/SO_DefaultFirstPersonMotorProfile.asset`
+8. Assign `Assets/Project/Design/Gameplay/Character/SO_DefaultFirstPersonMotorProfile.asset`
    to `Profile`.
 9. Assign the same `KeyboardFirstPersonInput` to `Input Source`.
 10. Assign the main camera transform to `View Reference` after adding the camera
@@ -834,6 +835,102 @@ In Play Mode:
 5. Walk back into `Boarding Point` radius and press `E`.
 6. `Player Explorer` should deactivate, `SpacecraftCameraRig` should re-enable,
    and `WorldOriginRebaser > Tracking Target` should return to `Probe Ship`.
+
+## First Resource Loop
+
+The first vertical-slice resource path is intentionally small. It proves that
+on-foot interaction can mutate player state without putting inventory logic in
+the raycaster or UI.
+
+### Planetary Biome And Resource Preview
+
+Biome, terrain-feature, and resource generation are separated from runtime
+state. Use the context-menu reports while authoring or validating a planet;
+runtime spawning is handled by `ResourceDepositRuntimeSpawner`.
+
+On the target planet:
+
+1. Add `PlanetSurfaceModel`.
+2. Assign the planet `CelestialBody` to `Body`.
+3. Assign `Assets/Project/Design/Simulation/Planetary/SO_TestPlanetaryGeneration.asset`
+   to `Generation Profile`.
+4. Assign the same terrain shape profile used by the planet visual, or assign
+   it through `PlanetaryGenerationProfile > Shape Profile`.
+5. Use `Log Generation Validation Report` after changing radius, gravity,
+   atmosphere, climate, biome compatibility, or terrain-feature constraints.
+6. Use `CelestialBodyVisual > Log Biome Visual Coverage Report` to confirm
+   terrain altitude, slope, local temperature, moisture, radiation, biome, and
+   terrain-feature sampling all come from the same `PlanetSurfaceModel`.
+
+`SO_TestStellarRadiation > Reference Orbit Distance` is calibrated to the
+current authored `Test Star` to `Test Planet` distance. If you move the star or
+rescale the sandbox, update the radiation profile or the planet's thermal report
+will legitimately shift biome coverage. The test biome set includes cold,
+temperate, rocky, and hot-basalt coverage so reports should not show every
+sample as missing biome under ordinary sandbox tuning.
+
+For resource distribution:
+
+1. Add `ResourceDepositRuntimeSpawner` to the target planet.
+2. Assign the same `Body` and `PlanetSurfaceModel`.
+3. Assign `Assets/Project/Design/Gameplay/Resources/SO_TestPlanetResourceDistribution.asset`
+   to `Resource Distribution`.
+4. Use `Log Resource Distribution Report` to verify sampled surface count,
+   missing biome count, allowed resource rules, and generated deposit counts.
+5. Use `Regenerate Resource Nodes` while tuning distribution density.
+
+The generated deposit data stores local surface directions and resource
+definitions plus biome and terrain-feature classification. Runtime state such
+as depleted deposits must remain outside the ScriptableObject assets.
+Resource node definitions must have explicit `Visual Prefab` assignments;
+missing prefabs are skipped instead of being replaced with primitive fallback
+objects.
+
+The current test distribution uses real starter resources instead of generic
+surface pickups. Iron is limited to rocky, basalt, and temperate biomes; nickel
+is limited to rocky and basalt biomes; ice crystal is limited to frozen crust.
+Terrain features are not resource filters yet; they should become resource
+modifiers after their coverage is stable.
+
+Current vertical-slice placeholder prefabs:
+
+- `Assets/Project/Prefabs/Gameplay/Resources/PF_IronOreNode.prefab`
+- `Assets/Project/Prefabs/Gameplay/Resources/PF_NickelFragmentNode.prefab`
+- `Assets/Project/Prefabs/Gameplay/Resources/PF_IceCrystalNode.prefab`
+
+These are authored temporary prefabs, not runtime fallbacks. Replace their
+visuals later through the `ResourceNodeDefinition > Visual Prefab` field when
+the final resource art direction is defined.
+
+On `Player Explorer`:
+
+1. Add or confirm `PlayerInventory`.
+2. Keep `Slot Capacity = 12` for the first slice.
+
+For a collectible surface node:
+
+1. Create or select a visible object near the landing area.
+2. Add a collider that is reachable by the player's interaction ray. Trigger
+   colliders are valid for collectible nodes.
+3. Add `CelestialSurfaceAnchor`.
+4. Assign the target planet's `CelestialBody` to `Body`.
+5. Assign the same planet's `CelestialBodyVisual` to `Surface Provider` when
+   the node should sit on procedural terrain instead of the perfect sphere.
+6. Use `Capture Current Pose` from the component context menu after placing the
+   object visually on the surface.
+7. Keep `Update Mode = Locked Surface Pose` for ordinary resource nodes. Use
+   `Resample Surface Every Frame` only for explicitly deforming terrain tests;
+   resource spawning should not make every node query procedural surface data
+   every frame.
+8. Add `ResourceNodeInteractable`.
+9. Assign `Assets/Project/Design/Gameplay/Resources/SO_IronOreNode.asset` to
+   `Definition`.
+10. Keep `Initialize Reserve On Awake` and `Consume On Depleted` enabled for the
+   first test.
+
+In Play Mode, exit the ship, look at the node, press `E`, and verify the node
+disables itself and `Player Explorer > PlayerInventory > Stacks` gains one
+`Iron Ore`.
 
 ### Terrain Mesh Collision
 

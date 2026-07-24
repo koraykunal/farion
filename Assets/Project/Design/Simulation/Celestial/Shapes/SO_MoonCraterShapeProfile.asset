@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 567d8a7d2ca628d48932e834dd7a0c84, type: 3}
+  m_Name: SO_MoonCraterShapeProfile
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.MoonCraterShapeProfile
+  seed: 70
+  craterSeed: 70
+  cratersEnabled: 1
+  craterCount: 643
+  craterRadiusMinMax: {x: 0.01, y: 0.1}
+  sizeDistribution: 0.278
+  floorHeightMinMax: {x: -1.2, y: -0.2}
+  smoothnessMinMax: {x: 0.4, y: 1.5}
+  rimSteepness: 0.13
+  rimWidth: 1.6
+  craterDepthScale: 1
+  lowFrequencyAmplitude: 0.21
+  lowFrequencyScale: 2
+  lowFrequencyOctaves: 4
+  ridgeAmplitude: 0.04
+  ridgeScale: 5.24
+  ridgeOctaves: 4
+  ridgePower: 2.5
+  ridgePersistence: 0.42
+  ridgeLacunarity: 2
+  biomePointCount: 24
+  biomeRadiusMinMax: {x: 0.02, y: 0.1}
+  detailNoiseScale: 1.35
+  detailNoiseOctaves: 4
+  ejectaEnabled: 1
+  ejectaCandidatePoolSize: 0.22
+  desiredEjectaCraterCount: 5
+  ejectaRaySeed: 101
+  ejectaRayScale: 10

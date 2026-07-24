@@ -1,4 +1,4 @@
-using Farion.Gameplay.Actors;
+﻿using Farion.Gameplay.Actors;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -49,7 +49,7 @@ namespace Farion.Gameplay.Flight
             if (landingComputer == null || celestialProbe == null || !celestialProbe.HasSample)
             {
                 currentGuidance = SpacecraftLandingGuidanceSample.Offline;
-                ApplyDebugFields();
+                ApplyRuntimeState();
                 return;
             }
 
@@ -70,7 +70,7 @@ namespace Farion.Gameplay.Flight
                 verticalRatio,
                 tangentialRatio,
                 assessment.NormalizedStress);
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
         void ResolveComponents()
@@ -190,7 +190,7 @@ namespace Farion.Gameplay.Flight
             };
         }
 
-        void ApplyDebugFields()
+        void ApplyRuntimeState()
         {
             level = currentGuidance.Level;
             command = currentGuidance.Command;
@@ -201,3 +201,4 @@ namespace Farion.Gameplay.Flight
         }
     }
 }
+

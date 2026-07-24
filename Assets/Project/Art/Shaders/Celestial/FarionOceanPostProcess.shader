@@ -191,7 +191,9 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 int index,
                 float3 rayOrigin,
                 float3 rayDirection,
-                float sceneDistance)
+                float sceneDistance,
+                float3 scenePositionWS,
+                bool sceneIsSky)
             {
                 float oceanRadius = _FarionOceanSpheres[index].w;
                 if (oceanRadius <= 0.0)
@@ -206,6 +208,21 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 if (oceanHit.x < 0.0)
                 {
                     return sourceColor;
+                }
+
+                half terrainAllowsWater = 1.0h;
+                if (!sceneIsSky && !cameraInsideOcean)
+                {
+                    float sceneSurfaceRadius = length(scenePositionWS - centre);
+                    float terrainFadeWidth = max(bodyRadius * 0.0015, 0.01);
+                    terrainAllowsWater = 1.0h - smoothstep(
+                        oceanRadius - terrainFadeWidth,
+                        oceanRadius + terrainFadeWidth,
+                        sceneSurfaceRadius);
+                    if (terrainAllowsWater <= 0.001h)
+                    {
+                        return sourceColor;
+                    }
                 }
 
                 float segmentStart;
@@ -305,7 +322,8 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     extinctionMultiplier,
                     surfaceTransmission);
 
-                return lerp(transmittedWater, reflectedSurface, surfaceReflection) + surfaceGlint;
+                half3 waterColor = lerp(transmittedWater, reflectedSurface, surfaceReflection) + surfaceGlint;
+                return lerp(sourceColor, waterColor, terrainAllowsWater);
             }
 
             half4 Fragment(Varyings input) : SV_Target
@@ -325,9 +343,10 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     : length(scenePositionWS - rayOrigin);
 
                 half3 color = source.rgb;
+                bool sceneIsSky = IsSkyDepth(rawDepth);
                 for (int i = 0; i < _FarionOceanEffectCount; i++)
                 {
-                    color = ApplyOcean(color, i, rayOrigin, rayDirection, sceneDistance);
+                    color = ApplyOcean(color, i, rayOrigin, rayDirection, sceneDistance, scenePositionWS, sceneIsSky);
                 }
 
                 return half4(color, source.a);

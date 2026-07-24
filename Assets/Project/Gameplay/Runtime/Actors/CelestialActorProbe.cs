@@ -1,4 +1,4 @@
-using Farion.Simulation.Celestial;
+﻿using Farion.Simulation.Celestial;
 using UnityEngine;
 
 namespace Farion.Gameplay.Actors
@@ -56,15 +56,15 @@ namespace Farion.Gameplay.Actors
             if (frameProvider == null)
             {
                 currentSample = CelestialFrameSample.Empty(Rigidbody.position, Rigidbody.linearVelocity);
-                ApplyDebugFields();
+                ApplyRuntimeState();
                 return;
             }
 
             currentSample = frameProvider.Sample(Rigidbody.position, Rigidbody.linearVelocity);
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
-        void ApplyDebugFields()
+        void ApplyRuntimeState()
         {
             dominantBodyName = currentSample.HasBody ? currentSample.Body.BodyName : string.Empty;
             surfaceAltitude = currentSample.SurfaceAltitude;
@@ -83,3 +83,4 @@ namespace Farion.Gameplay.Actors
         }
     }
 }
+

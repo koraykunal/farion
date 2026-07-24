@@ -1,4 +1,4 @@
-using Farion.Core.Physics;
+﻿using Farion.Core.Physics;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -81,16 +81,16 @@ namespace Farion.Gameplay.Flight
                 Time.time);
 
             lastContactTime = Time.fixedTime;
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
         void ClearContact()
         {
             currentContact = SpacecraftSurfaceContactSample.Empty;
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
-        void ApplyDebugFields()
+        void ApplyRuntimeState()
         {
             hasContact = currentContact.HasContact;
             contactBodyName = hasContact ? currentContact.Body.BodyName : string.Empty;
@@ -118,3 +118,4 @@ namespace Farion.Gameplay.Flight
         }
     }
 }
+

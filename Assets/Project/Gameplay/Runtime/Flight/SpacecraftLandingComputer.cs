@@ -1,4 +1,4 @@
-using Farion.Gameplay.Actors;
+﻿using Farion.Gameplay.Actors;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -63,12 +63,12 @@ namespace Farion.Gameplay.Flight
             if (profile == null || celestialProbe == null)
             {
                 currentAssessment = default;
-                ApplyDebugFields();
+                ApplyRuntimeState();
                 return;
             }
 
             currentAssessment = profile.Evaluate(celestialProbe.CurrentSample);
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
         void ResolveComponents()
@@ -84,7 +84,7 @@ namespace Farion.Gameplay.Flight
             }
         }
 
-        void ApplyDebugFields()
+        void ApplyRuntimeState()
         {
             SpacecraftSurfaceContactSample contact = surfaceContactProbe != null
                 ? surfaceContactProbe.CurrentContact
@@ -124,3 +124,4 @@ namespace Farion.Gameplay.Flight
         }
     }
 }
+

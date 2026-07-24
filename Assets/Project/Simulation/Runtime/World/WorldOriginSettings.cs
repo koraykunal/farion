@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Simulation.World
 {
-    [CreateAssetMenu(menuName = "Farion/World/World Origin Settings", fileName = "SO_WorldOriginSettings")]
+    [CreateAssetMenu(menuName = "Farion/Simulation/World/World Origin Settings", fileName = "SO_WorldOriginSettings")]
     public sealed class WorldOriginSettings : ScriptableObject
     {
         [Min(1f)]

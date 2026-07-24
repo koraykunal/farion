@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 091949adce7c4383929de40bc8fb23d4, type: 3}
+  m_Name: SO_IronOreNode
+  m_EditorClassIdentifier: 
+  nodeId: resource.iron_ore
+  displayName: Iron Ore Deposit
+  promptVerb: Collect
+  yieldedItem: {fileID: 11400000, guid: 2b56d29a452443eb8d5c60a95c54b977, type: 2}
+  minReserve: 1
+  maxReserve: 4
+  amountPerHarvest: 1
+  requiredToolTier: 0
+  harvestDurationSeconds: 0
+  requiresScan: 0
+  visualPrefab: {fileID: 100000, guid: f7a2591b09cf4156b2a5a035d0cbcdca, type: 3}

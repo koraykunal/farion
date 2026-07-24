@@ -101,7 +101,7 @@ namespace Farion.Rendering.Lighting
             directionalLight.transform.rotation = Quaternion.LookRotation(lightForward, ResolveStableUp(lightForward));
             directionalLight.color = profile.LightColor;
             directionalLight.useColorTemperature = profile.UseColorTemperature;
-            directionalLight.colorTemperature = profile.ColorTemperature;
+            directionalLight.colorTemperature = source.HasRadiationProfile ? source.ColorTemperatureKelvin : profile.ColorTemperature;
             directionalLight.intensity = profile.EvaluateIntensity(distance);
             directionalLight.shadows = profile.Shadows;
             directionalLight.shadowStrength = profile.ShadowStrength;

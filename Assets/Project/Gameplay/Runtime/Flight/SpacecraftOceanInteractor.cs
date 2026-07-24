@@ -1,4 +1,4 @@
-using Farion.Gameplay.Actors;
+﻿using Farion.Gameplay.Actors;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -71,12 +71,12 @@ namespace Farion.Gameplay.Flight
                     celestialProbe != null
                         ? celestialProbe.CurrentSample
                         : default);
-                ApplyDebugFields();
+                ApplyRuntimeState();
                 return;
             }
 
             currentInteraction = profile.Evaluate(celestialProbe.CurrentSample);
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
         void ApplyInteractionForces()
@@ -103,7 +103,7 @@ namespace Farion.Gameplay.Flight
             }
         }
 
-        void ApplyDebugFields()
+        void ApplyRuntimeState()
         {
             hasOcean = currentInteraction.HasOcean;
             touchingWater = currentInteraction.IsTouchingWater;
@@ -127,3 +127,4 @@ namespace Farion.Gameplay.Flight
         }
     }
 }
+

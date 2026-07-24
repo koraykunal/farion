@@ -1,4 +1,4 @@
-using Farion.Core.Physics;
+﻿using Farion.Core.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Simulation.Celestial;
 using UnityEngine;
@@ -66,12 +66,12 @@ namespace Farion.Gameplay.Flight
             if (celestialProbe == null || !celestialProbe.HasSample)
             {
                 currentOrbit = SpacecraftOrbitSample.NoFrame;
-                ApplyDebugFields();
+                ApplyRuntimeState();
                 return;
             }
 
             currentOrbit = EvaluateOrbit(celestialProbe.CurrentSample, Simulation);
-            ApplyDebugFields();
+            ApplyRuntimeState();
         }
 
         void ResolveComponents()
@@ -174,7 +174,7 @@ namespace Farion.Gameplay.Flight
                 : SpacecraftOrbitRegime.Elliptic;
         }
 
-        void ApplyDebugFields()
+        void ApplyRuntimeState()
         {
             regime = currentOrbit.Regime;
             gravitationalParameter = currentOrbit.GravitationalParameter;
@@ -195,3 +195,4 @@ namespace Farion.Gameplay.Flight
         }
     }
 }
+

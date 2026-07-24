@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a0be80c5d6e4246b253fe03165108aa, type: 3}
+  m_Name: SO_TerrestrialSurfaceProfile
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: 310287156d04410f92928d6675c1283c, type: 2}
+  biomeVisualProfile: {fileID: 11400000, guid: 9631c4b49e4a4c55b2555c6f088613b6, type: 2}
+  metallic: 0
+  landSmoothness: 0.125
+  oceanSmoothness: 0.851
+  oceanLow: {r: 0.015, g: 0.08, b: 0.16, a: 1}
+  oceanHigh: {r: 0.05, g: 0.32, b: 0.48, a: 1}
+  shoreLow: {r: 0.54, g: 0.48, b: 0.36, a: 1}
+  shoreHigh: {r: 0.72, g: 0.66, b: 0.48, a: 1}
+  flatLowA: {r: 0.28, g: 0.24, b: 0.2, a: 1}
+  flatHighA: {r: 0.52, g: 0.43, b: 0.31, a: 1}
+  flatLowB: {r: 0.22, g: 0.29, b: 0.21, a: 1}
+  flatHighB: {r: 0.42, g: 0.47, b: 0.3, a: 1}
+  steepLow: {r: 0.28, g: 0.27, b: 0.25, a: 1}
+  steepHigh: {r: 0.1, g: 0.095, b: 0.085, a: 1}
+  noiseTexture: {fileID: 2800000, guid: 6b95ad4431700b440b34db2c4fc0378e, type: 3}
+  rockNormal: {fileID: 2800000, guid: 91953f100d69a394c8bc744423b684fa, type: 3}
+  noiseScale: 10
+  noiseScale2: 24
+  rockNormalScale: 12
+  normalStrength: 0.28
+  flatColorBlend: 2.4
+  flatColorBlendNoise: 0.42
+  shoreHeight: 0.058
+  shoreBlend: 0.115
+  oceanEdgeBlend: 0.04
+  shoreWetness: 0.42
+  shoreFoamStrength: 0.16
+  maxFlatHeight: 0.52
+  steepBands: 4
+  steepBandStrength: 0
+  steepnessThreshold: 0.378
+  flatToSteepBlend: 0.051
+  flatToSteepNoise: 0.015

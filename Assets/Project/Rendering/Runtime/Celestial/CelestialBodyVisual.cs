@@ -1,5 +1,8 @@
+using System.Collections.Generic;
+using System.Text;
 using Farion.Core.Physics;
 using Farion.Simulation.Celestial;
+using Farion.Simulation.Planetary;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -11,12 +14,13 @@ namespace Farion.Rendering.Celestial
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CelestialBody))]
-    public sealed class CelestialBodyVisual : MonoBehaviour, ICelestialSurfaceProvider
+    public sealed class CelestialBodyVisual : MonoBehaviour
     {
         const string DefaultMeshObjectName = "Terrain Mesh";
 
         [Header("Source")]
         [SerializeField] CelestialBody body;
+        [SerializeField] PlanetSurfaceModel surfaceModel;
         [SerializeField] CelestialShapeProfile shapeProfile;
         [SerializeField] CelestialSurfaceProfileBase surfaceProfile;
 
@@ -27,8 +31,6 @@ namespace Farion.Rendering.Celestial
         [SerializeField] CelestialLodProfile lodProfile;
         [Range(0, 2)]
         [SerializeField] int editModePreviewLod;
-        [Range(0.0005f, 0.05f)]
-        [SerializeField] float surfaceNormalSampleStep = 0.004f;
 
         [Header("Collision")]
         [SerializeField] bool syncSphereCollider = true;
@@ -49,6 +51,7 @@ namespace Farion.Rendering.Celestial
         Mesh[] renderMeshes;
         Mesh collisionMesh;
         MaterialPropertyBlock propertyBlock;
+        PlanetSurfaceModel subscribedSurfaceModel;
         CelestialShapeProfile subscribedShapeProfile;
         CelestialSurfaceProfileBase subscribedSurfaceProfile;
         Vector2 renderRadiusMinMax;
@@ -67,31 +70,6 @@ namespace Farion.Rendering.Celestial
         public int ActiveLodIndex => activeLodIndex;
         public bool MeshColliderSkippedBecauseBodyIsDynamic => meshColliderSkippedBecauseBodyIsDynamic;
         public event System.Action Rebuilt;
-
-        public bool TrySampleSurface(CelestialBody sourceBody, Vector3 position, out CelestialSurfaceSample sample)
-        {
-            sample = default;
-            if (sourceBody == null || sourceBody != Body)
-            {
-                return false;
-            }
-
-            Vector3 centerToPoint = position - sourceBody.Position;
-            float centerDistance = centerToPoint.magnitude;
-            Vector3 radialNormal = centerDistance > 0.0001f ? centerToPoint / centerDistance : transform.up;
-            float surfaceRadius = EvaluateSurfaceRadius(sourceBody.Radius, radialNormal);
-            Vector3 surfacePoint = sourceBody.Position + radialNormal * surfaceRadius;
-            Vector3 surfaceNormal = EvaluateSurfaceNormal(sourceBody.Radius, radialNormal);
-            float slopeAngle = Vector3.Angle(radialNormal, surfaceNormal);
-            sample = new CelestialSurfaceSample(
-                sourceBody,
-                surfacePoint,
-                surfaceNormal,
-                centerDistance,
-                centerDistance - surfaceRadius,
-                slopeAngle);
-            return true;
-        }
 
         public void Configure(
             CelestialShapeProfile newShapeProfile,
@@ -135,6 +113,8 @@ namespace Farion.Rendering.Celestial
                 body = GetComponent<CelestialBody>();
             }
 
+            ResolveSurfaceModel();
+
             if (string.IsNullOrWhiteSpace(meshObjectName))
             {
                 meshObjectName = DefaultMeshObjectName;
@@ -142,7 +122,6 @@ namespace Farion.Rendering.Celestial
 
             renderResolution = Mathf.Clamp(renderResolution, 0, 128);
             editModePreviewLod = Mathf.Clamp(editModePreviewLod, 0, GetLodCount() - 1);
-            surfaceNormalSampleStep = Mathf.Clamp(surfaceNormalSampleStep, 0.0005f, 0.05f);
             SyncProfileSubscriptions();
 
             if (!Application.isPlaying && rebuildInEditMode)
@@ -158,6 +137,13 @@ namespace Farion.Rendering.Celestial
             if (sourceBody == null)
             {
                 return;
+            }
+
+            ResolveSurfaceModel();
+            SyncProfileSubscriptions();
+            if (surfaceModel != null && surfaceModel.ShapeProfile != null)
+            {
+                shapeProfile = surfaceModel.ShapeProfile;
             }
 
             ApplyAuthoringCleanup(sourceBody);
@@ -220,6 +206,172 @@ namespace Farion.Rendering.Celestial
             ApplyMaterialProperties(terrainMeshRenderer);
         }
 
+        [ContextMenu("Log Biome Visual Coverage Report")]
+        public void LogBiomeVisualCoverageReport()
+        {
+            ResolveSurfaceModel();
+            if (surfaceModel == null)
+            {
+                Debug.LogWarning($"{name}: biome visual coverage report skipped because no planet surface model is assigned.", this);
+                return;
+            }
+
+            if (surfaceProfile is not TerrestrialSurfaceProfile terrestrialSurface ||
+                terrestrialSurface.BiomeVisualProfile == null)
+            {
+                Debug.LogWarning($"{name}: biome visual coverage report skipped because no terrestrial biome visual profile is assigned.", this);
+                return;
+            }
+
+            BiomeDistributionProfile distribution = surfaceModel.GenerationProfile != null
+                ? surfaceModel.GenerationProfile.BiomeDistribution
+                : null;
+            if (distribution == null)
+            {
+                Debug.LogWarning($"{name}: biome visual coverage report skipped because no biome distribution profile is assigned.", this);
+                return;
+            }
+
+            CelestialBody sourceBody = surfaceModel.Body;
+            if (sourceBody == null)
+            {
+                Debug.LogWarning($"{name}: biome visual coverage report skipped because the surface model has no celestial body.", this);
+                return;
+            }
+
+            const int sampleCount = 180;
+            int sampled = 0;
+            int missingSurface = 0;
+            int missingDominantBiome = 0;
+            int missingDistributionWeights = 0;
+            int missingVisualWeights = 0;
+            int fallbackDominant = 0;
+            int fallbackWeighted = 0;
+            float minTemperature = float.PositiveInfinity;
+            float maxTemperature = float.NegativeInfinity;
+            float minMoisture = float.PositiveInfinity;
+            float maxMoisture = float.NegativeInfinity;
+            float minRadiation = float.PositiveInfinity;
+            float maxRadiation = float.NegativeInfinity;
+            List<BiomeWeight> weights = new(BiomeVisualProfile.MaxBiomeSlots);
+            Dictionary<string, int> dominantBiomeCounts = new();
+            Dictionary<string, int> terrainFeatureCounts = new();
+            BiomeVisualProfile biomeVisualProfile = terrestrialSurface.BiomeVisualProfile;
+
+            for (int i = 0; i < sampleCount; i++)
+            {
+                Vector3 localDirection = EvaluateReportDirection(i, sampleCount);
+                Vector3 worldDirection = sourceBody.transform.TransformDirection(localDirection);
+                float probeRadius = surfaceModel.ShapeProfile != null
+                    ? surfaceModel.ShapeProfile.EvaluateSample(sourceBody.Radius, localDirection).Radius
+                    : sourceBody.Radius;
+                Vector3 probePosition = sourceBody.Position + worldDirection * probeRadius;
+                if (!surfaceModel.TrySamplePlanetSurface(sourceBody, probePosition, out PlanetSurfaceSample sample))
+                {
+                    missingSurface++;
+                    continue;
+                }
+
+                sampled++;
+                minTemperature = Mathf.Min(minTemperature, sample.Climate.TemperatureCelsius);
+                maxTemperature = Mathf.Max(maxTemperature, sample.Climate.TemperatureCelsius);
+                minMoisture = Mathf.Min(minMoisture, sample.Climate.Moisture);
+                maxMoisture = Mathf.Max(maxMoisture, sample.Climate.Moisture);
+                minRadiation = Mathf.Min(minRadiation, sample.Climate.Radiation);
+                maxRadiation = Mathf.Max(maxRadiation, sample.Climate.Radiation);
+
+                BiomeDefinition dominantBiome = sample.Biome.Biome;
+                if (dominantBiome == null)
+                {
+                    missingDominantBiome++;
+                }
+                else
+                {
+                    IncrementReportCount(dominantBiomeCounts, dominantBiome.DisplayName);
+                    if (dominantBiome == distribution.FallbackBiome)
+                    {
+                        fallbackDominant++;
+                    }
+                }
+
+                if (sample.TerrainFeature.HasFeature)
+                {
+                    IncrementReportCount(terrainFeatureCounts, sample.TerrainFeature.Feature.DisplayName);
+                }
+
+                int weightCount = distribution.SampleBiomeWeights(
+                    sample.Context,
+                    sample.Climate,
+                    sample.LocalDirection,
+                    sample.TerrainAltitude,
+                    sample.Surface.SlopeAngleDegrees,
+                    weights);
+                if (weightCount <= 0)
+                {
+                    missingDistributionWeights++;
+                    missingVisualWeights++;
+                    continue;
+                }
+
+                bool hasFallbackWeight = false;
+                float visualWeightTotal = 0f;
+                for (int weightIndex = 0; weightIndex < weightCount; weightIndex++)
+                {
+                    BiomeWeight weight = weights[weightIndex];
+                    if (weight.Biome == distribution.FallbackBiome && weight.Weight > 0.001f)
+                    {
+                        hasFallbackWeight = true;
+                    }
+
+                    if (biomeVisualProfile.ResolveBiomeIndex(weight.Biome) >= 0)
+                    {
+                        visualWeightTotal += Mathf.Max(0f, weight.Weight);
+                    }
+                }
+
+                if (hasFallbackWeight)
+                {
+                    fallbackWeighted++;
+                }
+
+                if (visualWeightTotal <= 0.001f)
+                {
+                    missingVisualWeights++;
+                }
+            }
+
+            StringBuilder report = new(512);
+            report.Append(name);
+            report.Append(": biome visual coverage report. samples=");
+            report.Append(sampleCount);
+            report.Append(", sampled=");
+            report.Append(sampled);
+            report.Append(", missingSurface=");
+            report.Append(missingSurface);
+            report.Append(", missingDominantBiome=");
+            report.Append(missingDominantBiome);
+            report.Append(", missingDistributionWeights=");
+            report.Append(missingDistributionWeights);
+            report.Append(", missingVisualWeights=");
+            report.Append(missingVisualWeights);
+            report.Append(", fallbackDominant=");
+            report.Append(fallbackDominant);
+            report.Append(", fallbackWeighted=");
+            report.Append(fallbackWeighted);
+            report.Append(", temperatureC=");
+            AppendReportRange(report, minTemperature, maxTemperature);
+            report.Append(", moisture=");
+            AppendReportRange(report, minMoisture, maxMoisture);
+            report.Append(", radiation=");
+            AppendReportRange(report, minRadiation, maxRadiation);
+            report.Append(", dominantBiomes=[");
+            AppendReportCounts(report, dominantBiomeCounts);
+            report.Append("], terrainFeatures=[");
+            AppendReportCounts(report, terrainFeatureCounts);
+            report.Append(']');
+            Debug.Log(report.ToString(), this);
+        }
+
         void BuildRenderMeshes(CelestialBody sourceBody)
         {
             int lodCount = GetLodCount();
@@ -234,7 +386,8 @@ namespace Farion.Rendering.Celestial
                     $"{sourceBody.BodyName} LOD{i} Render Mesh",
                     out Vector2 lodRadiusMinMax,
                     shapeProfile,
-                    surfaceProfile);
+                    surfaceProfile,
+                    surfaceModel);
 
                 if (i == 0)
                 {
@@ -263,45 +416,6 @@ namespace Farion.Rendering.Celestial
             return surfaceProfile != null
                 ? surfaceProfile.EvaluateRadius(bodyRadius, unitDirection)
                 : bodyRadius;
-        }
-
-        Vector3 EvaluateSurfaceNormal(float bodyRadius, Vector3 unitDirection)
-        {
-            Vector3 tangentA = Vector3.ProjectOnPlane(Vector3.forward, unitDirection);
-            if (tangentA.sqrMagnitude <= 0.0001f)
-            {
-                tangentA = Vector3.ProjectOnPlane(Vector3.right, unitDirection);
-            }
-
-            if (tangentA.sqrMagnitude <= 0.0001f)
-            {
-                return unitDirection;
-            }
-
-            tangentA.Normalize();
-            Vector3 tangentB = Vector3.Cross(unitDirection, tangentA).normalized;
-            float step = Mathf.Clamp(surfaceNormalSampleStep, 0.0005f, 0.05f);
-
-            Vector3 pointA0 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection - tangentA * step).normalized);
-            Vector3 pointA1 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection + tangentA * step).normalized);
-            Vector3 pointB0 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection - tangentB * step).normalized);
-            Vector3 pointB1 = EvaluateRelativeSurfacePoint(bodyRadius, (unitDirection + tangentB * step).normalized);
-            Vector3 derivativeA = pointA1 - pointA0;
-            Vector3 derivativeB = pointB1 - pointB0;
-            Vector3 normal = Vector3.Cross(derivativeA, derivativeB);
-
-            if (normal.sqrMagnitude <= 0.0001f)
-            {
-                return unitDirection;
-            }
-
-            normal.Normalize();
-            return Vector3.Dot(normal, unitDirection) >= 0f ? normal : -normal;
-        }
-
-        Vector3 EvaluateRelativeSurfacePoint(float bodyRadius, Vector3 unitDirection)
-        {
-            return unitDirection * EvaluateSurfaceRadius(bodyRadius, unitDirection);
         }
 
         void ConfigureMeshCollider(GameObject meshObject, CelestialBody sourceBody)
@@ -365,11 +479,11 @@ namespace Farion.Rendering.Celestial
             propertyBlock ??= new MaterialPropertyBlock();
             propertyBlock.Clear();
 
-            if (surfaceProfile is EarthLikeSurfaceProfile earthLikeSurface
+            if (surfaceProfile is TerrestrialSurfaceProfile terrestrialSurface
                 && TryGetComponent(out ICelestialOceanLevelProvider oceanLevelProvider)
                 && oceanLevelProvider.TryGetOceanLevel(out float oceanLevel))
             {
-                earthLikeSurface.ApplyMaterialProperties(propertyBlock, Body.Radius, renderRadiusMinMax, oceanLevel);
+                terrestrialSurface.ApplyMaterialProperties(propertyBlock, Body.Radius, renderRadiusMinMax, oceanLevel);
             }
             else
             {
@@ -501,6 +615,20 @@ namespace Farion.Rendering.Celestial
 
         void SyncProfileSubscriptions()
         {
+            if (subscribedSurfaceModel != surfaceModel)
+            {
+                if (subscribedSurfaceModel != null)
+                {
+                    subscribedSurfaceModel.Changed -= HandleSurfaceModelChanged;
+                }
+
+                subscribedSurfaceModel = surfaceModel;
+                if (subscribedSurfaceModel != null)
+                {
+                    subscribedSurfaceModel.Changed += HandleSurfaceModelChanged;
+                }
+            }
+
             if (subscribedShapeProfile != shapeProfile)
             {
                 if (subscribedShapeProfile != null)
@@ -534,6 +662,12 @@ namespace Farion.Rendering.Celestial
 
         void UnsubscribeFromProfiles()
         {
+            if (subscribedSurfaceModel != null)
+            {
+                subscribedSurfaceModel.Changed -= HandleSurfaceModelChanged;
+                subscribedSurfaceModel = null;
+            }
+
             if (subscribedShapeProfile != null)
             {
                 subscribedShapeProfile.Changed -= HandleShapeProfileChanged;
@@ -545,6 +679,11 @@ namespace Farion.Rendering.Celestial
                 subscribedSurfaceProfile.Changed -= HandleSurfaceProfileChanged;
                 subscribedSurfaceProfile = null;
             }
+        }
+
+        void HandleSurfaceModelChanged()
+        {
+            HandleShapeProfileChanged();
         }
 
         void HandleShapeProfileChanged()
@@ -587,6 +726,65 @@ namespace Farion.Rendering.Celestial
             return shapeProfile == null &&
                 surfaceProfile is CelestialSurfaceProfile simpleSurfaceProfile &&
                 simpleSurfaceProfile.HasDisplacement;
+        }
+
+        static Vector3 EvaluateReportDirection(int index, int count)
+        {
+            float t = (index + 0.5f) / Mathf.Max(1, count);
+            float y = 1f - 2f * t;
+            float radius = Mathf.Sqrt(Mathf.Max(0f, 1f - y * y));
+            float theta = index * 2.3999632f;
+            return new Vector3(Mathf.Cos(theta) * radius, y, Mathf.Sin(theta) * radius);
+        }
+
+        static void IncrementReportCount(Dictionary<string, int> counts, string key)
+        {
+            key = string.IsNullOrWhiteSpace(key) ? "<unnamed>" : key;
+            counts.TryGetValue(key, out int count);
+            counts[key] = count + 1;
+        }
+
+        static void AppendReportRange(StringBuilder builder, float min, float max)
+        {
+            if (float.IsInfinity(min) || float.IsInfinity(max))
+            {
+                builder.Append("<none>");
+                return;
+            }
+
+            builder.Append(min.ToString("0.###"));
+            builder.Append("..");
+            builder.Append(max.ToString("0.###"));
+        }
+
+        static void AppendReportCounts(StringBuilder builder, Dictionary<string, int> counts)
+        {
+            bool first = true;
+            foreach (KeyValuePair<string, int> pair in counts)
+            {
+                if (!first)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(pair.Key);
+                builder.Append(": ");
+                builder.Append(pair.Value);
+                first = false;
+            }
+
+            if (first)
+            {
+                builder.Append("<none>");
+            }
+        }
+
+        void ResolveSurfaceModel()
+        {
+            if (surfaceModel == null)
+            {
+                surfaceModel = GetComponent<PlanetSurfaceModel>();
+            }
         }
 
         void QueueEditorRebuild()

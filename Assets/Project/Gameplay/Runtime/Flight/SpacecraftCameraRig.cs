@@ -15,6 +15,13 @@ namespace Farion.Gameplay.Flight
 
         [Header("Follow")]
         [SerializeField] Vector3 localOffset = new(0f, 4f, -14f);
+        [SerializeField] bool scaleOffsetByTargetBounds = true;
+        [Min(0.01f)]
+        [SerializeField] float referenceTargetRadius = 2.5f;
+        [Min(0.1f)]
+        [SerializeField] float minimumOffsetScale = 1f;
+        [Min(0.1f)]
+        [SerializeField] float maximumOffsetScale = 4f;
         [SerializeField] bool snapToTarget = true;
         [Min(0f)]
         [SerializeField] float positionResponsiveness = 8f;
@@ -40,6 +47,9 @@ namespace Farion.Gameplay.Flight
             rotationResponsiveness = Mathf.Max(0f, rotationResponsiveness);
             snapDistance = Mathf.Max(0f, snapDistance);
             maxPositionLag = Mathf.Max(0f, maxPositionLag);
+            referenceTargetRadius = Mathf.Max(0.01f, referenceTargetRadius);
+            minimumOffsetScale = Mathf.Max(0.1f, minimumOffsetScale);
+            maximumOffsetScale = Mathf.Max(minimumOffsetScale, maximumOffsetScale);
         }
 
         void LateUpdate()
@@ -68,7 +78,7 @@ namespace Farion.Gameplay.Flight
             ResolveCameraTransform();
             ResetCameraPayloadPose();
 
-            Vector3 desiredPosition = target.TransformPoint(localOffset);
+            Vector3 desiredPosition = target.TransformPoint(GetScaledLocalOffset());
             Vector3 viewDirection = target.position - desiredPosition;
             if (viewDirection.sqrMagnitude <= 0.0001f)
             {
@@ -98,6 +108,62 @@ namespace Farion.Gameplay.Flight
             }
 
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationT);
+        }
+
+        Vector3 GetScaledLocalOffset()
+        {
+            if (!scaleOffsetByTargetBounds)
+            {
+                return localOffset;
+            }
+
+            float targetRadius = CalculateTargetBoundsRadius();
+            if (targetRadius <= 0.0001f)
+            {
+                return localOffset;
+            }
+
+            float scale = Mathf.Clamp(
+                targetRadius / Mathf.Max(0.01f, referenceTargetRadius),
+                minimumOffsetScale,
+                maximumOffsetScale);
+            return localOffset * scale;
+        }
+
+        float CalculateTargetBoundsRadius()
+        {
+            if (target == null)
+            {
+                return 0f;
+            }
+
+            Renderer[] renderers = target.GetComponentsInChildren<Renderer>(false);
+            if (renderers.Length == 0)
+            {
+                return 0f;
+            }
+
+            Bounds bounds = default;
+            bool hasBounds = false;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                    continue;
+                }
+
+                bounds.Encapsulate(renderer.bounds);
+            }
+
+            return hasBounds ? bounds.extents.magnitude : 0f;
         }
 
         void ResolveCameraTransform()

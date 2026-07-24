@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 091949adce7c4383929de40bc8fb23d4, type: 3}
+  m_Name: SO_NickelFragmentNode
+  m_EditorClassIdentifier: 
+  nodeId: resource.nickel_fragment
+  displayName: Nickel Fragment Deposit
+  promptVerb: Collect
+  yieldedItem: {fileID: 11400000, guid: 76b0836b40b14a40983a274d83443158, type: 2}
+  minReserve: 2
+  maxReserve: 5
+  amountPerHarvest: 1
+  requiredToolTier: 0
+  harvestDurationSeconds: 0
+  requiresScan: 0
+  visualPrefab: {fileID: 100000, guid: 4ad02a787d1045c2bf61979e83775cd5, type: 3}

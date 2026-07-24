@@ -3,4 +3,6 @@
   <Project Path="Farion.Simulation.Runtime.csproj" />
   <Project Path="Farion.Rendering.Runtime.csproj" />
   <Project Path="Farion.Core.Runtime.csproj" />
+  <Project Path="Assembly-CSharp-firstpass.csproj" />
+  <Project Path="Farion.UI.Runtime.csproj" />
 </Solution>

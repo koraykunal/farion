@@ -9,7 +9,6 @@ namespace Farion.Gameplay.Interaction
     {
         [Header("Keys")]
         [SerializeField] Key inputSystemExitVehicleKey = Key.F;
-        [SerializeField] Key inputSystemInteractKey = Key.E;
 
         public BoardingInputState CurrentInput { get; private set; }
 
@@ -22,9 +21,7 @@ namespace Farion.Gameplay.Interaction
                 return;
             }
 
-            CurrentInput = new BoardingInputState(
-                WasPressedThisFrame(keyboard, inputSystemExitVehicleKey),
-                WasPressedThisFrame(keyboard, inputSystemInteractKey));
+            CurrentInput = new BoardingInputState(WasPressedThisFrame(keyboard, inputSystemExitVehicleKey));
         }
 
         void OnDisable()

@@ -1,4 +1,5 @@
 using Farion.Core.Physics;
+using Farion.Simulation.Celestial;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -10,6 +11,7 @@ namespace Farion.Rendering.Lighting
     public sealed class CelestialLightSource : MonoBehaviour
     {
         [SerializeField] CelestialBody body;
+        [SerializeField] CelestialRadiationSource radiationSource;
         [SerializeField] Material emissionMaterial;
         [SerializeField] bool applyEmissionMaterial = true;
         [SerializeField] bool disableShadowCasting = true;
@@ -17,6 +19,9 @@ namespace Farion.Rendering.Lighting
         [SerializeField] bool disableProbeLighting = true;
 
         public CelestialBody Body => body != null ? body : body = GetComponent<CelestialBody>();
+        public CelestialRadiationSource RadiationSource => radiationSource != null ? radiationSource : radiationSource = GetComponent<CelestialRadiationSource>();
+        public bool HasRadiationProfile => RadiationSource != null && RadiationSource.Profile != null;
+        public float ColorTemperatureKelvin => HasRadiationProfile ? RadiationSource.Profile.ColorTemperatureKelvin : 5778f;
         public Vector3 Position => Body != null ? Body.Position : transform.position;
         public float Radius => Body != null ? Body.Radius : 1f;
 
@@ -30,6 +35,11 @@ namespace Farion.Rendering.Lighting
             if (body == null)
             {
                 body = GetComponent<CelestialBody>();
+            }
+
+            if (radiationSource == null)
+            {
+                radiationSource = GetComponent<CelestialRadiationSource>();
             }
 
             ApplyStarRendererSettings();

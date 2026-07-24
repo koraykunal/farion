@@ -16,7 +16,7 @@ namespace Farion.Simulation.World
         [Header("Shifted Scene Roots")]
         [SerializeField] List<Transform> shiftedRoots = new();
 
-        [Header("Runtime Debug")]
+        [Header("Runtime State")]
         [SerializeField] Vector3 accumulatedOriginOffset;
         [SerializeField] Vector3 lastOriginOffset;
         [SerializeField] int shiftCount;
