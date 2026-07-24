@@ -50,10 +50,21 @@ moving.
   Do not make gameplay systems depend on debug gizmos or temporary visual maps.
 - Keep direct keyboard readers as temporary adapter components. Gameplay systems
   should consume input interfaces, not `Keyboard.current`.
+- Gameplay UI focus must not pause simulation. ESC, inventory, and later station
+  panels should use `PlayerControlLock` to block local player input while the
+  world, physics, resource streaming, and co-op simulation continue.
 - Put `PlayerInventory` on the active explorer actor before wiring any resource
   collection nodes. Resource nodes should use `ResourceNodeInteractable` and a
   `ResourceNodeDefinition` asset; item definitions are yielded by resource
   definitions, not assigned directly on scene nodes.
+- Item progression is category-driven, not linear tier-driven. Item definitions
+  carry `InventoryItemCategory`, `InventoryItemForm`, and `TechnologyDomain` so
+  crafting, research, upgrades, and future co-op authority can reason about
+  resource purpose without hard-coding names.
+- Crafting and research definitions are authored contracts only. They may
+  reference inventory items, recipes, and unlock capability ids, but current
+  progress, active jobs, researched ids, and station queues must live in runtime
+  services/save deltas later.
 - Resource deposits should keep generated base data and runtime deltas separate.
   `ResourceDepositData` describes deterministic base state; depletion is tracked
   as extracted amount against a `GeneratedEntityId`, not by mutating the
@@ -74,8 +85,15 @@ moving.
 2. Use the same biome and terrain-feature result to filter the first procedural
    resource deposits.
 3. Add a minimal resource streaming/spawn pass near the player.
-4. Add the first upgrade contract only after resource deposits produce stable
-   inventory input.
-5. Add save/load deltas for depleted resources and discovered points.
-6. Defer weather, fauna, and networking until the local exploration/resource
-   loop is readable.
+4. Add item taxonomy, recipe definitions, and research definitions before any
+   upgrade UI. This keeps progression tied to purpose and knowledge instead of
+   flat material tiers.
+5. Add local gameplay UI focus control for ESC and inventory without pausing
+   simulation.
+6. Prove one local economy chain: collect raw resources, refine them into
+   materials, unlock one research, and produce one upgrade component.
+7. Add the first upgrade contract only after that economy chain is readable.
+8. Add save/load deltas for depleted resources, crafted inventory changes,
+   researched ids, and discovered points.
+9. Defer weather, fauna, and networking until the local exploration/resource
+   and first economy loop are readable.

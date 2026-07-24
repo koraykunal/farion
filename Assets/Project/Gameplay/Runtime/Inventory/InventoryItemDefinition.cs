@@ -1,3 +1,4 @@
+using Farion.Gameplay.Research;
 using UnityEngine;
 
 namespace Farion.Gameplay.Inventory
@@ -9,10 +10,22 @@ namespace Farion.Gameplay.Inventory
         [SerializeField] string displayName = "Resource Item";
         [Min(1)]
         [SerializeField] int maxStackSize = 20;
+        [SerializeField] InventoryItemCategory category = InventoryItemCategory.Structural;
+        [SerializeField] InventoryItemForm form = InventoryItemForm.Raw;
+        [SerializeField] TechnologyDomain primaryTechDomain = TechnologyDomain.MaterialsEngineering;
+        [SerializeField] bool requiresIdentification;
+        [SerializeField] string unidentifiedDisplayName = "Unknown Material";
 
         public string ItemId => string.IsNullOrWhiteSpace(itemId) ? name : itemId.Trim();
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? ItemId : displayName.Trim();
         public int MaxStackSize => Mathf.Max(1, maxStackSize);
+        public InventoryItemCategory Category => category;
+        public InventoryItemForm Form => form;
+        public TechnologyDomain PrimaryTechDomain => primaryTechDomain;
+        public bool RequiresIdentification => requiresIdentification;
+        public string UnidentifiedDisplayName => string.IsNullOrWhiteSpace(unidentifiedDisplayName)
+            ? "Unknown Material"
+            : unidentifiedDisplayName.Trim();
 
         void OnValidate()
         {
@@ -27,6 +40,10 @@ namespace Farion.Gameplay.Inventory
             }
 
             maxStackSize = Mathf.Max(1, maxStackSize);
+            if (string.IsNullOrWhiteSpace(unidentifiedDisplayName))
+            {
+                unidentifiedDisplayName = "Unknown Material";
+            }
         }
     }
 }

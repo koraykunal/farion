@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
+using Farion.Gameplay.Input;
 using Farion.Gameplay.Resources;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.World;
@@ -20,6 +21,7 @@ namespace Farion.Gameplay.Interaction
 
         [Header("Input")]
         [SerializeField] MonoBehaviour boardingInputSource;
+        [SerializeField] PlayerControlLock controlLock;
 
         [Header("Spacecraft")]
         [SerializeField] Transform spacecraftRoot;
@@ -42,6 +44,7 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] FirstPersonMotor explorerMotor;
         [SerializeField] KeyboardFirstPersonInput explorerInput;
         [SerializeField] FirstPersonCameraRig firstPersonCameraRig;
+        [SerializeField] PlayerInteractionRaycaster explorerInteractionRaycaster;
         [Min(0f)]
         [SerializeField] float exitPoseClearance = 0.25f;
 
@@ -181,6 +184,9 @@ namespace Farion.Gameplay.Interaction
 
             SetBehaviourEnabled(explorerMotor, firstPerson);
             SetBehaviourEnabled(explorerInput, firstPerson);
+            explorerInput?.SetControlLock(controlLock);
+            spacecraftInput?.SetControlLock(controlLock);
+            explorerInteractionRaycaster?.SetControlLock(controlLock);
 
             if (firstPersonCameraRig != null && explorerMotor != null)
             {
@@ -388,6 +394,11 @@ namespace Farion.Gameplay.Interaction
 
         void ResolveReferences()
         {
+            if (controlLock == null)
+            {
+                controlLock = PlayerControlLock.Active;
+            }
+
             if (spacecraftRoot != null)
             {
                 spacecraftRigidbody ??= spacecraftRoot.GetComponent<Rigidbody>();
@@ -404,6 +415,7 @@ namespace Farion.Gameplay.Interaction
                 explorerRigidbody ??= explorerRoot.GetComponent<Rigidbody>();
                 explorerMotor ??= explorerRoot.GetComponent<FirstPersonMotor>();
                 explorerInput ??= explorerRoot.GetComponent<KeyboardFirstPersonInput>();
+                explorerInteractionRaycaster ??= explorerRoot.GetComponent<PlayerInteractionRaycaster>();
                 explorerCelestialProbe ??= explorerRoot.GetComponent<CelestialActorProbe>();
             }
         }

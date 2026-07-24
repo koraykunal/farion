@@ -11,7 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18e8ccdc9094421eb307bddf3252c480, type: 3}
   m_Name: SO_NickelFragmentItem
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   itemId: item.nickel_fragment
   displayName: Nickel Fragment
   maxStackSize: 30
+  category: 0
+  form: 0
+  primaryTechDomain: 0
+  requiresIdentification: 0
+  unidentifiedDisplayName: Unknown Ore

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Farion.Gameplay.Input;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
@@ -20,32 +21,26 @@ namespace Farion.Gameplay.Flight
         [SerializeField] Key inputSystemRollLeftKey = Key.Q;
         [SerializeField] Key inputSystemRollRightKey = Key.E;
         [SerializeField] float mouseSensitivity = 1f;
-        [SerializeField] bool lockCursorOnPlay = true;
+
+        [Header("Control Lock")]
+        [SerializeField] PlayerControlLock controlLock;
 
         public SpacecraftInputState CurrentInput { get; private set; }
-
-        void OnEnable()
-        {
-            if (Application.isPlaying && lockCursorOnPlay)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-        }
 
         void OnDisable()
         {
             CurrentInput = SpacecraftInputState.None;
-
-            if (Application.isPlaying && lockCursorOnPlay)
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
         }
 
         void Update()
         {
+            ResolveControlLock();
+            if (IsGameplayInputLocked())
+            {
+                CurrentInput = SpacecraftInputState.None;
+                return;
+            }
+
             Keyboard keyboard = Keyboard.current;
             Mouse mouse = Mouse.current;
             if (keyboard == null)
@@ -67,6 +62,24 @@ namespace Farion.Gameplay.Flight
                 look,
                 Axis(keyboard, inputSystemRollLeftKey, inputSystemRollRightKey),
                 IsPressed(keyboard, inputSystemBoostKey));
+        }
+
+        public void SetControlLock(PlayerControlLock nextControlLock)
+        {
+            controlLock = nextControlLock;
+        }
+
+        void ResolveControlLock()
+        {
+            if (controlLock == null)
+            {
+                controlLock = PlayerControlLock.Active;
+            }
+        }
+
+        bool IsGameplayInputLocked()
+        {
+            return controlLock != null && controlLock.IsGameplayInputLocked;
         }
 
         static int Axis(Keyboard keyboard, Key negative, Key positive)

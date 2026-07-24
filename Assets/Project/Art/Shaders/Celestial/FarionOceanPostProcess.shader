@@ -192,7 +192,6 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 float3 rayOrigin,
                 float3 rayDirection,
                 float sceneDistance,
-                float3 scenePositionWS,
                 bool sceneIsSky)
             {
                 float oceanRadius = _FarionOceanSpheres[index].w;
@@ -208,21 +207,6 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 if (oceanHit.x < 0.0)
                 {
                     return sourceColor;
-                }
-
-                half terrainAllowsWater = 1.0h;
-                if (!sceneIsSky && !cameraInsideOcean)
-                {
-                    float sceneSurfaceRadius = length(scenePositionWS - centre);
-                    float terrainFadeWidth = max(bodyRadius * 0.0015, 0.01);
-                    terrainAllowsWater = 1.0h - smoothstep(
-                        oceanRadius - terrainFadeWidth,
-                        oceanRadius + terrainFadeWidth,
-                        sceneSurfaceRadius);
-                    if (terrainAllowsWater <= 0.001h)
-                    {
-                        return sourceColor;
-                    }
                 }
 
                 float segmentStart;
@@ -241,6 +225,17 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     exitsToAir))
                 {
                     return sourceColor;
+                }
+
+                half waterVisibility = 1.0h;
+                if (!sceneIsSky && !cameraInsideOcean)
+                {
+                    float surfaceOcclusionWidth = max(bodyRadius * 0.00075, 0.01);
+                    waterVisibility = smoothstep(0.0, surfaceOcclusionWidth, sceneDistance - segmentStart);
+                    if (waterVisibility <= 0.001h)
+                    {
+                        return sourceColor;
+                    }
                 }
 
                 float surfaceDistance = entersFromAir ? segmentStart : segmentEnd;
@@ -323,7 +318,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     surfaceTransmission);
 
                 half3 waterColor = lerp(transmittedWater, reflectedSurface, surfaceReflection) + surfaceGlint;
-                return lerp(sourceColor, waterColor, terrainAllowsWater);
+                return lerp(sourceColor, waterColor, waterVisibility);
             }
 
             half4 Fragment(Varyings input) : SV_Target
@@ -346,7 +341,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 bool sceneIsSky = IsSkyDepth(rawDepth);
                 for (int i = 0; i < _FarionOceanEffectCount; i++)
                 {
-                    color = ApplyOcean(color, i, rayOrigin, rayDirection, sceneDistance, scenePositionWS, sceneIsSky);
+                    color = ApplyOcean(color, i, rayOrigin, rayDirection, sceneDistance, sceneIsSky);
                 }
 
                 return half4(color, source.a);

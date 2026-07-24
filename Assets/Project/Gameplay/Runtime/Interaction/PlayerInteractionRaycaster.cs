@@ -1,4 +1,5 @@
 using Farion.Gameplay.Character;
+using Farion.Gameplay.Input;
 using UnityEngine;
 
 namespace Farion.Gameplay.Interaction
@@ -11,6 +12,7 @@ namespace Farion.Gameplay.Interaction
 
         [Header("Input")]
         [SerializeField] MonoBehaviour inputSource;
+        [SerializeField] PlayerControlLock controlLock;
 
         [Header("Raycast")]
         [SerializeField] Transform viewReference;
@@ -55,6 +57,13 @@ namespace Farion.Gameplay.Interaction
         void Update()
         {
             ResolveInputSource();
+            ResolveControlLock();
+            if (IsGameplayInputLocked())
+            {
+                ClearTarget();
+                return;
+            }
+
             RefreshTarget();
 
             FirstPersonInputState input = resolvedInput?.CurrentInput ?? FirstPersonInputState.None;
@@ -68,12 +77,22 @@ namespace Farion.Gameplay.Interaction
             }
         }
 
-        void RefreshTarget()
+        public void SetControlLock(PlayerControlLock nextControlLock)
+        {
+            controlLock = nextControlLock;
+        }
+
+        void ClearTarget()
         {
             currentInteractable = null;
             currentTargetTransform = null;
             currentPrompt = string.Empty;
             hasTarget = false;
+        }
+
+        void RefreshTarget()
+        {
+            ClearTarget();
 
             Transform view = viewReference != null ? viewReference : transform;
             Ray ray = new(view.position, view.forward);
@@ -131,6 +150,19 @@ namespace Farion.Gameplay.Interaction
             }
 
             resolvedInput ??= GetComponent<IFirstPersonInputSource>();
+        }
+
+        void ResolveControlLock()
+        {
+            if (controlLock == null)
+            {
+                controlLock = PlayerControlLock.Active;
+            }
+        }
+
+        bool IsGameplayInputLocked()
+        {
+            return controlLock != null && controlLock.IsGameplayInputLocked;
         }
 
         bool IsOwnCollider(Collider candidate)

@@ -15,7 +15,6 @@ namespace Farion.Gameplay.Character
         [SerializeField] float eyeHeight = 1.65f;
         [Range(1f, 89f)]
         [SerializeField] float pitchLimit = 82f;
-        [SerializeField] bool lockCursorOnEnable = true;
         [Min(0f)]
         [SerializeField] float positionResponsiveness = 28f;
         [Min(0f)]
@@ -31,11 +30,6 @@ namespace Farion.Gameplay.Character
         {
             ResolveInputSource();
             snapNextFrame = true;
-            if (lockCursorOnEnable && Application.isPlaying)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
         }
 
         void OnValidate()

@@ -30,6 +30,22 @@ high-end celestial rendering.
     characters.
 - `Assets/Project/Gameplay/Runtime/Character`
   - On-foot first-person movement, view, and later suit/survival interaction.
+- `Assets/Project/Gameplay/Runtime/Input`
+  - Local player control locks shared by gameplay input adapters. UI focus,
+    dialogue, cinematics, or station interaction can block player controls
+    without pausing simulation.
+- `Assets/Project/Gameplay/Runtime/Inventory`
+  - Item definitions, item taxonomy, stack data, and player inventory state.
+- `Assets/Project/Gameplay/Runtime/Resources`
+  - Deterministic resource deposit generation, node definitions, streaming, and
+    runtime depletion deltas.
+- `Assets/Project/Gameplay/Runtime/Crafting`
+  - Recipe definitions and crafting station categories. Runtime station
+    execution should consume these definitions later; definitions must not store
+    active crafting jobs.
+- `Assets/Project/Gameplay/Runtime/Research`
+  - Research definitions and technology domains. Research unlock state belongs
+    in runtime/save data, not in ScriptableObject assets.
 - `Assets/Project/Rendering/Runtime`
   - URP-specific visual systems such as procedural celestial presentation,
     ocean, atmosphere, stars, and camera render passes.
@@ -44,10 +60,22 @@ high-end celestial rendering.
     reference assets.
 - `Assets/Project/Prefabs`
   - Authored prefabs only. Do not recreate scene-builder workflows here.
+- `Assets/Project/Prefabs/UI/Common`
+  - Shared UI prefabs such as `UI_MenuButton.prefab` and panel frame pieces.
+- `Assets/Project/Prefabs/UI/Gameplay`
+  - Gameplay HUD, pause menu, inventory panel, and gameplay slot prefabs.
 - `Assets/Project/Scenes`
   - Source-controlled authored scenes.
 - `Assets/Project/Docs`
   - Architecture notes and setup instructions.
+- `Assets/Project/UI/Runtime/Common`
+  - Reusable UI presentation components such as shared menu button visuals and
+    panel transitions. These components must not know about main menu,
+    gameplay, inventory, save, or upgrade actions.
+- `Assets/Project/UI/Runtime/Gameplay`
+  - Gameplay screen state, panel switching, inventory presentation, and local
+    cursor/control focus. This layer may reference Gameplay contracts but must
+    not own inventory, crafting, research, or survival state.
 
 ## Assembly Boundaries
 
@@ -62,6 +90,10 @@ high-end celestial rendering.
 - `Farion.Rendering.Runtime`
   - Depends on Core and Simulation. URP-specific atmosphere/ocean work belongs
     here, not in Core.
+- `Farion.UI.Runtime`
+  - Depends on Gameplay for presentation of local player state. It may request
+    local input locks, but gameplay authority and persistent state remain in
+    Gameplay.
 
 ## Gravity Model
 

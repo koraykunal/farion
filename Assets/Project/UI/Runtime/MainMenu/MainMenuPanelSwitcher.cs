@@ -1,4 +1,5 @@
 using UnityEngine;
+using Farion.UI.Common;
 
 namespace Farion.UI.MainMenu
 {
@@ -14,49 +15,57 @@ namespace Farion.UI.MainMenu
 
         public void ShowMain()
         {
-            ShowOnly(mainPanel);
+            ShowOnly(mainPanel, Application.isPlaying);
         }
 
         public void ShowSettings()
         {
-            ShowOnly(settingsPanel);
+            ShowOnly(settingsPanel, Application.isPlaying);
         }
 
         public void ShowCredits()
         {
-            ShowOnly(creditsPanel);
+            ShowOnly(creditsPanel, Application.isPlaying);
         }
 
         public void ShowConfirmDialog()
         {
-            ShowOnly(confirmDialog);
+            ShowOnly(confirmDialog, Application.isPlaying);
         }
 
         public void ShowLoading()
         {
-            ShowOnly(loadingOverlay);
+            ShowOnly(loadingOverlay, Application.isPlaying);
         }
 
         void Awake()
         {
-            ShowMain();
+            ShowOnly(mainPanel, animated: false);
         }
 
-        void ShowOnly(GameObject activePanel)
+        void ShowOnly(GameObject activePanel, bool animated)
         {
-            SetActive(mainPanel, activePanel == mainPanel);
-            SetActive(settingsPanel, activePanel == settingsPanel);
-            SetActive(creditsPanel, activePanel == creditsPanel);
-            SetActive(confirmDialog, activePanel == confirmDialog);
-            SetActive(loadingOverlay, activePanel == loadingOverlay);
+            SetActive(mainPanel, activePanel == mainPanel, animated);
+            SetActive(settingsPanel, activePanel == settingsPanel, animated);
+            SetActive(creditsPanel, activePanel == creditsPanel, animated);
+            SetActive(confirmDialog, activePanel == confirmDialog, animated);
+            SetActive(loadingOverlay, activePanel == loadingOverlay, animated);
         }
 
-        static void SetActive(GameObject target, bool active)
+        static void SetActive(GameObject target, bool active, bool animated)
         {
-            if (target != null)
+            if (target == null)
             {
-                target.SetActive(active);
+                return;
             }
+
+            if (target.TryGetComponent(out FarionPanelFader fader))
+            {
+                fader.SetVisible(active, animated);
+                return;
+            }
+
+            target.SetActive(active);
         }
     }
 }

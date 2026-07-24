@@ -932,6 +932,152 @@ In Play Mode, exit the ship, look at the node, press `E`, and verify the node
 disables itself and `Player Explorer > PlayerInventory > Stacks` gains one
 `Iron Ore`.
 
+## First Economy Contracts
+
+The first economy pass is data-only. It does not add UI, station interaction,
+save data, or upgrade application yet. Its purpose is to keep item purpose,
+crafting recipes, and research unlocks authored cleanly before runtime systems
+consume them.
+
+Item definitions live under `Assets/Project/Design/Gameplay/Inventory` and now
+carry:
+
+- `Category`: Structural, Electronic, Energy, Chemical, Biological, or Exotic.
+- `Form`: Raw, Refined, Component, Consumable, Research Sample, or Artifact.
+- `Primary Tech Domain`: the research branch most directly associated with the
+  item.
+- `Requires Identification`: reserved for later research-gated unknown
+  materials.
+
+Current starter item chain:
+
+- Raw: `SO_IronOreItem.asset`, `SO_NickelFragmentItem.asset`,
+  `SO_IceCrystalItem.asset`.
+- Refined: `SO_IronIngotItem.asset`, `SO_NickelPlateItem.asset`,
+  `SO_CoolantItem.asset`.
+- Components: `SO_ReinforcedHullPanelItem.asset`,
+  `SO_ThermalRegulatorItem.asset`.
+
+Recipe definitions live under `Assets/Project/Design/Gameplay/Crafting`:
+
+- `SO_Recipe_IronIngot.asset`: Iron Ore to Iron Ingot.
+- `SO_Recipe_NickelPlate.asset`: Nickel Fragment to Nickel Plate.
+- `SO_Recipe_Coolant.asset`: Ice Crystal to Coolant.
+- `SO_Recipe_ReinforcedHullPanel.asset`: refined structural materials to a hull
+  component.
+- `SO_Recipe_ThermalRegulator.asset`: coolant and nickel plate to a thermal
+  component, locked behind research.
+
+Research definitions live under `Assets/Project/Design/Gameplay/Research`:
+
+- `SO_Research_ThermalRegulation.asset`: consumes early frozen/structural
+  materials, unlocks `SO_Recipe_ThermalRegulator.asset`, and declares the future
+  capability id `capability.environment.thermal_regulation`.
+
+Do not wire multiplayer, station queues, or upgrade application directly into
+these ScriptableObjects. The next runtime layer should consume recipe/research
+definitions through a gameplay service that can later become server-authority.
+
+## Gameplay UI Focus
+
+Gameplay UI focus is local-only. It must not pause simulation because the game
+is planned for co-op. ESC, inventory, and later station screens block local
+player controls through `PlayerControlLock` while gravity, ships, resources,
+and other players keep running.
+
+Shared visual components:
+
+- `MenuButtonView` owns menu button visuals, hover/selection animation, icon,
+  title, subtitle, disabled state, and DOTween motion.
+- `MainMenuButton` only binds the shared button view to `MainMenuAction`.
+- `GameplayMenuButton` only binds the shared button view to
+  `GameplayMenuAction`.
+- `FarionPanelFader` is optional on panels and gives the same fade/slide
+  behavior to main menu and gameplay panels.
+
+Create a gameplay UI root in `SC_PhysicsSandbox`:
+
+1. Add a screen-space `Canvas`.
+2. Add an `EventSystem` with `InputSystemUIInputModule` if the scene does not
+   already have one.
+3. Add `GameplayUiController` to the canvas root. Unity also adds the required
+   `PlayerControlLock` component.
+4. Add `GameplayPanelSwitcher` to the same root.
+5. Create these child roots and assign them to `GameplayPanelSwitcher`:
+   - `HudRoot`
+   - `PauseMenuPanel`
+   - `InventoryPanel`
+6. Keep `PauseMenuPanel` and `InventoryPanel` inactive in the authored scene.
+7. Assign `Player Explorer > PlayerInventory` to `GameplayUiController >
+   Player Inventory`.
+8. Add `InventoryPanelPresenter` to `InventoryPanel`.
+9. Create an inventory slot child prefab or scene object with
+   `InventorySlotView` and TMP text fields for name, detail, and quantity.
+10. Assign the slot container and slot prefab/view list to
+    `InventoryPanelPresenter`.
+
+Runtime behavior:
+
+- `Escape` toggles `PauseMenuPanel`.
+- `I` toggles `InventoryPanel`.
+- Opening either panel unlocks and shows the cursor.
+- Closing all panels locks and hides the cursor.
+- While a panel is open, first-person look/move, spacecraft input, and
+  interaction raycasts read `PlayerControlLock` and return empty input.
+- `Time.timeScale` must stay unchanged.
+
+### Pause Menu Visual Target
+
+Use the shared `MenuButtonView` look for the reference-style vertical menu.
+The reusable button prefab is:
+
+`Assets/Project/Prefabs/UI/Common/UI_MenuButton.prefab`
+
+Recommended pause hierarchy:
+
+```text
+GameplayCanvas
+`-- PauseMenuPanel
+    |-- BackgroundScrim
+    `-- MenuColumn
+        |-- BrandText
+        |-- StateText
+        |-- ResumeButton
+        |-- InventoryButton
+        |-- BlueprintsButton
+        |-- JournalButton
+        |-- ShipButton
+        |-- MapButton
+        |-- OptionsButton
+        |-- SaveButton
+        |-- ExitToMainMenuButton
+        `-- QuitGameButton
+```
+
+`PauseMenuPanel`:
+
+- Full stretch anchors.
+- Add `CanvasGroup`.
+- Add `FarionPanelFader`.
+- Add a dark transparent image as `BackgroundScrim`.
+- Keep the panel inactive in the authored scene.
+
+`MenuColumn`:
+
+- Left anchored.
+- Suggested width: `520`.
+- Suggested left padding: `32`.
+- Use a `VerticalLayoutGroup` for the button list only, not for the full panel
+  background.
+
+Each button:
+
+- Use `Assets/Project/Prefabs/UI/Common/UI_MenuButton.prefab`.
+- Add `GameplayMenuButton` on gameplay menu instances.
+- Set `Action` to the matching `GameplayMenuAction`.
+- Add `MainMenuButton` on main-menu instances. Do not create a second visual
+  button prefab unless a screen genuinely needs a different layout.
+
 ### Terrain Mesh Collision
 
 The Solar-System reference generates a separate collision-resolution mesh and
