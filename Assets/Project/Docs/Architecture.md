@@ -67,7 +67,8 @@ high-end celestial rendering.
 - `Assets/Project/Scenes`
   - Source-controlled authored scenes.
 - `Assets/Project/Docs`
-  - Architecture notes and setup instructions.
+  - Architecture notes, setup instructions, beta planning, and asset intake
+    rules.
 - `Assets/Project/UI/Runtime/Common`
   - Reusable UI presentation components such as shared menu button visuals and
     panel transitions. These components must not know about main menu,
@@ -257,9 +258,6 @@ The simulation uses:
   surface-relative velocities, ocean state, and atmosphere state for any
   Rigidbody actor. Spacecraft and on-foot characters must consume this contract
   instead of duplicating body-relative calculations.
-- `SpacecraftCelestialProbe` is a compatibility wrapper for existing authored
-  spacecraft scene references. New systems should use `CelestialActorProbe`
-  directly.
 - `SpacecraftLandingProfile` owns the current landing policy thresholds:
   altitude bands, safe touchdown speeds, high-descent limits, and deorbit
   descent speed, and safe touchdown slope. Tune landing difficulty through this
@@ -300,9 +298,9 @@ The simulation uses:
   state into pilot-facing guidance: severity level, command, advisory text, and
   normalized speed/stress ratios. It can warn the pilot to seek a flatter
   surface, but it still does not steer the ship or own UI.
-- `SpacecraftLandingDebugHud` is a sandbox-only IMGUI presenter for reading the
-  active landing guidance in Play Mode. It can be replaced by a cockpit UI
-  without changing the landing computer or guidance computer.
+- Gameplay HUD presenters read telemetry such as landing guidance, interaction
+  prompts, inventory state, and later objective state. They must not compute
+  landing rules, mutate inventory, or own progression state.
 - `FirstPersonMotorProfile` owns on-foot movement tuning: walk/sprint speed,
   acceleration, jump speed, ground probe, slope limit, and upright response.
 - `FirstPersonMotor` is a Rigidbody/CapsuleCollider first-person movement

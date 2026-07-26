@@ -49,7 +49,7 @@ namespace Farion.Rendering.Lighting
         [SerializeField] CameraClearFlags cameraClearFlags = CameraClearFlags.Skybox;
         [SerializeField] Color cameraBackground = Color.black;
         [Min(0.001f)]
-        [SerializeField] float nearClipPlane = 0.05f;
+        [SerializeField] float nearClipPlane = 0.1f;
         [Min(1f)]
         [SerializeField] float farClipPlane = 5000f;
         [SerializeField] bool allowHdr = true;

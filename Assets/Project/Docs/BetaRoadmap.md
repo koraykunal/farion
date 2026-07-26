@@ -30,6 +30,9 @@ moving.
 
 ## Production Boundaries
 
+- Import item, resource, and UI assets through `Assets/Project/Docs/AssetIntake.md`
+  so runtime art, source art, ScriptableObject definitions, and prefabs stay in
+  separate ownership paths.
 - Keep debug HUDs behind editor/development build flags.
 - Keep planetary generation deterministic. `PlanetaryGenerationProfile` owns
   planet identity, generation-environment assumptions, shape, biome

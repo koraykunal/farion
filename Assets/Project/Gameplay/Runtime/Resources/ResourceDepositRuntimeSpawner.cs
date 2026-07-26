@@ -41,17 +41,16 @@ namespace Farion.Gameplay.Resources
         bool loggedNoSpawnWarning;
         float nextStreamRefreshTime;
 
-        [Header("Runtime")]
-        [SerializeField] int generatedDepositCount;
-        [SerializeField] int spawnedNodeCount;
-        [SerializeField] int skippedPoseOrOceanCount;
-        [SerializeField] int skippedMissingPrefabCount;
-        [SerializeField] int skippedDepletedDepositCount;
-        [SerializeField] int skippedOutOfRangeDepositCount;
-        [SerializeField] int trackedDepositDeltaCount;
-        [SerializeField] int depositsWithinSpawnRadiusCount;
-        [SerializeField] float nearestAvailableDepositDistance;
-        [SerializeField] string activeTrackingTargetName;
+        [System.NonSerialized] int generatedDepositCount;
+        [System.NonSerialized] int spawnedNodeCount;
+        [System.NonSerialized] int skippedPoseOrOceanCount;
+        [System.NonSerialized] int skippedMissingPrefabCount;
+        [System.NonSerialized] int skippedDepletedDepositCount;
+        [System.NonSerialized] int skippedOutOfRangeDepositCount;
+        [System.NonSerialized] int trackedDepositDeltaCount;
+        [System.NonSerialized] int depositsWithinSpawnRadiusCount;
+        [System.NonSerialized] float nearestAvailableDepositDistance;
+        [System.NonSerialized] string activeTrackingTargetName;
 
         void Awake()
         {

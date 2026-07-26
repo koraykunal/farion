@@ -63,7 +63,7 @@ On `Simulation`:
 1. Add `WorldOriginRebaser`.
 2. Assign `Assets/Project/Design/World/SO_WorldOriginSettings.asset` to
    `Settings`.
-3. Assign `Probe Ship` to `Tracking Target` while testing ship travel. If this
+3. Assign `Player Starter Shuttle` to `Tracking Target` while testing ship travel. If this
    is empty, rebasing is disabled and the component will warn.
 4. Add these transforms to `Shifted Roots`:
    - `Bodies`
@@ -73,14 +73,14 @@ On `Simulation`:
 5. Start with `Rebase Distance = 1000` on `SO_WorldOriginSettings`.
 
 Do not add `Simulation` itself to `Shifted Roots`. The simulation service has no
-world position ownership; only authored scene content should move. `Probe Ship`
+world position ownership; only authored scene content should move. `Player Starter Shuttle`
 should live under `Actors`; do not rely on automatic target insertion. Rebase
 shifts positions only, preserves Rigidbody velocities, and runs in `FixedUpdate`
 so physics and camera follow do not fight each other.
 
 Use `WorldOriginRebaser > Validate Setup` after changing the hierarchy. In Play
 Mode, `Shift Count`, `Last Origin Offset`, and `Tracking Distance From Origin`
-show whether rebasing is actually happening. `Probe Ship` local values may stay
+show whether rebasing is actually happening. `Player Starter Shuttle` local values may stay
 large if it is nested under a shifted root; what matters is that its world
 position and camera remain near local origin after a shift.
 
@@ -445,7 +445,7 @@ Create an authored lighting setup:
    - `Primary Source`: `Test Star`
    - `Main Directional Light`: the Directional Light under `Lighting`
    - `Sync Light Position To Source`: enabled
-   - `Lighting Focus`: `Probe Ship` while flying, or `CameraRig` while viewing
+   - `Lighting Focus`: `Player Starter Shuttle` while flying, or `CameraRig` while viewing
      the sandbox.
    - `Scene Camera`: the main camera.
 8. Disable `Auto Find Primary Source`, `Auto Find Main Directional Light`, and
@@ -537,11 +537,11 @@ Before moving to spacecraft controls:
 - Confirm the star remains locked.
 - Confirm the actor uses project gravity rather than Unity default gravity.
 
-## Spacecraft Probe
+## Player Starter Shuttle
 
-After the gravity actor test works, create a spacecraft probe:
+After the gravity actor test works, create the player starter spacecraft:
 
-1. Create a capsule or cube under `Actors` named `Probe Ship`.
+1. Create an empty object under `Actors` named `Player Starter Shuttle`.
 2. Add `Rigidbody`.
 3. Add `KeyboardSpacecraftInput`.
 4. Add `SpacecraftMotor`.
@@ -552,7 +552,7 @@ After the gravity actor test works, create a spacecraft probe:
    `GravitySimulation.Active`.
 7. Keep Unity's default `GravityActor` off this object. `SpacecraftMotor` already
    applies project gravity.
-8. Move the probe near the planet, outside the surface. For the current test
+8. Move the ship near the planet, outside the surface. For the current test
    planet, a starting position around `(350, 70, -120)` is useful.
 9. Add `CelestialActorProbe`.
 10. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
@@ -580,17 +580,38 @@ After the gravity actor test works, create a spacecraft probe:
 26. Keep `Apply Buoyancy`, `Apply Drag`, and `Damp Angular Velocity` enabled.
 27. Add `SpacecraftOrbitComputer`.
 28. Assign the same `CelestialActorProbe` to `Celestial Probe`.
-29. Leave `Simulation` empty unless you need an explicit scene reference; empty
-    means it uses `GravitySimulation.Active`.
+29. Assign `Simulation > GravitySimulation` to `Simulation`.
 30. Add `SpacecraftEntryCorridorComputer`.
 31. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultEntryCorridorProfile.asset`
     to `Profile`.
 32. Assign the same `CelestialActorProbe` and `SpacecraftOrbitComputer`.
-33. Add `SpacecraftLandingDebugHud` while testing landing.
-34. Assign `Guidance Computer`, `Landing Computer`, `Orbit Computer`,
-    `Entry Corridor Computer`, `Celestial Probe`, `Surface Contact Probe`, and
-    `Ocean Interactor` from the same `Probe Ship`.
-35. Keep `Show Hud` enabled while tuning, or press `F9` in Play Mode to hide it.
+33. Read `SpacecraftLandingGuidanceComputer`, `SpacecraftLandingComputer`,
+    `SpacecraftOrbitComputer`, `SpacecraftEntryCorridorComputer`,
+    `CelestialActorProbe`, `SpacecraftSurfaceContactProbe`, and
+    `SpacecraftOceanInteractor` directly in the Inspector while tuning. The
+    product-facing HUD should consume those components later; do not add a
+    separate IMGUI debug presenter to production scenes.
+
+Starter shuttle scene contract:
+
+- Keep the physics/input owner on `Player Starter Shuttle`. Do not rotate this
+  root to fix model orientation.
+- Put the imported FBX instance under `VisualRoot`; use `VisualRoot` local
+  rotation for model-facing corrections.
+- Do not keep a root `MeshRenderer`, `MeshFilter`, or broad root `BoxCollider`
+  on `Player Starter Shuttle`. The root owns runtime systems and Rigidbody
+  only.
+- Use simple compound child colliders under the ship root: `COL_Hull_Main`,
+  `COL_Hull_Nose`, `COL_Hull_EngineBlock`, `COL_Wing_Left`, `COL_Wing_Right`,
+  and `COL_Landing_Footprint`.
+- Keep `BoardingPoint` at the side hatch/door trigger. Assign its
+  `VehicleBoardingPoint > Exit Point` to `ExteriorExitPoint`.
+- Add `PilotSeatPoint`, `InteriorSpawnPoint`, and `ExteriorExitPoint` under the
+  ship root. `InteriorSpawnPoint` is where `F` places the explorer when exiting
+  the pilot seat into the cockpit.
+- Assign those three points on `SpacecraftRig`; camera targets should use named
+  child transforms such as `ChaseCameraTarget`, `LandingCameraTarget`, and
+  `CockpitCameraTarget`.
 
 Controls:
 
@@ -604,8 +625,8 @@ Controls:
 For a camera:
 
 1. Add `SpacecraftCameraRig` to the scene camera or a `CameraRig` child.
-2. Assign `Probe Ship` as the target.
-3. Start with `Local Offset = (0, 4, -14)`.
+2. Assign `Player Starter Shuttle > ChaseCameraTarget` as the target.
+3. Start with `Local Offset = (0, 5.5, -18)`.
 4. Keep `Snap To Target` enabled. This matches the Solar-System reference more
    closely than a delayed follow camera. Disable it only if you deliberately
    want cinematic camera lag later.
@@ -613,7 +634,7 @@ For a camera:
 This is only the first ship-control sandbox. Do not add survival, inventory,
 automation, networking, HUD, or landing systems until this motion feels stable.
 
-While in Play Mode, select `Probe Ship` and watch
+While in Play Mode, select `Player Starter Shuttle` and watch
 `CelestialActorProbe > Runtime Sample`:
 
 - `Dominant Body Name` should become the nearest/highest-gravity body.
@@ -703,8 +724,9 @@ Then check `SpacecraftEntryCorridorComputer > Runtime Entry Corridor`:
 - `Overspeed` means the ship should slow down before committing to atmosphere
   entry.
 
-`SpacecraftLandingDebugHud` mirrors these values in Game view. Treat it as
-temporary sandbox instrumentation, not the final survival/cockpit interface.
+Landing, orbit, entry, and ocean telemetry are currently inspected from the
+ship components. Surface these values through the gameplay HUD only after the
+resource/inventory/crafting loop is readable.
 
 ## First-Person Explorer
 
@@ -746,7 +768,7 @@ For the first-person camera:
 
 On `Simulation > WorldOriginRebaser`, keep `Actors` and `CameraRig` in
 `Shifted Roots`. While testing the explorer alone, set `Tracking Target` to
-`Player Explorer`. When testing the ship again, set it back to `Probe Ship`.
+`Player Explorer`. When testing the ship again, set it back to `Player Starter Shuttle`.
 
 Controls:
 
@@ -777,7 +799,7 @@ Then check `FirstPersonMotor > Runtime Movement`:
 Do not add inventory, tools, resource collection, health, or co-op replication
 until this basic explorer can walk, jump, and camera-look reliably on the
 planet surface. The next gameplay layer is possession/boarding: a single active
-control owner that switches between `Player Explorer` and `Probe Ship`.
+control owner that switches between `Player Explorer` and `Player Starter Shuttle`.
 
 ## Player Possession And Boarding
 
@@ -787,15 +809,13 @@ physics. Only the active input source and camera presenter change.
 
 Create the boarding point:
 
-1. Under `Probe Ship`, create an empty child named `Boarding Point`.
+1. Under `Player Starter Shuttle`, create an empty child named `BoardingPoint`.
 2. Place it near the hatch/door where the player should stand to re-enter.
-3. Rotate its green axis/up away from the planet surface if it also acts as the
-   exit pose.
+3. Match its forward direction to `ExteriorExitPoint` if it also drives a door
+   trigger.
 4. Add `VehicleBoardingPoint`.
-5. Keep `Interaction Radius = 2.5` for the first test.
-6. Optional but recommended: create another child named `Exit Point`, place it
-   slightly outside the ship, and assign it to `VehicleBoardingPoint > Exit
-   Point`.
+5. Use a trigger `BoxCollider` around the side hatch.
+6. Assign `ExteriorExitPoint` to `VehicleBoardingPoint > Exit Point`.
 
 Create the possession owner:
 
@@ -804,13 +824,13 @@ Create the possession owner:
 3. Add `PlayerPossessionController`.
 4. Set `Initial Mode = Spacecraft`.
 5. Assign `KeyboardBoardingInput` to `Boarding Input Source`.
-6. Assign `Probe Ship` to `Spacecraft Root`.
-7. Assign `Probe Ship > Rigidbody` to `Spacecraft Rigidbody`.
-8. Assign `Probe Ship > SpacecraftMotor` to `Spacecraft Motor`.
-9. Assign `Probe Ship > KeyboardSpacecraftInput` to `Spacecraft Input`.
+6. Assign `Player Starter Shuttle` to `Spacecraft Root`.
+7. Assign `Player Starter Shuttle > Rigidbody` to `Spacecraft Rigidbody`.
+8. Assign `Player Starter Shuttle > SpacecraftMotor` to `Spacecraft Motor`.
+9. Assign `Player Starter Shuttle > KeyboardSpacecraftInput` to `Spacecraft Input`.
 10. Assign the scene camera's `SpacecraftCameraRig` to `Spacecraft Camera Rig`.
-11. Assign `Probe Ship` or a camera target child to `Spacecraft Camera Target`.
-12. Assign `Probe Ship > Boarding Point` to `Boarding Point`.
+11. Assign `Player Starter Shuttle > ChaseCameraTarget` to `Spacecraft Camera Target`.
+12. Assign `Player Starter Shuttle > BoardingPoint` to `Boarding Point`.
 13. Assign `Player Explorer` to `Explorer Root`.
 14. Assign `Player Explorer > Rigidbody` to `Explorer Rigidbody`.
 15. Assign `Player Explorer > FirstPersonMotor` to `Explorer Motor`.
@@ -828,13 +848,16 @@ Controls:
 In Play Mode:
 
 1. Start in the ship.
-2. Press `F`. `Player Explorer` should activate at `Exit Point`.
+2. Press `F`. `Player Explorer` should activate at `InteriorSpawnPoint` in the
+   cockpit/interior.
 3. The ship should keep simulating physics, but `KeyboardSpacecraftInput` should
    be disabled.
 4. `FirstPersonCameraRig` and `KeyboardFirstPersonInput` should be enabled.
-5. Walk back into `Boarding Point` radius and press `E`.
-6. `Player Explorer` should deactivate, `SpacecraftCameraRig` should re-enable,
-   and `WorldOriginRebaser > Tracking Target` should return to `Probe Ship`.
+5. Open the boarding door/ramp, then walk through `ExteriorExitPoint.forward` to
+   transition from ship interior to on-foot outside.
+6. Walk back into `BoardingPoint` radius and press `E`.
+7. `Player Explorer` should deactivate, `SpacecraftCameraRig` should re-enable,
+   and `WorldOriginRebaser > Tracking Target` should return to `Player Starter Shuttle`.
 
 ## First Resource Loop
 
@@ -1007,13 +1030,18 @@ Create a gameplay UI root in `SC_PhysicsSandbox`:
    - `HudRoot`
    - `PauseMenuPanel`
    - `InventoryPanel`
-6. Keep `PauseMenuPanel` and `InventoryPanel` inactive in the authored scene.
+6. Keep `HudRoot` active. Keep `PauseMenuPanel` and `InventoryPanel` inactive
+   in the authored scene.
 7. Assign `Player Explorer > PlayerInventory` to `GameplayUiController >
    Player Inventory`.
-8. Add `InventoryPanelPresenter` to `InventoryPanel`.
-9. Create an inventory slot child prefab or scene object with
+8. Assign `Player Explorer > PlayerInteractionRaycaster` to
+   `GameplayUiController > Interaction Raycaster`.
+9. Add a TMP text child under `HudRoot` for the interaction prompt and assign it
+   to `GameplayUiController > Interaction Prompt Text`.
+10. Add `InventoryPanelPresenter` to `InventoryPanel`.
+11. Create an inventory slot child prefab or scene object with
    `InventorySlotView` and TMP text fields for name, detail, and quantity.
-10. Assign the slot container and slot prefab/view list to
+12. Assign the slot container and slot prefab/view list to
     `InventoryPanelPresenter`.
 
 Runtime behavior:
@@ -1022,6 +1050,9 @@ Runtime behavior:
 - `I` toggles `InventoryPanel`.
 - Opening either panel unlocks and shows the cursor.
 - Closing all panels locks and hides the cursor.
+- `HudRoot` stays active during gameplay. The interaction prompt text is shown
+  only when `PlayerInteractionRaycaster` has a valid target and no blocking
+  gameplay panel is open.
 - While a panel is open, first-person look/move, spacecraft input, and
   interaction raycasts read `PlayerControlLock` and return empty input.
 - `Time.timeScale` must stay unchanged.

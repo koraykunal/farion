@@ -174,7 +174,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -259,14 +259,6 @@ PrefabInstance:
       propertyPath: m_text
       value: RESTORE SAVED EXPEDITION
       objectReference: {fileID: 0}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Sprite
-      value:
-      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671008, type: 3}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -335,6 +327,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671008, type: 3}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Name
       value: UI_MenuButton_LoadGame
@@ -357,7 +357,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 2
   controller: {fileID: 1323367404}
@@ -478,7 +478,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
@@ -690,7 +690,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
   m_Padding:
     m_Left: 0
@@ -698,7 +698,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 0
+  m_Spacing: 5
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -800,14 +800,6 @@ PrefabInstance:
       propertyPath: m_text
       value: RETURN TO DESKTOP
       objectReference: {fileID: 0}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Sprite
-      value:
-      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671009, type: 3}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -876,6 +868,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671009, type: 3}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Name
       value: UI_MenuButton_Exit
@@ -898,7 +898,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 5
   controller: {fileID: 1323367404}
@@ -928,14 +928,6 @@ PrefabInstance:
       propertyPath: m_text
       value: PROJECT AND TOOLS
       objectReference: {fileID: 0}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Sprite
-      value:
-      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671004, type: 3}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1004,6 +996,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 537c5bcec20df1e43a5deb19aa8819c6, type: 3}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Name
       value: UI_MenuButton_Credits
@@ -1016,11 +1016,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 986605212}
   m_SourcePrefab: {fileID: 100100000, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
---- !u!224 &1136868966 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-  m_PrefabInstance: {fileID: 986605211}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &986605212
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1031,7 +1026,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 4
   controller: {fileID: 1323367404}
@@ -1039,6 +1034,11 @@ MonoBehaviour:
 --- !u!1 &986605213 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+  m_PrefabInstance: {fileID: 986605211}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &1136868966 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
   m_PrefabInstance: {fileID: 986605211}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1174507937
@@ -1119,7 +1119,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
@@ -1150,7 +1150,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 1268675400}
   m_sendNavigationEvents: 1
@@ -1257,7 +1257,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 21300000, guid: b48bc638f6cd2da41931273f6d57011b, type: 3}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Color.b
@@ -1273,7 +1273,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Material
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Name
@@ -1302,7 +1302,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 1
   controller: {fileID: 1323367404}
@@ -1331,14 +1331,6 @@ PrefabInstance:
     - target: {fileID: 6273784691779864178, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_text
       value: RESUME SAVED EXPEDITION
-      objectReference: {fileID: 0}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Sprite
-      value:
-      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671001, type: 3}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Enabled
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Pivot.x
@@ -1408,6 +1400,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671001, type: 3}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Name
       value: UI_MenuButton_Continue
@@ -1435,7 +1435,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 0
   controller: {fileID: 1323367404}
@@ -1523,7 +1523,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f02b833af00a43b986ee3fad6802609a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuController
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
   gameplaySceneName: SC_PhysicsSandbox
@@ -1541,7 +1541,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbf27687871d4d63a4f1418f23c2a27f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuPanelSwitcher
   mainPanel: {fileID: 946050619}
   settingsPanel: {fileID: 1268834543}
@@ -1601,7 +1601,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -1618,7 +1618,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -1708,14 +1708,6 @@ PrefabInstance:
       propertyPath: m_text
       value: CONFIGURE SYSTEMS
       objectReference: {fileID: 0}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Sprite
-      value:
-      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671007, type: 3}
-    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1784,6 +1776,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671007, type: 3}
+    - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Name
       value: UI_MenuButton_Options
@@ -1806,7 +1806,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 3
   controller: {fileID: 1323367404}

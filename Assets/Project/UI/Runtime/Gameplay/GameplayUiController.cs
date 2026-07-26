@@ -1,6 +1,8 @@
 using System;
+using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Inventory;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -25,6 +27,11 @@ namespace Farion.UI.Gameplay
         [SerializeField] GameplayPanelSwitcher panelSwitcher;
         [SerializeField] InventoryPanelPresenter inventoryPanel;
         [SerializeField] PlayerInventory playerInventory;
+
+        [Header("HUD")]
+        [SerializeField] PlayerInteractionRaycaster interactionRaycaster;
+        [SerializeField] TMP_Text interactionPromptText;
+        [SerializeField] string interactionPromptPrefix = "E";
 
         [Header("Cursor")]
         [SerializeField] bool lockCursorDuringGameplay = true;
@@ -56,21 +63,24 @@ namespace Farion.UI.Gameplay
         void Update()
         {
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null)
+            if (keyboard != null)
             {
-                return;
-            }
+                if (WasPressedThisFrame(keyboard, pauseKey))
+                {
+                    HandlePausePressed();
+                    return;
+                }
 
-            if (WasPressedThisFrame(keyboard, pauseKey))
-            {
-                HandlePausePressed();
-                return;
+                if (WasPressedThisFrame(keyboard, inventoryKey))
+                {
+                    ToggleInventory();
+                }
             }
+        }
 
-            if (WasPressedThisFrame(keyboard, inventoryKey))
-            {
-                ToggleInventory();
-            }
+        void LateUpdate()
+        {
+            RefreshHud();
         }
 
         public void ShowPauseMenu()
@@ -177,6 +187,7 @@ namespace Farion.UI.Gameplay
             }
 
             ApplyCursorState(uiFocused);
+            RefreshHud();
         }
 
         void ApplyCursorState(bool uiFocused)
@@ -216,11 +227,31 @@ namespace Farion.UI.Gameplay
             {
                 inventoryPanel = GetComponentInChildren<InventoryPanelPresenter>(true);
             }
+        }
 
-            if (playerInventory == null)
+        void RefreshHud()
+        {
+            if (interactionPromptText == null)
             {
-                playerInventory = FindAnyObjectByType<PlayerInventory>();
+                return;
             }
+
+            bool showPrompt = currentScreen == GameplayScreenState.None &&
+                interactionRaycaster != null &&
+                interactionRaycaster.HasTarget &&
+                !string.IsNullOrWhiteSpace(interactionRaycaster.CurrentPrompt);
+
+            interactionPromptText.gameObject.SetActive(showPrompt);
+            if (!showPrompt)
+            {
+                interactionPromptText.text = string.Empty;
+                return;
+            }
+
+            string prompt = interactionRaycaster.CurrentPrompt.Trim();
+            interactionPromptText.text = string.IsNullOrWhiteSpace(interactionPromptPrefix)
+                ? prompt
+                : $"{interactionPromptPrefix.Trim()} - {prompt}";
         }
 
         static bool WasPressedThisFrame(Keyboard keyboard, Key key)
