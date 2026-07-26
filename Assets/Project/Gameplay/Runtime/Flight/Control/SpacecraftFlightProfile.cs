@@ -1,0 +1,154 @@
+using UnityEngine;
+
+namespace Farion.Gameplay.Flight
+{
+    [CreateAssetMenu(menuName = "Farion/Spacecraft/Flight Profile", fileName = "SO_SpacecraftFlightProfile")]
+    public sealed class SpacecraftFlightProfile : ScriptableObject
+    {
+        [Header("Linear Speed")]
+        [Min(0f)]
+        [SerializeField] float maxForwardSpeed = 180f;
+        [Min(0f)]
+        [SerializeField] float maxBoostForwardSpeed = 260f;
+        [Min(0f)]
+        [SerializeField] float maxReverseSpeed = 70f;
+        [Min(0f)]
+        [SerializeField] float maxStrafeSpeed = 45f;
+        [Min(0f)]
+        [SerializeField] float maxVerticalSpeed = 40f;
+
+        [Header("Linear Acceleration")]
+        [Min(0f)]
+        [SerializeField] float forwardAcceleration = 20f;
+        [Min(0f)]
+        [SerializeField] float boostForwardAcceleration = 34f;
+        [Min(0f)]
+        [SerializeField] float reverseAcceleration = 14f;
+        [Min(0f)]
+        [SerializeField] float strafeAcceleration = 8f;
+        [Min(0f)]
+        [SerializeField] float verticalAcceleration = 7f;
+        [Min(0f)]
+        [SerializeField] float brakeGain = 3.2f;
+
+        [Header("Angular Rate")]
+        [Min(0f)]
+        [SerializeField] float pitchRateDeg = 65f;
+        [Min(0f)]
+        [SerializeField] float yawRateDeg = 42f;
+        [Min(0f)]
+        [SerializeField] float rollRateDeg = 95f;
+
+        [Header("Angular Acceleration")]
+        [Min(0f)]
+        [SerializeField] float pitchAccelerationDeg = 180f;
+        [Min(0f)]
+        [SerializeField] float yawAccelerationDeg = 140f;
+        [Min(0f)]
+        [SerializeField] float rollAccelerationDeg = 240f;
+
+        [Header("Assist")]
+        [SerializeField] Vector3 velocityGain = new(2.8f, 2.8f, 2.2f);
+        [SerializeField] Vector3 angularVelocityGain = new(7f, 7f, 9f);
+
+        [Header("Response")]
+        [Min(0f)]
+        [SerializeField] float translationSpoolRate = 7f;
+        [Min(0f)]
+        [SerializeField] float rotationSpoolRate = 8f;
+        [Min(0f)]
+        [SerializeField] float boostSpoolRate = 3.5f;
+        [Range(0f, 0.5f)]
+        [SerializeField] float inputDeadZone = 0.04f;
+
+        public float MaxForwardSpeed => maxForwardSpeed;
+        public float MaxBoostForwardSpeed => maxBoostForwardSpeed;
+        public float MaxReverseSpeed => maxReverseSpeed;
+        public float MaxStrafeSpeed => maxStrafeSpeed;
+        public float MaxVerticalSpeed => maxVerticalSpeed;
+        public float ForwardAcceleration => forwardAcceleration;
+        public float BoostForwardAcceleration => boostForwardAcceleration;
+        public float ReverseAcceleration => reverseAcceleration;
+        public float StrafeAcceleration => strafeAcceleration;
+        public float VerticalAcceleration => verticalAcceleration;
+        public float BrakeGain => brakeGain;
+        public float PitchRateRad => pitchRateDeg * Mathf.Deg2Rad;
+        public float YawRateRad => yawRateDeg * Mathf.Deg2Rad;
+        public float RollRateRad => rollRateDeg * Mathf.Deg2Rad;
+        public float PitchAccelerationRad => pitchAccelerationDeg * Mathf.Deg2Rad;
+        public float YawAccelerationRad => yawAccelerationDeg * Mathf.Deg2Rad;
+        public float RollAccelerationRad => rollAccelerationDeg * Mathf.Deg2Rad;
+        public Vector3 VelocityGain => velocityGain;
+        public Vector3 AngularVelocityGain => angularVelocityGain;
+        public float TranslationSpoolRate => translationSpoolRate;
+        public float RotationSpoolRate => rotationSpoolRate;
+        public float BoostSpoolRate => boostSpoolRate;
+        public float InputDeadZone => inputDeadZone;
+
+        public Vector3 AssistedMaxSpeed(bool boostActive)
+        {
+            return new Vector3(
+                maxStrafeSpeed,
+                maxVerticalSpeed,
+                boostActive ? maxBoostForwardSpeed : maxForwardSpeed);
+        }
+
+        public Vector3 MaxPositiveAcceleration(bool boostActive)
+        {
+            return new Vector3(
+                strafeAcceleration,
+                verticalAcceleration,
+                boostActive ? boostForwardAcceleration : forwardAcceleration);
+        }
+
+        public Vector3 MaxNegativeAcceleration()
+        {
+            return new Vector3(
+                strafeAcceleration,
+                verticalAcceleration,
+                reverseAcceleration);
+        }
+
+        public Vector3 MaxAngularRate()
+        {
+            return new Vector3(PitchRateRad, YawRateRad, RollRateRad);
+        }
+
+        public Vector3 MaxAngularAcceleration()
+        {
+            return new Vector3(PitchAccelerationRad, YawAccelerationRad, RollAccelerationRad);
+        }
+
+        void OnValidate()
+        {
+            maxForwardSpeed = Mathf.Max(0f, maxForwardSpeed);
+            maxBoostForwardSpeed = Mathf.Max(maxForwardSpeed, maxBoostForwardSpeed);
+            maxReverseSpeed = Mathf.Max(0f, maxReverseSpeed);
+            maxStrafeSpeed = Mathf.Max(0f, maxStrafeSpeed);
+            maxVerticalSpeed = Mathf.Max(0f, maxVerticalSpeed);
+            forwardAcceleration = Mathf.Max(0f, forwardAcceleration);
+            boostForwardAcceleration = Mathf.Max(forwardAcceleration, boostForwardAcceleration);
+            reverseAcceleration = Mathf.Max(0f, reverseAcceleration);
+            strafeAcceleration = Mathf.Max(0f, strafeAcceleration);
+            verticalAcceleration = Mathf.Max(0f, verticalAcceleration);
+            brakeGain = Mathf.Max(0f, brakeGain);
+            pitchRateDeg = Mathf.Max(0f, pitchRateDeg);
+            yawRateDeg = Mathf.Max(0f, yawRateDeg);
+            rollRateDeg = Mathf.Max(0f, rollRateDeg);
+            pitchAccelerationDeg = Mathf.Max(0f, pitchAccelerationDeg);
+            yawAccelerationDeg = Mathf.Max(0f, yawAccelerationDeg);
+            rollAccelerationDeg = Mathf.Max(0f, rollAccelerationDeg);
+            velocityGain = Abs(velocityGain);
+            angularVelocityGain = Abs(angularVelocityGain);
+            translationSpoolRate = Mathf.Max(0f, translationSpoolRate);
+            rotationSpoolRate = Mathf.Max(0f, rotationSpoolRate);
+            boostSpoolRate = Mathf.Max(0f, boostSpoolRate);
+            inputDeadZone = Mathf.Clamp(inputDeadZone, 0f, 0.5f);
+        }
+
+        static Vector3 Abs(Vector3 value)
+        {
+            return new Vector3(Mathf.Abs(value.x), Mathf.Abs(value.y), Mathf.Abs(value.z));
+        }
+    }
+}

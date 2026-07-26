@@ -37,6 +37,10 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] bool closeRampOnEnter = true;
         [Min(0.1f)]
         [SerializeField] float exteriorTransitionDistance = 1.5f;
+        [Min(0f)]
+        [SerializeField] float exteriorTransitionCooldownSeconds = 0.35f;
+        [Min(0f)]
+        [SerializeField] float exteriorTransitionProgressDistance = 0.75f;
 
         [Header("Explorer")]
         [SerializeField] GameObject explorerRoot;
@@ -67,6 +71,10 @@ namespace Farion.Gameplay.Interaction
         CelestialActorProbe spacecraftCelestialProbe;
         CelestialActorProbe explorerCelestialProbe;
         bool explorerCanTransitionOutside;
+        float shipInteriorEnteredAt = float.NegativeInfinity;
+        float shipInteriorEntryExitDistance;
+        bool hasShipInteriorEntryExitDistance;
+        readonly List<Collider> ignoredSpacecraftExteriorColliders = new();
 
         public PlayerPossessionMode CurrentMode => currentMode;
         public bool IsPilotingSpacecraft => currentMode == PlayerPossessionMode.Spacecraft;
@@ -92,6 +100,8 @@ namespace Farion.Gameplay.Interaction
                 boardingInputSource = null;
             }
             exteriorTransitionDistance = Mathf.Max(0.1f, exteriorTransitionDistance);
+            exteriorTransitionCooldownSeconds = Mathf.Max(0f, exteriorTransitionCooldownSeconds);
+            exteriorTransitionProgressDistance = Mathf.Max(0f, exteriorTransitionProgressDistance);
             exteriorGroundClearance = Mathf.Max(0f, exteriorGroundClearance);
             exteriorSurfaceClearance = Mathf.Max(0f, exteriorSurfaceClearance);
         }
@@ -144,6 +154,7 @@ namespace Farion.Gameplay.Interaction
                 spacecraftRig?.OpenRamp();
             }
 
+            SetSpacecraftExteriorCollisionIgnored(spawnInsideShipOnPilotExit);
             PlaceExplorerAtTransform(ResolvePilotExitTransform(), !spawnInsideShipOnPilotExit);
             ApplyMode(spawnInsideShipOnPilotExit ? PlayerPossessionMode.ShipInterior : PlayerPossessionMode.OnFoot);
         }
@@ -152,6 +163,7 @@ namespace Farion.Gameplay.Interaction
         public void EnterShipInterior()
         {
             ResolveReferences();
+            SetSpacecraftExteriorCollisionIgnored(true);
             PlaceExplorerAtTransform(ResolveExteriorEntryTransform(), false);
             ApplyMode(PlayerPossessionMode.ShipInterior);
         }
@@ -210,6 +222,16 @@ namespace Farion.Gameplay.Interaction
                 UpdateResourceStreamingTargets(target);
             }
 
+            if (currentMode == PlayerPossessionMode.ShipInterior)
+            {
+                ResetShipInteriorExitGate();
+            }
+            else
+            {
+                ClearShipInteriorExitGate();
+            }
+
+            SetSpacecraftExteriorCollisionIgnored(currentMode == PlayerPossessionMode.ShipInterior);
         }
 
         void UpdateResourceStreamingTargets(Transform target)
@@ -524,20 +546,67 @@ namespace Farion.Gameplay.Interaction
                 return;
             }
 
-            Vector3 explorerPosition = explorerRigidbody != null
-                ? explorerRigidbody.position
-                : explorerRoot.transform.position;
-            Transform exteriorExit = spacecraftRig.ExteriorExitPoint;
-            Vector3 exitForward = exteriorExit.forward.sqrMagnitude > 0.0001f
-                ? exteriorExit.forward.normalized
-                : exteriorExit.forward;
-            float outsideDistance = Vector3.Dot(explorerPosition - exteriorExit.position, exitForward);
-            explorerCanTransitionOutside = outsideDistance >= exteriorTransitionDistance;
+            if (Time.time < shipInteriorEnteredAt + exteriorTransitionCooldownSeconds)
+            {
+                return;
+            }
+
+            if (!TryCalculateExteriorExitDistance(out float outsideDistance))
+            {
+                return;
+            }
+
+            float requiredDistance = exteriorTransitionDistance;
+            if (hasShipInteriorEntryExitDistance)
+            {
+                requiredDistance = Mathf.Max(
+                    requiredDistance,
+                    shipInteriorEntryExitDistance + exteriorTransitionProgressDistance);
+            }
+
+            explorerCanTransitionOutside = outsideDistance >= requiredDistance;
             if (explorerCanTransitionOutside)
             {
                 SnapExplorerToExteriorSurface();
                 ApplyMode(PlayerPossessionMode.OnFoot);
             }
+        }
+
+        void ResetShipInteriorExitGate()
+        {
+            shipInteriorEnteredAt = Time.time;
+            hasShipInteriorEntryExitDistance = TryCalculateExteriorExitDistance(out shipInteriorEntryExitDistance);
+            explorerCanTransitionOutside = false;
+        }
+
+        void ClearShipInteriorExitGate()
+        {
+            shipInteriorEnteredAt = float.NegativeInfinity;
+            shipInteriorEntryExitDistance = 0f;
+            hasShipInteriorEntryExitDistance = false;
+            explorerCanTransitionOutside = false;
+        }
+
+        bool TryCalculateExteriorExitDistance(out float outsideDistance)
+        {
+            outsideDistance = 0f;
+            if (spacecraftRig == null || spacecraftRig.ExteriorExitPoint == null || explorerRoot == null)
+            {
+                return false;
+            }
+
+            Vector3 explorerPosition = explorerRigidbody != null
+                ? explorerRigidbody.position
+                : explorerRoot.transform.position;
+            Transform exteriorExit = spacecraftRig.ExteriorExitPoint;
+            Vector3 exitForward = exteriorExit.forward;
+            if (exitForward.sqrMagnitude <= 0.0001f)
+            {
+                return false;
+            }
+
+            outsideDistance = Vector3.Dot(explorerPosition - exteriorExit.position, exitForward.normalized);
+            return true;
         }
 
         void SnapExplorerToExteriorSurface()
@@ -564,6 +633,72 @@ namespace Farion.Gameplay.Interaction
             {
                 explorerMotor.ResetMotorState();
             }
+        }
+
+        void SetSpacecraftExteriorCollisionIgnored(bool ignore)
+        {
+            CapsuleCollider explorerCapsule = ResolveExplorerCapsule();
+            if (explorerCapsule == null)
+            {
+                ignoredSpacecraftExteriorColliders.Clear();
+                return;
+            }
+
+            if (!ignore)
+            {
+                RestoreIgnoredSpacecraftExteriorCollisions(explorerCapsule);
+                return;
+            }
+
+            if (ignoredSpacecraftExteriorColliders.Count > 0)
+            {
+                return;
+            }
+
+            if (spacecraftRoot == null)
+            {
+                return;
+            }
+
+            Collider[] spacecraftColliders = spacecraftRoot.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < spacecraftColliders.Length; i++)
+            {
+                Collider spacecraftCollider = spacecraftColliders[i];
+                if (spacecraftCollider == null ||
+                    spacecraftCollider == explorerCapsule ||
+                    spacecraftCollider.isTrigger ||
+                    spacecraftCollider.GetComponentInParent<SpacecraftInteriorCollider>() != null)
+                {
+                    continue;
+                }
+
+                Physics.IgnoreCollision(explorerCapsule, spacecraftCollider, true);
+                ignoredSpacecraftExteriorColliders.Add(spacecraftCollider);
+            }
+        }
+
+        void RestoreIgnoredSpacecraftExteriorCollisions(CapsuleCollider explorerCapsule)
+        {
+            for (int i = 0; i < ignoredSpacecraftExteriorColliders.Count; i++)
+            {
+                Collider spacecraftCollider = ignoredSpacecraftExteriorColliders[i];
+                if (spacecraftCollider != null)
+                {
+                    Physics.IgnoreCollision(explorerCapsule, spacecraftCollider, false);
+                }
+            }
+
+            ignoredSpacecraftExteriorColliders.Clear();
+        }
+
+        CapsuleCollider ResolveExplorerCapsule()
+        {
+            if (explorerMotor != null && explorerMotor.Capsule != null)
+            {
+                return explorerMotor.Capsule;
+            }
+
+            return explorerRoot != null ? explorerRoot.GetComponent<CapsuleCollider>() : null;
         }
 
         Transform GetExplorerTrackingTarget()

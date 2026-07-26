@@ -1,0 +1,302 @@
+fileFormatVersion: 2
+guid: d324dfc19f74d2a4d9d9f114b126ea54
+ModelImporter:
+  serializedVersion: 24200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Back_Fins_Baked
+    second: {fileID: 2100000, guid: bcb9087461f941f1a25149d9cdd9d9e2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Back_Plate_Baked
+    second: {fileID: 2100000, guid: 91be9f558a9945cd8c2520b0c11688c8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Back_Plates_Baked
+    second: {fileID: 2100000, guid: f9fede4bd20c4dd691c32ed102983c9a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Cockpit_Floor_Baked
+    second: {fileID: 2100000, guid: dc4e67306e8145e2b8bece3d8c708c41, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Door_Baked
+    second: {fileID: 2100000, guid: 4baaeadc4ea84da4946c943e98107e93, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Monitor_Stand_Baked
+    second: {fileID: 2100000, guid: c3bd8b3f1064476aaf5afe8b8342f1f8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Monitors_Baked
+    second: {fileID: 2100000, guid: 6ab1446830c64314960d12b21df68b79, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Seat_1_Baked
+    second: {fileID: 2100000, guid: 1de3dd0f6a754a23af0ecf074997bbb2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Seat_2_Baked
+    second: {fileID: 2100000, guid: fb083f788e474e58b5102cdf98aff9b7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Ship_Hull_Baked
+    second: {fileID: 2100000, guid: 8e0315f0e332483e86f151f79000562d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Ship_Plates_1_Baked
+    second: {fileID: 2100000, guid: bf088c528574427bb0265ef8a8218f0d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Ship_Plates_2_Baked
+    second: {fileID: 2100000, guid: dd7f6716d70f468d9a9360067dd26631, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Ship_Side_Beams_Baked
+    second: {fileID: 2100000, guid: 54bb17a144de4b1890ad3aa4a51b1ff4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Wing_Fins_Baked
+    second: {fileID: 2100000, guid: b5c5c4d39a6446a1bdb0cb94a6198794, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MAT_PlayerStarterShuttle_Wings_Baked
+    second: {fileID: 2100000, guid: 52d4cd60e84d48598dcde0c9bd6b955d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Back Jet Metal
+    second: {fileID: 2100000, guid: 05db00de9e404aba87ce764c3ff7cc01, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bolts Window
+    second: {fileID: 2100000, guid: 1399ac0a1a1d4579aba86069afbecfdc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cannons Paint Colored
+    second: {fileID: 2100000, guid: ef44f2505d7444329a008556e8b67630, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cannons Silver
+    second: {fileID: 2100000, guid: 22820c63fa1b451b97ed908395621bda, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cords
+    second: {fileID: 2100000, guid: 0af5216ab7674ab59575ee45236a0f75, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Engines Back Metal
+    second: {fileID: 2100000, guid: 5fd0f7f48ad348bb9bcefe715e8d61ba, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Front Cannons Metal
+    second: {fileID: 2100000, guid: be544e0e73b5448786de55db04613a18, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Front Cannons Metal Dark
+    second: {fileID: 2100000, guid: ffbcc55d263a4d4a83489c706f49c547, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Front Cannons With Stripes
+    second: {fileID: 2100000, guid: b43d1a55893d43d0a62ef200e33d6a0f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Jet Connectors
+    second: {fileID: 2100000, guid: 7b206e34252a46ebbd1165bbf8bdfc14, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Jet Paint Metal
+    second: {fileID: 2100000, guid: ed374350efce44cf824e4487b3533b05, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Landing Gear
+    second: {fileID: 2100000, guid: 4e388582034742ebbc401c6a5502f936, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Landing Gear Dark
+    second: {fileID: 2100000, guid: 72acabcddcdf4779a98729e5f4dc9cc1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Orange Straps
+    second: {fileID: 2100000, guid: 0929199b712d444790852f5a0e9054d1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ship Circle Back Parts 1
+    second: {fileID: 2100000, guid: 12ab18711d014b748674449c9dee6ca2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ship Door Hinge
+    second: {fileID: 2100000, guid: a52608de6af34958b29ca831335ae1bc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Ship Metal Smooth 1
+    second: {fileID: 2100000, guid: 8a09bc4c985c4cc0871e53bb668f2c45, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Tanks
+    second: {fileID: 2100000, guid: 0931ee8ec0744fd4bddc648f8e5930a2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Window Bars
+    second: {fileID: 2100000, guid: bc836d53e09a4bf1bea4db5a95ce1444, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Yoke
+    second: {fileID: 2100000, guid: 6343a24ebe3d4565aac15896d1b35230, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Metal Pipe
+    second: {fileID: 2100000, guid: c2117181f62c4c75af038bea0b93e5ed, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cockpit Light
+    second: {fileID: 2100000, guid: 25aef336639a48a8893a43a5bf1c3667, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Glass Window
+    second: {fileID: 2100000, guid: fff8dcc59ad842bcb299289d5b8b0634, type: 2}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 0
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 1
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 0
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 0
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+
+

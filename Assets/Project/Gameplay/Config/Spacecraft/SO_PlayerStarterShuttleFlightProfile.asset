@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1f8a1d8643641deaa8b47dd88a78d20, type: 3}
+  m_Name: SO_PlayerStarterShuttleFlightProfile
+  m_EditorClassIdentifier: 
+  maxForwardSpeed: 180
+  maxBoostForwardSpeed: 260
+  maxReverseSpeed: 70
+  maxStrafeSpeed: 45
+  maxVerticalSpeed: 40
+  forwardAcceleration: 20
+  boostForwardAcceleration: 34
+  reverseAcceleration: 14
+  strafeAcceleration: 8
+  verticalAcceleration: 7
+  brakeGain: 3.2
+  pitchRateDeg: 65
+  yawRateDeg: 42
+  rollRateDeg: 95
+  pitchAccelerationDeg: 180
+  yawAccelerationDeg: 140
+  rollAccelerationDeg: 240
+  velocityGain: {x: 2.8, y: 2.8, z: 2.2}
+  angularVelocityGain: {x: 7, y: 7, z: 9}
+  translationSpoolRate: 7
+  rotationSpoolRate: 8
+  boostSpoolRate: 3.5
+  inputDeadZone: 0.04
