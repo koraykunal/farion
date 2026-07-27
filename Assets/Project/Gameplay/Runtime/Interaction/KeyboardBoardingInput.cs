@@ -1,27 +1,23 @@
+using Farion.Gameplay.Input;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 
 namespace Farion.Gameplay.Interaction
 {
     [DisallowMultipleComponent]
     public sealed class KeyboardBoardingInput : MonoBehaviour, IBoardingInputSource
     {
-        [Header("Keys")]
-        [SerializeField] Key inputSystemExitVehicleKey = Key.F;
-
         public BoardingInputState CurrentInput { get; private set; }
+
+        void OnEnable()
+        {
+            FarionInputActions.Enable();
+        }
 
         void Update()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null)
-            {
-                CurrentInput = BoardingInputState.None;
-                return;
-            }
-
-            CurrentInput = new BoardingInputState(WasPressedThisFrame(keyboard, inputSystemExitVehicleKey));
+            CurrentInput = new BoardingInputState(
+                FarionInputActions.VehicleExit.WasPressedThisFrame(),
+                FarionInputActions.VehicleToggleCamera.WasPressedThisFrame());
         }
 
         void OnDisable()
@@ -29,10 +25,5 @@ namespace Farion.Gameplay.Interaction
             CurrentInput = BoardingInputState.None;
         }
 
-        static bool WasPressedThisFrame(Keyboard keyboard, Key key)
-        {
-            KeyControl control = keyboard[key];
-            return control != null && control.wasPressedThisFrame;
-        }
     }
 }

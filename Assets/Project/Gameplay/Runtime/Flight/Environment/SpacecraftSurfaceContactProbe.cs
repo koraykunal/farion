@@ -22,6 +22,12 @@ namespace Farion.Gameplay.Flight
         Rigidbody cachedRigidbody;
         SpacecraftSurfaceContactSample currentContact = SpacecraftSurfaceContactSample.Empty;
         float lastContactTime = float.NegativeInfinity;
+        CelestialBody accumulatedBody;
+        Vector3 accumulatedPoint;
+        Vector3 accumulatedNormal;
+        float accumulatedSeparation;
+        float accumulatedFixedTime = float.NegativeInfinity;
+        int accumulatedContactCount;
 
         public SpacecraftSurfaceContactSample CurrentContact => currentContact;
         public bool HasContact => hasContact;
@@ -53,11 +59,8 @@ namespace Farion.Gameplay.Flight
 
         void OnCollisionExit(Collision collision)
         {
-            CelestialBody body = ResolveBody(collision.collider);
-            if (body != null && currentContact.Body == body)
-            {
-                ClearContact();
-            }
+            // FixedUpdate time-out clears the sample after every collider pair
+            // has stopped reporting contact.
         }
 
         void CaptureContact(Collision collision)
@@ -68,16 +71,34 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            ContactPoint contact = collision.GetContact(0);
-            Vector3 bodyVelocity = body.GetVelocityAtPoint(contact.point);
-            Vector3 relativeVelocity = Rigidbody.linearVelocity - bodyVelocity;
+            if (accumulatedBody != body || !Mathf.Approximately(accumulatedFixedTime, Time.fixedTime))
+            {
+                ResetAccumulator(body);
+            }
+
+            int count = collision.contactCount;
+            for (int i = 0; i < count; i++)
+            {
+                ContactPoint contact = collision.GetContact(i);
+                accumulatedPoint += contact.point;
+                accumulatedNormal += contact.normal;
+                accumulatedSeparation = Mathf.Min(accumulatedSeparation, contact.separation);
+                accumulatedContactCount++;
+            }
+
+            Vector3 point = accumulatedPoint / accumulatedContactCount;
+            Vector3 normal = accumulatedNormal.sqrMagnitude > 0.0001f
+                ? accumulatedNormal.normalized
+                : Vector3.up;
+            Vector3 bodyVelocity = body.GetVelocityAtPoint(point);
+            Vector3 relativeVelocity = Rigidbody.GetPointVelocity(point) - bodyVelocity;
             currentContact = new SpacecraftSurfaceContactSample(
                 body,
-                contact.point,
-                contact.normal,
+                point,
+                normal,
                 relativeVelocity,
-                contact.separation,
-                collision.contactCount,
+                accumulatedSeparation,
+                accumulatedContactCount,
                 Time.time);
 
             lastContactTime = Time.fixedTime;
@@ -87,7 +108,20 @@ namespace Farion.Gameplay.Flight
         void ClearContact()
         {
             currentContact = SpacecraftSurfaceContactSample.Empty;
+            accumulatedBody = null;
+            accumulatedContactCount = 0;
+            accumulatedFixedTime = float.NegativeInfinity;
             ApplyRuntimeState();
+        }
+
+        void ResetAccumulator(CelestialBody body)
+        {
+            accumulatedBody = body;
+            accumulatedPoint = Vector3.zero;
+            accumulatedNormal = Vector3.zero;
+            accumulatedSeparation = float.PositiveInfinity;
+            accumulatedContactCount = 0;
+            accumulatedFixedTime = Time.fixedTime;
         }
 
         void ApplyRuntimeState()

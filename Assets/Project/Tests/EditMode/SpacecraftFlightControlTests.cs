@@ -1,0 +1,366 @@
+using Farion.Core.Physics;
+using Farion.Gameplay.Actors;
+using Farion.Gameplay.Flight;
+using Farion.Gameplay.Input;
+using Farion.Simulation.Celestial;
+using NUnit.Framework;
+using UnityEngine;
+
+namespace Farion.Tests.EditMode
+{
+    public sealed class SpacecraftFlightControlTests
+    {
+        [Test]
+        public void AssistedControlCompensatesGravityAtZeroVelocity()
+        {
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    SpacecraftPilotCommand.None,
+                    Vector3.zero,
+                    Vector3.zero,
+                    new Vector3(0f, -9.81f, 0f),
+                    assisted: true),
+                Settings());
+
+            Assert.That(output.LocalLinearAcceleration.x, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(output.LocalLinearAcceleration.y, Is.EqualTo(9.81f).Within(0.0001f));
+            Assert.That(output.LocalLinearAcceleration.z, Is.EqualTo(0f).Within(0.0001f));
+        }
+
+        [Test]
+        public void ManualControlDoesNotHideGravityWithNoPilotInput()
+        {
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    SpacecraftPilotCommand.None,
+                    Vector3.zero,
+                    Vector3.zero,
+                    new Vector3(0f, -9.81f, 0f),
+                    assisted: false),
+                Settings());
+
+            Assert.That(output.LocalLinearAcceleration, Is.EqualTo(Vector3.zero));
+        }
+
+        [Test]
+        public void ManualEnvelopeStopsAddingSpeedAtEveryAxisLimit()
+        {
+            SpacecraftPilotCommand command = new(
+                Vector3.one,
+                Vector3.one,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    command,
+                    new Vector3(45f, 40f, 180f),
+                    new Vector3(65f, 42f, 95f) * Mathf.Deg2Rad,
+                    Vector3.zero,
+                    assisted: false),
+                Settings());
+
+            Assert.That(output.LocalLinearAcceleration, Is.EqualTo(Vector3.zero));
+            Assert.That(output.LocalAngularAcceleration, Is.EqualTo(Vector3.zero));
+        }
+
+        [Test]
+        public void ManualEnvelopeKeepsFullCounterThrustAuthority()
+        {
+            SpacecraftPilotCommand command = new(
+                -Vector3.one,
+                -Vector3.one,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    command,
+                    new Vector3(45f, 40f, 180f),
+                    new Vector3(65f, 42f, 95f) * Mathf.Deg2Rad,
+                    Vector3.zero,
+                    assisted: false),
+                Settings());
+
+            Assert.That(output.LocalLinearAcceleration, Is.EqualTo(new Vector3(-12f, -16f, -18f)));
+            Assert.That(
+                output.LocalAngularAcceleration,
+                Is.EqualTo(new Vector3(-180f, -140f, -240f) * Mathf.Deg2Rad));
+        }
+
+        [Test]
+        public void AssistedReverseCommandUsesConfiguredReverseAuthority()
+        {
+            SpacecraftPilotCommand command = new(
+                new Vector3(0f, 0f, -1f),
+                Vector3.zero,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(command, Vector3.zero, Vector3.zero, Vector3.zero, assisted: true),
+                Settings());
+
+            Assert.That(output.LocalLinearAcceleration.z, Is.EqualTo(-18f));
+        }
+
+        [Test]
+        public void AssistedBrakeAppliesMaximumCounterThrust()
+        {
+            SpacecraftPilotCommand command = new(
+                Vector3.zero,
+                Vector3.zero,
+                boost: false,
+                brake: true,
+                toggleFlightAssist: false);
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(command, new Vector3(0f, 0f, 100f), Vector3.zero, Vector3.zero, assisted: true),
+                Settings());
+
+            Assert.That(output.LocalLinearAcceleration.z, Is.EqualTo(-18f));
+        }
+
+        [Test]
+        public void SimultaneousAxesAreNotNormalizedAgainstEachOther()
+        {
+            SpacecraftInputState input = new(
+                new Vector3(1f, 1f, 1f),
+                Vector2.zero,
+                roll: 0f,
+                boost: false);
+
+            Assert.That(input.Translation, Is.EqualTo(Vector3.one));
+
+            SpacecraftThrusterState effectsState = new(
+                Vector3.one,
+                Vector3.one,
+                SpacecraftThrusterCommand.None,
+                normalizedThrust: 1f,
+                engineActivity: 1f,
+                boostActive: false,
+                boostBlend: 0f);
+            Assert.That(effectsState.LocalTranslationInput, Is.EqualTo(Vector3.one));
+            Assert.That(effectsState.LocalRotationInput, Is.EqualTo(Vector3.one));
+        }
+
+        [Test]
+        public void GamepadLookScalingDoesNotDependOnFrameDelta()
+        {
+            Vector2 first = FarionInputActions.ScaleGamepadLook(Vector2.one, 120f);
+            Vector2 second = FarionInputActions.ScaleGamepadLook(Vector2.one, 120f);
+
+            Assert.That(first, Is.EqualTo(Vector2.one));
+            Assert.That(second, Is.EqualTo(first));
+        }
+
+        [Test]
+        public void MouseLookScalingPreservesPhysicalMotionAcrossFrameRates()
+        {
+            Vector2 atSixtyFps = FarionInputActions.ScaleMouseLook(
+                new Vector2(2f, -2f),
+                1f,
+                1f / 60f);
+            Vector2 atOneTwentyFps = FarionInputActions.ScaleMouseLook(
+                new Vector2(1f, -1f),
+                1f,
+                1f / 120f);
+
+            Assert.That(atOneTwentyFps, Is.EqualTo(atSixtyFps));
+        }
+
+        [Test]
+        public void BoostRequiresReleaseAfterDepletionAndThenRecharges()
+        {
+            SpacecraftBoostController controller = new();
+            controller.Step(
+                requested: true,
+                hasForwardThrottle: true,
+                deltaTime: 1f,
+                spoolRate: 10f,
+                drainPerSecond: 1f,
+                rechargePerSecond: 1f,
+                rechargeDelay: 0f);
+
+            Assert.That(controller.Charge, Is.EqualTo(0f));
+            Assert.That(controller.IsLocked, Is.True);
+
+            controller.Step(true, true, 1f, 10f, 1f, 1f, 0f);
+            Assert.That(controller.Charge, Is.EqualTo(1f));
+            Assert.That(controller.IsLocked, Is.True);
+
+            controller.Step(false, true, 0f, 10f, 1f, 1f, 0f);
+            controller.Step(true, true, 0.1f, 10f, 0f, 0f, 0f);
+            Assert.That(controller.IsLocked, Is.False);
+            Assert.That(controller.IsActive, Is.True);
+        }
+
+        [Test]
+        public void TouchdownRequiresContactWithinEverySafetyLimit()
+        {
+            Assert.That(
+                SpacecraftTouchdownEvaluator.IsSafe(
+                    SpacecraftSurfaceContactSample.Empty,
+                    0f,
+                    2f,
+                    3f,
+                    8f),
+                Is.False);
+
+            GameObject bodyObject = new("Touchdown Test Body");
+            try
+            {
+                CelestialBody body = bodyObject.AddComponent<CelestialBody>();
+                SpacecraftSurfaceContactSample safeContact = new(
+                    body,
+                    Vector3.zero,
+                    Vector3.up,
+                    new Vector3(1f, -1.5f, 0f),
+                    0f,
+                    2,
+                    1f);
+
+                Assert.That(
+                    SpacecraftTouchdownEvaluator.IsSafe(safeContact, 5f, 2f, 3f, 8f),
+                    Is.True);
+                Assert.That(
+                    SpacecraftTouchdownEvaluator.IsSafe(safeContact, 9f, 2f, 3f, 8f),
+                    Is.False);
+                Assert.That(
+                    SpacecraftTouchdownEvaluator.IsSafe(safeContact, 5f, 1f, 3f, 8f),
+                    Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(bodyObject);
+            }
+        }
+
+        [Test]
+        public void ActorProbeFallsBackToActiveCelestialFrameProvider()
+        {
+            GameObject providerObject = new("Frame Provider");
+            GameObject actorObject = new("Actor");
+            try
+            {
+                CelestialFrameProvider provider =
+                    providerObject.AddComponent<CelestialFrameProvider>();
+                CelestialActorProbe probe = actorObject.AddComponent<CelestialActorProbe>();
+
+                Assert.That(probe.FrameProvider, Is.SameAs(provider));
+            }
+            finally
+            {
+                Object.DestroyImmediate(actorObject);
+                Object.DestroyImmediate(providerObject);
+            }
+        }
+
+        [Test]
+        public void MechanicalPartPoseBuildsLinkedHierarchyWithoutChangingDeployedPose()
+        {
+            GameObject rootObject = new("Visual Root");
+            GameObject parentObject = new("Parent Part");
+            GameObject childObject = new("Child Part");
+            try
+            {
+                parentObject.transform.SetParent(rootObject.transform, false);
+                childObject.transform.SetParent(rootObject.transform, false);
+                childObject.transform.localPosition = new Vector3(0f, -1f, 1f);
+                Vector3 deployedPosition = childObject.transform.position;
+
+                SpacecraftMechanicalPartPose parentPose =
+                    JsonUtility.FromJson<SpacecraftMechanicalPartPose>(
+                        "{\"partName\":\"Parent Part\",\"targetLocalEulerOffset\":{\"x\":-90}}");
+                SpacecraftMechanicalPartPose childPose =
+                    JsonUtility.FromJson<SpacecraftMechanicalPartPose>(
+                        "{\"partName\":\"Child Part\",\"parentPartName\":\"Parent Part\"}");
+
+                Assert.That(parentPose.PrepareDrivenTransform(rootObject.transform), Is.True);
+                Assert.That(childPose.PrepareDrivenTransform(rootObject.transform), Is.True);
+                Assert.That(childPose.AttachTo(parentPose), Is.True);
+                parentPose.CaptureInitialPose(rootObject.transform);
+                childPose.CaptureInitialPose(rootObject.transform);
+
+                Assert.That(childObject.transform.parent, Is.SameAs(parentObject.transform));
+                Assert.That(childObject.transform.position, Is.EqualTo(deployedPosition));
+
+                parentPose.Apply(1f);
+                childPose.Apply(1f);
+
+                Assert.That(
+                    Vector3.Distance(childObject.transform.position, deployedPosition),
+                    Is.GreaterThan(0.5f));
+                Assert.That(
+                    Vector3.Distance(childObject.transform.position, parentObject.transform.position),
+                    Is.EqualTo(Mathf.Sqrt(2f)).Within(0.0001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(rootObject);
+            }
+        }
+
+        [Test]
+        public void MechanicalPartPoseCanDriveMeshFromAuthoredVirtualPivot()
+        {
+            GameObject rootObject = new("Visual Root");
+            GameObject partObject = new("Unrigged Part");
+            try
+            {
+                partObject.transform.SetParent(rootObject.transform, false);
+                partObject.transform.localPosition = new Vector3(2f, 0f, 0f);
+                Vector3 deployedPosition = partObject.transform.position;
+                SpacecraftMechanicalPartPose pose =
+                    JsonUtility.FromJson<SpacecraftMechanicalPartPose>(
+                        "{\"partName\":\"Unrigged Part\",\"createVirtualPivot\":true," +
+                        "\"virtualPivotLocalPosition\":{\"x\":0,\"y\":1,\"z\":0}}");
+
+                Assert.That(pose.PrepareDrivenTransform(rootObject.transform), Is.True);
+
+                Assert.That(pose.DrivenTransform, Is.Not.SameAs(partObject.transform));
+                Assert.That(partObject.transform.parent, Is.SameAs(pose.DrivenTransform));
+                Assert.That(pose.DrivenTransform.position, Is.EqualTo(new Vector3(2f, 1f, 0f)));
+                Assert.That(partObject.transform.position, Is.EqualTo(deployedPosition));
+            }
+            finally
+            {
+                Object.DestroyImmediate(rootObject);
+            }
+        }
+
+        static SpacecraftFlightControlFrame Frame(
+            SpacecraftPilotCommand command,
+            Vector3 localVelocity,
+            Vector3 localAngularVelocity,
+            Vector3 localGravity,
+            bool assisted)
+        {
+            return new SpacecraftFlightControlFrame(
+                command,
+                localVelocity,
+                localAngularVelocity,
+                localGravity,
+                assisted,
+                boostAuthority: 0f);
+        }
+
+        static SpacecraftFlightControlSettings Settings()
+        {
+            return new SpacecraftFlightControlSettings(
+                new Vector3(45f, 40f, 180f),
+                new Vector3(45f, 40f, 260f),
+                new Vector3(45f, 40f, 70f),
+                new Vector3(12f, 16f, 20f),
+                new Vector3(12f, 16f, 34f),
+                new Vector3(12f, 16f, 18f),
+                new Vector3(65f, 42f, 95f) * Mathf.Deg2Rad,
+                new Vector3(180f, 140f, 240f) * Mathf.Deg2Rad,
+                new Vector3(2.8f, 2.8f, 2.2f),
+                new Vector3(7f, 7f, 9f),
+                3.2f,
+                compensateGravity: true,
+                limitManualFlightEnvelope: true,
+                manualEnvelopeStart: 0.85f);
+        }
+    }
+}

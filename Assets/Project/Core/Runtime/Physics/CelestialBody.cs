@@ -1,9 +1,11 @@
 using UnityEngine;
+using Farion.Core.Persistence;
 
 namespace Farion.Core.Physics
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(PersistentObjectId))]
     public sealed class CelestialBody : MonoBehaviour
     {
         [SerializeField] string bodyName = "Unnamed Body";
@@ -26,6 +28,15 @@ namespace Farion.Core.Physics
         float mass;
 
         public string BodyName => bodyName;
+        public string PersistentId
+        {
+            get
+            {
+                return TryGetComponent(out PersistentObjectId persistentObjectId)
+                    ? persistentObjectId.Id
+                    : string.Empty;
+            }
+        }
         public CelestialBodyType BodyType => bodyType;
         public float Radius => radius;
         public float SurfaceGravity => surfaceGravity;
@@ -189,6 +200,49 @@ namespace Farion.Core.Physics
         public Vector3 GetVelocityAtPoint(Vector3 point)
         {
             return simulatedVelocity + Vector3.Cross(simulatedAngularVelocity, point - Position);
+        }
+
+        public CelestialBodySnapshot CaptureSnapshot()
+        {
+            return new CelestialBodySnapshot(
+                PersistentId,
+                BodyName,
+                new TransformPoseSnapshot(
+                    Rigidbody.position,
+                    Rigidbody.rotation,
+                    simulatedVelocity,
+                    simulatedAngularVelocity));
+        }
+
+        public bool ApplySnapshot(CelestialBodySnapshot snapshot)
+        {
+            if (!SnapshotMatches(snapshot))
+            {
+                return false;
+            }
+
+            TransformPoseSnapshot pose = snapshot.Pose;
+            Rigidbody.position = pose.Position;
+            Rigidbody.rotation = pose.Rotation;
+            simulatedVelocity = pose.LinearVelocity;
+            simulatedAngularVelocity = pose.AngularVelocity;
+            return true;
+        }
+
+        public bool SnapshotMatches(CelestialBodySnapshot snapshot)
+        {
+            if (!snapshot.IsValid)
+            {
+                return false;
+            }
+
+            if (snapshot.HasPersistentId)
+            {
+                return !string.IsNullOrEmpty(PersistentId) &&
+                       string.Equals(snapshot.PersistentId, PersistentId, System.StringComparison.Ordinal);
+            }
+
+            return string.Equals(snapshot.BodyName, BodyName, System.StringComparison.Ordinal);
         }
     }
 }

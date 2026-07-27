@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63527877603c4e069ae2a2bef9345fd8, type: 3}
+  m_Name: SO_GameplayDefinitionRegistry
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Definitions.GameplayDefinitionRegistry
+  inventoryItems:
+  - {fileID: 11400000, guid: 6f84f55884b84691abd2506d96050f5d, type: 2}
+  - {fileID: 11400000, guid: d278d87b82cb49a5bcd7f23d7cf3a73a, type: 2}
+  - {fileID: 11400000, guid: f15c7a5940334b8c9145cc03d4cf8b00, type: 2}
+  - {fileID: 11400000, guid: 2b56d29a452443eb8d5c60a95c54b977, type: 2}
+  - {fileID: 11400000, guid: 76b0836b40b14a40983a274d83443158, type: 2}
+  - {fileID: 11400000, guid: a006d4e9b6ff4609921210a80e10f636, type: 2}
+  - {fileID: 11400000, guid: e23c851c4d34400cb493249c56e08c08, type: 2}
+  - {fileID: 11400000, guid: 6512ee87e844415da67306b1e6231b6f, type: 2}
+  resourceNodes:
+  - {fileID: 11400000, guid: 781593be774844bdb3473ed3476a5c22, type: 2}
+  - {fileID: 11400000, guid: 812f67a5eb3c4960b62c3caac9c9a655, type: 2}
+  - {fileID: 11400000, guid: 57f33f503c114cc784208068d47c696c, type: 2}
+  recipes:
+  - {fileID: 11400000, guid: 3680d23642804ee7b3e5fd685d3351f2, type: 2}
+  - {fileID: 11400000, guid: 5766c737642f47d69bd4adc02d1420c6, type: 2}
+  - {fileID: 11400000, guid: 59fd465b6c914bc48aba72e2586a4762, type: 2}
+  - {fileID: 11400000, guid: 69e9d684109b47fbabb6fd287bbd2e1f, type: 2}
+  - {fileID: 11400000, guid: 2212d42bd15c408880ac5d44d4989c0e, type: 2}
+  research:
+  - {fileID: 11400000, guid: 2a63d1db56284425b1316ea0ec653cee, type: 2}

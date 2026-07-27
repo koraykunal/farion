@@ -161,7 +161,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 1
   priority: 0
@@ -259,7 +259,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00019572057, y: 0.70745546, z: -0.00019591373, w: 0.7067579}
+  m_LocalRotation: {x: 0.0002691144, y: 0.70756674, z: -0.0002694649, w: 0.70664644}
   m_LocalPosition: {x: -315245, y: 174.6, z: 311}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -276,8 +276,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
   m_CustomShadowLayers: 0
@@ -324,7 +324,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0c6fcab710c8e94c902e2f6d8590e62, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.GravitySimulation
   settings: {fileID: 11400000, guid: 2edfb3b296b04fc4d9f69762ba589d6a, type: 2}
   autoDiscoverBodies: 0
@@ -357,10 +357,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6e3fa050e50a4743a3992d022eca79f6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.World.WorldOriginRebaser
   settings: {fileID: 11400000, guid: 6799d7f003dd4eacb53a2104a65fbba1, type: 2}
-  trackingTarget: {fileID: 515695056}
+  trackingTarget: {fileID: 0}
   shiftedRoots:
   - {fileID: 1738582684}
   - {fileID: 1944801546}
@@ -381,91 +381,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7b4d1f8c2a6b4ab3aa5591e6b0db57f1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialFrameProvider
   simulation: {fileID: 476981471}
   environmentSources:
   - {fileID: 922402154}
   surfaceSources:
   - {fileID: 922402157}
---- !u!1001 &515695055
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1944801546}
-    m_Modifications:
-    - target: {fileID: 1430296848504241019, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: controlLock
-      value: 
-      objectReference: {fileID: 1891705759}
-    - target: {fileID: 2441852034644142768, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_Name
-      value: Player Starter Shuttle
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7190813019005924918, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: frameProvider
-      value: 
-      objectReference: {fileID: 476981474}
-    - target: {fileID: 7247907982008486530, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: possessionController
-      value: 
-      objectReference: {fileID: 1917591035}
-    - target: {fileID: 1187435800579178240, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: possessionController
-      value: 
-      objectReference: {fileID: 1917591035}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
---- !u!4 &515695056 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 515695055}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &657189156
 GameObject:
   m_ObjectHideFlags: 0
@@ -622,10 +544,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 60b9fe0006befcd46beb11974c08121a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftCameraRig
-  target: {fileID: 1022701218}
+  exteriorTarget: {fileID: 1678406297}
+  cockpitTarget: {fileID: 0}
+  motor: {fileID: 1678406301}
+  view: 0
   cameraTransform: {fileID: 2069305678}
+  payloadCamera: {fileID: 0}
   resetCameraLocalPose: 1
   localOffset: {x: 0, y: 5.5, z: -18}
   scaleOffsetByTargetBounds: 0
@@ -637,6 +563,19 @@ MonoBehaviour:
   rotationResponsiveness: 12
   snapDistance: 60
   maxPositionLag: 2.2
+  avoidObstacles: 1
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionRadius: 0.35
+  collisionPadding: 0.15
+  minimumTargetDistance: 1
+  velocityOffsetScale: 0.008
+  accelerationOffsetScale: 0.018
+  maxFlightOffset: 0.85
+  flightOffsetResponsiveness: 4
+  fovResponsiveness: 6
+  boostFovIncrease: 7
 --- !u!1 &709315112 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
@@ -664,6 +603,7 @@ GameObject:
   - component: {fileID: 733625512}
   - component: {fileID: 733625518}
   - component: {fileID: 733625519}
+  - component: {fileID: 733625520}
   m_Layer: 0
   m_Name: Test Star
   m_TagString: Untagged
@@ -696,7 +636,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 9fe158cc1956f8c43b75bff5cc5e49d5, type: 2}
   applyInEditMode: 1
@@ -712,7 +652,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.CelestialBody
   bodyName: Test Star
   bodyType: 0
@@ -724,6 +664,19 @@ MonoBehaviour:
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 0
+--- !u!114 &733625520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733625510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: celestial.test-star
 --- !u!54 &733625514
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -839,7 +792,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614eb7b496224fbd82ffa684591be353, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightSource
   body: {fileID: 733625513}
   radiationSource: {fileID: 733625519}
@@ -858,7 +811,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e485273ad23c4c778982d5d5829118f3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialRadiationSource
   body: {fileID: 733625513}
   profile: {fileID: 11400000, guid: 076a8bd9b2ab4b3f818b8c563a906a44, type: 2}
@@ -892,11 +845,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73ff7679bce941f0949a9fa36fb21f9a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightingRig
   profile: {fileID: 11400000, guid: 2b4d723e74a0ac94fac5a7927c8ec78c, type: 2}
   primarySource: {fileID: 733625518}
-  lightingFocus: {fileID: 515695056}
+  lightingFocus: {fileID: 0}
   useMainCameraAsFallbackFocus: 0
   mainDirectionalLight: {fileID: 410087040}
   syncLightPositionToSource: 1
@@ -929,7 +882,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d2dc33b0c7c74af8b8b4f6b94de6229a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Space.StarDomeController
   profile: {fileID: 11400000, guid: ada5dcf8924d49079d431e09b24c8b30, type: 2}
   applyOnEnable: 1
@@ -946,7 +899,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a58b5d9828e947359ec7e7a4c05af062, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialLodController
   targetCamera: {fileID: 2069305681}
   visuals:
@@ -964,7 +917,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 93889cbb63db486187f7c03cfe7eac33, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialOrbitLineRenderer
   simulation: {fileID: 476981471}
   showOrbitLines: 1
@@ -1003,8 +956,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
@@ -1109,7 +1062,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f927aa0bca054ea6805e496fc833c886, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.InventoryPanelPresenter
 --- !u!1 &900200000
 GameObject:
@@ -1140,6 +1093,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 900200011}
+  - {fileID: 900210001}
   m_Father: {fileID: 1891705753}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1202,7 +1156,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 0.94, g: 0.91, b: 0.83, a: 0.92}
@@ -1212,7 +1166,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1284,6 +1238,278 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &900210000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 900210001}
+  - component: {fileID: 900210002}
+  m_Layer: 5
+  m_Name: SpacecraftFlightHud
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &900210001
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 900210011}
+  - {fileID: 900210021}
+  - {fileID: 900210031}
+  m_Father: {fileID: 900200001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &900210002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6f583d467b54e60b67bb5399a099de1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.SpacecraftFlightHudPresenter
+  possessionController: {fileID: 1917591035}
+  flightText: {fileID: 900210013}
+  navigationText: {fileID: 900210023}
+  advisoryText: {fileID: 900210033}
+  refreshRate: 20
+--- !u!1 &900210010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 900210011}
+  - component: {fileID: 900210012}
+  - component: {fileID: 900210013}
+  m_Layer: 5
+  m_Name: FlightStatusText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &900210011
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210010}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 900210001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 64, y: 64}
+  m_SizeDelta: {x: 360, y: 150}
+  m_Pivot: {x: 0, y: 0}
+--- !u!222 &900210012
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210010}
+  m_CullTransparentMesh: 1
+--- !u!114 &900210013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.52, g: 0.94, b: 0.9, a: 0.96}
+  m_RaycastTarget: 0
+  m_text: FLIGHT ASSIST  ON
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSize: 18
+  m_fontSizeBase: 18
+  m_fontWeight: 400
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 1024
+  m_characterSpacing: 0
+  m_TextWrappingMode: 1
+  m_overflowMode: 0
+  m_isRichText: 1
+--- !u!1 &900210020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 900210021}
+  - component: {fileID: 900210022}
+  - component: {fileID: 900210023}
+  m_Layer: 5
+  m_Name: NavigationStatusText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &900210021
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210020}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 900210001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -64, y: 64}
+  m_SizeDelta: {x: 420, y: 150}
+  m_Pivot: {x: 1, y: 0}
+--- !u!222 &900210022
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210020}
+  m_CullTransparentMesh: 1
+--- !u!114 &900210023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.52, g: 0.94, b: 0.9, a: 0.96}
+  m_RaycastTarget: 0
+  m_text: NO SURFACE FRAME
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSize: 18
+  m_fontSizeBase: 18
+  m_fontWeight: 400
+  m_HorizontalAlignment: 4
+  m_VerticalAlignment: 1024
+  m_characterSpacing: 0
+  m_TextWrappingMode: 1
+  m_overflowMode: 0
+  m_isRichText: 1
+--- !u!1 &900210030
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 900210031}
+  - component: {fileID: 900210032}
+  - component: {fileID: 900210033}
+  m_Layer: 5
+  m_Name: FlightAdvisoryText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &900210031
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210030}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 900210001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -64}
+  m_SizeDelta: {x: 720, y: 50}
+  m_Pivot: {x: 0.5, y: 1}
+--- !u!222 &900210032
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210030}
+  m_CullTransparentMesh: 1
+--- !u!114 &900210033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900210030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.52, g: 0.94, b: 0.9, a: 0.96}
+  m_RaycastTarget: 0
+  m_text: NO FRAME
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSize: 18
+  m_fontSizeBase: 18
+  m_fontWeight: 600
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 256
+  m_characterSpacing: 0
+  m_TextWrappingMode: 1
+  m_overflowMode: 0
+  m_isRichText: 1
 --- !u!1 &922402144
 GameObject:
   m_ObjectHideFlags: 0
@@ -1303,6 +1529,7 @@ GameObject:
   - component: {fileID: 922402154}
   - component: {fileID: 922402157}
   - component: {fileID: 922402158}
+  - component: {fileID: 922402159}
   m_Layer: 0
   m_Name: Test Planet
   m_TagString: Untagged
@@ -1336,7 +1563,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 05ea708a8f4fcb64d80047baab728a2e, type: 2}
   applyInEditMode: 1
@@ -1352,7 +1579,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.CelestialBody
   bodyName: Test Planet
   bodyType: 1
@@ -1364,6 +1591,19 @@ MonoBehaviour:
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 1
+--- !u!114 &922402159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 922402144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: celestial.test-planet
 --- !u!54 &922402148
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1479,7 +1719,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 922402147}
   surfaceModel: {fileID: 922402157}
@@ -1488,7 +1728,7 @@ MonoBehaviour:
   meshObjectName: Terrain Mesh
   renderResolution: 57
   lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
-  editModePreviewLod: 0
+  editModePreviewLod: 2
   syncSphereCollider: 1
   generateMeshCollider: 1
   meshColliderResolution: 64
@@ -1509,7 +1749,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
   profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
   terrainVisual: {fileID: 922402152}
@@ -1526,7 +1766,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 922402147}
   generationProfile: {fileID: 11400000, guid: 1ff9db461b1b46e48af26cd43336dcae, type: 2}
@@ -1550,7 +1790,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
   body: {fileID: 922402147}
   surfaceModel: {fileID: 922402157}
@@ -1566,184 +1806,6 @@ MonoBehaviour:
   surfaceOffset: 1.96
   skipOceanCoveredDeposits: 1
   oceanSurfaceClearance: 0.05
---- !u!43 &940226281
-Mesh:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: SpacecraftThrusterBeam Mesh
-  serializedVersion: 12
-  m_SubMeshes:
-  - serializedVersion: 2
-    firstByte: 0
-    indexCount: 336
-    topology: 0
-    baseVertex: 0
-    firstVertex: 0
-    vertexCount: 84
-    localAABB:
-      m_Center: {x: 0, y: 0, z: -3.25}
-      m_Extent: {x: 0.78, y: 0.78, z: 3.25}
-  m_Shapes:
-    vertices: []
-    shapes: []
-    channels: []
-    fullWeights: []
-  m_BindPose: []
-  m_BoneNameHashes: 
-  m_RootBoneNameHash: 0
-  m_BonesAABB: []
-  m_VariableBoneCountWeights:
-    m_Data: 
-  m_MeshCompression: 0
-  m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexFormat: 0
-  m_IndexBuffer: 00001c00010001001c001d001c0038001d001d003800390001001d00020002001d001e001d0039001e001e0039003a0002001e00030003001e001f001e003a001f001f003a003b0003001f00040004001f0020001f003b00200020003b003c0004002000050005002000210020003c00210021003c003d0005002100060006002100220021003d00220022003d003e0006002200070007002200230022003e00230023003e003f0007002300080008002300240023003f00240024003f004000080024000900090024002500240040002500250040004100090025000a000a00250026002500410026002600410042000a0026000b000b00260027002600420027002700420043000b0027000c000c00270028002700430028002800430044000c0028000d000d00280029002800440029002900440045000d0029000e000e0029002a00290045002a002a00450046000e002a000f000f002a002b002a0046002b002b00460047000f002b00100010002b002c002b0047002c002c004700480010002c00110011002c002d002c0048002d002d004800490011002d00120012002d002e002d0049002e002e0049004a0012002e00130013002e002f002e004a002f002f004a004b0013002f00140014002f0030002f004b00300030004b004c0014003000150015003000310030004c00310031004c004d0015003100160016003100320031004d00320032004d004e0016003200170017003200330032004e00330033004e004f0017003300180018003300340033004f00340034004f005000180034001900190034003500340050003500350050005100190035001a001a00350036003500510036003600510052001a0036001b001b00360037003600520037003700520053001b0037000000000037001c00370053001c001c0053003800
-  m_VertexData:
-    serializedVersion: 3
-    m_VertexCount: 84
-    m_Channels:
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 12
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 24
-      format: 0
-      dimension: 4
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    m_DataSize: 3360
-    _typelessdata: 14ae473f00000000000000000000803f00000000000000000000803f00000000000000003333733f71ac423f5fbb313e00000000e094793f87dc633e000000000000803f00000000000000003333733fcce7333f9c46ad3e00000000e5a5663f0326de3e000000000000803f00000000000000003333733fb91d1c3f35fff83e000000001b26483f089d1f3f000000000000803f00000000000000003333733f33fff83eb91d1c3f00000000079d1f3f1c26483f000000000000803f00000000000000003333733f9c46ad3ecce7333f000000000326de3ee5a5663f000000000000803f00000000000000003333733f5bbb313e71ac423f0000000082dc633ee094793f000000000000803f00000000000000003333733fb86f12b314ae473f000000002ebd3bb30000803f000000000000803f00000000000000003333733f5fbb31be71ac423f0000000088dc63bee094793f000000000000803f00000000000000003333733f9e46adbecce7333f000000000626debee5a5663f000000000000803f00000000000000003333733f33fff8beb91d1c3f00000000079d1fbf1c26483f000000000000803f00000000000000003333733fb91d1cbf32fff83e000000001c2648bf069d1f3f000000000000803f00000000000000003333733fcde733bf9846ad3e00000000e6a566bffe25de3e000000000000803f00000000000000003333733f71ac42bf5fbb313e00000000e09479bf87dc633e000000000000803f00000000000000003333733f14ae47bfb86f92b300000000000080bf2ebdbbb3000000000000803f00000000000000003333733f70ac42bf68bb31be00000000df9479bf93dc63be000000000000803f00000000000000003333733fcce733bf9c46adbe00000000e5a566bf0326debe000000000000803f00000000000000003333733fb81d1cbf36fff8be000000001a2648bf099d1fbf000000000000803f00000000000000003333733f2ffff8bebb1d1cbf00000000049d1fbf1e2648bf000000000000803f00000000000000003333733f9446adbecee733bf00000000f925debee8a566bf000000000000803f00000000000000003333733f63bb31be71ac42bf000000008cdc63bee09479bf000000000000803f00000000000000003333733f05cc1f3214ae47bf000000002ede4c32000080bf000000000000803f00000000000000003333733f64bb313e71ac42bf000000008edc633ee09479bf000000000000803f00000000000000003333733f9f46ad3ecbe733bf000000000826de3ee4a566bf000000000000803f00000000000000003333733f3afff83eb71d1cbf000000000b9d1f3f192648bf000000000000803f00000000000000003333733fbc1d1c3f2bfff8be000000002026483f029d1fbf000000000000803f00000000000000003333733fcce7333f9c46adbe00000000e5a5663f0326debe000000000000803f00000000000000003333733f71ac423f5bbb31be00000000e094793f82dc63be000000000000803f00000000000000003333733f5227e03e0000000052b82ec00000803f00000000000000006666e63e00000000000000005c8fc23e9a88da3ef683c73d52b82ec0e094793f87dc633e000000006666e63e00000000000000005c8fc23e96f4c93e6283423e52b82ec0e5a5663f0326de3e000000006666e63e00000000000000005c8fc23e1640af3eebc18b3e52b82ec01b26483f089d1f3f000000006666e63e00000000000000005c8fc23eeac18b3e1640af3e52b82ec0079d1f3f1c26483f000000006666e63e00000000000000005c8fc23e6283423e96f4c93e52b82ec00326de3ee5a5663f000000006666e63e00000000000000005c8fc23ef183c73d9a88da3e52b82ec082dc633ee094793f000000006666e63e00000000000000005c8fc23e5e62a4b25227e03e52b82ec02ebd3bb30000803f000000006666e63e00000000000000005c8fc23ef783c7bd9a88da3e52b82ec088dc63bee094793f000000006666e63e00000000000000005c8fc23e648342be96f4c93e52b82ec00626debee5a5663f000000006666e63e00000000000000005c8fc23eeac18bbe1640af3e52b82ec0079d1fbf1c26483f000000006666e63e00000000000000005c8fc23e1640afbee9c18b3e52b82ec01c2648bf069d1f3f000000006666e63e00000000000000005c8fc23e96f4c9be5d83423e52b82ec0e6a566bffe25de3e000000006666e63e00000000000000005c8fc23e9a88dabef683c73d52b82ec0e09479bf87dc633e000000006666e63e00000000000000005c8fc23e5227e0be5e6224b352b82ec0000080bf2ebdbbb3000000006666e63e00000000000000005c8fc23e9988dabe0084c7bd52b82ec0df9479bf93dc63be000000006666e63e00000000000000005c8fc23e96f4c9be628342be52b82ec0e5a566bf0326debe000000006666e63e00000000000000005c8fc23e1540afbeecc18bbe52b82ec01a2648bf099d1fbf000000006666e63e00000000000000005c8fc23ee8c18bbe1840afbe52b82ec0049d1fbf1e2648bf000000006666e63e00000000000000005c8fc23e598342be98f4c9be52b82ec0f925debee8a566bf000000006666e63e00000000000000005c8fc23efa83c7bd9a88dabe52b82ec08cdc63bee09479bf000000006666e63e00000000000000005c8fc23ee061b3315227e0be52b82ec02ede4c32000080bf000000006666e63e00000000000000005c8fc23efc83c73d9a88dabe52b82ec08edc633ee09479bf000000006666e63e00000000000000005c8fc23e6683423e95f4c9be52b82ec00826de3ee4a566bf000000006666e63e00000000000000005c8fc23eeec18b3e1440afbe52b82ec00b9d1f3f192648bf000000006666e63e00000000000000005c8fc23e1a40af3ee6c18bbe52b82ec02026483f029d1fbf000000006666e63e00000000000000005c8fc23e96f4c93e628342be52b82ec0e5a5663f0326debe000000006666e63e00000000000000005c8fc23e9a88da3ef183c7bd52b82ec0e094793f82dc63be000000006666e63e00000000000000005c8fc23e5c8f423e000000000000d0c00000803f0000000000000000cdcc4c3d00000000000000000000000096ae3d3eb82c2d3d0000d0c0e094793f87dc633e00000000cdcc4c3d000000000000000000000000e14a2f3e35d5a83d0000d0c0e5a5663f0326de3e00000000cdcc4c3d000000000000000000000000f61c183ec49cf23d0000d0c01b26483f089d1f3f00000000cdcc4c3d000000000000000000000000c39cf23df61c183e0000d0c0079d1f3f1c26483f00000000cdcc4c3d00000000000000000000000035d5a83de14a2f3e0000d0c00326de3ee5a5663f00000000cdcc4c3d000000000000000000000000b52c2d3d96ae3d3e0000d0c082dc633ee094793f00000000cdcc4c3d0000000000000000000000007fae0eb25c8f423e0000d0c02ebd3bb30000803f00000000cdcc4c3d000000000000000000000000b92c2dbd96ae3d3e0000d0c088dc63bee094793f00000000cdcc4c3d00000000000000000000000038d5a8bde14a2f3e0000d0c00626debee5a5663f00000000cdcc4c3d000000000000000000000000c39cf2bdf61c183e0000d0c0079d1fbf1c26483f00000000cdcc4c3d000000000000000000000000f61c18bec19cf23d0000d0c01c2648bf069d1f3f00000000cdcc4c3d000000000000000000000000e24a2fbe32d5a83d0000d0c0e6a566bffe25de3e00000000cdcc4c3d00000000000000000000000096ae3dbeb82c2d3d0000d0c0e09479bf87dc633e00000000cdcc4c3d0000000000000000000000005c8f42be7fae8eb20000d0c0000080bf2ebdbbb300000000cdcc4c3d00000000000000000000000095ae3dbec12c2dbd0000d0c0df9479bf93dc63be00000000cdcc4c3d000000000000000000000000e14a2fbe35d5a8bd0000d0c0e5a566bf0326debe00000000cdcc4c3d000000000000000000000000f51c18bec69cf2bd0000d0c01a2648bf099d1fbf00000000cdcc4c3d000000000000000000000000be9cf2bdf81c18be0000d0c0049d1fbf1e2648bf00000000cdcc4c3d0000000000000000000000002ed5a8bde34a2fbe0000d0c0f925debee8a566bf00000000cdcc4c3d000000000000000000000000bc2c2dbd96ae3dbe0000d0c08cdc63bee09479bf00000000cdcc4c3d00000000000000000000000019b31b315c8f42be0000d0c02ede4c32000080bf00000000cdcc4c3d000000000000000000000000be2c2d3d96ae3dbe0000d0c08edc633ee09479bf00000000cdcc4c3d00000000000000000000000039d5a83de04a2fbe0000d0c00826de3ee4a566bf00000000cdcc4c3d000000000000000000000000c99cf23df41c18be0000d0c00b9d1f3f192648bf00000000cdcc4c3d000000000000000000000000f91c183ebb9cf2bd0000d0c02026483f029d1fbf00000000cdcc4c3d000000000000000000000000e14a2f3e35d5a8bd0000d0c0e5a5663f0326debe00000000cdcc4c3d00000000000000000000000096ae3d3eb52c2dbd0000d0c0e094793f82dc63be00000000cdcc4c3d000000000000000000000000
-  m_CompressedMesh:
-    m_Vertices:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UV:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Normals:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Tangents:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Weights:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_NormalSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_TangentSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_FloatColors:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_BoneIndices:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Triangles:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UVInfo: 0
-  m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: -3.25}
-    m_Extent: {x: 0.78, y: 0.78, z: 3.25}
-  m_MeshUsageFlags: 0
-  m_CookingOptions: 30
-  m_BakedConvexCollisionMesh: 
-  m_BakedTriangleCollisionMesh: 
-  'm_MeshMetrics[0]': 1
-  'm_MeshMetrics[1]': 1
-  m_MeshOptimizationFlags: 1
-  m_StreamData:
-    serializedVersion: 2
-    offset: 0
-    size: 0
-    path: 
-  m_MeshLodInfo:
-    serializedVersion: 2
-    m_LodSelectionCurve:
-      serializedVersion: 1
-      m_LodSlope: 0
-      m_LodBias: 0
-    m_NumLevels: 1
-    m_SubMeshes:
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
 --- !u!1 &990561836
 GameObject:
   m_ObjectHideFlags: 0
@@ -1762,6 +1824,7 @@ GameObject:
   - component: {fileID: 990561843}
   - component: {fileID: 990561845}
   - component: {fileID: 990561846}
+  - component: {fileID: 990561847}
   m_Layer: 0
   m_Name: Player Explorer
   m_TagString: Untagged
@@ -1874,12 +1937,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
   mouseSensitivity: 1
-  inputSystemJumpKey: 1
-  inputSystemSprintKey: 51
-  inputSystemInteractKey: 19
+  gamepadLookDegreesPerSecond: 150
   controlLock: {fileID: 1891705759}
 --- !u!54 &990561842
 Rigidbody:
@@ -1918,7 +1979,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
   profile: {fileID: 11400000, guid: 83dee516fa8b4632bcbb28acd5b0e3f5, type: 2}
   inputSource: {fileID: 990561841}
@@ -1945,10 +2006,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d25fd99b97c4ca48f4aebe4425840b2, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Actors.CelestialActorProbe
   frameProvider: {fileID: 476981474}
-  dominantBodyName: 
+  dominantBodyName:
   surfaceAltitude: 0
   surfaceSlopeAngleDegrees: 0
   oceanAltitude: 0
@@ -1972,7 +2033,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
   inputSource: {fileID: 990561841}
   controlLock: {fileID: 1891705759}
@@ -1984,7 +2045,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   triggerInteraction: 2
   hasTarget: 0
-  currentPrompt: 
+  currentPrompt:
   currentTargetTransform: {fileID: 0}
 --- !u!114 &990561846
 MonoBehaviour:
@@ -1996,64 +2057,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
   slotCapacity: 12
   stacks: []
---- !u!114 &1022701206 stripped
+--- !u!114 &990561847
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7591439062830295501, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 515695055}
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 990561836}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a37fae9001c495cbc8611c85c486f84, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftRig
---- !u!114 &1022701215 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3359784979145954321, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 515695055}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9bd89b4c96f34fd4e9d670f2eb2c0a02, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftMotor
---- !u!114 &1022701216 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1430296848504241019, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 515695055}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
---- !u!54 &1022701217 stripped
-Rigidbody:
-  m_CorrespondingSourceObject: {fileID: 7057908404667551272, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 515695055}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &1022701218 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4833877797365802232, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 515695055}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1022701219 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7247907982008486530, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 515695055}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 240ea934eebc42bf9fd3088b670f8e90, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: player.explorer
 --- !u!1001 &1136215600
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2159,184 +2179,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
---- !u!43 &1313540486
-Mesh:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: SpacecraftThrusterBeam Mesh
-  serializedVersion: 12
-  m_SubMeshes:
-  - serializedVersion: 2
-    firstByte: 0
-    indexCount: 336
-    topology: 0
-    baseVertex: 0
-    firstVertex: 0
-    vertexCount: 84
-    localAABB:
-      m_Center: {x: 0, y: 0, z: -3.25}
-      m_Extent: {x: 0.78, y: 0.78, z: 3.25}
-  m_Shapes:
-    vertices: []
-    shapes: []
-    channels: []
-    fullWeights: []
-  m_BindPose: []
-  m_BoneNameHashes: 
-  m_RootBoneNameHash: 0
-  m_BonesAABB: []
-  m_VariableBoneCountWeights:
-    m_Data: 
-  m_MeshCompression: 0
-  m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexFormat: 0
-  m_IndexBuffer: 00001c00010001001c001d001c0038001d001d003800390001001d00020002001d001e001d0039001e001e0039003a0002001e00030003001e001f001e003a001f001f003a003b0003001f00040004001f0020001f003b00200020003b003c0004002000050005002000210020003c00210021003c003d0005002100060006002100220021003d00220022003d003e0006002200070007002200230022003e00230023003e003f0007002300080008002300240023003f00240024003f004000080024000900090024002500240040002500250040004100090025000a000a00250026002500410026002600410042000a0026000b000b00260027002600420027002700420043000b0027000c000c00270028002700430028002800430044000c0028000d000d00280029002800440029002900440045000d0029000e000e0029002a00290045002a002a00450046000e002a000f000f002a002b002a0046002b002b00460047000f002b00100010002b002c002b0047002c002c004700480010002c00110011002c002d002c0048002d002d004800490011002d00120012002d002e002d0049002e002e0049004a0012002e00130013002e002f002e004a002f002f004a004b0013002f00140014002f0030002f004b00300030004b004c0014003000150015003000310030004c00310031004c004d0015003100160016003100320031004d00320032004d004e0016003200170017003200330032004e00330033004e004f0017003300180018003300340033004f00340034004f005000180034001900190034003500340050003500350050005100190035001a001a00350036003500510036003600510052001a0036001b001b00360037003600520037003700520053001b0037000000000037001c00370053001c001c0053003800
-  m_VertexData:
-    serializedVersion: 3
-    m_VertexCount: 84
-    m_Channels:
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 12
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 24
-      format: 0
-      dimension: 4
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    m_DataSize: 3360
-    _typelessdata: 14ae473f00000000000000000000803f00000000000000000000803f00000000000000003333733f71ac423f5fbb313e00000000e094793f87dc633e000000000000803f00000000000000003333733fcce7333f9c46ad3e00000000e5a5663f0326de3e000000000000803f00000000000000003333733fb91d1c3f35fff83e000000001b26483f089d1f3f000000000000803f00000000000000003333733f33fff83eb91d1c3f00000000079d1f3f1c26483f000000000000803f00000000000000003333733f9c46ad3ecce7333f000000000326de3ee5a5663f000000000000803f00000000000000003333733f5bbb313e71ac423f0000000082dc633ee094793f000000000000803f00000000000000003333733fb86f12b314ae473f000000002ebd3bb30000803f000000000000803f00000000000000003333733f5fbb31be71ac423f0000000088dc63bee094793f000000000000803f00000000000000003333733f9e46adbecce7333f000000000626debee5a5663f000000000000803f00000000000000003333733f33fff8beb91d1c3f00000000079d1fbf1c26483f000000000000803f00000000000000003333733fb91d1cbf32fff83e000000001c2648bf069d1f3f000000000000803f00000000000000003333733fcde733bf9846ad3e00000000e6a566bffe25de3e000000000000803f00000000000000003333733f71ac42bf5fbb313e00000000e09479bf87dc633e000000000000803f00000000000000003333733f14ae47bfb86f92b300000000000080bf2ebdbbb3000000000000803f00000000000000003333733f70ac42bf68bb31be00000000df9479bf93dc63be000000000000803f00000000000000003333733fcce733bf9c46adbe00000000e5a566bf0326debe000000000000803f00000000000000003333733fb81d1cbf36fff8be000000001a2648bf099d1fbf000000000000803f00000000000000003333733f2ffff8bebb1d1cbf00000000049d1fbf1e2648bf000000000000803f00000000000000003333733f9446adbecee733bf00000000f925debee8a566bf000000000000803f00000000000000003333733f63bb31be71ac42bf000000008cdc63bee09479bf000000000000803f00000000000000003333733f05cc1f3214ae47bf000000002ede4c32000080bf000000000000803f00000000000000003333733f64bb313e71ac42bf000000008edc633ee09479bf000000000000803f00000000000000003333733f9f46ad3ecbe733bf000000000826de3ee4a566bf000000000000803f00000000000000003333733f3afff83eb71d1cbf000000000b9d1f3f192648bf000000000000803f00000000000000003333733fbc1d1c3f2bfff8be000000002026483f029d1fbf000000000000803f00000000000000003333733fcce7333f9c46adbe00000000e5a5663f0326debe000000000000803f00000000000000003333733f71ac423f5bbb31be00000000e094793f82dc63be000000000000803f00000000000000003333733f5227e03e0000000052b82ec00000803f00000000000000006666e63e00000000000000005c8fc23e9a88da3ef683c73d52b82ec0e094793f87dc633e000000006666e63e00000000000000005c8fc23e96f4c93e6283423e52b82ec0e5a5663f0326de3e000000006666e63e00000000000000005c8fc23e1640af3eebc18b3e52b82ec01b26483f089d1f3f000000006666e63e00000000000000005c8fc23eeac18b3e1640af3e52b82ec0079d1f3f1c26483f000000006666e63e00000000000000005c8fc23e6283423e96f4c93e52b82ec00326de3ee5a5663f000000006666e63e00000000000000005c8fc23ef183c73d9a88da3e52b82ec082dc633ee094793f000000006666e63e00000000000000005c8fc23e5e62a4b25227e03e52b82ec02ebd3bb30000803f000000006666e63e00000000000000005c8fc23ef783c7bd9a88da3e52b82ec088dc63bee094793f000000006666e63e00000000000000005c8fc23e648342be96f4c93e52b82ec00626debee5a5663f000000006666e63e00000000000000005c8fc23eeac18bbe1640af3e52b82ec0079d1fbf1c26483f000000006666e63e00000000000000005c8fc23e1640afbee9c18b3e52b82ec01c2648bf069d1f3f000000006666e63e00000000000000005c8fc23e96f4c9be5d83423e52b82ec0e6a566bffe25de3e000000006666e63e00000000000000005c8fc23e9a88dabef683c73d52b82ec0e09479bf87dc633e000000006666e63e00000000000000005c8fc23e5227e0be5e6224b352b82ec0000080bf2ebdbbb3000000006666e63e00000000000000005c8fc23e9988dabe0084c7bd52b82ec0df9479bf93dc63be000000006666e63e00000000000000005c8fc23e96f4c9be628342be52b82ec0e5a566bf0326debe000000006666e63e00000000000000005c8fc23e1540afbeecc18bbe52b82ec01a2648bf099d1fbf000000006666e63e00000000000000005c8fc23ee8c18bbe1840afbe52b82ec0049d1fbf1e2648bf000000006666e63e00000000000000005c8fc23e598342be98f4c9be52b82ec0f925debee8a566bf000000006666e63e00000000000000005c8fc23efa83c7bd9a88dabe52b82ec08cdc63bee09479bf000000006666e63e00000000000000005c8fc23ee061b3315227e0be52b82ec02ede4c32000080bf000000006666e63e00000000000000005c8fc23efc83c73d9a88dabe52b82ec08edc633ee09479bf000000006666e63e00000000000000005c8fc23e6683423e95f4c9be52b82ec00826de3ee4a566bf000000006666e63e00000000000000005c8fc23eeec18b3e1440afbe52b82ec00b9d1f3f192648bf000000006666e63e00000000000000005c8fc23e1a40af3ee6c18bbe52b82ec02026483f029d1fbf000000006666e63e00000000000000005c8fc23e96f4c93e628342be52b82ec0e5a5663f0326debe000000006666e63e00000000000000005c8fc23e9a88da3ef183c7bd52b82ec0e094793f82dc63be000000006666e63e00000000000000005c8fc23e5c8f423e000000000000d0c00000803f0000000000000000cdcc4c3d00000000000000000000000096ae3d3eb82c2d3d0000d0c0e094793f87dc633e00000000cdcc4c3d000000000000000000000000e14a2f3e35d5a83d0000d0c0e5a5663f0326de3e00000000cdcc4c3d000000000000000000000000f61c183ec49cf23d0000d0c01b26483f089d1f3f00000000cdcc4c3d000000000000000000000000c39cf23df61c183e0000d0c0079d1f3f1c26483f00000000cdcc4c3d00000000000000000000000035d5a83de14a2f3e0000d0c00326de3ee5a5663f00000000cdcc4c3d000000000000000000000000b52c2d3d96ae3d3e0000d0c082dc633ee094793f00000000cdcc4c3d0000000000000000000000007fae0eb25c8f423e0000d0c02ebd3bb30000803f00000000cdcc4c3d000000000000000000000000b92c2dbd96ae3d3e0000d0c088dc63bee094793f00000000cdcc4c3d00000000000000000000000038d5a8bde14a2f3e0000d0c00626debee5a5663f00000000cdcc4c3d000000000000000000000000c39cf2bdf61c183e0000d0c0079d1fbf1c26483f00000000cdcc4c3d000000000000000000000000f61c18bec19cf23d0000d0c01c2648bf069d1f3f00000000cdcc4c3d000000000000000000000000e24a2fbe32d5a83d0000d0c0e6a566bffe25de3e00000000cdcc4c3d00000000000000000000000096ae3dbeb82c2d3d0000d0c0e09479bf87dc633e00000000cdcc4c3d0000000000000000000000005c8f42be7fae8eb20000d0c0000080bf2ebdbbb300000000cdcc4c3d00000000000000000000000095ae3dbec12c2dbd0000d0c0df9479bf93dc63be00000000cdcc4c3d000000000000000000000000e14a2fbe35d5a8bd0000d0c0e5a566bf0326debe00000000cdcc4c3d000000000000000000000000f51c18bec69cf2bd0000d0c01a2648bf099d1fbf00000000cdcc4c3d000000000000000000000000be9cf2bdf81c18be0000d0c0049d1fbf1e2648bf00000000cdcc4c3d0000000000000000000000002ed5a8bde34a2fbe0000d0c0f925debee8a566bf00000000cdcc4c3d000000000000000000000000bc2c2dbd96ae3dbe0000d0c08cdc63bee09479bf00000000cdcc4c3d00000000000000000000000019b31b315c8f42be0000d0c02ede4c32000080bf00000000cdcc4c3d000000000000000000000000be2c2d3d96ae3dbe0000d0c08edc633ee09479bf00000000cdcc4c3d00000000000000000000000039d5a83de04a2fbe0000d0c00826de3ee4a566bf00000000cdcc4c3d000000000000000000000000c99cf23df41c18be0000d0c00b9d1f3f192648bf00000000cdcc4c3d000000000000000000000000f91c183ebb9cf2bd0000d0c02026483f029d1fbf00000000cdcc4c3d000000000000000000000000e14a2f3e35d5a8bd0000d0c0e5a5663f0326debe00000000cdcc4c3d00000000000000000000000096ae3d3eb52c2dbd0000d0c0e094793f82dc63be00000000cdcc4c3d000000000000000000000000
-  m_CompressedMesh:
-    m_Vertices:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UV:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Normals:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Tangents:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Weights:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_NormalSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_TangentSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_FloatColors:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_BoneIndices:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Triangles:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UVInfo: 0
-  m_LocalAABB:
-    m_Center: {x: 0, y: 0, z: -3.25}
-    m_Extent: {x: 0.78, y: 0.78, z: 3.25}
-  m_MeshUsageFlags: 0
-  m_CookingOptions: 30
-  m_BakedConvexCollisionMesh: 
-  m_BakedTriangleCollisionMesh: 
-  'm_MeshMetrics[0]': 1
-  'm_MeshMetrics[1]': 1
-  m_MeshOptimizationFlags: 1
-  m_StreamData:
-    serializedVersion: 2
-    offset: 0
-    size: 0
-    path: 
-  m_MeshLodInfo:
-    serializedVersion: 2
-    m_LodSelectionCurve:
-      serializedVersion: 1
-      m_LodSlope: 0
-      m_LodBias: 0
-    m_NumLevels: 1
-    m_SubMeshes:
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
 --- !u!1 &1317745336
 GameObject:
   m_ObjectHideFlags: 0
@@ -2383,7 +2225,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e4e1358212cc86449edc2c485798f10, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.GravityActor
   simulation: {fileID: 476981471}
   alignUpAgainstGravity: 1
@@ -2609,6 +2451,133 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!1001 &1678406296
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1944801546}
+    m_Modifications:
+    - target: {fileID: 2441852034644142768, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Name
+      value: PF_PlayerStarterShuttle
+      objectReference: {fileID: 0}
+    - target: {fileID: 3756892544726139654, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 0}
+    - target: {fileID: 4918412385370244340, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383031462875425764, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8165542165073250860, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value:
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+--- !u!4 &1678406297 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1678406298 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7591439062830295501, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a37fae9001c495cbc8611c85c486f84, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftRig
+--- !u!114 &1678406299 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7247907982008486530, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 240ea934eebc42bf9fd3088b670f8e90, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
+--- !u!114 &1678406301 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3359784979145954321, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd89b4c96f34fd4e9d670f2eb2c0a02, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftMotor
+--- !u!114 &1678406302 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1430296848504241019, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
+--- !u!54 &1678406309 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 7057908404667551272, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1738582683
 GameObject:
   m_ObjectHideFlags: 0
@@ -2658,6 +2627,8 @@ GameObject:
   - component: {fileID: 1891705759}
   - component: {fileID: 1891705758}
   - component: {fileID: 1891705757}
+  - component: {fileID: 1891705760}
+  - component: {fileID: 1891705761}
   m_Layer: 5
   m_Name: GameplayCanvas
   m_TagString: Untagged
@@ -2697,7 +2668,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -2714,7 +2685,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -2761,7 +2732,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cdfc4682b72b4979bf8fddc44de31f7f, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.GameplayPanelSwitcher
   hudRoot: {fileID: 900200000}
   pauseMenuPanel: {fileID: 709315112}
@@ -2776,16 +2747,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc97f6f987a24a7da3c79acef9cfa4f1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.GameplayUiController
-  pauseKey: 60
-  inventoryKey: 23
   currentScreen: 0
-  mainMenuSceneName: MainMenu
   controlLock: {fileID: 1891705759}
   panelSwitcher: {fileID: 1891705757}
   inventoryPanel: {fileID: 900100003}
   playerInventory: {fileID: 990561846}
+  sessionController: {fileID: 1891705761}
   interactionRaycaster: {fileID: 990561845}
   interactionPromptText: {fileID: 900200013}
   interactionPromptPrefix: E
@@ -2800,9 +2769,44 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a739a33de0447638f2977c488050d22, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Input.PlayerControlLock
   activeReasons: 0
+--- !u!114 &1891705760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891705752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05a0c010b8cca7f4283fe3fc6a17d3b6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Persistence.GameplaySaveCoordinator
+  slotName: autosave
+  consumeStartupRequestOnStart: 1
+  definitions: {fileID: 11400000, guid: e1f437824dc54f30a15891d3a77e3217, type: 2}
+  gravitySimulation: {fileID: 476981471}
+  originRebaser: {fileID: 476981473}
+  playerInventory: {fileID: 990561846}
+  possessionController: {fileID: 1917591035}
+  resourceStreamers:
+  - {fileID: 922402158}
+--- !u!114 &1891705761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891705752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71b1c94751624c24ae13a79cce587eb6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Application.Runtime::Farion.App.Flow.GameplaySessionController
+  flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
+  saveCoordinator: {fileID: 1891705760}
 --- !u!1 &1917591032
 GameObject:
   m_ObjectHideFlags: 0
@@ -2846,9 +2850,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f51b22b953e42e9a984584a2737ed88, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.KeyboardBoardingInput
-  inputSystemExitVehicleKey: 20
 --- !u!114 &1917591035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2859,21 +2862,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27301337013f42f48461e2c5149285d9, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerPossessionController
   initialMode: 0
   currentMode: 0
   applyInitialModeOnAwake: 1
   boardingInputSource: {fileID: 1917591034}
   controlLock: {fileID: 1891705759}
-  spacecraftRoot: {fileID: 515695056}
-  spacecraftRigidbody: {fileID: 1022701217}
-  spacecraftMotor: {fileID: 1022701215}
-  spacecraftInput: {fileID: 1022701216}
+  spacecraftRoot: {fileID: 1678406297}
+  spacecraftRigidbody: {fileID: 1678406309}
+  spacecraftMotor: {fileID: 1678406301}
+  spacecraftInput: {fileID: 1678406302}
   spacecraftCameraRig: {fileID: 672124906}
-  spacecraftRig: {fileID: 1022701206}
-  spacecraftCameraTarget: {fileID: 1022701218}
-  boardingPoint: {fileID: 1022701219}
+  spacecraftRig: {fileID: 1678406298}
+  spacecraftCameraTarget: {fileID: 1678406297}
+  initialPilotCameraView: 0
+  currentPilotCameraView: 0
+  boardingPoint: {fileID: 1678406299}
   spawnInsideShipOnPilotExit: 1
   openRampOnPilotExit: 0
   closeRampOnEnter: 1
@@ -2938,7 +2943,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
@@ -2969,7 +2974,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
@@ -3004,7 +3009,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1317745337}
-  - {fileID: 515695056}
+  - {fileID: 1678406297}
   - {fileID: 990561837}
   - {fileID: 1917591033}
   m_Father: {fileID: 0}
@@ -3019,9 +3024,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2069305678}
   - component: {fileID: 2069305681}
-  - component: {fileID: 2069305680}
   - component: {fileID: 2069305679}
   - component: {fileID: 2069305682}
+  - component: {fileID: 2069305683}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -3054,7 +3059,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
@@ -3088,14 +3093,6 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!81 &2069305680
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2069305677}
-  m_Enabled: 1
 --- !u!20 &2069305681
 Camera:
   m_ObjectHideFlags: 0
@@ -3127,7 +3124,7 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.05
+  near clip plane: 0.1
   far clip plane: 5000
   field of view: 60
   orthographic: 0
@@ -3157,7 +3154,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ced45a73ad04689b7acff5d28915f41, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonCameraRig
   target: {fileID: 990561843}
   inputSource: {fileID: 990561841}
@@ -3166,6 +3163,20 @@ MonoBehaviour:
   positionResponsiveness: 28
   rotationResponsiveness: 36
   snapDistance: 4
+--- !u!114 &2069305683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2069305677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
+  nonRigidbodyVelocity: 1
+  attenuationObject: {fileID: 0}
 --- !u!1 &2069590342
 GameObject:
   m_ObjectHideFlags: 0
@@ -3215,6 +3226,7 @@ GameObject:
   - component: {fileID: 2107307731}
   - component: {fileID: 2107307730}
   - component: {fileID: 2107307736}
+  - component: {fileID: 2107307737}
   m_Layer: 0
   m_Name: Test Moon
   m_TagString: Untagged
@@ -3231,7 +3243,7 @@ Transform:
   m_GameObject: {fileID: 2107307728}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7144, y: 229.63, z: 3131}
+  m_LocalPosition: {x: 818, y: 229.63, z: 3131}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3248,7 +3260,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: c9716310537b1f74ba20424113e5f417, type: 2}
   applyInEditMode: 1
@@ -3264,7 +3276,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.CelestialBody
   bodyName: Test Moon
   bodyType: 2
@@ -3276,6 +3288,19 @@ MonoBehaviour:
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 1
+--- !u!114 &2107307737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2107307728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: celestial.test-moon
 --- !u!54 &2107307732
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3391,7 +3416,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 2107307731}
   surfaceModel: {fileID: 0}
@@ -3400,7 +3425,7 @@ MonoBehaviour:
   meshObjectName: Terrain Mesh
   renderResolution: 64
   lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
-  editModePreviewLod: 1
+  editModePreviewLod: 2
   syncSphereCollider: 1
   generateMeshCollider: 1
   meshColliderResolution: 32

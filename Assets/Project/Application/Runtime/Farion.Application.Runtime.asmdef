@@ -1,0 +1,17 @@
+{
+    "name": "Farion.Application.Runtime",
+    "rootNamespace": "Farion.App",
+    "references": [
+        "Farion.Core.Runtime",
+        "Farion.Gameplay.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

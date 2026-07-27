@@ -14,7 +14,8 @@ namespace Farion.Gameplay.Flight
             Vector3 localAngularAcceleration,
             Vector3 worldRelativeVelocity,
             bool boostActive,
-            float boostBlend)
+            float boostBlend,
+            float boostCharge)
         {
             AssistMode = assistMode;
             Command = command;
@@ -26,6 +27,7 @@ namespace Farion.Gameplay.Flight
             WorldRelativeVelocity = worldRelativeVelocity;
             BoostActive = boostActive;
             BoostBlend = Mathf.Clamp01(boostBlend);
+            BoostCharge = Mathf.Clamp01(boostCharge);
         }
 
         public SpacecraftFlightAssistMode AssistMode { get; }
@@ -38,6 +40,7 @@ namespace Farion.Gameplay.Flight
         public Vector3 WorldRelativeVelocity { get; }
         public bool BoostActive { get; }
         public float BoostBlend { get; }
+        public float BoostCharge { get; }
 
         public float RelativeSpeed => WorldRelativeVelocity.magnitude;
         public bool FlightAssistEnabled => AssistMode == SpacecraftFlightAssistMode.Assisted;
@@ -52,6 +55,7 @@ namespace Farion.Gameplay.Flight
             Vector3.zero,
             Vector3.zero,
             boostActive: false,
-            boostBlend: 0f);
+            boostBlend: 0f,
+            boostCharge: 1f);
     }
 }

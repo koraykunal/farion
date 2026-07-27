@@ -9,30 +9,13 @@ namespace Farion.Gameplay.Flight
     [RequireComponent(typeof(Rigidbody))]
     public sealed class SpacecraftMotor : MonoBehaviour
     {
-        const float DefaultMaxForwardSpeed = 180f;
-        const float DefaultMaxBoostForwardSpeed = 260f;
-        const float DefaultMaxReverseSpeed = 70f;
-        const float DefaultMaxStrafeSpeed = 45f;
-        const float DefaultMaxVerticalSpeed = 40f;
-        const float DefaultForwardAcceleration = 20f;
-        const float DefaultBoostForwardAcceleration = 34f;
-        const float DefaultReverseAcceleration = 14f;
-        const float DefaultStrafeAcceleration = 8f;
-        const float DefaultVerticalAcceleration = 7f;
-        const float DefaultBrakeGain = 3.2f;
-        const float DefaultPitchRateRad = 65f * Mathf.Deg2Rad;
-        const float DefaultYawRateRad = 42f * Mathf.Deg2Rad;
-        const float DefaultRollRateRad = 95f * Mathf.Deg2Rad;
-        const float DefaultPitchAccelerationRad = 180f * Mathf.Deg2Rad;
-        const float DefaultYawAccelerationRad = 140f * Mathf.Deg2Rad;
-        const float DefaultRollAccelerationRad = 240f * Mathf.Deg2Rad;
         const float DefaultTranslationSpoolRate = 7f;
         const float DefaultRotationSpoolRate = 8f;
         const float DefaultBoostSpoolRate = 3.5f;
+        const float DefaultBoostDrainPerSecond = 0.28f;
+        const float DefaultBoostRechargePerSecond = 0.16f;
+        const float DefaultBoostRechargeDelay = 1.2f;
         const float DefaultInputDeadZone = 0.04f;
-
-        static readonly Vector3 DefaultVelocityGain = new(2.8f, 2.8f, 2.2f);
-        static readonly Vector3 DefaultAngularVelocityGain = new(7f, 7f, 9f);
 
         [Header("Input")]
         [SerializeField] MonoBehaviour inputSource;
@@ -59,20 +42,22 @@ namespace Farion.Gameplay.Flight
         Rigidbody cachedRigidbody;
         ISpacecraftInputSource resolvedInput;
         SpacecraftInputState currentInput;
+        SpacecraftPilotCommand requestedCommand = SpacecraftPilotCommand.None;
         SpacecraftPilotCommand currentCommand = SpacecraftPilotCommand.None;
         SpacecraftThrusterCommand currentThrusterCommand = SpacecraftThrusterCommand.None;
         SpacecraftMovementTelemetry telemetry = SpacecraftMovementTelemetry.Empty;
+        readonly SpacecraftBoostController boostController = new();
         Vector3 smoothedTranslation;
         Vector3 smoothedRotationInput;
-        float smoothedBoostAuthority;
-        bool boostActive;
         Vector3 lastGravityAcceleration;
         Vector3 lastThrustAcceleration;
         Vector3 lastFlightAssistAcceleration;
+        Vector3 lastGravityCompensationAcceleration;
         Vector3 lastLocalLinearAcceleration;
         Vector3 lastLocalAngularAcceleration;
 
-        public Rigidbody Rigidbody => cachedRigidbody != null ? cachedRigidbody : cachedRigidbody = GetComponent<Rigidbody>();
+        public Rigidbody Rigidbody =>
+            cachedRigidbody != null ? cachedRigidbody : cachedRigidbody = GetComponent<Rigidbody>();
         public SpacecraftFlightProfile FlightProfile => flightProfile;
         public SpacecraftFlightAssistMode AssistMode => flightAssistEnabled
             ? SpacecraftFlightAssistMode.Assisted
@@ -83,12 +68,15 @@ namespace Farion.Gameplay.Flight
         public Vector3 LastGravityAcceleration => lastGravityAcceleration;
         public Vector3 LastThrustAcceleration => lastThrustAcceleration;
         public Vector3 LastFlightAssistAcceleration => lastFlightAssistAcceleration;
+        public Vector3 LastGravityCompensationAcceleration => lastGravityCompensationAcceleration;
         public Vector3 LastLocalTranslationInput => smoothedTranslation;
         public Vector3 LastLocalRotationInput => smoothedRotationInput;
         public Vector3 CurrentLocalTranslationInput => currentInput.Translation;
         public bool FlightAssistEnabled => flightAssistEnabled;
-        public bool BoostActive => boostActive;
-        public float CurrentBoostMultiplier => 1f + smoothedBoostAuthority;
+        public bool BoostActive => boostController.IsActive;
+        public float BoostAuthority => boostController.Authority;
+        public float BoostCharge => boostController.Charge;
+        public float CurrentBoostMultiplier => 1f + boostController.Authority;
         public Vector3 Velocity => Rigidbody.linearVelocity;
         public Vector3 RelativeVelocity => Rigidbody.linearVelocity - ResolveFlightReferenceVelocity();
         public float Speed => Velocity.magnitude;
@@ -100,9 +88,8 @@ namespace Farion.Gameplay.Flight
         void Awake()
         {
             ConfigureRigidbody();
-            ResolveInputSource();
-            ResolveContactProbe();
-            ResolveCelestialProbe();
+            ResolveReferences();
+            boostController.Reset();
             RefreshTelemetry();
         }
 
@@ -120,10 +107,7 @@ namespace Farion.Gameplay.Flight
 
         void Update()
         {
-            ResolveInputSource();
-            ResolveContactProbe();
-            ResolveCelestialProbe();
-
+            ResolveReferences();
             currentInput = resolvedInput?.CurrentInput ?? SpacecraftInputState.None;
             SpacecraftPilotCommand nextCommand = BuildPilotCommand(currentInput);
             if (nextCommand.ToggleFlightAssist)
@@ -131,7 +115,7 @@ namespace Farion.Gameplay.Flight
                 flightAssistEnabled = !flightAssistEnabled;
             }
 
-            currentCommand = new SpacecraftPilotCommand(
+            requestedCommand = new SpacecraftPilotCommand(
                 nextCommand.Translation,
                 nextCommand.Rotation,
                 nextCommand.Boost,
@@ -141,10 +125,12 @@ namespace Farion.Gameplay.Flight
 
         void FixedUpdate()
         {
-            float deltaTime = UnityEngine.Time.fixedDeltaTime;
+            ResolveReferences();
+            float deltaTime = Time.fixedDeltaTime;
             ApplyGravity();
-            ApplyTranslation(deltaTime);
-            ApplyRotation(deltaTime);
+            UpdateSmoothedCommand(deltaTime);
+            UpdateBoost(deltaTime);
+            ApplyFlightControl();
             RefreshTelemetry();
         }
 
@@ -164,7 +150,33 @@ namespace Farion.Gameplay.Flight
             Rigidbody.useGravity = false;
             Rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            Rigidbody.centerOfMass = Vector3.zero;
+
+            if (flightProfile != null)
+            {
+                Rigidbody.mass = flightProfile.RigidbodyMass;
+                Rigidbody.angularDamping = flightProfile.AngularDamping;
+                if (flightProfile.OverrideCenterOfMass)
+                {
+                    Rigidbody.centerOfMass = flightProfile.CenterOfMass;
+                }
+                else
+                {
+                    Rigidbody.ResetCenterOfMass();
+                }
+
+                Vector3 maxAngularRate = flightProfile.MaxAngularRate();
+                Rigidbody.maxAngularVelocity = Mathf.Max(
+                    maxAngularRate.x,
+                    maxAngularRate.y,
+                    maxAngularRate.z) * 1.1f;
+            }
+        }
+
+        void ResolveReferences()
+        {
+            ResolveInputSource();
+            ResolveContactProbe();
+            ResolveCelestialProbe();
         }
 
         void ResolveInputSource()
@@ -180,18 +192,12 @@ namespace Farion.Gameplay.Flight
 
         void ResolveContactProbe()
         {
-            if (surfaceContactProbe == null)
-            {
-                surfaceContactProbe = GetComponent<SpacecraftSurfaceContactProbe>();
-            }
+            surfaceContactProbe ??= GetComponent<SpacecraftSurfaceContactProbe>();
         }
 
         void ResolveCelestialProbe()
         {
-            if (celestialProbe == null)
-            {
-                celestialProbe = GetComponent<CelestialActorProbe>();
-            }
+            celestialProbe ??= GetComponent<CelestialActorProbe>();
         }
 
         void ApplyGravity()
@@ -212,117 +218,79 @@ namespace Farion.Gameplay.Flight
             Rigidbody.AddForce(lastGravityAcceleration, ForceMode.Acceleration);
         }
 
-        void ApplyTranslation(float deltaTime)
+        void UpdateSmoothedCommand(float deltaTime)
         {
-            Vector3 targetTranslation = DeadZone(currentCommand.Translation, InputDeadZone);
+            Vector3 targetTranslation = DeadZone(requestedCommand.Translation, InputDeadZone);
             smoothedTranslation = Vector3.Lerp(
                 smoothedTranslation,
                 targetTranslation,
                 ResponsivenessToLerp(TranslationSpoolRate, deltaTime));
             smoothedTranslation = DeadZone(smoothedTranslation, 0.001f);
 
-            boostActive = currentCommand.Boost && smoothedTranslation.z > InputDeadZone;
-            smoothedBoostAuthority = Mathf.Lerp(
-                smoothedBoostAuthority,
-                boostActive ? 1f : 0f,
-                ResponsivenessToLerp(BoostSpoolRate, deltaTime));
+            smoothedRotationInput = Vector3.Lerp(
+                smoothedRotationInput,
+                requestedCommand.Rotation,
+                ResponsivenessToLerp(RotationSpoolRate, deltaTime));
+            smoothedRotationInput = DeadZone(smoothedRotationInput, 0.001f);
 
+            currentCommand = new SpacecraftPilotCommand(
+                smoothedTranslation,
+                smoothedRotationInput,
+                requestedCommand.Boost,
+                requestedCommand.Brake,
+                toggleFlightAssist: false);
+        }
+
+        void UpdateBoost(float deltaTime)
+        {
+            boostController.Step(
+                currentCommand.Boost,
+                currentCommand.Translation.z > InputDeadZone,
+                deltaTime,
+                BoostSpoolRate,
+                BoostDrainPerSecond,
+                BoostRechargePerSecond,
+                BoostRechargeDelay);
+        }
+
+        void ApplyFlightControl()
+        {
             Vector3 localRelativeVelocity = transform.InverseTransformDirection(RelativeVelocity);
-            Vector3 localAcceleration = flightAssistEnabled
-                ? CalculateAssistedLinearAcceleration(localRelativeVelocity)
-                : CalculateManualLinearAcceleration(localRelativeVelocity);
+            Vector3 localAngularVelocity = transform.InverseTransformDirection(Rigidbody.angularVelocity);
+            Vector3 localGravity = transform.InverseTransformDirection(lastGravityAcceleration);
+            SpacecraftFlightControlFrame frame = new(
+                currentCommand,
+                localRelativeVelocity,
+                localAngularVelocity,
+                localGravity,
+                flightAssistEnabled,
+                boostController.Authority);
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                frame,
+                ControlSettings);
 
-            lastLocalLinearAcceleration = localAcceleration;
-            lastThrustAcceleration = transform.TransformDirection(localAcceleration);
-            lastFlightAssistAcceleration = flightAssistEnabled ? lastThrustAcceleration : Vector3.zero;
+            lastLocalLinearAcceleration = output.LocalLinearAcceleration;
+            lastThrustAcceleration = transform.TransformDirection(output.LocalLinearAcceleration);
+            lastFlightAssistAcceleration = transform.TransformDirection(output.LocalAssistAcceleration);
+            lastGravityCompensationAcceleration =
+                transform.TransformDirection(output.LocalGravityCompensation);
 
             if (lastThrustAcceleration.sqrMagnitude > 0.000001f)
             {
                 Rigidbody.AddForce(lastThrustAcceleration, ForceMode.Acceleration);
             }
-        }
 
-        Vector3 CalculateAssistedLinearAcceleration(Vector3 localRelativeVelocity)
-        {
-            Vector3 speed = AssistedMaxSpeed(boostActive);
-            Vector3 desiredLocalVelocity = new(
-                smoothedTranslation.x * speed.x,
-                smoothedTranslation.y * speed.y,
-                smoothedTranslation.z >= 0f
-                    ? smoothedTranslation.z * speed.z
-                    : smoothedTranslation.z * MaxReverseSpeed);
-
-            if (currentCommand.Brake)
-            {
-                desiredLocalVelocity = Vector3.zero;
-            }
-
-            Vector3 acceleration = Vector3.Scale(
-                desiredLocalVelocity - localRelativeVelocity,
-                VelocityGain);
-
-            return ClampLinearAcceleration(acceleration, boostActive);
-        }
-
-        Vector3 CalculateManualLinearAcceleration(Vector3 localRelativeVelocity)
-        {
-            if (currentCommand.Brake)
-            {
-                return ClampLinearAcceleration(-localRelativeVelocity * BrakeGain, boostActive: false);
-            }
-
-            Vector3 acceleration = new(
-                smoothedTranslation.x * StrafeAcceleration,
-                smoothedTranslation.y * VerticalAcceleration,
-                smoothedTranslation.z >= 0f
-                    ? smoothedTranslation.z * ForwardAcceleration(boostActive)
-                    : smoothedTranslation.z * ReverseAcceleration);
-
-            acceleration.z *= ForwardSpeedAuthority(localRelativeVelocity.z, boostActive);
-            return ClampLinearAcceleration(acceleration, boostActive);
-        }
-
-        void ApplyRotation(float deltaTime)
-        {
-            Vector3 targetRotation = currentCommand.Rotation;
-            smoothedRotationInput = Vector3.Lerp(
-                smoothedRotationInput,
-                targetRotation,
-                ResponsivenessToLerp(RotationSpoolRate, deltaTime));
-            smoothedRotationInput = DeadZone(smoothedRotationInput, 0.001f);
-
+            lastLocalAngularAcceleration = output.LocalAngularAcceleration;
             if (RotationSuspendedByContact)
             {
-                smoothedRotationInput = Vector3.zero;
                 lastLocalAngularAcceleration = Vector3.zero;
-                Rigidbody.angularVelocity = Vector3.zero;
                 return;
             }
 
-            Vector3 localAngularVelocity = transform.InverseTransformDirection(Rigidbody.angularVelocity);
-            Vector3 localAngularAcceleration = flightAssistEnabled
-                ? CalculateAssistedAngularAcceleration(localAngularVelocity)
-                : CalculateManualAngularAcceleration();
-
-            lastLocalAngularAcceleration = localAngularAcceleration;
-            if (localAngularAcceleration.sqrMagnitude > 0.000001f)
+            if (lastLocalAngularAcceleration.sqrMagnitude > 0.000001f)
             {
-                Rigidbody.AddRelativeTorque(localAngularAcceleration, ForceMode.Acceleration);
+                Rigidbody.AddRelativeTorque(lastLocalAngularAcceleration, ForceMode.Acceleration);
             }
-        }
-
-        Vector3 CalculateAssistedAngularAcceleration(Vector3 localAngularVelocity)
-        {
-            Vector3 targetAngularVelocity = Vector3.Scale(smoothedRotationInput, MaxAngularRate);
-            Vector3 acceleration = Vector3.Scale(
-                targetAngularVelocity - localAngularVelocity,
-                AngularVelocityGain);
-            return ClampAngularAcceleration(acceleration);
-        }
-
-        Vector3 CalculateManualAngularAcceleration()
-        {
-            return Vector3.Scale(smoothedRotationInput, MaxAngularAcceleration);
         }
 
         SpacecraftPilotCommand BuildPilotCommand(SpacecraftInputState input)
@@ -341,31 +309,14 @@ namespace Farion.Gameplay.Flight
                 input.ToggleFlightAssist);
         }
 
-        Vector3 ClampLinearAcceleration(Vector3 acceleration, bool boostActive)
+        SpacecraftThrusterCommand BuildThrusterCommand(
+            Vector3 localAcceleration,
+            Vector3 localAngularAcceleration)
         {
-            Vector3 positive = MaxPositiveAcceleration(boostActive);
-            Vector3 negative = MaxNegativeAcceleration;
-
-            return new Vector3(
-                ClampAsymmetric(acceleration.x, negative.x, positive.x),
-                ClampAsymmetric(acceleration.y, negative.y, positive.y),
-                ClampAsymmetric(acceleration.z, negative.z, positive.z));
-        }
-
-        Vector3 ClampAngularAcceleration(Vector3 acceleration)
-        {
-            Vector3 limit = MaxAngularAcceleration;
-            return new Vector3(
-                Mathf.Clamp(acceleration.x, -limit.x, limit.x),
-                Mathf.Clamp(acceleration.y, -limit.y, limit.y),
-                Mathf.Clamp(acceleration.z, -limit.z, limit.z));
-        }
-
-        SpacecraftThrusterCommand BuildThrusterCommand(Vector3 localAcceleration, Vector3 localAngularAcceleration)
-        {
-            Vector3 positive = MaxPositiveAcceleration(boostActive);
-            Vector3 negative = MaxNegativeAcceleration;
-            Vector3 angular = MaxAngularAcceleration;
+            SpacecraftFlightControlSettings settings = ControlSettings;
+            Vector3 positive = settings.MaxPositiveAcceleration(boostController.Authority);
+            Vector3 negative = settings.NegativeAcceleration;
+            Vector3 angular = settings.MaxAngularAcceleration;
 
             return new SpacecraftThrusterCommand(
                 NormalizePositive(localAcceleration.z, positive.z),
@@ -387,7 +338,9 @@ namespace Farion.Gameplay.Flight
             Vector3 relativeVelocity = RelativeVelocity;
             Vector3 localRelativeVelocity = transform.InverseTransformDirection(relativeVelocity);
             Vector3 localAngularVelocity = transform.InverseTransformDirection(Rigidbody.angularVelocity);
-            currentThrusterCommand = BuildThrusterCommand(lastLocalLinearAcceleration, lastLocalAngularAcceleration);
+            currentThrusterCommand = BuildThrusterCommand(
+                lastLocalLinearAcceleration,
+                lastLocalAngularAcceleration);
             telemetry = new SpacecraftMovementTelemetry(
                 AssistMode,
                 currentCommand,
@@ -397,106 +350,70 @@ namespace Farion.Gameplay.Flight
                 lastLocalLinearAcceleration,
                 lastLocalAngularAcceleration,
                 relativeVelocity,
-                boostActive,
-                smoothedBoostAuthority);
+                boostController.IsActive,
+                boostController.Authority,
+                boostController.Charge);
         }
 
         Vector3 ResolveFlightReferenceVelocity()
         {
-            if (!useBodyRelativeFlightAssist || celestialProbe == null || !celestialProbe.HasSample)
+            if (!useBodyRelativeFlightAssist)
             {
                 return Vector3.zero;
             }
 
-            return celestialProbe.CurrentSample.BodyPointVelocity;
-        }
-
-        float ForwardSpeedAuthority(float localForwardVelocity, bool boostActive)
-        {
-            float speedLimit = boostActive ? MaxBoostForwardSpeed : MaxForwardSpeed;
-            if (speedLimit <= 0f || localForwardVelocity <= 0f)
+            if (surfaceContactProbe != null && surfaceContactProbe.HasContact)
             {
-                return 1f;
+                SpacecraftSurfaceContactSample contact = surfaceContactProbe.CurrentContact;
+                if (contact.HasContact && contact.Body != null)
+                {
+                    return contact.Body.GetVelocityAtPoint(Rigidbody.worldCenterOfMass);
+                }
             }
 
-            float ratio = Mathf.Clamp01(localForwardVelocity / speedLimit);
-            if (ratio < 0.7f)
-            {
-                return 1f;
-            }
-
-            return Mathf.Clamp01(1f - Mathf.InverseLerp(0.7f, 1f, ratio));
+            return celestialProbe != null && celestialProbe.HasSample
+                ? celestialProbe.CurrentSample.BodyPointVelocity
+                : Vector3.zero;
         }
 
-        float ForwardAcceleration(bool boostActive)
-        {
-            return boostActive
-                ? Mathf.Lerp(MaxForwardAcceleration, MaxBoostForwardAcceleration, smoothedBoostAuthority)
-                : MaxForwardAcceleration;
-        }
+        SpacecraftFlightControlSettings ControlSettings => flightProfile != null
+            ? flightProfile.BuildControlSettings()
+            : DefaultControlSettings;
 
-        Vector3 AssistedMaxSpeed(bool boostActive)
-        {
-            if (flightProfile != null)
-            {
-                return flightProfile.AssistedMaxSpeed(boostActive);
-            }
+        float TranslationSpoolRate =>
+            flightProfile != null ? flightProfile.TranslationSpoolRate : DefaultTranslationSpoolRate;
+        float RotationSpoolRate =>
+            flightProfile != null ? flightProfile.RotationSpoolRate : DefaultRotationSpoolRate;
+        float BoostSpoolRate =>
+            flightProfile != null ? flightProfile.BoostSpoolRate : DefaultBoostSpoolRate;
+        float BoostDrainPerSecond =>
+            flightProfile != null ? flightProfile.BoostDrainPerSecond : DefaultBoostDrainPerSecond;
+        float BoostRechargePerSecond =>
+            flightProfile != null ? flightProfile.BoostRechargePerSecond : DefaultBoostRechargePerSecond;
+        float BoostRechargeDelay =>
+            flightProfile != null ? flightProfile.BoostRechargeDelay : DefaultBoostRechargeDelay;
+        float InputDeadZone =>
+            flightProfile != null ? flightProfile.InputDeadZone : DefaultInputDeadZone;
 
-            return new Vector3(
-                DefaultMaxStrafeSpeed,
-                DefaultMaxVerticalSpeed,
-                boostActive ? DefaultMaxBoostForwardSpeed : DefaultMaxForwardSpeed);
-        }
-
-        Vector3 MaxPositiveAcceleration(bool boostActive)
-        {
-            if (flightProfile != null)
-            {
-                return flightProfile.MaxPositiveAcceleration(boostActive);
-            }
-
-            return new Vector3(
-                DefaultStrafeAcceleration,
-                DefaultVerticalAcceleration,
-                boostActive ? DefaultBoostForwardAcceleration : DefaultForwardAcceleration);
-        }
-
-        Vector3 MaxNegativeAcceleration => flightProfile != null
-            ? flightProfile.MaxNegativeAcceleration()
-            : new Vector3(DefaultStrafeAcceleration, DefaultVerticalAcceleration, DefaultReverseAcceleration);
-
-        Vector3 MaxAngularRate => flightProfile != null
-            ? flightProfile.MaxAngularRate()
-            : new Vector3(DefaultPitchRateRad, DefaultYawRateRad, DefaultRollRateRad);
-
-        Vector3 MaxAngularAcceleration => flightProfile != null
-            ? flightProfile.MaxAngularAcceleration()
-            : new Vector3(DefaultPitchAccelerationRad, DefaultYawAccelerationRad, DefaultRollAccelerationRad);
-
-        Vector3 VelocityGain => flightProfile != null ? flightProfile.VelocityGain : DefaultVelocityGain;
-        Vector3 AngularVelocityGain => flightProfile != null ? flightProfile.AngularVelocityGain : DefaultAngularVelocityGain;
-        float MaxForwardSpeed => flightProfile != null ? flightProfile.MaxForwardSpeed : DefaultMaxForwardSpeed;
-        float MaxBoostForwardSpeed => flightProfile != null ? flightProfile.MaxBoostForwardSpeed : DefaultMaxBoostForwardSpeed;
-        float MaxReverseSpeed => flightProfile != null ? flightProfile.MaxReverseSpeed : DefaultMaxReverseSpeed;
-        float MaxForwardAcceleration => flightProfile != null ? flightProfile.ForwardAcceleration : DefaultForwardAcceleration;
-        float MaxBoostForwardAcceleration => flightProfile != null ? flightProfile.BoostForwardAcceleration : DefaultBoostForwardAcceleration;
-        float ReverseAcceleration => flightProfile != null ? flightProfile.ReverseAcceleration : DefaultReverseAcceleration;
-        float StrafeAcceleration => flightProfile != null ? flightProfile.StrafeAcceleration : DefaultStrafeAcceleration;
-        float VerticalAcceleration => flightProfile != null ? flightProfile.VerticalAcceleration : DefaultVerticalAcceleration;
-        float BrakeGain => flightProfile != null ? flightProfile.BrakeGain : DefaultBrakeGain;
-        float TranslationSpoolRate => flightProfile != null ? flightProfile.TranslationSpoolRate : DefaultTranslationSpoolRate;
-        float RotationSpoolRate => flightProfile != null ? flightProfile.RotationSpoolRate : DefaultRotationSpoolRate;
-        float BoostSpoolRate => flightProfile != null ? flightProfile.BoostSpoolRate : DefaultBoostSpoolRate;
-        float InputDeadZone => flightProfile != null ? flightProfile.InputDeadZone : DefaultInputDeadZone;
+        static SpacecraftFlightControlSettings DefaultControlSettings => new(
+            new Vector3(45f, 40f, 180f),
+            new Vector3(45f, 40f, 260f),
+            new Vector3(45f, 40f, 70f),
+            new Vector3(12f, 16f, 20f),
+            new Vector3(12f, 16f, 34f),
+            new Vector3(12f, 16f, 18f),
+            new Vector3(65f, 42f, 95f) * Mathf.Deg2Rad,
+            new Vector3(180f, 140f, 240f) * Mathf.Deg2Rad,
+            new Vector3(2.8f, 2.8f, 2.2f),
+            new Vector3(7f, 7f, 9f),
+            3.2f,
+            compensateGravity: true,
+            limitManualFlightEnvelope: true,
+            manualEnvelopeStart: 0.85f);
 
         static Vector3 DeadZone(Vector3 value, float deadZone)
         {
             return value.sqrMagnitude <= deadZone * deadZone ? Vector3.zero : value;
-        }
-
-        static float ClampAsymmetric(float value, float negativeLimit, float positiveLimit)
-        {
-            return Mathf.Clamp(value, -Mathf.Abs(negativeLimit), Mathf.Abs(positiveLimit));
         }
 
         static float NormalizePositive(float value, float limit)

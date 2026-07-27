@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -56,6 +57,10 @@ namespace Farion.Gameplay.Flight
         float runtimeSeed;
         int cachedSegments = -1;
         float cachedMeshIntensity = -1f;
+        Vector3[] vertices = Array.Empty<Vector3>();
+        Vector3[] normals = Array.Empty<Vector3>();
+        Color[] colors = Array.Empty<Color>();
+        int[] triangles = Array.Empty<int>();
 
         void Awake()
         {
@@ -155,15 +160,19 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
+            bool topologyChanged = beamMesh == null ||
+                cachedSegments != segments ||
+                vertices.Length != segments * 3;
             if (beamMesh == null)
             {
                 beamMesh = new Mesh
                 {
-                    name = $"{nameof(SpacecraftThrusterBeam)} Mesh"
+                    name = $"{nameof(SpacecraftThrusterBeam)} Mesh",
+                    hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild
                 };
                 beamMesh.MarkDynamic();
             }
-            else
+            else if (topologyChanged)
             {
                 beamMesh.Clear();
             }
@@ -171,10 +180,18 @@ namespace Farion.Gameplay.Flight
             cachedSegments = segments;
             cachedMeshIntensity = meshIntensity;
             int ringVertexCount = segments;
-            Vector3[] vertices = new Vector3[ringVertexCount * 3];
-            Vector3[] normals = new Vector3[vertices.Length];
-            Color[] colors = new Color[vertices.Length];
-            int[] triangles = new int[segments * 12];
+            if (vertices.Length != ringVertexCount * 3)
+            {
+                vertices = new Vector3[ringVertexCount * 3];
+                normals = new Vector3[vertices.Length];
+                colors = new Color[vertices.Length];
+            }
+
+            if (triangles.Length != segments * 12)
+            {
+                triangles = new int[segments * 12];
+                topologyChanged = true;
+            }
 
             float direction = extendAlongNegativeZ ? -1f : 1f;
             float length = Mathf.Lerp(idleLength, fullLength, plumeIntensity) * lengthPulse;
@@ -212,36 +229,42 @@ namespace Farion.Gameplay.Flight
                 colors[tipIndex] = new Color(0.05f, 0f, 0f, 0f);
             }
 
-            int triangleIndex = 0;
-            for (int i = 0; i < segments; i++)
+            if (topologyChanged)
             {
-                int next = (i + 1) % segments;
-                int nozzleA = i;
-                int nozzleB = next;
-                int midA = i + ringVertexCount;
-                int midB = next + ringVertexCount;
-                int tipA = i + ringVertexCount * 2;
-                int tipB = next + ringVertexCount * 2;
+                int triangleIndex = 0;
+                for (int i = 0; i < segments; i++)
+                {
+                    int next = (i + 1) % segments;
+                    int nozzleA = i;
+                    int nozzleB = next;
+                    int midA = i + ringVertexCount;
+                    int midB = next + ringVertexCount;
+                    int tipA = i + ringVertexCount * 2;
+                    int tipB = next + ringVertexCount * 2;
 
-                triangles[triangleIndex++] = nozzleA;
-                triangles[triangleIndex++] = midA;
-                triangles[triangleIndex++] = nozzleB;
-                triangles[triangleIndex++] = nozzleB;
-                triangles[triangleIndex++] = midA;
-                triangles[triangleIndex++] = midB;
+                    triangles[triangleIndex++] = nozzleA;
+                    triangles[triangleIndex++] = midA;
+                    triangles[triangleIndex++] = nozzleB;
+                    triangles[triangleIndex++] = nozzleB;
+                    triangles[triangleIndex++] = midA;
+                    triangles[triangleIndex++] = midB;
 
-                triangles[triangleIndex++] = midA;
-                triangles[triangleIndex++] = tipA;
-                triangles[triangleIndex++] = midB;
-                triangles[triangleIndex++] = midB;
-                triangles[triangleIndex++] = tipA;
-                triangles[triangleIndex++] = tipB;
+                    triangles[triangleIndex++] = midA;
+                    triangles[triangleIndex++] = tipA;
+                    triangles[triangleIndex++] = midB;
+                    triangles[triangleIndex++] = midB;
+                    triangles[triangleIndex++] = tipA;
+                    triangles[triangleIndex++] = tipB;
+                }
             }
 
             beamMesh.vertices = vertices;
             beamMesh.normals = normals;
             beamMesh.colors = colors;
-            beamMesh.triangles = triangles;
+            if (topologyChanged)
+            {
+                beamMesh.triangles = triangles;
+            }
             beamMesh.RecalculateBounds();
             meshFilter.sharedMesh = beamMesh;
         }

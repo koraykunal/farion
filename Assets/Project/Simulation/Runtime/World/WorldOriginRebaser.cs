@@ -32,10 +32,39 @@ namespace Farion.Simulation.World
         public float TrackingDistanceFromOrigin => trackingDistanceFromOrigin;
         public Transform TrackingTarget => trackingTarget;
 
+        public WorldOriginSnapshot CaptureSnapshot()
+        {
+            return new WorldOriginSnapshot(accumulatedOriginOffset, shiftCount);
+        }
+
+        public bool RestoreSnapshot(WorldOriginSnapshot snapshot)
+        {
+            if (!snapshot.IsSupported)
+            {
+                return false;
+            }
+
+            accumulatedOriginOffset = snapshot.AccumulatedOffset;
+            shiftCount = snapshot.ShiftCount;
+            lastOriginOffset = Vector3.zero;
+            lastShiftFrame = -1;
+            trackingDistanceFromOrigin = trackingTarget != null ? GetTrackingPosition().magnitude : 0f;
+            return true;
+        }
+
+        public void ResetRuntimeState()
+        {
+            accumulatedOriginOffset = Vector3.zero;
+            lastOriginOffset = Vector3.zero;
+            shiftCount = 0;
+            lastShiftFrame = -1;
+            trackingDistanceFromOrigin = trackingTarget != null ? GetTrackingPosition().magnitude : 0f;
+        }
+
         void Awake()
         {
             RefreshShiftRoots();
-            ValidateSetup(logWarnings: true);
+            ValidateSetup(logWarnings: false);
         }
 
         void FixedUpdate()
@@ -59,18 +88,22 @@ namespace Farion.Simulation.World
             }
         }
 
+#if UNITY_EDITOR
         [ContextMenu("Validate Setup")]
         public bool ValidateSetup()
         {
             return ValidateSetup(logWarnings: true);
         }
+#endif
 
         [ContextMenu("Rebase Now")]
         public void RebaseNow()
         {
             if (!Application.isPlaying)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"{nameof(WorldOriginRebaser)} can only rebase from the context menu in Play Mode.", this);
+#endif
                 return;
             }
 

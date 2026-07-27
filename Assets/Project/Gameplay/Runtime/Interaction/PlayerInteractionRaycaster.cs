@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Input;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] Transform currentTargetTransform;
 
         readonly RaycastHit[] hits = new RaycastHit[MaxHits];
+        readonly List<MonoBehaviour> behaviourBuffer = new(8);
         IFirstPersonInputSource resolvedInput;
         Collider[] ownColliders;
         IInteractable currentInteractable;
@@ -183,15 +185,16 @@ namespace Farion.Gameplay.Interaction
             return false;
         }
 
-        static IInteractable ResolveInteractable(Collider hitCollider)
+        IInteractable ResolveInteractable(Collider hitCollider)
         {
             Transform current = hitCollider.transform;
             while (current != null)
             {
-                MonoBehaviour[] behaviours = current.GetComponents<MonoBehaviour>();
-                for (int i = 0; i < behaviours.Length; i++)
+                behaviourBuffer.Clear();
+                current.GetComponents(behaviourBuffer);
+                for (int i = 0; i < behaviourBuffer.Count; i++)
                 {
-                    if (behaviours[i] is IInteractable interactable)
+                    if (behaviourBuffer[i] is IInteractable interactable)
                     {
                         return interactable;
                     }

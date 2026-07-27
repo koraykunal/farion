@@ -16,7 +16,40 @@ namespace Farion.Simulation.Celestial
         [Header("Surface Sources")]
         [SerializeField] List<MonoBehaviour> surfaceSources = new();
 
+        static readonly List<CelestialFrameProvider> EnabledProviders = new();
+        static CelestialFrameProvider active;
+
+        public static CelestialFrameProvider Active => active;
         public GravitySimulation Simulation => simulation != null ? simulation : GravitySimulation.Active;
+
+        void OnEnable()
+        {
+            EnabledProviders.Remove(this);
+            if (EnabledProviders.Count > 0)
+            {
+#if UNITY_EDITOR
+                Debug.LogWarning(
+                    $"Multiple {nameof(CelestialFrameProvider)} instances detected. Using {name} as active.",
+                    this);
+#endif
+            }
+
+            EnabledProviders.Add(this);
+            active = this;
+        }
+
+        void OnDisable()
+        {
+            EnabledProviders.Remove(this);
+            active = EnabledProviders.Count > 0 ? EnabledProviders[^1] : null;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStaticState()
+        {
+            EnabledProviders.Clear();
+            active = null;
+        }
 
         void OnValidate()
         {

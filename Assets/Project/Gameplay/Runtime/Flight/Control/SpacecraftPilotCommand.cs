@@ -11,8 +11,8 @@ namespace Farion.Gameplay.Flight
             bool brake,
             bool toggleFlightAssist)
         {
-            Translation = Vector3.ClampMagnitude(translation, 1f);
-            Rotation = Vector3.ClampMagnitude(rotation, 1f);
+            Translation = ClampAxes(translation);
+            Rotation = ClampAxes(rotation);
             Boost = boost;
             Brake = brake;
             ToggleFlightAssist = toggleFlightAssist;
@@ -30,5 +30,13 @@ namespace Farion.Gameplay.Flight
             boost: false,
             brake: false,
             toggleFlightAssist: false);
+
+        static Vector3 ClampAxes(Vector3 value)
+        {
+            return new Vector3(
+                Mathf.Clamp(value.x, -1f, 1f),
+                Mathf.Clamp(value.y, -1f, 1f),
+                Mathf.Clamp(value.z, -1f, 1f));
+        }
     }
 }

@@ -1,33 +1,34 @@
 using UnityEngine;
 using Farion.Gameplay.Input;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 
 namespace Farion.Gameplay.Flight
 {
     [DisallowMultipleComponent]
     public sealed class KeyboardSpacecraftInput : MonoBehaviour, ISpacecraftInputSource
     {
-        [Header("Translation")]
-        [SerializeField] Key inputSystemForwardKey = Key.W;
-        [SerializeField] Key inputSystemBackwardKey = Key.S;
-        [SerializeField] Key inputSystemLeftKey = Key.A;
-        [SerializeField] Key inputSystemRightKey = Key.D;
-        [SerializeField] Key inputSystemAscendKey = Key.Space;
-        [SerializeField] Key inputSystemDescendKey = Key.LeftCtrl;
-        [SerializeField] Key inputSystemBoostKey = Key.LeftShift;
-        [SerializeField] Key inputSystemBrakeKey = Key.X;
-        [SerializeField] Key inputSystemFlightAssistKey = Key.Z;
-
         [Header("Rotation")]
-        [SerializeField] Key inputSystemRollLeftKey = Key.Q;
-        [SerializeField] Key inputSystemRollRightKey = Key.E;
         [SerializeField] float mouseSensitivity = 1f;
+        [Min(0f)]
+        [SerializeField] float gamepadLookDegreesPerSecond = 120f;
+
+        [Header("Throttle")]
+        [Range(-1f, 1f)]
+        [SerializeField] float initialThrottle;
+        [Min(0.01f)]
+        [SerializeField] float throttleChangePerSecond = 0.8f;
+        [SerializeField, Range(-1f, 1f)] float currentThrottle;
 
         [Header("Control Lock")]
         [SerializeField] PlayerControlLock controlLock;
 
         public SpacecraftInputState CurrentInput { get; private set; }
+        public float CurrentThrottle => currentThrottle;
+
+        void OnEnable()
+        {
+            FarionInputActions.Enable();
+            currentThrottle = Mathf.Clamp(initialThrottle, -1f, 1f);
+        }
 
         void OnDisable()
         {
@@ -39,33 +40,52 @@ namespace Farion.Gameplay.Flight
             ResolveControlLock();
             if (IsGameplayInputLocked())
             {
-                CurrentInput = SpacecraftInputState.None;
+                CurrentInput = new SpacecraftInputState(
+                    new Vector3(0f, 0f, currentThrottle),
+                    Vector2.zero,
+                    roll: 0f,
+                    boost: false);
                 return;
             }
 
-            Keyboard keyboard = Keyboard.current;
-            Mouse mouse = Mouse.current;
-            if (keyboard == null)
+            Vector2 planarTranslation = FarionInputActions.FlightTranslate.ReadValue<Vector2>();
+            float throttleInput = Mathf.Clamp(planarTranslation.y, -1f, 1f);
+            if (Mathf.Abs(throttleInput) > 0.001f)
             {
-                CurrentInput = SpacecraftInputState.None;
-                return;
+                currentThrottle = Mathf.MoveTowards(
+                    currentThrottle,
+                    throttleInput > 0f ? 1f : -1f,
+                    throttleChangePerSecond * Time.unscaledDeltaTime);
+            }
+
+            bool brake = FarionInputActions.FlightBrake.IsPressed();
+            if (FarionInputActions.FlightBrake.WasPressedThisFrame())
+            {
+                currentThrottle = 0f;
             }
 
             Vector3 translation = new(
-                Axis(keyboard, inputSystemLeftKey, inputSystemRightKey),
-                Axis(keyboard, inputSystemDescendKey, inputSystemAscendKey),
-                Axis(keyboard, inputSystemBackwardKey, inputSystemForwardKey));
-
-            Vector2 mouseDelta = mouse != null ? mouse.delta.ReadValue() : Vector2.zero;
-            Vector2 look = mouseDelta * mouseSensitivity;
+                planarTranslation.x,
+                FarionInputActions.FlightVertical.ReadValue<float>(),
+                currentThrottle);
 
             CurrentInput = new SpacecraftInputState(
                 translation,
-                look,
-                Axis(keyboard, inputSystemRollLeftKey, inputSystemRollRightKey),
-                IsPressed(keyboard, inputSystemBoostKey),
-                IsPressed(keyboard, inputSystemBrakeKey),
-                WasPressedThisFrame(keyboard, inputSystemFlightAssistKey));
+                FarionInputActions.ReadLook(
+                    FarionInputActions.FlightLook,
+                    mouseSensitivity,
+                    gamepadLookDegreesPerSecond),
+                FarionInputActions.FlightRoll.ReadValue<float>(),
+                FarionInputActions.FlightBoost.IsPressed(),
+                brake,
+                FarionInputActions.FlightToggleAssist.WasPressedThisFrame(),
+                FarionInputActions.FlightToggleLandingGear.WasPressedThisFrame());
+        }
+
+        void OnValidate()
+        {
+            initialThrottle = Mathf.Clamp(initialThrottle, -1f, 1f);
+            throttleChangePerSecond = Mathf.Max(0.01f, throttleChangePerSecond);
         }
 
         public void SetControlLock(PlayerControlLock nextControlLock)
@@ -86,32 +106,5 @@ namespace Farion.Gameplay.Flight
             return controlLock != null && controlLock.IsGameplayInputLocked;
         }
 
-        static int Axis(Keyboard keyboard, Key negative, Key positive)
-        {
-            int value = 0;
-            if (IsPressed(keyboard, positive))
-            {
-                value++;
-            }
-
-            if (IsPressed(keyboard, negative))
-            {
-                value--;
-            }
-
-            return value;
-        }
-
-        static bool IsPressed(Keyboard keyboard, Key key)
-        {
-            KeyControl control = keyboard[key];
-            return control != null && control.isPressed;
-        }
-
-        static bool WasPressedThisFrame(Keyboard keyboard, Key key)
-        {
-            KeyControl control = keyboard[key];
-            return control != null && control.wasPressedThisFrame;
-        }
     }
 }

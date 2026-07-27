@@ -1,18 +1,16 @@
 using System.Collections;
+using Farion.App.Flow;
+using Farion.Core.Persistence;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Farion.UI.MainMenu
 {
     [DisallowMultipleComponent]
     public sealed class MainMenuController : MonoBehaviour
     {
-        const string DefaultGameplaySceneName = "SC_PhysicsSandbox";
-
         [Header("Scene Flow")]
         [SerializeField] GameFlowSettings flowSettings;
-        [SerializeField] string gameplaySceneName = DefaultGameplaySceneName;
-        [SerializeField] bool hasSaveGame;
+        [SerializeField] SaveGameAvailabilityProvider saveGameAvailability;
 
         [Header("Panels")]
         [SerializeField] MainMenuPanelSwitcher panelSwitcher;
@@ -23,21 +21,13 @@ namespace Farion.UI.MainMenu
 
         Coroutine loadRoutine;
 
-        public bool HasSaveGame => flowSettings != null ? flowSettings.HasSaveGame : hasSaveGame;
+        public bool HasSaveGame => saveGameAvailability != null && saveGameAvailability.HasSaveGame;
 
         void Awake()
         {
             ResolveReferences();
             ApplySaveAvailability();
             panelSwitcher?.ShowMain();
-        }
-
-        void OnValidate()
-        {
-            if (string.IsNullOrWhiteSpace(gameplaySceneName))
-            {
-                gameplaySceneName = DefaultGameplaySceneName;
-            }
         }
 
         public void Handle(MainMenuAction action)
@@ -47,16 +37,16 @@ namespace Farion.UI.MainMenu
                 case MainMenuAction.Continue:
                     if (HasSaveGame)
                     {
-                        StartGameplayLoad(ResolveContinueSceneName());
+                        StartGameplayLoad(ResolveContinueSceneName(), SaveGameStartupMode.LoadGame, ResolveSaveSlotName());
                     }
                     break;
                 case MainMenuAction.NewGame:
-                    StartGameplayLoad(ResolveNewGameSceneName());
+                    StartGameplayLoad(ResolveNewGameSceneName(), SaveGameStartupMode.NewGame);
                     break;
                 case MainMenuAction.LoadGame:
                     if (HasSaveGame)
                     {
-                        StartGameplayLoad(ResolveLoadGameSceneName());
+                        StartGameplayLoad(ResolveLoadGameSceneName(), SaveGameStartupMode.LoadGame, ResolveSaveSlotName());
                     }
                     break;
                 case MainMenuAction.Settings:
@@ -73,30 +63,38 @@ namespace Farion.UI.MainMenu
                     panelSwitcher?.ShowMain();
                     break;
                 case MainMenuAction.ConfirmExit:
-                    Application.Quit();
+                    GameFlowService.Quit();
                     break;
             }
         }
 
-        void StartGameplayLoad(string sceneName)
+        void StartGameplayLoad(
+            string sceneName,
+            SaveGameStartupMode startupMode,
+            string requestedSlotName = null)
         {
-            if (loadRoutine != null)
+            if (loadRoutine != null || string.IsNullOrWhiteSpace(sceneName))
             {
                 return;
             }
 
-            loadRoutine = StartCoroutine(LoadSceneRoutine(sceneName));
+            loadRoutine = StartCoroutine(LoadSceneRoutine(sceneName, startupMode, requestedSlotName));
         }
 
-        IEnumerator LoadSceneRoutine(string sceneName)
+        IEnumerator LoadSceneRoutine(
+            string sceneName,
+            SaveGameStartupMode startupMode,
+            string requestedSlotName)
         {
             panelSwitcher?.ShowLoading();
             yield return null;
 
-            AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+            AsyncOperation operation = GameFlowService.LoadGameplaySceneAsync(
+                sceneName,
+                startupMode,
+                requestedSlotName);
             if (operation == null)
             {
-                Debug.LogError($"Main menu could not load scene '{sceneName}'. Check Build Settings and MainMenuController.", this);
                 panelSwitcher?.ShowMain();
                 loadRoutine = null;
                 yield break;
@@ -113,6 +111,11 @@ namespace Farion.UI.MainMenu
             if (panelSwitcher == null)
             {
                 panelSwitcher = GetComponent<MainMenuPanelSwitcher>();
+            }
+
+            if (saveGameAvailability == null)
+            {
+                saveGameAvailability = GetComponent<SaveGameAvailabilityProvider>();
             }
         }
 
@@ -131,22 +134,22 @@ namespace Farion.UI.MainMenu
 
         string ResolveNewGameSceneName()
         {
-            return flowSettings != null ? flowSettings.NewGameSceneName : ResolveFallbackSceneName();
+            return flowSettings != null ? flowSettings.NewGameSceneName : string.Empty;
         }
 
         string ResolveContinueSceneName()
         {
-            return flowSettings != null ? flowSettings.ContinueSceneName : ResolveFallbackSceneName();
+            return flowSettings != null ? flowSettings.ContinueSceneName : string.Empty;
         }
 
         string ResolveLoadGameSceneName()
         {
-            return flowSettings != null ? flowSettings.LoadGameSceneName : ResolveFallbackSceneName();
+            return flowSettings != null ? flowSettings.LoadGameSceneName : string.Empty;
         }
 
-        string ResolveFallbackSceneName()
+        string ResolveSaveSlotName()
         {
-            return string.IsNullOrWhiteSpace(gameplaySceneName) ? DefaultGameplaySceneName : gameplaySceneName.Trim();
+            return saveGameAvailability != null ? saveGameAvailability.SlotName : SaveGameSlotCatalog.DefaultSlotName;
         }
     }
 }

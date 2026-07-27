@@ -1,8 +1,18 @@
 ﻿<Solution>
   <Project Path="Farion.Gameplay.Runtime.csproj" />
   <Project Path="Farion.Simulation.Runtime.csproj" />
+  <Project Path="FMODUnityEditor.csproj" />
   <Project Path="Farion.Rendering.Runtime.csproj" />
   <Project Path="Farion.Core.Runtime.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
+  <Project Path="Farion.Audio.Runtime.csproj" />
   <Project Path="Farion.UI.Runtime.csproj" />
+  <Project Path="FMODUnityResonanceEditor.csproj" />
+  <Project Path="FMODUnity.csproj" />
+  <Project Path="FMODUnityHaptics.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Farion.Tests.PlayMode.csproj" />
+  <Project Path="FMODUnityResonance.csproj" />
+  <Project Path="Farion.Tests.EditMode.csproj" />
+  <Project Path="Farion.Application.Runtime.csproj" />
 </Solution>

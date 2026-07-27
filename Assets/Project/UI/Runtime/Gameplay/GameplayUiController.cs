@@ -1,32 +1,27 @@
 using System;
+using Farion.App.Flow;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Inventory;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
-using UnityEngine.SceneManagement;
 
 namespace Farion.UI.Gameplay
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerControlLock))]
+    [RequireComponent(typeof(GameplaySessionController))]
     public sealed class GameplayUiController : MonoBehaviour
     {
-        [Header("Input")]
-        [SerializeField] Key pauseKey = Key.Escape;
-        [SerializeField] Key inventoryKey = Key.I;
-
         [Header("State")]
         [SerializeField] GameplayScreenState currentScreen = GameplayScreenState.None;
-        [SerializeField] string mainMenuSceneName = "MainMenu";
 
         [Header("References")]
         [SerializeField] PlayerControlLock controlLock;
         [SerializeField] GameplayPanelSwitcher panelSwitcher;
         [SerializeField] InventoryPanelPresenter inventoryPanel;
         [SerializeField] PlayerInventory playerInventory;
+        [SerializeField] GameplaySessionController sessionController;
 
         [Header("HUD")]
         [SerializeField] PlayerInteractionRaycaster interactionRaycaster;
@@ -48,6 +43,7 @@ namespace Farion.UI.Gameplay
 
         void OnEnable()
         {
+            FarionInputActions.Enable();
             ResolveReferences();
             ApplyScreenState();
         }
@@ -62,19 +58,15 @@ namespace Farion.UI.Gameplay
 
         void Update()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard != null)
+            if (FarionInputActions.UiPause.WasPressedThisFrame())
             {
-                if (WasPressedThisFrame(keyboard, pauseKey))
-                {
-                    HandlePausePressed();
-                    return;
-                }
+                HandlePausePressed();
+                return;
+            }
 
-                if (WasPressedThisFrame(keyboard, inventoryKey))
-                {
-                    ToggleInventory();
-                }
+            if (FarionInputActions.UiInventory.WasPressedThisFrame())
+            {
+                ToggleInventory();
             }
         }
 
@@ -125,17 +117,19 @@ namespace Farion.UI.Gameplay
                     ShowInventory();
                     break;
                 case GameplayMenuAction.ExitToMainMenu:
-                    LoadMainMenu();
+                    sessionController?.ExitToMainMenu();
                     break;
                 case GameplayMenuAction.QuitGame:
-                    Application.Quit();
+                    sessionController?.Quit();
                     break;
                 case GameplayMenuAction.Blueprints:
                 case GameplayMenuAction.Journal:
                 case GameplayMenuAction.Ship:
                 case GameplayMenuAction.Map:
                 case GameplayMenuAction.Options:
+                    break;
                 case GameplayMenuAction.Save:
+                    sessionController?.Save();
                     ShowPauseMenu();
                     break;
             }
@@ -150,16 +144,6 @@ namespace Farion.UI.Gameplay
             }
 
             CloseActiveScreen();
-        }
-
-        void LoadMainMenu()
-        {
-            if (string.IsNullOrWhiteSpace(mainMenuSceneName))
-            {
-                return;
-            }
-
-            SceneManager.LoadScene(mainMenuSceneName.Trim(), LoadSceneMode.Single);
         }
 
         void Show(GameplayScreenState nextScreen)
@@ -227,6 +211,11 @@ namespace Farion.UI.Gameplay
             {
                 inventoryPanel = GetComponentInChildren<InventoryPanelPresenter>(true);
             }
+
+            if (sessionController == null)
+            {
+                sessionController = GetComponent<GameplaySessionController>();
+            }
         }
 
         void RefreshHud()
@@ -254,10 +243,5 @@ namespace Farion.UI.Gameplay
                 : $"{interactionPromptPrefix.Trim()} - {prompt}";
         }
 
-        static bool WasPressedThisFrame(Keyboard keyboard, Key key)
-        {
-            KeyControl control = keyboard[key];
-            return control != null && control.wasPressedThisFrame;
-        }
     }
 }

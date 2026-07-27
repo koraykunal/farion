@@ -62,7 +62,9 @@ namespace Farion.Rendering.PostProcessing
             Shader shader = atmosphereShader != null ? atmosphereShader : Shader.Find(DefaultShaderName);
             if (shader == null)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"{nameof(FarionAtmosphereRendererFeature)} skipped because {DefaultShaderName} was not found.");
+#endif
                 return null;
             }
 

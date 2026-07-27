@@ -216,37 +216,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 6534604987873499861}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2157504224738513156
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4367661742636444537}
-  m_Layer: 0
-  m_Name: LandingCameraTarget
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4367661742636444537
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2157504224738513156}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.2, z: -1.5}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6534604987873499861}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2249748746459582925
 GameObject:
   m_ObjectHideFlags: 0
@@ -321,6 +290,11 @@ GameObject:
   - component: {fileID: 5218897094659780235}
   - component: {fileID: 789528504066411760}
   - component: {fileID: 7591439062830295501}
+  - component: {fileID: 4332399351985421442}
+  - component: {fileID: 6774825901920648301}
+  - component: {fileID: 8451750196482294104}
+  - component: {fileID: 1701556989748357691}
+  - component: {fileID: 3152652441471290225}
   m_Layer: 0
   m_Name: PF_PlayerStarterShuttle
   m_TagString: Untagged
@@ -344,7 +318,6 @@ Transform:
   - {fileID: 8865894835135117964}
   - {fileID: 650765735987026872}
   - {fileID: 4833877797365802232}
-  - {fileID: 4367661742636444537}
   - {fileID: 6518568834013352069}
   - {fileID: 7741211403999503185}
   - {fileID: 8051136416678382119}
@@ -360,9 +333,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2441852034644142768}
   serializedVersion: 5
-  m_Mass: 1
+  m_Mass: 12000
   m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_AngularDamping: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -391,18 +364,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
-  inputSystemForwardKey: 37
-  inputSystemBackwardKey: 33
-  inputSystemLeftKey: 15
-  inputSystemRightKey: 18
-  inputSystemAscendKey: 1
-  inputSystemDescendKey: 55
-  inputSystemBoostKey: 51
-  inputSystemBrakeKey: 38
-  inputSystemFlightAssistKey: 40
-  inputSystemRollLeftKey: 31
-  inputSystemRollRightKey: 19
   mouseSensitivity: 0.13
+  gamepadLookDegreesPerSecond: 120
+  initialThrottle: 0
+  throttleChangePerSecond: 0.8
+  currentThrottle: 0
   controlLock: {fileID: 0}
 --- !u!114 &3359784979145954321
 MonoBehaviour:
@@ -516,6 +482,7 @@ MonoBehaviour:
   surfaceContactProbe: {fileID: 4585842710350534113}
   removeLowSpeedClosingVelocity: 1
   maxCorrectedNormalSpeed: 4
+  maxStabilizedTangentialSpeed: 6
   tangentialDamping: 3
   angularDamping: 6
   recoverSmallPenetration: 1
@@ -643,87 +610,247 @@ MonoBehaviour:
   pilotSeatPoint: {fileID: 7741211403999503185}
   rampController: {fileID: 7735736289883491458}
   chaseCameraTarget: {fileID: 4833877797365802232}
-  landingCameraTarget: {fileID: 4367661742636444537}
   cockpitCameraTarget: {fileID: 6518568834013352069}
-  animateMechanicalParts: 1
+--- !u!114 &4332399351985421442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2441852034644142768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 476c9470f5094ca99e9e1eee235db97c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftLandingGearAnimator
+  visualRoot: {fileID: 650765735987026872}
   motor: {fileID: 3359784979145954321}
   celestialProbe: {fileID: 7190813019005924918}
   surfaceContactProbe: {fileID: 4585842710350534113}
+  rampController: {fileID: 7735736289883491458}
+  inputSource: {fileID: 1430296848504241019}
   landingGearStartsDeployed: 1
-  deployLandingGearOnSurfaceContact: 1
-  deployLandingGearWhenRampOpen: 1
-  deployLandingGearNearSurface: 1
-  landingGearDeployAltitude: 8
-  landingGearRetractAltitude: 18
-  landingGearRetractSpeed: 6
-  landingGearDecisionHoldSeconds: 0.2
-  landingGearTransitionSeconds: 1.25
+  allowManualToggle: 1
+  deployOnSurfaceContact: 1
+  deployWhenRampOpen: 1
+  deployNearSurface: 0
+  deployAltitude: 8
+  retractAltitude: 18
+  retractSpeed: 6
+  decisionHoldSeconds: 0.2
+  transitionSeconds: 1.25
   landingGearParts:
   - partName: Landing Gear Front 1
+    parentPartName: 
     part: {fileID: 0}
+    createVirtualPivot: 1
+    virtualPivotLocalPosition: {x: -0.21, y: -0.14, z: 1.63}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
-    targetLocalEulerOffset: {x: -75, y: 0, z: 0}
+    targetLocalEulerOffset: {x: 0, y: 78, z: 0}
     startAmount: 0
-    durationAmount: 0.55
+    durationAmount: 0.65
     smoothStep: 1
   - partName: Landing Gear Front 2
+    parentPartName: Landing Gear Front 1
     part: {fileID: 0}
+    createVirtualPivot: 0
+    virtualPivotLocalPosition: {x: 0, y: 0, z: 0}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
-    targetLocalEulerOffset: {x: 62, y: 0, z: 0}
-    startAmount: 0.25
+    targetLocalEulerOffset: {x: 0, y: -72, z: 0}
+    startAmount: 0.3
     durationAmount: 0.55
     smoothStep: 1
   - partName: Landing Gear Left 1
+    parentPartName: 
     part: {fileID: 0}
+    createVirtualPivot: 0
+    virtualPivotLocalPosition: {x: 0, y: 0, z: 0}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerOffset: {x: -78, y: 0, z: 0}
     startAmount: 0
     durationAmount: 0.55
     smoothStep: 1
   - partName: Landing Gear Left 2
+    parentPartName: Landing Gear Left 1
     part: {fileID: 0}
+    createVirtualPivot: 0
+    virtualPivotLocalPosition: {x: 0, y: 0, z: 0}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerOffset: {x: 62, y: 0, z: 0}
     startAmount: 0.22
     durationAmount: 0.58
     smoothStep: 1
   - partName: Landing Gear Left 3
+    parentPartName: Landing Gear Left 2
     part: {fileID: 0}
+    createVirtualPivot: 0
+    virtualPivotLocalPosition: {x: 0, y: 0, z: 0}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerOffset: {x: -18, y: 0, z: 0}
     startAmount: 0.45
     durationAmount: 0.4
     smoothStep: 1
   - partName: Landing Gear Right 1
+    parentPartName: 
     part: {fileID: 0}
+    createVirtualPivot: 0
+    virtualPivotLocalPosition: {x: 0, y: 0, z: 0}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
-    targetLocalEulerOffset: {x: -78, y: 0, z: 0}
+    targetLocalEulerOffset: {x: 78, y: 0, z: 0}
     startAmount: 0
     durationAmount: 0.55
     smoothStep: 1
   - partName: Landing Gear Right 2
+    parentPartName: Landing Gear Right 1
     part: {fileID: 0}
+    createVirtualPivot: 0
+    virtualPivotLocalPosition: {x: 0, y: 0, z: 0}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
-    targetLocalEulerOffset: {x: 62, y: 0, z: 0}
+    targetLocalEulerOffset: {x: -62, y: 0, z: 0}
     startAmount: 0.22
     durationAmount: 0.58
     smoothStep: 1
   - partName: Landing Gear Right 3
+    parentPartName: Landing Gear Right 2
     part: {fileID: 0}
+    createVirtualPivot: 0
+    virtualPivotLocalPosition: {x: 0, y: 0, z: 0}
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
-    targetLocalEulerOffset: {x: -18, y: 0, z: 0}
+    targetLocalEulerOffset: {x: 18, y: 0, z: 0}
     startAmount: 0.45
     durationAmount: 0.4
     smoothStep: 1
-  animateEnginesFromThrust: 1
+  landingGearColliders:
+  - {fileID: 3653746519276145787}
+  colliderEnableThreshold: 0.72
+  deployedAmount: 1
+--- !u!114 &6774825901920648301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2441852034644142768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffea4d8d79964e14b1c7a936524f2261, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftEngineMotionAnimator
+  visualRoot: {fileID: 650765735987026872}
+  motor: {fileID: 3359784979145954321}
+  animateFromThrust: 1
   thrustReferenceAcceleration: 18
-  engineResponse: 8
-  engineParts: []
-  engineGimbals: []
-  engineGimbalParts: []
-  landingGearDeployedAmount: 1
+  response: 8
+  engineMotionParts:
+  - partName: Engine Nozzle
+    part: {fileID: 0}
+    rightInputEulerOffset: {x: 0, y: 0, z: 6}
+    upInputEulerOffset: {x: 0, y: 0, z: 0}
+    forwardInputEulerOffset: {x: 0, y: 0, z: 0}
+    rightInputLocalPositionOffset: {x: 0, y: 0, z: 0}
+    upInputLocalPositionOffset: {x: 0, y: -0.06, z: 0}
+    forwardInputLocalPositionOffset: {x: 0, y: 0, z: 0}
+    activityLocalPositionOffset: {x: 0, y: 0, z: -0.045}
+    activityLocalEulerOffset: {x: 0, y: 0, z: 0}
+    inputScale: 0.45
+    activityScale: 1
+    deadZone: 0.015
   engineActivity: 0
-  engineGimbalInput: {x: 0, y: 0, z: 0}
+  localMotionInput: {x: 0, y: 0, z: 0}
+--- !u!114 &8451750196482294104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2441852034644142768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: ship.starter
+--- !u!114 &1701556989748357691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2441852034644142768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d21395da21a408e41a3ae3858ccb4878, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.Spacecraft.ShipAudioTelemetryProvider
+  tuningProfile: {fileID: 0}
+  motor: {fileID: 3359784979145954321}
+  celestialProbe: {fileID: 7190813019005924918}
+  surfaceContactProbe: {fileID: 4585842710350534113}
+  oceanInteractor: {fileID: 789528504066411760}
+  possessionController: {fileID: 0}
+  debugEngineLoad: 0
+  debugMainThrustDemand: 0
+  debugWeightedAccelerationLoad: 0
+  debugBoost: 0
+  debugLocalLinearAcceleration: {x: 0, y: 0, z: 0}
+--- !u!114 &3152652441471290225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2441852034644142768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d98d0874ed7fd34880ff4e88b7f276b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.Spacecraft.ShipAudioController
+  engineEvent:
+    Guid:
+      Data1: -2070388898
+      Data2: 1204643430
+      Data3: -1204368454
+      Data4: -1150719828
+    Path: event:/Ships/StarterShuttle/Engine
+  playOnEnable: 1
+  attachToRigidbody: 1
+  allowFadeoutOnStop: 1
+  telemetryProvider: {fileID: 1701556989748357691}
+  motor: {fileID: 3359784979145954321}
+  rpmParameter: Rpm
+  loadParameter: Load
+  boostParameter: Boost
+  rollParameter: Roll
+  engineStateParameter: EngineState
+  perspectiveParameter: Perspective
+  hullStressParameter: 
+  impactParameter: 
+  atmosphereParameter: 
+  waterSubmersionParameter: 
+  startupSeconds: 0.75
+  idleRpm: 18
+  maximumRpm: 100
+  speedRpmWeight: 0.42
+  thrustRpmWeight: 0.24
+  loadRpmWeight: 0.14
+  boostRpmWeight: 0.2
+  rpmSpoolUpSeconds: 0.9
+  rpmSpoolDownSeconds: 1.8
+  loadAttackSeconds: 0.18
+  loadReleaseSeconds: 0.5
+  boostAttackSeconds: 0.12
+  boostReleaseSeconds: 0.4
+  rollResponse: 7
+  debugRpm: 0
+  debugLoad: 0
+  debugBoost: 0
+  debugRoll: 0
+  debugEngineState: 0
+  debugPerspective: 0
+  debugHullStress: 0
+  debugImpact: 0
+  debugAtmosphere: 0
+  debugWaterSubmersion: 0
 --- !u!1 &2750082159652750420
 GameObject:
   m_ObjectHideFlags: 0
@@ -1213,7 +1340,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterEffects
   motor: {fileID: 3359784979145954321}
-  rig: {fileID: 7591439062830295501}
+  engineMotionAnimator: {fileID: 6774825901920648301}
   response: 10
   idleThreshold: 0.02
   thrustReferenceAcceleration: 18
@@ -1497,7 +1624,7 @@ Transform:
   m_GameObject: {fileID: 6266479584298324880}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 2.5}
+  m_LocalPosition: {x: -0.127, y: 2.05, z: -1.45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2066,7 +2193,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
   exitPoint: {fileID: 4781495207676866640}
   possessionController: {fileID: 0}
-  prompt: Enter ship
+  prompt: Enter cockpit
 --- !u!65 &3209807718926970522
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2207,15 +2334,6 @@ MonoBehaviour:
   closedLocalEulerAngles: {x: 0, y: 90, z: 0}
   openLocalEulerAngles: {x: -90, y: 90, z: 0}
   startOpen: 0
-  resolvePivotByName: 1
-  pivotName: Door Hinge
-  pivotSearchRoot: {fileID: 650765735987026872}
-  buildRuntimePivotFromNamedSource: 1
-  runtimePivotName: Runtime_BoardingDoorPivot
-  runtimePivotChildNames:
-  - Door
-  - Door Window
-  - Door Handles
   openCloseSeconds: 1.2
   isOpen: 0
   normalizedOpen: 0
@@ -2323,6 +2441,10 @@ PrefabInstance:
     - target: {fileID: -338297266007847047, guid: d324dfc19f74d2a4d9d9f114b126ea54, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -134934577033134716, guid: d324dfc19f74d2a4d9d9f114b126ea54, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d324dfc19f74d2a4d9d9f114b126ea54, type: 3}
       propertyPath: m_Name

@@ -68,7 +68,9 @@ namespace Farion.UI.MainMenu
 
             if (controller == null)
             {
+#if UNITY_EDITOR
                 Debug.LogError($"{nameof(MainMenuButton)} on {name} requires a parent or explicit {nameof(MainMenuController)} reference.", this);
+#endif
             }
         }
 

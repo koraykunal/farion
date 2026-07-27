@@ -33,6 +33,18 @@ namespace Farion.Gameplay.Inventory
             return amount - accepted;
         }
 
+        public int Remove(int amount)
+        {
+            if (item == null || amount <= 0)
+            {
+                return 0;
+            }
+
+            int removed = Mathf.Min(quantity, amount);
+            quantity -= removed;
+            return removed;
+        }
+
         public void Clear()
         {
             item = null;

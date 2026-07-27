@@ -94,6 +94,49 @@ namespace Farion.Gameplay.Resources
             results.Sort((a, b) => a.DepositId.Value.CompareTo(b.DepositId.Value));
         }
 
+        public void CaptureSnapshot(List<ResourceDepositDeltaSnapshot> results)
+        {
+            if (results == null)
+            {
+                return;
+            }
+
+            foreach (KeyValuePair<GeneratedEntityId, int> pair in extractedAmountByDeposit)
+            {
+                if (pair.Value > 0)
+                {
+                    results.Add(new ResourceDepositDeltaSnapshot(pair.Key, pair.Value));
+                }
+            }
+
+            results.Sort((a, b) => a.DepositId.Value.CompareTo(b.DepositId.Value));
+        }
+
+        public void ApplySnapshot(IEnumerable<ResourceDepositDeltaSnapshot> snapshots)
+        {
+            extractedAmountByDeposit.Clear();
+            if (snapshots == null)
+            {
+                return;
+            }
+
+            foreach (ResourceDepositDeltaSnapshot snapshot in snapshots)
+            {
+                if (snapshot.IsValid)
+                {
+                    extractedAmountByDeposit[snapshot.DepositId] = snapshot.ExtractedAmount;
+                }
+            }
+        }
+
+        public void ApplySnapshot(ResourceDepositDeltaSnapshot snapshot)
+        {
+            if (snapshot.IsValid)
+            {
+                extractedAmountByDeposit[snapshot.DepositId] = snapshot.ExtractedAmount;
+            }
+        }
+
         public bool TryGetDelta(GeneratedEntityId depositId, out ResourceDepositDelta delta)
         {
             int extractedAmount = GetExtractedAmount(depositId);

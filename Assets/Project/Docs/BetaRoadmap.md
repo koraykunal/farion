@@ -6,7 +6,8 @@ prototype-only systems into production gameplay.
 ## Product Flow
 
 1. `MainMenu` is the first build scene.
-2. `SO_GameFlowSettings` owns menu-to-gameplay scene routing.
+2. `Farion.Application.Runtime` owns menu-to-gameplay scene routing through
+   `SO_GameFlowSettings` and `GameFlowService`.
 3. `SC_PhysicsSandbox` remains the current gameplay proving ground until the
    first vertical slice is stable enough to be renamed or split.
 
@@ -51,8 +52,8 @@ moving.
   fields or mountain ridges for resources, POI, and future modifiers.
 - Keep biome visualization opt-in and separated under rendering/debug tooling.
   Do not make gameplay systems depend on debug gizmos or temporary visual maps.
-- Keep direct keyboard readers as temporary adapter components. Gameplay systems
-  should consume input interfaces, not `Keyboard.current`.
+- `FarionInputActions` owns keyboard/mouse and gamepad bindings. Gameplay
+  systems consume input interfaces and do not read devices directly.
 - Gameplay UI focus must not pause simulation. ESC, inventory, and later station
   panels should use `PlayerControlLock` to block local player input while the
   world, physics, resource streaming, and co-op simulation continue.
@@ -83,20 +84,23 @@ moving.
 
 ## Next Implementation Order
 
-1. Validate deterministic biome and terrain-feature sampling with the selected
-   planet coverage reports.
-2. Use the same biome and terrain-feature result to filter the first procedural
-   resource deposits.
-3. Add a minimal resource streaming/spawn pass near the player.
-4. Add item taxonomy, recipe definitions, and research definitions before any
-   upgrade UI. This keeps progression tied to purpose and knowledge instead of
-   flat material tiers.
-5. Add local gameplay UI focus control for ESC and inventory without pausing
-   simulation.
-6. Prove one local economy chain: collect raw resources, refine them into
-   materials, unlock one research, and produce one upgrade component.
-7. Add the first upgrade contract only after that economy chain is readable.
-8. Add save/load deltas for depleted resources, crafted inventory changes,
-   researched ids, and discovered points.
-9. Defer weather, fauna, and networking until the local exploration/resource
-   and first economy loop are readable.
+Completed foundation: deterministic planetary/resource generation, local
+resource streaming and pooling, inventory and definition registries, gameplay
+UI focus, possession/boarding composition, schema-4 save/load, centralized
+input actions, application flow, audio assembly isolation, and build validation.
+
+1. Play Mode-prove the complete pilot exit, interior, exterior, board, and
+   re-enter loop.
+2. Add a runtime crafting station service and one readable raw-to-refined
+   resource transaction.
+3. Add research runtime state and persist researched capability ids.
+4. Apply one real suit or ship upgrade through a dedicated upgrade service.
+5. Add one objective that observes the economy/upgrade result and persist it.
+6. Play Mode-tune and accessibility-test the implemented production flight and
+   landing HUD.
+7. Add local terrain-collision patches before generated moving planets become
+   regular landing targets.
+8. Profile resource patch streaming and ocean/atmosphere render budgets on
+   target hardware.
+9. Defer weather, fauna, Addressables, ECS, and networking until this local loop
+   is readable, tested, and save-safe.

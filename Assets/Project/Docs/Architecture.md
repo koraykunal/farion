@@ -8,8 +8,10 @@ high-end celestial rendering.
 ## Project Layout
 
 - `Assets/Project/Core/Runtime`
-  - Engine-agnostic game rules that should not know about gameplay, rendering,
-    UI, scenes, or networking.
+  - Feature-agnostic Unity runtime contracts that do not know about gameplay,
+    rendering, UI, scenes, or networking. Pure domain code should remain free of
+    `MonoBehaviour`; Unity adapters may live here only when they are genuinely
+    shared foundation.
 - `Assets/Project/Core/Runtime/Physics`
   - Newtonian gravity, celestial body state, gravity samples, and generic
     Rigidbody gravity actors.
@@ -46,6 +48,12 @@ high-end celestial rendering.
 - `Assets/Project/Gameplay/Runtime/Research`
   - Research definitions and technology domains. Research unlock state belongs
     in runtime/save data, not in ScriptableObject assets.
+- `Assets/Project/Application/Runtime`
+  - Session commands, startup requests, save orchestration entry points, and
+    scene flow. UI requests these operations but does not own them.
+- `Assets/Project/Audio/Runtime`
+  - Unity and FMOD presentation driven by gameplay telemetry. Audio never owns
+    flight physics, possession, inventory, or scene flow.
 - `Assets/Project/Rendering/Runtime`
   - URP-specific visual systems such as procedural celestial presentation,
     ocean, atmosphere, stars, and camera render passes.
@@ -69,6 +77,10 @@ high-end celestial rendering.
 - `Assets/Project/Docs`
   - Architecture notes, setup instructions, beta planning, and asset intake
     rules.
+- `Assets/Project/Editor`
+  - Project validation and build-time authoring checks.
+- `Assets/Project/Tests/EditMode`
+  - Deterministic identity, persistence, input-schema, and gameplay-rule tests.
 - `Assets/Project/UI/Runtime/Common`
   - Reusable UI presentation components such as shared menu button visuals and
     panel transitions. These components must not know about main menu,
@@ -86,15 +98,66 @@ high-end celestial rendering.
   - Depends on Core. Owns simulation authoring and later procedural celestial
     runtime contracts.
 - `Farion.Gameplay.Runtime`
-  - Depends on Core and Simulation. Future co-op authority belongs here or in a
-    separate networking assembly above this layer.
+  - Depends on Core, Simulation, and Input System. It has no FMOD dependency.
+    Future co-op authority belongs here or in a separate networking assembly
+    above this layer.
+- `Farion.Application.Runtime`
+  - Depends on Core and Gameplay. Owns scene/session flow and the UI-facing
+    gameplay-session command facade.
+- `Farion.Audio.Runtime`
+  - Depends on Core, Simulation, Gameplay, and FMOD. It consumes telemetry and
+    remains presentation-only.
 - `Farion.Rendering.Runtime`
   - Depends on Core and Simulation. URP-specific atmosphere/ocean work belongs
     here, not in Core.
 - `Farion.UI.Runtime`
-  - Depends on Gameplay for presentation of local player state. It may request
-    local input locks, but gameplay authority and persistent state remain in
-    Gameplay.
+  - Depends on Application and Gameplay for presentation of local player state.
+    It may request local input locks and session commands, but gameplay
+    authority and persistent state remain outside UI.
+
+## Runtime Composition
+
+- Scene-level dependencies are assigned through authored references or scoped
+  composition. `PlayerPossessionController` binds pilot-seat and boarding
+  interactables only under its serialized spacecraft root. It also supplies
+  itself to `IPlayerPossessionContextReceiver` implementations under that root,
+  so presentation systems such as ship audio never discover an arbitrary
+  global player.
+- `GameplaySessionController` is the UI-facing facade for save, exit-to-menu,
+  and quit commands. `GameplayUiController` does not call `SceneManager`,
+  `Application.Quit`, or `GameplaySaveCoordinator` directly.
+- `FarionProjectValidator` blocks builds with missing scripts, empty or
+  duplicate persistent ids, incomplete possession/session/save references, or
+  invalid definition registries.
+
+## Persistence Identity
+
+- New saves use schema `4`; schema `3` remains readable.
+- Celestial snapshots use `PersistentObjectId` as their primary identity and
+  retain body-name fallback only for schema `3`.
+- Resource deposit ids derive from the persistent planet identity, generation
+  version, resource definition, and deterministic slot.
+- Save writes are temporary-file replacements with backups. Loading validates
+  the complete payload, falls back to a supported backup, and restores a
+  pre-load snapshot if participant application fails.
+- `WorldOriginSnapshot` persists accumulated local rebase metadata without
+  treating Unity float transforms as the future authoritative universe model.
+
+## Input Ownership
+
+- `FarionInputActions` owns the shared OnFoot, Flight, Vehicle, and UI action
+  maps with keyboard/mouse and gamepad bindings.
+- Device adapters expose `IFirstPersonInputSource`, `ISpacecraftInputSource`,
+  and `IBoardingInputSource`; motors and possession do not read devices.
+- Spacecraft throttle is persistent pilot state in `KeyboardSpacecraftInput`.
+  `W/S` change the commanded throttle and releasing the key holds the current
+  value; `X` returns throttle to zero and requests assisted braking. Local UI
+  focus blocks new flight input but preserves the current throttle setpoint;
+  leaving the pilot seat disables the adapter and returns the motor to zero
+  command.
+- Mouse look is normalized against a 60 Hz reference and gamepad look remains
+  a frame-rate-independent normalized rate command.
+- Binding overrides can be saved or reset without changing gameplay systems.
 
 ## Gravity Model
 
@@ -258,10 +321,25 @@ The simulation uses:
   surface-relative velocities, ocean state, and atmosphere state for any
   Rigidbody actor. Spacecraft and on-foot characters must consume this contract
   instead of duplicating body-relative calculations.
+- `SpacecraftFlightProfile` owns speed envelopes, asymmetric thrust authority,
+  angular response, input spool rates, boost energy, gravity compensation,
+  Rigidbody mass, and optional center-of-mass tuning. Authored ship profiles
+  live under `Design/Gameplay/Flight`.
+- `SpacecraftMotor` owns Rigidbody sampling and force application only. The
+  deterministic `SpacecraftFlightControlLaw` converts a pilot command and one
+  sampled flight frame into requested linear/angular acceleration.
+- Assisted flight controls body-relative velocity and compensates local gravity
+  within the ship's available thrust envelope. Manual flight applies direct
+  thrust without hidden gravity cancellation and tapers same-direction thrust
+  near its configured safety envelope while retaining full counter-thrust.
+- `SpacecraftBoostController` owns boost spool, charge drain, recharge delay,
+  depletion lockout, and release-to-rearm behavior. Boost changes forward
+  authority only; it does not multiply lateral or vertical thrusters.
 - `SpacecraftLandingProfile` owns the current landing policy thresholds:
   altitude bands, safe touchdown speeds, high-descent limits, and deorbit
-  descent speed, and safe touchdown slope. Tune landing difficulty through this
-  asset before changing code.
+  descent speed, and safe touchdown slope. Touchdown altitude includes hull/gear
+  clearance, so ships with different geometry own different landing profiles.
+  Tune landing difficulty through the asset before changing code.
 - `SpacecraftLandingComputer` evaluates the active `CelestialActorProbe`
   against a landing profile and emits a phase plus risk flags. It must not apply
   thrust, lock controls, snap the ship, or create landing triggers. Future HUD,
@@ -278,10 +356,11 @@ The simulation uses:
   `SpacecraftOrbitComputer` to classify the current atmospheric entry as safe,
   shallow, steep, overspeed, impacting, escaping, or outside the corridor. It is
   a navigation/warning layer only and must not apply burns.
-- `SpacecraftSurfaceContactProbe` listens to Rigidbody collision contacts and
-  records the contacted celestial body, contact normal, normal speed, and
-  tangential speed. `SpacecraftLandingComputer` uses this data to distinguish a
-  valid touchdown from merely being close to the surface.
+- `SpacecraftSurfaceContactProbe` aggregates every contact in the active
+  collision, samples Rigidbody point velocity (including angular motion), and
+  records the contacted body, average point/normal, deepest separation, normal
+  speed, and tangential speed. `SpacecraftLandingComputer` uses this data to
+  distinguish a valid touchdown from merely being close to the surface.
 - `SpacecraftSurfaceContactStabilizer` removes low-speed into-surface velocity,
   damps contact sliding/spin, and recovers small penetrations while a spacecraft
   is touching a celestial surface. It is not an autopilot or fake landing lock;
@@ -298,9 +377,9 @@ The simulation uses:
   state into pilot-facing guidance: severity level, command, advisory text, and
   normalized speed/stress ratios. It can warn the pilot to seek a flatter
   surface, but it still does not steer the ship or own UI.
-- Gameplay HUD presenters read telemetry such as landing guidance, interaction
-  prompts, inventory state, and later objective state. They must not compute
-  landing rules, mutate inventory, or own progression state.
+- `SpacecraftFlightHudPresenter` reads flight, boost, gear, celestial-frame,
+  and landing-guidance telemetry for the production HUD. It does not compute
+  landing rules, apply flight forces, or own progression state.
 - `FirstPersonMotorProfile` owns on-foot movement tuning: walk/sprint speed,
   acceleration, jump speed, ground probe, slope limit, and upright response.
 - `FirstPersonMotor` is a Rigidbody/CapsuleCollider first-person movement
@@ -317,16 +396,16 @@ The simulation uses:
   `SpacecraftMotor` enabled so gravity and vehicle physics continue while the
   player is outside the ship.
 
-The current landing/orbit telemetry is intentionally a first authoritative
-baseline: it is correct for spherical-body altitude, body-relative radial
+The current flight/landing/orbit stack is the authoritative baseline: it covers
+persistent six-degree-of-freedom pilot input, assisted/manual control laws,
+gravity feed-forward, bounded boost energy, spherical-body altitude, body-relative radial
 velocity, tangential velocity, atmosphere/ocean membership, procedural
 terrain-aware surface altitude, approximate local surface slope, water
-submersion, first-pass buoyancy/drag, contact-speed validation, osculating
+submersion, first-pass buoyancy/drag, multi-contact touchdown validation, osculating
 two-body orbit estimates around the dominant body, and first-pass atmosphere
-entry classification. It is not yet a full landing-site, damage, or
-terrain-collision model. The next flight layer should add burn-window guidance
-and local terrain patch collision before any automated landing assist or co-op
-prediction depends on it.
+entry classification. It is not yet a full damage, subsystem, cargo-mass,
+autopilot, or moving-planet local terrain-patch model. Those systems must extend
+the existing telemetry/control contracts rather than bypassing them.
 
 ## Current Rule
 

@@ -10,33 +10,31 @@ namespace Farion.Gameplay.Interaction
 
         [Header("Boarding")]
         [SerializeField] PlayerPossessionController possessionController;
-        [SerializeField] string prompt = "Enter ship";
+        [SerializeField] string prompt = "Enter cockpit";
 
         public Transform ExitPoint => exitPoint != null ? exitPoint : transform;
         public bool HasExplicitExitPoint => exitPoint != null;
         public string InteractionPrompt => prompt;
+        public bool IsBound => possessionController != null;
 
         void Reset()
         {
             possessionController = GetComponentInParent<PlayerPossessionController>();
         }
 
-        void Awake()
+        public void Bind(PlayerPossessionController controller)
         {
-            if (possessionController == null)
-            {
-                Debug.LogError($"{nameof(VehicleBoardingPoint)} on {name} requires an explicit {nameof(PlayerPossessionController)} reference.", this);
-            }
+            possessionController = controller;
         }
 
         public bool CanInteract(InteractionContext context)
         {
-            return possessionController != null && possessionController.IsOnFoot;
+            return possessionController != null && possessionController.CanEnterSpacecraft;
         }
 
         public void Interact(InteractionContext context)
         {
-            possessionController?.EnterShipInterior();
+            possessionController?.EnterPilotSeat();
         }
 
     }

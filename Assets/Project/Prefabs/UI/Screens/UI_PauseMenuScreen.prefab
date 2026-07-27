@@ -561,23 +561,23 @@ MonoBehaviour:
   - action: 20
     title: BLUEPRINTS
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671003, type: 3}
-    available: 1
+    available: 0
   - action: 30
     title: JOURNAL
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671004, type: 3}
-    available: 1
+    available: 0
   - action: 40
     title: SHIP
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671005, type: 3}
-    available: 1
+    available: 0
   - action: 50
     title: MAP
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671006, type: 3}
-    available: 1
+    available: 0
   - action: 60
     title: OPTIONS
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671007, type: 3}
-    available: 1
+    available: 0
   - action: 70
     title: SAVE
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671008, type: 3}

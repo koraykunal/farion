@@ -153,6 +153,7 @@ namespace Farion.Simulation.Planetary
                 source != null ? source.SurfaceGravity : 0f);
         }
 
+#if UNITY_EDITOR
         [ContextMenu("Log Generation Validation Report")]
         public void LogValidationReport()
         {
@@ -184,6 +185,7 @@ namespace Farion.Simulation.Planetary
                 }
             }
         }
+#endif
 
         PlanetClimateSample SampleClimate(
             CelestialBody sourceBody,

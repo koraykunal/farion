@@ -9,28 +9,26 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] string prompt = "Pilot seat";
 
         public string InteractionPrompt => prompt;
+        public bool IsBound => possessionController != null;
 
         void Reset()
         {
             possessionController = GetComponentInParent<PlayerPossessionController>();
         }
 
-        void Awake()
+        public void Bind(PlayerPossessionController controller)
         {
-            if (possessionController == null)
-            {
-                Debug.LogError($"{nameof(PilotSeatInteractable)} on {name} requires an explicit {nameof(PlayerPossessionController)} reference.", this);
-            }
+            possessionController = controller;
         }
 
         public bool CanInteract(InteractionContext context)
         {
-            return possessionController != null && !possessionController.IsPilotingSpacecraft;
+            return possessionController != null && possessionController.CanEnterSpacecraft;
         }
 
         public void Interact(InteractionContext context)
         {
-            possessionController?.EnterSpacecraft();
+            possessionController?.EnterPilotSeat();
         }
     }
 }

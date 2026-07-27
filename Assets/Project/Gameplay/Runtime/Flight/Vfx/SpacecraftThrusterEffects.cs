@@ -9,7 +9,7 @@ namespace Farion.Gameplay.Flight
     {
         [Header("Source")]
         [SerializeField] SpacecraftMotor motor;
-        [SerializeField] SpacecraftRig rig;
+        [SerializeField] SpacecraftEngineMotionAnimator engineMotionAnimator;
 
         [Header("Response")]
         [Min(0.01f)]
@@ -29,6 +29,7 @@ namespace Farion.Gameplay.Flight
         SpacecraftThrusterCommand thrusterCommand;
         float normalizedThrust;
         float boostBlend;
+        SpacecraftThrusterState thrusterState;
 
         public Vector3 LocalTranslationInput => localTranslationInput;
         public Vector3 LocalRotationInput => localRotationInput;
@@ -37,12 +38,12 @@ namespace Farion.Gameplay.Flight
 
         void Reset()
         {
-            ResolveReferences();
+            AutoAssignReferences();
         }
 
         void Awake()
         {
-            ResolveReferences();
+            AutoAssignReferences();
             InitializeEmitters();
         }
 
@@ -52,27 +53,26 @@ namespace Farion.Gameplay.Flight
             idleThreshold = Mathf.Clamp01(idleThreshold);
             thrustReferenceAcceleration = Mathf.Max(0.01f, thrustReferenceAcceleration);
             boostIntensityMultiplier = Mathf.Max(1f, boostIntensityMultiplier);
-            ResolveReferences();
+            AutoAssignReferences();
             InitializeEmitters();
         }
 
         void Update()
         {
-            ResolveReferences();
             SampleSource();
             ApplyEmitters(Time.deltaTime);
         }
 
-        void ResolveReferences()
+        void AutoAssignReferences()
         {
             if (motor == null)
             {
                 motor = GetComponentInParent<SpacecraftMotor>();
             }
 
-            if (rig == null)
+            if (engineMotionAnimator == null)
             {
-                rig = GetComponentInParent<SpacecraftRig>();
+                engineMotionAnimator = GetComponentInParent<SpacecraftEngineMotionAnimator>();
             }
         }
 
@@ -98,16 +98,25 @@ namespace Farion.Gameplay.Flight
                 thrusterCommand = SpacecraftThrusterCommand.None;
                 normalizedThrust = 0f;
                 boostBlend = 0f;
+                thrusterState = SpacecraftThrusterState.Idle;
                 return;
             }
 
-            localTranslationInput = Vector3.ClampMagnitude(motor.LastLocalTranslationInput, 1f);
-            localRotationInput = Vector3.ClampMagnitude(motor.LastLocalRotationInput, 1f);
+            localTranslationInput = ClampAxes(motor.LastLocalTranslationInput);
+            localRotationInput = ClampAxes(motor.LastLocalRotationInput);
             thrusterCommand = motor.CurrentThrusterCommand;
             normalizedThrust = Mathf.Clamp01(Mathf.Max(
                 motor.LastThrustAcceleration.magnitude / thrustReferenceAcceleration,
                 thrusterCommand.Activity));
             boostBlend = Mathf.Clamp01(motor.CurrentBoostMultiplier - 1f);
+            thrusterState = new SpacecraftThrusterState(
+                localTranslationInput,
+                localRotationInput,
+                thrusterCommand,
+                normalizedThrust,
+                engineMotionAnimator != null ? engineMotionAnimator.EngineActivity : normalizedThrust,
+                motor.BoostActive,
+                boostBlend);
         }
 
         void ApplyEmitters(float deltaTime)
@@ -126,45 +135,22 @@ namespace Farion.Gameplay.Flight
                     continue;
                 }
 
-                float targetIntensity = EvaluateEmitterIntensity(emitter.Role) * emitter.IntensityScale;
-                if (motor != null && motor.BoostActive && emitter.AllowBoostIntensity)
-                {
-                    targetIntensity *= boostIntensityMultiplier;
-                }
-
-                emitter.Apply(Mathf.Clamp01(targetIntensity), responseT, idleThreshold, boostBlend, deltaTime);
+                float targetIntensity = SpacecraftThrusterIntensityEvaluator.EvaluateTarget(
+                    emitter.Role,
+                    thrusterState,
+                    emitter.IntensityScale,
+                    emitter.AllowBoostIntensity,
+                    boostIntensityMultiplier);
+                emitter.Apply(targetIntensity, responseT, idleThreshold, boostBlend, deltaTime);
             }
         }
 
-        float EvaluateEmitterIntensity(ThrusterRole role)
+        static Vector3 ClampAxes(Vector3 value)
         {
-            return role switch
-            {
-                ThrusterRole.MainForward => Mathf.Max(thrusterCommand.Forward, Positive(localTranslationInput.z)),
-                ThrusterRole.Reverse => Mathf.Max(thrusterCommand.Reverse, Negative(localTranslationInput.z)),
-                ThrusterRole.StrafeLeft => Mathf.Max(thrusterCommand.StrafeLeft, Negative(localTranslationInput.x)),
-                ThrusterRole.StrafeRight => Mathf.Max(thrusterCommand.StrafeRight, Positive(localTranslationInput.x)),
-                ThrusterRole.Ascend => Mathf.Max(thrusterCommand.Ascend, Positive(localTranslationInput.y)),
-                ThrusterRole.Descend => Mathf.Max(thrusterCommand.Descend, Negative(localTranslationInput.y)),
-                ThrusterRole.PitchUp => Mathf.Max(thrusterCommand.PitchUp, Positive(localRotationInput.x)),
-                ThrusterRole.PitchDown => Mathf.Max(thrusterCommand.PitchDown, Negative(localRotationInput.x)),
-                ThrusterRole.YawLeft => Mathf.Max(thrusterCommand.YawLeft, Negative(localRotationInput.y)),
-                ThrusterRole.YawRight => Mathf.Max(thrusterCommand.YawRight, Positive(localRotationInput.y)),
-                ThrusterRole.RollLeft => Mathf.Max(thrusterCommand.RollLeft, Negative(localRotationInput.z)),
-                ThrusterRole.RollRight => Mathf.Max(thrusterCommand.RollRight, Positive(localRotationInput.z)),
-                ThrusterRole.EngineActivity => rig != null ? rig.EngineActivity : normalizedThrust,
-                _ => 0f
-            };
-        }
-
-        static float Positive(float value)
-        {
-            return Mathf.Clamp01(value);
-        }
-
-        static float Negative(float value)
-        {
-            return Mathf.Clamp01(-value);
+            return new Vector3(
+                Mathf.Clamp(value.x, -1f, 1f),
+                Mathf.Clamp(value.y, -1f, 1f),
+                Mathf.Clamp(value.z, -1f, 1f));
         }
 
         public enum ThrusterRole

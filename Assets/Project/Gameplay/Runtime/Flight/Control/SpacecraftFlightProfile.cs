@@ -23,11 +23,11 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float boostForwardAcceleration = 34f;
         [Min(0f)]
-        [SerializeField] float reverseAcceleration = 14f;
+        [SerializeField] float reverseAcceleration = 18f;
         [Min(0f)]
-        [SerializeField] float strafeAcceleration = 8f;
+        [SerializeField] float strafeAcceleration = 12f;
         [Min(0f)]
-        [SerializeField] float verticalAcceleration = 7f;
+        [SerializeField] float verticalAcceleration = 16f;
         [Min(0f)]
         [SerializeField] float brakeGain = 3.2f;
 
@@ -50,6 +50,10 @@ namespace Farion.Gameplay.Flight
         [Header("Assist")]
         [SerializeField] Vector3 velocityGain = new(2.8f, 2.8f, 2.2f);
         [SerializeField] Vector3 angularVelocityGain = new(7f, 7f, 9f);
+        [SerializeField] bool compensateGravityInAssistedMode = true;
+        [SerializeField] bool limitManualFlightEnvelope = true;
+        [Range(0.1f, 0.99f)]
+        [SerializeField] float manualEnvelopeStart = 0.85f;
 
         [Header("Response")]
         [Min(0f)]
@@ -60,6 +64,22 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float boostSpoolRate = 3.5f;
         [Range(0f, 0.5f)]
         [SerializeField] float inputDeadZone = 0.04f;
+
+        [Header("Boost Energy")]
+        [Min(0f)]
+        [SerializeField] float boostDrainPerSecond = 0.28f;
+        [Min(0f)]
+        [SerializeField] float boostRechargePerSecond = 0.16f;
+        [Min(0f)]
+        [SerializeField] float boostRechargeDelay = 1.2f;
+
+        [Header("Rigidbody")]
+        [Min(1f)]
+        [SerializeField] float rigidbodyMass = 12000f;
+        [SerializeField] bool overrideCenterOfMass;
+        [SerializeField] Vector3 centerOfMass;
+        [Min(0f)]
+        [SerializeField] float angularDamping;
 
         public float MaxForwardSpeed => maxForwardSpeed;
         public float MaxBoostForwardSpeed => maxBoostForwardSpeed;
@@ -84,6 +104,16 @@ namespace Farion.Gameplay.Flight
         public float RotationSpoolRate => rotationSpoolRate;
         public float BoostSpoolRate => boostSpoolRate;
         public float InputDeadZone => inputDeadZone;
+        public bool CompensateGravityInAssistedMode => compensateGravityInAssistedMode;
+        public bool LimitManualFlightEnvelope => limitManualFlightEnvelope;
+        public float ManualEnvelopeStart => manualEnvelopeStart;
+        public float BoostDrainPerSecond => boostDrainPerSecond;
+        public float BoostRechargePerSecond => boostRechargePerSecond;
+        public float BoostRechargeDelay => boostRechargeDelay;
+        public float RigidbodyMass => rigidbodyMass;
+        public bool OverrideCenterOfMass => overrideCenterOfMass;
+        public Vector3 CenterOfMass => centerOfMass;
+        public float AngularDamping => angularDamping;
 
         public Vector3 AssistedMaxSpeed(bool boostActive)
         {
@@ -119,6 +149,44 @@ namespace Farion.Gameplay.Flight
             return new Vector3(PitchAccelerationRad, YawAccelerationRad, RollAccelerationRad);
         }
 
+        internal SpacecraftFlightControlSettings BuildControlSettings()
+        {
+            Vector3 positiveMaxSpeed = new(maxStrafeSpeed, maxVerticalSpeed, maxForwardSpeed);
+            Vector3 boostedPositiveMaxSpeed = new(
+                maxStrafeSpeed,
+                maxVerticalSpeed,
+                maxBoostForwardSpeed);
+            Vector3 negativeMaxSpeed = new(maxStrafeSpeed, maxVerticalSpeed, maxReverseSpeed);
+            Vector3 positiveAcceleration = new(
+                strafeAcceleration,
+                verticalAcceleration,
+                forwardAcceleration);
+            Vector3 boostedPositiveAcceleration = new(
+                strafeAcceleration,
+                verticalAcceleration,
+                boostForwardAcceleration);
+            Vector3 negativeAcceleration = new(
+                strafeAcceleration,
+                verticalAcceleration,
+                reverseAcceleration);
+
+            return new SpacecraftFlightControlSettings(
+                positiveMaxSpeed,
+                boostedPositiveMaxSpeed,
+                negativeMaxSpeed,
+                positiveAcceleration,
+                boostedPositiveAcceleration,
+                negativeAcceleration,
+                MaxAngularRate(),
+                MaxAngularAcceleration(),
+                velocityGain,
+                angularVelocityGain,
+                brakeGain,
+                compensateGravityInAssistedMode,
+                limitManualFlightEnvelope,
+                manualEnvelopeStart);
+        }
+
         void OnValidate()
         {
             maxForwardSpeed = Mathf.Max(0f, maxForwardSpeed);
@@ -144,6 +212,12 @@ namespace Farion.Gameplay.Flight
             rotationSpoolRate = Mathf.Max(0f, rotationSpoolRate);
             boostSpoolRate = Mathf.Max(0f, boostSpoolRate);
             inputDeadZone = Mathf.Clamp(inputDeadZone, 0f, 0.5f);
+            manualEnvelopeStart = Mathf.Clamp(manualEnvelopeStart, 0.1f, 0.99f);
+            boostDrainPerSecond = Mathf.Max(0f, boostDrainPerSecond);
+            boostRechargePerSecond = Mathf.Max(0f, boostRechargePerSecond);
+            boostRechargeDelay = Mathf.Max(0f, boostRechargeDelay);
+            rigidbodyMass = Mathf.Max(1f, rigidbodyMass);
+            angularDamping = Mathf.Max(0f, angularDamping);
         }
 
         static Vector3 Abs(Vector3 value)

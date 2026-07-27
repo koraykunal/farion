@@ -56,7 +56,9 @@ namespace Farion.UI.Gameplay
 
             if (controller == null)
             {
+#if UNITY_EDITOR
                 Debug.LogError($"{nameof(GameplayMenuButton)} on {name} requires a parent or explicit {nameof(GameplayUiController)} reference.", this);
+#endif
             }
         }
 

@@ -28,7 +28,9 @@ namespace Farion.Core.Physics
         {
             if (active != null && active != this)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"Multiple {nameof(GravitySimulation)} instances detected. Using {name} as active.");
+#endif
             }
 
             active = this;
@@ -196,6 +198,71 @@ namespace Farion.Core.Physics
             return true;
         }
 
+        public void CaptureSnapshots(List<CelestialBodySnapshot> results)
+        {
+            if (results == null)
+            {
+                return;
+            }
+
+            RefreshBodies();
+            for (int i = 0; i < simulationBodies.Count; i++)
+            {
+                CelestialBody body = simulationBodies[i];
+                if (body != null)
+                {
+                    results.Add(body.CaptureSnapshot());
+                }
+            }
+        }
+
+        public bool ApplySnapshots(IReadOnlyList<CelestialBodySnapshot> snapshots)
+        {
+            if (!CanApplySnapshots(snapshots))
+            {
+                return false;
+            }
+
+            RefreshBodies();
+            for (int i = 0; i < snapshots.Count; i++)
+            {
+                CelestialBodySnapshot snapshot = snapshots[i];
+                if (!snapshot.IsValid)
+                {
+                    return false;
+                }
+
+                CelestialBody body = FindBody(snapshot);
+                if (body == null || !body.ApplySnapshot(snapshot))
+                {
+                    return false;
+                }
+            }
+
+            UnityEngine.Physics.SyncTransforms();
+            return true;
+        }
+
+        public bool CanApplySnapshots(IReadOnlyList<CelestialBodySnapshot> snapshots)
+        {
+            if (snapshots == null || snapshots.Count == 0)
+            {
+                return false;
+            }
+
+            RefreshBodies();
+            for (int i = 0; i < snapshots.Count; i++)
+            {
+                CelestialBodySnapshot snapshot = snapshots[i];
+                if (!snapshot.IsValid || FindBody(snapshot) == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         void ConfigureBodies()
         {
             foreach (CelestialBody body in simulationBodies)
@@ -209,6 +276,20 @@ namespace Farion.Core.Physics
                 body.ConfigureRigidbody();
                 body.ResetSimulationState();
             }
+        }
+
+        CelestialBody FindBody(CelestialBodySnapshot snapshot)
+        {
+            for (int i = 0; i < simulationBodies.Count; i++)
+            {
+                CelestialBody body = simulationBodies[i];
+                if (body != null && body.SnapshotMatches(snapshot))
+                {
+                    return body;
+                }
+            }
+
+            return null;
         }
 
         void IntegrateVelocities(float deltaTime)

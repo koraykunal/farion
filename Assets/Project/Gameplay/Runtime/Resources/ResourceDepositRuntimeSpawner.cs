@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using System.Text;
 using Farion.Core.Physics;
-using Farion.Gameplay.Interaction;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Planetary;
 using Farion.Simulation.World.Identity;
@@ -33,12 +31,12 @@ namespace Farion.Gameplay.Resources
         readonly List<ResourceDepositData> deposits = new();
         readonly List<DepositStreamingCandidate> spawnCandidates = new();
         readonly Dictionary<GeneratedEntityId, SpawnedDepositNode> spawnedNodes = new();
+        readonly HashSet<GeneratedEntityId> generatedDepositIds = new();
+        readonly Dictionary<GeneratedEntityId, GeneratedEntityId> currentIdByLegacyId = new();
+        readonly Dictionary<ResourceNodeDefinition, Stack<GameObject>> pooledNodesByDefinition = new();
         readonly List<GeneratedEntityId> nodesToRemove = new();
         readonly ResourceDepositDeltaStore depositDeltaStore = new();
-        MaterialPropertyBlock propertyBlock;
         bool hasGeneratedDeposits;
-        bool loggedMissingTrackingTargetWarning;
-        bool loggedNoSpawnWarning;
         float nextStreamRefreshTime;
 
         [System.NonSerialized] int generatedDepositCount;
@@ -106,6 +104,7 @@ namespace Farion.Gameplay.Resources
             }
 
             ResourceDepositGenerator.Generate(resourceDistribution, generationProfile, body, surfaceModel, deposits);
+            RebuildDepositIdentityLookup();
             generatedDepositCount = deposits.Count;
             hasGeneratedDeposits = true;
             RefreshStreaming();
@@ -114,8 +113,6 @@ namespace Farion.Gameplay.Resources
         public void SetTrackingTarget(Transform target)
         {
             trackingTarget = target;
-            loggedMissingTrackingTargetWarning = false;
-            loggedNoSpawnWarning = false;
             RefreshStreaming();
         }
 
@@ -137,16 +134,9 @@ namespace Farion.Gameplay.Resources
 
             if (!TryResolveTrackingDirection(out Vector3 trackingDirection))
             {
-                if (generatedDepositCount > 0 && !loggedMissingTrackingTargetWarning)
-                {
-                    Debug.LogWarning($"{name}: resource streaming requires an explicit tracking target.", this);
-                    loggedMissingTrackingTargetWarning = true;
-                }
-
                 return;
             }
 
-            loggedMissingTrackingTargetWarning = false;
             DespawnOutOfRangeNodes(trackingDirection);
             CollectSpawnCandidates(trackingDirection);
 
@@ -166,8 +156,7 @@ namespace Farion.Gameplay.Resources
                     continue;
                 }
 
-                GameObject node = CreateNodeObject(deposit, position, rotation);
-                if (node == null)
+                if (!CreateNodeObject(deposit, position, rotation, out GameObject node))
                 {
                     continue;
                 }
@@ -177,28 +166,22 @@ namespace Farion.Gameplay.Resources
 
             spawnedNodeCount = spawnedNodes.Count;
             trackedDepositDeltaCount = depositDeltaStore.Count;
-            if (spawnedNodeCount == 0 && !loggedNoSpawnWarning)
-            {
-                Debug.LogWarning(
-                    $"{name}: resource generation produced {generatedDepositCount} deposits but spawned 0 nodes. " +
-                    $"Target: {activeTrackingTargetName}. Within radius: {depositsWithinSpawnRadiusCount}. " +
-                    $"Nearest available distance: {nearestAvailableDepositDistance:0.##}. " +
-                    $"Skipped pose/ocean: {skippedPoseOrOceanCount}, depleted: {skippedDepletedDepositCount}, " +
-                    $"out of range: {skippedOutOfRangeDepositCount}, missing prefab: {skippedMissingPrefabCount}.",
-                    this);
-                loggedNoSpawnWarning = true;
-            }
-            else if (spawnedNodeCount > 0)
-            {
-                loggedNoSpawnWarning = false;
-            }
         }
 
         [ContextMenu("Clear Resource Nodes")]
         public void ClearSpawned()
         {
-            RemoveGeneratedChildren();
+            foreach (KeyValuePair<GeneratedEntityId, SpawnedDepositNode> pair in spawnedNodes)
+            {
+                ReleaseNode(pair.Value);
+            }
+
             spawnedNodes.Clear();
+            if (!Application.isPlaying)
+            {
+                RemoveGeneratedChildren();
+            }
+
             spawnedNodeCount = 0;
         }
 
@@ -211,6 +194,74 @@ namespace Farion.Gameplay.Resources
             RefreshStreaming();
         }
 
+        public void CaptureDeltaSnapshot(List<ResourceDepositDeltaSnapshot> results)
+        {
+            depositDeltaStore.CaptureSnapshot(results);
+        }
+
+        public void ApplyDeltaSnapshot(
+            IEnumerable<ResourceDepositDeltaSnapshot> snapshots,
+            bool useLegacyIds = false)
+        {
+            depositDeltaStore.Clear();
+            if (snapshots != null)
+            {
+                foreach (ResourceDepositDeltaSnapshot snapshot in snapshots)
+                {
+                    GeneratedEntityId depositId = ResolveSnapshotDepositId(snapshot.DepositId, useLegacyIds);
+                    if (!depositId.IsValid)
+                    {
+                        continue;
+                    }
+
+                    depositDeltaStore.ApplySnapshot(
+                        new ResourceDepositDeltaSnapshot(depositId, snapshot.ExtractedAmount));
+                }
+            }
+
+            ClearSpawned();
+            trackedDepositDeltaCount = depositDeltaStore.Count;
+            RefreshStreaming();
+        }
+
+        void RebuildDepositIdentityLookup()
+        {
+            generatedDepositIds.Clear();
+            currentIdByLegacyId.Clear();
+            for (int i = 0; i < deposits.Count; i++)
+            {
+                ResourceDepositData deposit = deposits[i];
+                if (!deposit.DepositId.IsValid)
+                {
+                    continue;
+                }
+
+                generatedDepositIds.Add(deposit.DepositId);
+                if (deposit.LegacyDepositId.IsValid)
+                {
+                    currentIdByLegacyId[deposit.LegacyDepositId] = deposit.DepositId;
+                }
+            }
+        }
+
+        GeneratedEntityId ResolveSnapshotDepositId(GeneratedEntityId snapshotId, bool useLegacyIds)
+        {
+            if (!snapshotId.IsValid)
+            {
+                return GeneratedEntityId.None;
+            }
+
+            if (!useLegacyIds)
+            {
+                return generatedDepositIds.Contains(snapshotId) ? snapshotId : GeneratedEntityId.None;
+            }
+
+            return currentIdByLegacyId.TryGetValue(snapshotId, out GeneratedEntityId currentId)
+                ? currentId
+                : GeneratedEntityId.None;
+        }
+
+#if UNITY_EDITOR
         [ContextMenu("Log Resource Streaming Report")]
         public void LogResourceStreamingReport()
         {
@@ -229,152 +280,19 @@ namespace Farion.Gameplay.Resources
         public void LogResourceDistributionReport()
         {
             ResolveComponents();
-            PlanetaryGenerationProfile generationProfile = surfaceModel != null
-                ? surfaceModel.GenerationProfile
-                : null;
-            if (body == null || surfaceModel == null || generationProfile == null || resourceDistribution == null)
+            if (!ResourceDistributionReportBuilder.TryBuild(
+                    name,
+                    body,
+                    surfaceModel,
+                    resourceDistribution,
+                    out string report))
             {
-                Debug.LogWarning($"{name}: resource distribution report skipped because body, surface model, generation profile, or resource distribution is missing.", this);
                 return;
             }
 
-            int sampleCount = resourceDistribution.CalculateSurfaceSampleCount(body.Radius);
-            PlanetGenerationContext context = generationProfile.CreateContext(body.Radius, body.SurfaceGravity);
-            List<ResourceSpawnRule> allowedRules = new();
-            List<ResourceDepositData> reportDeposits = new();
-            Dictionary<string, int> biomeCounts = new();
-            Dictionary<string, int> featureCounts = new();
-            Dictionary<string, int> allowedRuleCounts = new();
-            Dictionary<string, int> depositCounts = new();
-
-            int sampledSurfaceCount = 0;
-            int missingSurfaceCount = 0;
-            int missingBiomeCount = 0;
-            int missingFeatureCount = 0;
-            int samplesWithAllowedRules = 0;
-            float minAltitude = float.PositiveInfinity;
-            float maxAltitude = float.NegativeInfinity;
-            float minSlope = float.PositiveInfinity;
-            float maxSlope = float.NegativeInfinity;
-            float minTemperature = float.PositiveInfinity;
-            float maxTemperature = float.NegativeInfinity;
-            float minMoisture = float.PositiveInfinity;
-            float maxMoisture = float.NegativeInfinity;
-            float minRadiation = float.PositiveInfinity;
-            float maxRadiation = float.NegativeInfinity;
-
-            int resourceSeed = SeedUtility.Derive(context.PlanetSeed, resourceDistribution.BaseSeed, "resources");
-            for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++)
-            {
-                Vector3 localDirection = FibonacciSphereDirection(sampleIndex, sampleCount);
-                Vector3 worldDirection = body.transform.TransformDirection(localDirection.normalized);
-                Vector3 probePosition = body.Position + worldDirection * Mathf.Max(0.01f, body.Radius);
-                if (!surfaceModel.TrySamplePlanetSurface(body, probePosition, out PlanetSurfaceSample sample))
-                {
-                    missingSurfaceCount++;
-                    continue;
-                }
-
-                sampledSurfaceCount++;
-                minAltitude = Mathf.Min(minAltitude, sample.TerrainAltitude);
-                maxAltitude = Mathf.Max(maxAltitude, sample.TerrainAltitude);
-                minSlope = Mathf.Min(minSlope, sample.Surface.SlopeAngleDegrees);
-                maxSlope = Mathf.Max(maxSlope, sample.Surface.SlopeAngleDegrees);
-                minTemperature = Mathf.Min(minTemperature, sample.Climate.TemperatureCelsius);
-                maxTemperature = Mathf.Max(maxTemperature, sample.Climate.TemperatureCelsius);
-                minMoisture = Mathf.Min(minMoisture, sample.Climate.Moisture);
-                maxMoisture = Mathf.Max(maxMoisture, sample.Climate.Moisture);
-                minRadiation = Mathf.Min(minRadiation, sample.Climate.Radiation);
-                maxRadiation = Mathf.Max(maxRadiation, sample.Climate.Radiation);
-
-                BiomeDefinition biome = sample.Biome.Biome;
-                if (biome == null)
-                {
-                    missingBiomeCount++;
-                }
-                else
-                {
-                    IncrementCount(biomeCounts, biome.DisplayName);
-                }
-
-                TerrainFeatureDefinition terrainFeature = sample.TerrainFeature.Feature;
-                if (terrainFeature == null)
-                {
-                    missingFeatureCount++;
-                }
-                else
-                {
-                    IncrementCount(featureCounts, terrainFeature.DisplayName);
-                }
-
-                float resourceNoise = SampleDirectionalNoise(
-                    localDirection,
-                    resourceDistribution.ResourceNoiseScale,
-                    SeedUtility.Derive(resourceSeed, sampleIndex, "resource.noise"));
-                resourceDistribution.CollectAllowedRules(
-                    biome,
-                    terrainFeature,
-                    sample.TerrainAltitude,
-                    sample.Surface.SlopeAngleDegrees,
-                    resourceNoise,
-                    allowedRules);
-                if (allowedRules.Count <= 0)
-                {
-                    continue;
-                }
-
-                samplesWithAllowedRules++;
-                for (int i = 0; i < allowedRules.Count; i++)
-                {
-                    ResourceNodeDefinition resource = allowedRules[i].Resource;
-                    IncrementCount(allowedRuleCounts, resource != null ? resource.DisplayName : "Missing Resource");
-                }
-            }
-
-            ResourceDepositGenerator.Generate(resourceDistribution, generationProfile, body, surfaceModel, reportDeposits);
-            for (int i = 0; i < reportDeposits.Count; i++)
-            {
-                ResourceDepositData deposit = reportDeposits[i];
-                IncrementCount(depositCounts, deposit.Resource != null ? deposit.Resource.DisplayName : "Missing Resource");
-            }
-
-            StringBuilder report = new(768);
-            report.Append(name);
-            report.Append(": resource distribution report. samples=");
-            report.Append(sampleCount);
-            report.Append(", sampledSurface=");
-            report.Append(sampledSurfaceCount);
-            report.Append(", missingSurface=");
-            report.Append(missingSurfaceCount);
-            report.Append(", missingBiome=");
-            report.Append(missingBiomeCount);
-            report.Append(", missingFeature=");
-            report.Append(missingFeatureCount);
-            report.Append(", samplesWithAllowedRules=");
-            report.Append(samplesWithAllowedRules);
-            report.Append(", generatedDeposits=");
-            report.Append(reportDeposits.Count);
-            report.Append(", altitude=");
-            AppendRange(report, minAltitude, maxAltitude);
-            report.Append(", slope=");
-            AppendRange(report, minSlope, maxSlope);
-            report.Append(", temperatureC=");
-            AppendRange(report, minTemperature, maxTemperature);
-            report.Append(", moisture=");
-            AppendRange(report, minMoisture, maxMoisture);
-            report.Append(", radiation=");
-            AppendRange(report, minRadiation, maxRadiation);
-            report.Append(", biomes=[");
-            AppendCounts(report, biomeCounts);
-            report.Append("], terrainFeatures=[");
-            AppendCounts(report, featureCounts);
-            report.Append("], allowedRules=[");
-            AppendCounts(report, allowedRuleCounts);
-            report.Append("], deposits=[");
-            AppendCounts(report, depositCounts);
-            report.Append(']');
-            Debug.Log(report.ToString(), this);
+            Debug.Log(report, this);
         }
+#endif
 
         bool TryResolveDepositPose(ResourceDepositData deposit, out Vector3 position, out Quaternion rotation)
         {
@@ -449,7 +367,7 @@ namespace Farion.Gameplay.Resources
                     continue;
                 }
 
-                DestroyNode(spawned.Node);
+                ReleaseNode(spawned);
                 spawnedNodes.Remove(nodesToRemove[i]);
             }
 
@@ -464,7 +382,8 @@ namespace Farion.Gameplay.Resources
             }
 
             GeneratedEntityId farthestId = default;
-            GameObject farthestNode = null;
+            SpawnedDepositNode farthestNode = default;
+            bool hasFarthestNode = false;
             float farthestDistance = candidateDistance;
 
             foreach (KeyValuePair<GeneratedEntityId, SpawnedDepositNode> pair in spawnedNodes)
@@ -477,15 +396,16 @@ namespace Farion.Gameplay.Resources
 
                 farthestDistance = distance;
                 farthestId = pair.Key;
-                farthestNode = pair.Value.Node;
+                farthestNode = pair.Value;
+                hasFarthestNode = farthestNode.Node != null;
             }
 
-            if (farthestNode == null)
+            if (!hasFarthestNode)
             {
                 return false;
             }
 
-            DestroyNode(farthestNode);
+            ReleaseNode(farthestNode);
             spawnedNodes.Remove(farthestId);
             return true;
         }
@@ -553,35 +473,73 @@ namespace Farion.Gameplay.Resources
             return frame.Environment.OceanRadius > sample.SurfaceRadius + oceanSurfaceClearance;
         }
 
-        GameObject CreateNodeObject(ResourceDepositData deposit, Vector3 position, Quaternion rotation)
+        bool CreateNodeObject(ResourceDepositData deposit, Vector3 position, Quaternion rotation, out GameObject node)
         {
-            if (!deposit.Resource.HasVisualPrefab)
+            Transform parent = container != null ? container : body != null ? body.transform : transform;
+            if (Application.isPlaying &&
+                TryRentNode(deposit.Resource, out node) &&
+                ResourceNodeFactory.TryConfigure(
+                    node,
+                    deposit,
+                    position,
+                    rotation,
+                    parent,
+                    depositDeltaStore))
+            {
+                return true;
+            }
+
+            if (!ResourceNodeFactory.TryCreate(deposit, position, rotation, parent, depositDeltaStore, out node))
             {
                 skippedMissingPrefabCount++;
-                Debug.LogWarning(
-                    $"{name}: skipped resource node '{deposit.Resource.DisplayName}' because its resource definition has no visual prefab.",
-                    this);
-                return null;
+                return false;
             }
 
+            return true;
+        }
+
+        bool TryRentNode(ResourceNodeDefinition definition, out GameObject node)
+        {
+            node = null;
+            if (definition == null ||
+                !pooledNodesByDefinition.TryGetValue(definition, out Stack<GameObject> pool))
+            {
+                return false;
+            }
+
+            while (pool.Count > 0 && node == null)
+            {
+                node = pool.Pop();
+            }
+
+            return node != null;
+        }
+
+        void ReleaseNode(SpawnedDepositNode spawned)
+        {
+            GameObject node = spawned.Node;
+            if (node == null)
+            {
+                return;
+            }
+
+            ResourceNodeDefinition definition = spawned.Deposit.Resource;
+            if (!Application.isPlaying || definition == null)
+            {
+                DestroyNode(node);
+                return;
+            }
+
+            node.SetActive(false);
             Transform parent = container != null ? container : body != null ? body.transform : transform;
-            GameObject node = Instantiate(deposit.Resource.VisualPrefab, position, rotation, parent);
-            node.name = $"Resource Node - {deposit.Resource.DisplayName} ({deposit.DepositId})";
-            if (!Application.isPlaying)
+            node.transform.SetParent(parent, worldPositionStays: false);
+            if (!pooledNodesByDefinition.TryGetValue(definition, out Stack<GameObject> pool))
             {
-                node.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+                pool = new Stack<GameObject>();
+                pooledNodesByDefinition.Add(definition, pool);
             }
 
-            ResourceNodeInteractable interactable = node.GetComponent<ResourceNodeInteractable>();
-            if (interactable == null)
-            {
-                interactable = node.AddComponent<ResourceNodeInteractable>();
-            }
-
-            interactable.Configure(deposit.Resource, deposit.InitialReserve, deposit.GenerationSeed, deposit.DepositId, depositDeltaStore);
-            EnsureInteractionCollider(node);
-            ApplyResourceColor(node, deposit);
-            return node;
+            pool.Push(node);
         }
 
         void RemoveGeneratedChildren()
@@ -626,119 +584,6 @@ namespace Farion.Gameplay.Resources
             {
                 DestroyImmediate(node);
             }
-        }
-
-        static void EnsureInteractionCollider(GameObject node)
-        {
-            Collider collider = node.GetComponentInChildren<Collider>();
-            if (collider == null)
-            {
-                collider = node.AddComponent<SphereCollider>();
-            }
-
-            collider.isTrigger = true;
-        }
-
-        static Vector3 FibonacciSphereDirection(int index, int count)
-        {
-            if (count <= 1)
-            {
-                return Vector3.up;
-            }
-
-            float t = index / (float)(count - 1);
-            float y = 1f - 2f * t;
-            float radius = Mathf.Sqrt(Mathf.Max(0f, 1f - y * y));
-            float theta = index * Mathf.PI * (3f - Mathf.Sqrt(5f));
-            return new Vector3(Mathf.Cos(theta) * radius, y, Mathf.Sin(theta) * radius).normalized;
-        }
-
-        static float SampleDirectionalNoise(Vector3 direction, float scale, int seed)
-        {
-            float u = Mathf.Atan2(direction.z, direction.x) / (Mathf.PI * 2f) + 0.5f;
-            float v = Mathf.Asin(Mathf.Clamp(direction.y, -1f, 1f)) / Mathf.PI + 0.5f;
-            float seedOffset = (seed & 2047) * 0.00731f;
-            return Mathf.PerlinNoise(u * Mathf.Max(0.001f, scale) + seedOffset, v * Mathf.Max(0.001f, scale) + seedOffset * 1.731f);
-        }
-
-        static void IncrementCount(Dictionary<string, int> counts, string key)
-        {
-            if (counts == null || string.IsNullOrWhiteSpace(key))
-            {
-                return;
-            }
-
-            key = key.Trim();
-            counts.TryGetValue(key, out int count);
-            counts[key] = count + 1;
-        }
-
-        static void AppendCounts(StringBuilder builder, Dictionary<string, int> counts)
-        {
-            if (counts == null || counts.Count == 0)
-            {
-                builder.Append("none");
-                return;
-            }
-
-            bool first = true;
-            foreach (KeyValuePair<string, int> pair in counts)
-            {
-                if (!first)
-                {
-                    builder.Append(", ");
-                }
-
-                builder.Append(pair.Key);
-                builder.Append('=');
-                builder.Append(pair.Value);
-                first = false;
-            }
-        }
-
-        static void AppendRange(StringBuilder builder, float min, float max)
-        {
-            if (float.IsInfinity(min) || float.IsInfinity(max))
-            {
-                builder.Append("n/a");
-                return;
-            }
-
-            builder.Append(min.ToString("0.###"));
-            builder.Append("..");
-            builder.Append(max.ToString("0.###"));
-        }
-
-        void ApplyResourceColor(GameObject node, ResourceDepositData deposit)
-        {
-            Color color = deposit.Biome != null ? deposit.Biome.PreviewColor : Color.yellow;
-            if (deposit.TerrainFeature != null)
-            {
-                color = Color.Lerp(color, deposit.TerrainFeature.PreviewColor, 0.35f);
-            }
-
-            color = Color.Lerp(color, Color.white, 0.25f);
-            Renderer[] renderers = node.GetComponentsInChildren<Renderer>();
-            for (int i = 0; i < renderers.Length; i++)
-            {
-                Renderer renderer = renderers[i];
-                if (renderer == null)
-                {
-                    continue;
-                }
-
-                MaterialPropertyBlock block = ResolvePropertyBlock();
-                renderer.GetPropertyBlock(block);
-                block.SetColor("_BaseColor", color);
-                block.SetColor("_Color", color);
-                renderer.SetPropertyBlock(block);
-            }
-        }
-
-        MaterialPropertyBlock ResolvePropertyBlock()
-        {
-            propertyBlock ??= new MaterialPropertyBlock();
-            return propertyBlock;
         }
 
         void ResolveComponents()

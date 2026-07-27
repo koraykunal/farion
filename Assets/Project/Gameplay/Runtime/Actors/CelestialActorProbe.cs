@@ -30,7 +30,8 @@ namespace Farion.Gameplay.Actors
         Rigidbody cachedRigidbody;
         CelestialFrameSample currentSample;
 
-        public CelestialFrameProvider FrameProvider => frameProvider;
+        public CelestialFrameProvider FrameProvider =>
+            frameProvider != null ? frameProvider : CelestialFrameProvider.Active;
         public CelestialFrameSample CurrentSample => currentSample;
         public bool HasSample => currentSample.HasBody;
         public Rigidbody Rigidbody => cachedRigidbody != null ? cachedRigidbody : cachedRigidbody = GetComponent<Rigidbody>();
@@ -53,14 +54,15 @@ namespace Farion.Gameplay.Actors
         [ContextMenu("Refresh Celestial Sample")]
         public void RefreshSample()
         {
-            if (frameProvider == null)
+            CelestialFrameProvider provider = FrameProvider;
+            if (provider == null)
             {
                 currentSample = CelestialFrameSample.Empty(Rigidbody.position, Rigidbody.linearVelocity);
                 ApplyRuntimeState();
                 return;
             }
 
-            currentSample = frameProvider.Sample(Rigidbody.position, Rigidbody.linearVelocity);
+            currentSample = provider.Sample(Rigidbody.position, Rigidbody.linearVelocity);
             ApplyRuntimeState();
         }
 

@@ -66,7 +66,9 @@ namespace Farion.Rendering.PostProcessing
             Shader shader = oceanShader != null ? oceanShader : Shader.Find(DefaultShaderName);
             if (shader == null)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"{nameof(FarionOceanRendererFeature)} skipped because {DefaultShaderName} was not found.");
+#endif
                 return null;
             }
 

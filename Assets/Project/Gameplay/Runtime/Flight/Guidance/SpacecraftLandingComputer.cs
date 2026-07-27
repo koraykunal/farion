@@ -116,10 +116,12 @@ namespace Farion.Gameplay.Flight
             surfaceSlopeLimit = currentAssessment.SurfaceSlopeLimit;
             safeTouchdownWindow = currentAssessment.IsSafeTouchdownWindow;
             impactRisk = currentAssessment.HasImpactRisk;
-            touchdownConfirmed = hasSurfaceContact &&
-                safeTouchdownWindow &&
-                contact.NormalSpeed <= verticalSpeedLimit &&
-                contact.TangentialSpeed <= tangentialSpeedLimit;
+            touchdownConfirmed = SpacecraftTouchdownEvaluator.IsSafe(
+                contact,
+                surfaceSlopeAngle,
+                profile.SafeTouchdownVerticalSpeed,
+                profile.SafeTouchdownTangentialSpeed,
+                profile.SafeTouchdownSlopeAngle);
             unsafeSurfaceContact = hasSurfaceContact && !touchdownConfirmed;
         }
     }

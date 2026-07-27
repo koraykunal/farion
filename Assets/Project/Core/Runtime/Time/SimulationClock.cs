@@ -6,15 +6,15 @@ namespace Farion.Core.Time
     {
         public static float FixedStep => UnityEngine.Time.fixedDeltaTime;
 
-        public static void ApplyFixedStep(float fixedStep)
+        public static bool ApplyFixedStep(float fixedStep)
         {
             if (fixedStep <= 0f)
             {
-                Debug.LogWarning($"Ignoring invalid fixed timestep: {fixedStep}");
-                return;
+                return false;
             }
 
             UnityEngine.Time.fixedDeltaTime = fixedStep;
+            return true;
         }
     }
 }

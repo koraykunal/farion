@@ -165,7 +165,9 @@ namespace Farion.Rendering.Celestial
             }
             catch (UnityException exception)
             {
+#if UNITY_EDITOR
                 Debug.LogWarning($"{name}: biome texture arrays could not be prepared; biome color layers remain active. {exception.Message}", this);
+#endif
                 ReleaseTextureArrays();
                 textureArraySignature = null;
                 return 0;
@@ -266,9 +268,11 @@ namespace Farion.Rendering.Celestial
                 Texture2D texture = selectTexture(activeRules[i].Textures);
                 if (texture.width != width || texture.height != height || texture.format != format || texture.mipmapCount != mipCount)
                 {
+#if UNITY_EDITOR
                     Debug.LogWarning(
                         $"{name}: biome {label} textures must share size, format, and mip count to build a texture array.",
                         this);
+#endif
                     return null;
                 }
             }

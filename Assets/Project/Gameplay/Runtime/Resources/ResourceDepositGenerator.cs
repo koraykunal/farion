@@ -50,8 +50,22 @@ namespace Farion.Gameplay.Resources
                 return;
             }
 
+            if (string.IsNullOrEmpty(body.PersistentId))
+            {
+                Debug.LogError(
+                    $"{nameof(ResourceDepositGenerator)} requires a persistent id on celestial body {body.name}.",
+                    body);
+                return;
+            }
+
             int sampleCount = profile.CalculateSurfaceSampleCount(body.Radius);
             int resourceSeed = SeedUtility.Derive(context.PlanetSeed, profile.BaseSeed, "resources");
+            ulong bodyIdentitySeed = StableHashUtility.Combine((ulong)(uint)context.PlanetSeed, body.PersistentId);
+            GeneratedEntityId bodyId = SeedDerivationUtility.DeriveId(
+                bodyIdentitySeed,
+                GenerationVersion.Current,
+                UniverseEntityKind.CelestialBody,
+                body.PersistentId);
             List<ResourceSpawnRule> allowedRules = new();
             for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++)
             {
@@ -115,14 +129,20 @@ namespace Farion.Gameplay.Resources
                         sampleIndex * 397 + clusterIndex,
                         selectedRule.Resource.NodeId);
                     int initialReserve = selectedRule.Resource.EvaluateInitialReserve(depositSeed);
-                    GeneratedEntityId depositId = SeedDerivationUtility.DeriveId(
+                    GeneratedEntityId legacyDepositId = SeedDerivationUtility.DeriveId(
                         (ulong)(uint)resourceSeed,
                         GenerationVersion.Current,
                         UniverseEntityKind.ResourceDeposit,
                         selectedRule.Resource.NodeId,
                         sampleIndex * 397L + clusterIndex);
+                    GeneratedEntityId depositId = SeedDerivationUtility.DeriveChildId(
+                        bodyId,
+                        UniverseEntityKind.ResourceDeposit,
+                        selectedRule.Resource.NodeId,
+                        sampleIndex * 397L + clusterIndex);
                     results.Add(new ResourceDepositData(
                         depositId,
+                        legacyDepositId,
                         selectedRule.Resource,
                         depositBiome,
                         depositTerrainFeature,

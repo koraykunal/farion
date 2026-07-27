@@ -545,47 +545,52 @@ After the gravity actor test works, create the player starter spacecraft:
 2. Add `Rigidbody`.
 3. Add `KeyboardSpacecraftInput`.
 4. Add `SpacecraftMotor`.
-5. Keep `Rigidbody > Use Gravity` disabled. `SpacecraftMotor` applies project
+5. Assign
+   `Assets/Project/Design/Gameplay/Flight/SO_PlayerStarterShuttleFlightProfile.asset`
+   to `Flight Profile`.
+6. Keep `Rigidbody > Use Gravity` disabled. `SpacecraftMotor` applies project
    gravity when `Apply Gravity` is enabled.
-6. On `SpacecraftMotor`, leave `Simulation` empty unless you want to assign the
+7. On `SpacecraftMotor`, leave `Simulation` empty unless you want to assign the
    scene `GravitySimulation` explicitly. Empty means it uses
    `GravitySimulation.Active`.
-7. Keep Unity's default `GravityActor` off this object. `SpacecraftMotor` already
+8. Keep Unity's default `GravityActor` off this object. `SpacecraftMotor` already
    applies project gravity.
-8. Move the ship near the planet, outside the surface. For the current test
+9. Move the ship near the planet, outside the surface. For the current test
    planet, a starting position around `(350, 70, -120)` is useful.
-9. Add `CelestialActorProbe`.
-10. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
-11. Add `SpacecraftSurfaceContactProbe`.
-12. Add `SpacecraftLandingComputer`.
-13. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultLandingProfile.asset` to
-    `Profile`.
-14. Assign the same `CelestialActorProbe` component to `Celestial Probe`.
-15. Assign the same `SpacecraftSurfaceContactProbe` component to
+10. Add `CelestialActorProbe`.
+11. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
+12. Add `SpacecraftSurfaceContactProbe`.
+13. Add `SpacecraftLandingComputer`.
+14. Assign
+    `Assets/Project/Design/Gameplay/Flight/SO_PlayerStarterShuttleLandingProfile.asset`
+    to `Profile`.
+15. Assign the same `CelestialActorProbe` component to `Celestial Probe`.
+16. Assign the same `SpacecraftSurfaceContactProbe` component to
     `Surface Contact Probe`.
-16. Add `SpacecraftLandingGuidanceComputer`.
-17. Assign the same `SpacecraftLandingComputer` to `Landing Computer`.
-18. Assign the same `CelestialActorProbe` to `Celestial Probe`.
-19. On `SpacecraftMotor`, assign the same `SpacecraftSurfaceContactProbe` to
+17. Add `SpacecraftLandingGuidanceComputer`.
+18. Assign the same `SpacecraftLandingComputer` to `Landing Computer`.
+19. Assign the same `CelestialActorProbe` to `Celestial Probe`.
+20. On `SpacecraftMotor`, assign the same `SpacecraftSurfaceContactProbe` to
     `Surface Contact Probe`.
-20. Keep `Suspend Rotation While In Surface Contact` enabled. This follows the
+21. Keep `Suspend Rotation While In Surface Contact` enabled. This follows the
     Solar-System reference approach of not forcing ship rotation through a
     surface contact.
-21. Add `SpacecraftSurfaceContactStabilizer`.
-22. Assign the same `SpacecraftSurfaceContactProbe`.
-23. Add `SpacecraftOceanInteractor`.
-24. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultOceanInteractionProfile.asset`
+22. Add `SpacecraftSurfaceContactStabilizer`.
+23. Assign the same `SpacecraftSurfaceContactProbe`.
+24. Add `SpacecraftOceanInteractor`.
+25. Assign
+    `Assets/Project/Design/Gameplay/Flight/SO_PlayerStarterShuttleOceanInteractionProfile.asset`
     to `Profile`.
-25. Assign the same `CelestialActorProbe` to `Celestial Probe`.
-26. Keep `Apply Buoyancy`, `Apply Drag`, and `Damp Angular Velocity` enabled.
-27. Add `SpacecraftOrbitComputer`.
-28. Assign the same `CelestialActorProbe` to `Celestial Probe`.
-29. Assign `Simulation > GravitySimulation` to `Simulation`.
-30. Add `SpacecraftEntryCorridorComputer`.
-31. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultEntryCorridorProfile.asset`
+26. Assign the same `CelestialActorProbe` to `Celestial Probe`.
+27. Keep `Apply Buoyancy`, `Apply Drag`, and `Damp Angular Velocity` enabled.
+28. Add `SpacecraftOrbitComputer`.
+29. Assign the same `CelestialActorProbe` to `Celestial Probe`.
+30. Assign `Simulation > GravitySimulation` to `Simulation`.
+31. Add `SpacecraftEntryCorridorComputer`.
+32. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultEntryCorridorProfile.asset`
     to `Profile`.
-32. Assign the same `CelestialActorProbe` and `SpacecraftOrbitComputer`.
-33. Read `SpacecraftLandingGuidanceComputer`, `SpacecraftLandingComputer`,
+33. Assign the same `CelestialActorProbe` and `SpacecraftOrbitComputer`.
+34. Read `SpacecraftLandingGuidanceComputer`, `SpacecraftLandingComputer`,
     `SpacecraftOrbitComputer`, `SpacecraftEntryCorridorComputer`,
     `CelestialActorProbe`, `SpacecraftSurfaceContactProbe`, and
     `SpacecraftOceanInteractor` directly in the Inspector while tuning. The
@@ -615,24 +620,72 @@ Starter shuttle scene contract:
 
 Controls:
 
-- `W/S`: forward/back
+- `W/S`: increase/decrease persistent forward throttle
 - `A/D`: strafe
 - `Space/Left Ctrl`: ascend/descend
 - `Mouse`: yaw/pitch
 - `Q/E`: roll
-- `Left Shift`: boost
+- `X`: zero throttle and assisted brake
+- `Left Shift`: boost while forward throttle is positive and charge remains
+- `Z`: toggle flight assist
+- `G`: deploy/retract landing gear
+- `C`: exterior/cockpit camera
+- `F`: leave the pilot seat
 
 For a camera:
 
 1. Add `SpacecraftCameraRig` to the scene camera or a `CameraRig` child.
 2. Assign `Player Starter Shuttle > ChaseCameraTarget` as the target.
 3. Start with `Local Offset = (0, 5.5, -18)`.
-4. Keep `Snap To Target` enabled. This matches the Solar-System reference more
-   closely than a delayed follow camera. Disable it only if you deliberately
-   want cinematic camera lag later.
+4. Keep `Snap To Target` disabled for the starter shuttle and use the authored
+   responsiveness/lag limits. Enable snapping only for initial acquisition or
+   explicit camera cuts.
+5. Keep obstacle avoidance enabled. The camera ignores colliders under its
+   spacecraft target and sphere-casts against the configured obstacle layers.
 
-This is only the first ship-control sandbox. Do not add survival, inventory,
-automation, networking, HUD, or landing systems until this motion feels stable.
+`SC_PhysicsSandbox` includes the production flight HUD presenter under
+`GameplayCanvas/HudRoot/SpacecraftFlightHud`. It is visible only while the
+player is piloting and reads existing flight/landing telemetry.
+
+### Starter Shuttle Production Rig Gate
+
+The current FBX exposes one shared `Engine Nozzle` transform. Do not duplicate
+that pivot in code or place guessed RCS emitters on the physics root. Before the
+final VFX/gimbal pass, update the source model with these named empties:
+
+```text
+EngineGimbal_Left
+EngineGimbal_Right
+Thruster_Main_Left
+Thruster_Main_Right
+Thruster_Reverse_Left
+Thruster_Reverse_Right
+RCS_Front_Left
+RCS_Front_Right
+RCS_Rear_Left
+RCS_Rear_Right
+GearContact_Front
+GearContact_Left
+GearContact_Right
+LandingCameraTarget
+```
+
+1. Put each engine-gimbal pivot at the actual mechanical hinge and parent its
+   main-thruster marker below it.
+2. Orient every thruster marker so its local axis matches the plume component's
+   configured extension direction.
+3. Keep the imported model under `VisualRoot`; do not rotate or offset the
+   Rigidbody root.
+4. Reimport the FBX, then replace the shared `Engine Nozzle` entry in
+   `SpacecraftEngineMotionAnimator` with the two named gimbal pivots.
+5. Create emitter payloads at the named thrust/RCS markers and assign them to
+   the existing `SpacecraftThrusterEffects` roles. The code already supports
+   forward, reverse, strafe, vertical, pitch, yaw, and roll roles.
+6. Replace `COL_Landing_Footprint` with three small compound gear-contact
+   colliders only after their model markers are final. Assign all three to
+   `SpacecraftLandingGearAnimator > Landing Gear Colliders`.
+7. Assign `LandingCameraTarget` only when a third landing-camera mode is
+   intentionally designed; the current production toggle is exterior/cockpit.
 
 While in Play Mode, select `Player Starter Shuttle` and watch
 `CelestialActorProbe > Runtime Sample`:
@@ -656,7 +709,8 @@ Then check `SpacecraftLandingComputer > Runtime Assessment`:
   on speed and altitude.
 - `Risks` should flag excessive vertical or tangential speed near the surface.
 - `Risks` should flag `ExcessiveSurfaceSlope` when the current sampled terrain
-  is steeper than `SO_DefaultLandingProfile > Safe Touchdown Slope Angle`.
+  is steeper than
+  `SO_PlayerStarterShuttleLandingProfile > Safe Touchdown Slope Angle`.
 - `Normalized Stress` approaches `1` as the current descent becomes unsafe for
   the active altitude.
 - `Safe Touchdown Window` should be true only very close to the surface with low
@@ -666,8 +720,9 @@ Then check `SpacecraftLandingComputer > Runtime Assessment`:
 - `Has Surface Contact` should become true only while the ship collider is
   touching a celestial body collider.
 - `Touchdown Confirmed` should become true only when the ship has surface
-  contact and both normal/tangential speeds are inside the active profile
-  limits.
+  contact and normal speed, tangential speed, and sampled slope are inside the
+  profile's strict touchdown limits. Center altitude does not veto a valid
+  physical gear contact.
 - `Unsafe Surface Contact` means contact happened, but not inside safe
   touchdown limits.
 
@@ -692,7 +747,7 @@ Then check `SpacecraftOceanInteractor > Runtime Ocean`:
   touching water.
 - `Water Entry Speed` is the ocean-radial impact speed into the water.
 - `Unsafe Water Entry` becomes true when entering water faster than
-  `SO_DefaultOceanInteractionProfile > Safe Water Entry Speed`.
+  `SO_PlayerStarterShuttleOceanInteractionProfile > Safe Water Entry Speed`.
 - `Pressure Stress` should rise with depth after `Pressure Warning Depth`.
 - `Crushing Depth` becomes true at or below `Crush Depth`; this is telemetry for
   future damage, not damage by itself yet.
@@ -1132,7 +1187,7 @@ After rebuilding, the generated `Terrain Mesh` child should have an enabled
 collision is active. For moving planets, leave `Generate Mesh Collider`
 disabled until the future local terrain patch/surface query system exists.
 
-Tune `SO_DefaultLandingProfile` only after confirming the sample values make
-sense in Play Mode. For the current sandbox scale, low approach intentionally
-starts near the surface so atmospheric entry can be observed before final
-approach.
+Tune `SO_PlayerStarterShuttleLandingProfile` only after confirming the sample
+values make sense in Play Mode. Its touchdown altitude includes the current
+starter-shuttle gear clearance; a different hull must own a separate landing
+profile rather than silently reusing this geometry-dependent value.

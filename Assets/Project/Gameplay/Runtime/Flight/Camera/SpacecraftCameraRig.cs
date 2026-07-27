@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Gameplay.Flight
 {
@@ -7,8 +8,11 @@ namespace Farion.Gameplay.Flight
     public sealed class SpacecraftCameraRig : MonoBehaviour
     {
         [Header("Target")]
-        [SerializeField] Transform target;
+        [FormerlySerializedAs("target")]
+        [SerializeField] Transform exteriorTarget;
+        [SerializeField] Transform cockpitTarget;
         [SerializeField] SpacecraftMotor motor;
+        [SerializeField] SpacecraftPilotCameraView view = SpacecraftPilotCameraView.Exterior;
 
         [Header("Camera Payload")]
         [SerializeField] Transform cameraTransform;
@@ -34,6 +38,16 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float maxPositionLag = 1.5f;
 
+        [Header("Collision")]
+        [SerializeField] bool avoidObstacles = true;
+        [SerializeField] LayerMask obstacleLayers = ~0;
+        [Min(0.01f)]
+        [SerializeField] float collisionRadius = 0.35f;
+        [Min(0f)]
+        [SerializeField] float collisionPadding = 0.15f;
+        [Min(0f)]
+        [SerializeField] float minimumTargetDistance = 1f;
+
         [Header("Flight Feedback")]
         [Min(0f)]
         [SerializeField] float velocityOffsetScale = 0.008f;
@@ -51,11 +65,19 @@ namespace Farion.Gameplay.Flight
         bool snapNextFrame = true;
         float baseFieldOfView = 60f;
         Vector3 smoothedFlightOffset;
+        readonly RaycastHit[] collisionHits = new RaycastHit[32];
+        Transform cachedBoundsTarget;
+        float cachedTargetBoundsRadius;
+        bool targetBoundsDirty = true;
+        Camera cachedFovCamera;
+
+        public SpacecraftPilotCameraView View => view;
 
         void OnEnable()
         {
             ResolveCameraTransform();
             ResetCameraPayloadPose();
+            targetBoundsDirty = true;
             snapNextFrame = true;
         }
 
@@ -65,6 +87,9 @@ namespace Farion.Gameplay.Flight
             rotationResponsiveness = Mathf.Max(0f, rotationResponsiveness);
             snapDistance = Mathf.Max(0f, snapDistance);
             maxPositionLag = Mathf.Max(0f, maxPositionLag);
+            collisionRadius = Mathf.Max(0.01f, collisionRadius);
+            collisionPadding = Mathf.Max(0f, collisionPadding);
+            minimumTargetDistance = Mathf.Max(0f, minimumTargetDistance);
             referenceTargetRadius = Mathf.Max(0.01f, referenceTargetRadius);
             minimumOffsetScale = Mathf.Max(0.1f, minimumOffsetScale);
             maximumOffsetScale = Mathf.Max(minimumOffsetScale, maximumOffsetScale);
@@ -74,6 +99,7 @@ namespace Farion.Gameplay.Flight
             flightOffsetResponsiveness = Mathf.Max(0f, flightOffsetResponsiveness);
             fovResponsiveness = Mathf.Max(0f, fovResponsiveness);
             boostFovIncrease = Mathf.Max(0f, boostFovIncrease);
+            targetBoundsDirty = true;
         }
 
         void LateUpdate()
@@ -83,8 +109,31 @@ namespace Farion.Gameplay.Flight
 
         public void SetTarget(Transform newTarget)
         {
-            target = newTarget;
+            SetExteriorTarget(newTarget);
+        }
+
+        public void SetExteriorTarget(Transform newTarget)
+        {
+            if (exteriorTarget != newTarget)
+            {
+                targetBoundsDirty = true;
+            }
+
+            exteriorTarget = newTarget;
             snapNextFrame = true;
+        }
+
+        public void SetCockpitTarget(Transform newTarget)
+        {
+            cockpitTarget = newTarget;
+            snapNextFrame = true;
+        }
+
+        public void SetView(SpacecraftPilotCameraView nextView)
+        {
+            view = nextView;
+            snapNextFrame = true;
+            smoothedFlightOffset = Vector3.zero;
         }
 
         public void SnapToTarget()
@@ -92,9 +141,20 @@ namespace Farion.Gameplay.Flight
             ApplyCamera(forceSnap: true);
         }
 
+        public void RefreshTargetBounds()
+        {
+            targetBoundsDirty = true;
+        }
+
         void ApplyCamera(bool forceSnap)
         {
-            if (target == null)
+            if (view == SpacecraftPilotCameraView.Cockpit && cockpitTarget != null)
+            {
+                ApplyCockpitCamera();
+                return;
+            }
+
+            if (exteriorTarget == null)
             {
                 return;
             }
@@ -105,14 +165,15 @@ namespace Farion.Gameplay.Flight
             ResolveMotor();
             ApplyCameraFov();
 
-            Vector3 desiredPosition = target.TransformPoint(GetScaledLocalOffset() + UpdateFlightOffset());
-            Vector3 viewDirection = target.position - desiredPosition;
+            Vector3 desiredPosition = exteriorTarget.TransformPoint(GetScaledLocalOffset() + UpdateFlightOffset());
+            desiredPosition = ResolveCollisionAdjustedPosition(desiredPosition);
+            Vector3 viewDirection = exteriorTarget.position - desiredPosition;
             if (viewDirection.sqrMagnitude <= 0.0001f)
             {
                 return;
             }
 
-            Quaternion desiredRotation = Quaternion.LookRotation(viewDirection, target.up);
+            Quaternion desiredRotation = Quaternion.LookRotation(viewDirection, exteriorTarget.up);
 
             if (snapToTarget || forceSnap || snapNextFrame || Vector3.Distance(transform.position, desiredPosition) > snapDistance)
             {
@@ -137,6 +198,62 @@ namespace Farion.Gameplay.Flight
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationT);
         }
 
+        Vector3 ResolveCollisionAdjustedPosition(Vector3 desiredPosition)
+        {
+            if (!avoidObstacles || exteriorTarget == null)
+            {
+                return desiredPosition;
+            }
+
+            Vector3 origin = exteriorTarget.position;
+            Vector3 offset = desiredPosition - origin;
+            float desiredDistance = offset.magnitude;
+            if (desiredDistance <= 0.0001f)
+            {
+                return desiredPosition;
+            }
+
+            Vector3 direction = offset / desiredDistance;
+            int hitCount = Physics.SphereCastNonAlloc(
+                origin,
+                collisionRadius,
+                direction,
+                collisionHits,
+                desiredDistance,
+                obstacleLayers,
+                QueryTriggerInteraction.Ignore);
+
+            float nearestDistance = desiredDistance;
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = collisionHits[i];
+                if (hit.collider == null || IsExteriorTargetCollider(hit.collider))
+                {
+                    continue;
+                }
+
+                nearestDistance = Mathf.Min(nearestDistance, hit.distance);
+            }
+
+            if (nearestDistance >= desiredDistance)
+            {
+                return desiredPosition;
+            }
+
+            float adjustedDistance = Mathf.Clamp(
+                nearestDistance - collisionPadding,
+                minimumTargetDistance,
+                desiredDistance);
+            return origin + direction * adjustedDistance;
+        }
+
+        bool IsExteriorTargetCollider(Collider candidate)
+        {
+            Transform candidateTransform = candidate.transform;
+            return candidateTransform == exteriorTarget ||
+                candidateTransform.IsChildOf(exteriorTarget);
+        }
+
         Vector3 GetScaledLocalOffset()
         {
             if (!scaleOffsetByTargetBounds)
@@ -144,7 +261,7 @@ namespace Farion.Gameplay.Flight
                 return localOffset;
             }
 
-            float targetRadius = CalculateTargetBoundsRadius();
+            float targetRadius = GetTargetBoundsRadius();
             if (targetRadius <= 0.0001f)
             {
                 return localOffset;
@@ -157,16 +274,24 @@ namespace Farion.Gameplay.Flight
             return localOffset * scale;
         }
 
-        float CalculateTargetBoundsRadius()
+        float GetTargetBoundsRadius()
         {
-            if (target == null)
+            if (exteriorTarget == null)
             {
                 return 0f;
             }
 
-            Renderer[] renderers = target.GetComponentsInChildren<Renderer>(false);
+            if (!targetBoundsDirty && cachedBoundsTarget == exteriorTarget)
+            {
+                return cachedTargetBoundsRadius;
+            }
+
+            Renderer[] renderers = exteriorTarget.GetComponentsInChildren<Renderer>(false);
             if (renderers.Length == 0)
             {
+                cachedBoundsTarget = exteriorTarget;
+                cachedTargetBoundsRadius = 0f;
+                targetBoundsDirty = false;
                 return 0f;
             }
 
@@ -190,7 +315,10 @@ namespace Farion.Gameplay.Flight
                 bounds.Encapsulate(renderer.bounds);
             }
 
-            return hasBounds ? bounds.extents.magnitude : 0f;
+            cachedBoundsTarget = exteriorTarget;
+            cachedTargetBoundsRadius = hasBounds ? bounds.extents.magnitude : 0f;
+            targetBoundsDirty = false;
+            return cachedTargetBoundsRadius;
         }
 
         void ResolveCameraTransform()
@@ -230,10 +358,21 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            if (target != null)
+            if (exteriorTarget != null)
             {
-                motor = target.GetComponentInParent<SpacecraftMotor>();
+                motor = exteriorTarget.GetComponentInParent<SpacecraftMotor>();
             }
+        }
+
+        void ApplyCockpitCamera()
+        {
+            ResolveCameraTransform();
+            ResetCameraPayloadPose();
+            ResolveMotor();
+            ApplyCameraFov();
+
+            transform.SetPositionAndRotation(cockpitTarget.position, cockpitTarget.rotation);
+            snapNextFrame = false;
         }
 
         Vector3 UpdateFlightOffset()
@@ -284,15 +423,13 @@ namespace Farion.Gameplay.Flight
 
         void CacheBaseFov()
         {
-            if (payloadCamera != null && baseFieldOfView <= 0f)
+            if (payloadCamera == null || cachedFovCamera == payloadCamera)
             {
-                baseFieldOfView = payloadCamera.fieldOfView;
+                return;
             }
 
-            if (payloadCamera != null && Mathf.Approximately(baseFieldOfView, 60f))
-            {
-                baseFieldOfView = payloadCamera.fieldOfView;
-            }
+            cachedFovCamera = payloadCamera;
+            baseFieldOfView = payloadCamera.fieldOfView;
         }
 
         void ResetCameraPayloadPose()

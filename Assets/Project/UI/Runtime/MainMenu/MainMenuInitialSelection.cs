@@ -35,7 +35,9 @@ namespace Farion.UI.MainMenu
 
             if (controller == null)
             {
+#if UNITY_EDITOR
                 Debug.LogError($"{nameof(MainMenuInitialSelection)} on {name} requires a local, parent, or explicit {nameof(MainMenuController)} reference.", this);
+#endif
             }
         }
 
