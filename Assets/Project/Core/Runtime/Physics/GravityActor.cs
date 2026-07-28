@@ -41,7 +41,9 @@ namespace Farion.Core.Physics
                 return;
             }
 
-            lastGravityAcceleration = source.CalculateAcceleration(Rigidbody.position) * gravityMultiplier;
+            lastGravityAcceleration =
+                source.CalculateReferenceFrameAcceleration(Rigidbody.position) *
+                gravityMultiplier;
             Rigidbody.AddForce(lastGravityAcceleration, ForceMode.Acceleration);
 
             if (alignUpAgainstGravity && lastGravityAcceleration.sqrMagnitude > 0.0001f)

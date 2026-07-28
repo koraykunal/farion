@@ -309,7 +309,7 @@ namespace Farion.Audio.Spacecraft
 
             warnedParameterNames.Add(parameterName);
             Debug.LogWarning(
-                $"FMOD ship engine parameter '{parameterName}' could not be set on '{engineEvent.Path}': {result}.",
+                $"FMOD ship engine parameter '{parameterName}' could not be set on '{engineEvent}': {result}.",
                 this);
         }
 
@@ -325,7 +325,7 @@ namespace Farion.Audio.Spacecraft
             {
                 warnedUnexpectedStop = true;
                 Debug.LogWarning(
-                    $"FMOD ship engine event stopped while ShipAudioController was active: {engineEvent.Path}. " +
+                    $"FMOD ship engine event stopped while ShipAudioController was active: {engineEvent}. " +
                     "For engine audio, author the FMOD event as a looping/sustained event instead of a one-shot.",
                     this);
             }

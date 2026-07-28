@@ -1,4 +1,4 @@
-Shader "Farion/Celestial/Terrestrial Triplanar"
+﻿Shader "Farion/Celestial/Terrestrial Triplanar"
 {
     Properties
     {
@@ -54,7 +54,10 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
             "Queue" = "Geometry"
+            "UniversalMaterialType" = "Lit"
+            "IgnoreProjector" = "True"
         }
+        LOD 300
 
         Pass
         {
@@ -67,7 +70,16 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             #pragma fragment Fragment
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_ATLAS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -78,14 +90,33 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             SAMPLER(sampler_NoiseTex);
             TEXTURE2D(_RockNormal);
             SAMPLER(sampler_RockNormal);
-            TEXTURE2D_ARRAY(_BiomeBaseColorArray);
-            SAMPLER(sampler_BiomeBaseColorArray);
-            TEXTURE2D_ARRAY(_BiomeNormalArray);
-            SAMPLER(sampler_BiomeNormalArray);
-            TEXTURE2D_ARRAY(_BiomeRoughnessArray);
-            SAMPLER(sampler_BiomeRoughnessArray);
-            TEXTURE2D_ARRAY(_BiomeAmbientOcclusionArray);
-            SAMPLER(sampler_BiomeAmbientOcclusionArray);
+            TEXTURE2D_ARRAY(_SurfaceBaseColorArray);
+            SAMPLER(sampler_SurfaceBaseColorArray);
+            TEXTURE2D_ARRAY(_SurfaceNormalArray);
+            SAMPLER(sampler_SurfaceNormalArray);
+            TEXTURE2D_ARRAY(_SurfaceRoughnessArray);
+            SAMPLER(sampler_SurfaceRoughnessArray);
+            TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray);
+            SAMPLER(sampler_SurfaceAmbientOcclusionArray);
+            TEXTURE2D_ARRAY(_SurfaceHeightArray);
+            SAMPLER(sampler_SurfaceHeightArray);
+            TEXTURE2D_ARRAY(_SurfaceEmissionArray);
+            SAMPLER(sampler_SurfaceEmissionArray);
+            TEXTURECUBE(_SurfaceWeightsA);
+            SAMPLER(sampler_SurfaceWeightsA);
+            TEXTURECUBE(_SurfaceWeightsB);
+            SAMPLER(sampler_SurfaceWeightsB);
+            TEXTURECUBE(_SurfaceStateMap);
+            SAMPLER(sampler_SurfaceStateMap);
+            TEXTURE2D(_LavaBaseColor);
+            SAMPLER(sampler_LavaBaseColor);
+            TEXTURE2D(_LavaNormal);
+            TEXTURE2D(_LavaRoughness);
+            TEXTURE2D(_LavaEmission);
+            TEXTURE2D(_SnowBaseColor);
+            SAMPLER(sampler_SnowBaseColor);
+            TEXTURE2D(_SnowNormal);
+            TEXTURE2D(_SnowRoughness);
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _OceanLow;
@@ -120,23 +151,34 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half _Metallic;
                 half _LandSmoothness;
                 half _OceanSmoothness;
-                half _BiomeVisualCount;
-                half _BiomeVisualBlendStrength;
-                half _BiomeTextureCount;
-                half _BiomeTextureBlendStrength;
-                half4 _BiomeFlatLow[8];
-                half4 _BiomeFlatHigh[8];
-                half4 _BiomeSteepLow[8];
-                half4 _BiomeSteepHigh[8];
-                half4 _BiomeParams[8];
-                half4 _BiomeTextureParams[8];
+                half _SurfaceVisualCount;
+                half _SurfaceVisualBlendStrength;
+                half _SurfaceTextureCount;
+                half _SurfaceTextureBlendStrength;
+                half _SurfaceAmbientOcclusionTextureCount;
+                half _SurfaceHeightTextureCount;
+                half _SurfaceEmissionTextureCount;
+                half4 _SurfaceFlatLow[8];
+                half4 _SurfaceFlatHigh[8];
+                half4 _SurfaceSteepLow[8];
+                half4 _SurfaceSteepHigh[8];
+                half4 _SurfaceParams[8];
+                half4 _SurfaceTextureParams[8];
+                half4 _SurfaceAuxTextureParams[8];
+                half4 _SurfaceEmissionTints[8];
+                half _SurfaceWeightMapEnabled;
+                half _LavaOverlayEnabled;
+                float _LavaWorldTileSize;
+                half _LavaNormalStrength;
+                half4 _LavaEmissionTint;
+                half _LavaEmissionStrength;
+                half _SnowOverlayEnabled;
+                float _SnowWorldTileSize;
+                half _SnowNormalStrength;
                 float _BodyRadius;
                 float4 _RadiusMinMax;
             CBUFFER_END
 
-            float4 _FarionStarPositionWS;
-            half4 _FarionStarColor;
-            float _FarionStarIntensity;
             half4 _FarionAmbientColor;
 
             struct Attributes
@@ -144,8 +186,6 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 texcoord : TEXCOORD0;
-                float4 texcoord1 : TEXCOORD1;
-                float4 texcoord2 : TEXCOORD2;
             };
 
             struct Varyings
@@ -156,8 +196,9 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 float3 normalOS : TEXCOORD2;
                 float3 normalWS : TEXCOORD3;
                 float4 terrainData : TEXCOORD4;
-                float4 biomeWeightsA : TEXCOORD5;
-                float4 biomeWeightsB : TEXCOORD6;
+#if defined(_ADDITIONAL_LIGHTS_VERTEX)
+                half3 vertexLighting : TEXCOORD5;
+#endif
             };
 
             Varyings Vertex(Attributes input)
@@ -170,8 +211,9 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 output.normalOS = normalize(input.normalOS);
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.terrainData = input.texcoord;
-                output.biomeWeightsA = input.texcoord1;
-                output.biomeWeightsB = input.texcoord2;
+#if defined(_ADDITIONAL_LIGHTS_VERTEX)
+                output.vertexLighting = VertexLighting(positionInputs.positionWS, output.normalWS);
+#endif
                 return output;
             }
 
@@ -191,7 +233,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 return weights / max(dot(weights, 1.0), 0.0001);
             }
 
-            half FarionGetBiomeWeight(int index, half4 weightsA, half4 weightsB)
+            half FarionGetSurfaceWeight(int index, half4 weightsA, half4 weightsB)
             {
                 if (index == 0) return weightsA.x;
                 if (index == 1) return weightsA.y;
@@ -201,6 +243,22 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 if (index == 5) return weightsB.y;
                 if (index == 6) return weightsB.z;
                 return weightsB.w;
+            }
+
+            bool FarionTryGetSurfaceTextureLayer(int surfaceSlot, out int textureLayer)
+            {
+                half4 textureParams = _SurfaceTextureParams[surfaceSlot];
+                textureLayer = (int)round(textureParams.z);
+                return textureParams.w > 0.5h
+                    && textureLayer >= 0
+                    && textureLayer < (int)_SurfaceTextureCount;
+            }
+
+            bool FarionTryGetSurfaceAuxTextureLayer(float layerValue, float textureCount, out int textureLayer)
+            {
+                textureLayer = (int)round(layerValue);
+                return textureLayer >= 0
+                    && textureLayer < (int)textureCount;
             }
 
             half4 FarionSampleTriplanarNoise(float3 positionOS, float3 normalOS, float scale)
@@ -213,33 +271,92 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
-            half4 FarionSampleBiomeBaseColor(float3 positionOS, float3 normalOS, float scale, int layer)
+            half4 FarionSampleOverlay(
+                TEXTURE2D_PARAM(overlayTexture, overlaySampler),
+                float3 positionOS,
+                float3 normalOS,
+                float worldTileSize)
             {
-                float3 normalizedPosition = positionOS / max(_BodyRadius, 0.0001);
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half4 x = SAMPLE_TEXTURE2D_ARRAY(_BiomeBaseColorArray, sampler_BiomeBaseColorArray, normalizedPosition.zy * scale, layer);
-                half4 y = SAMPLE_TEXTURE2D_ARRAY(_BiomeBaseColorArray, sampler_BiomeBaseColorArray, normalizedPosition.xz * scale, layer);
-                half4 z = SAMPLE_TEXTURE2D_ARRAY(_BiomeBaseColorArray, sampler_BiomeBaseColorArray, normalizedPosition.xy * scale, layer);
+                half4 x = SAMPLE_TEXTURE2D(overlayTexture, overlaySampler, samplePosition.zy);
+                half4 y = SAMPLE_TEXTURE2D(overlayTexture, overlaySampler, samplePosition.xz);
+                half4 z = SAMPLE_TEXTURE2D(overlayTexture, overlaySampler, samplePosition.xy);
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
-            half FarionSampleBiomeRoughness(float3 positionOS, float3 normalOS, float scale, int layer)
+            half3 FarionUnpackOverlayNormalOS(
+                TEXTURE2D_PARAM(normalTexture, normalSampler),
+                float3 positionOS,
+                float3 normalOS,
+                float worldTileSize,
+                half strength)
             {
-                float3 normalizedPosition = positionOS / max(_BodyRadius, 0.0001);
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_BiomeRoughnessArray, sampler_BiomeRoughnessArray, normalizedPosition.zy * scale, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_BiomeRoughnessArray, sampler_BiomeRoughnessArray, normalizedPosition.xz * scale, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_BiomeRoughnessArray, sampler_BiomeRoughnessArray, normalizedPosition.xy * scale, layer).r;
+                float3 axisSign = sign(normalOS);
+                half3 normalX = UnpackNormalScale(
+                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, samplePosition.zy),
+                    strength);
+                half3 normalY = UnpackNormalScale(
+                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, samplePosition.xz),
+                    strength);
+                half3 normalZ = UnpackNormalScale(
+                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, samplePosition.xy),
+                    strength);
+                normalX = half3(normalX.z * axisSign.x, normalX.y, normalX.x);
+                normalY = half3(normalY.x, normalY.z * axisSign.y, normalY.y);
+                normalZ = half3(normalZ.x, normalZ.y, normalZ.z * axisSign.z);
+                return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
+            }
+
+            half4 FarionSampleSurfaceBaseColor(float3 positionOS, float3 normalOS, float worldTileSize, int layer)
+            {
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
+                float3 weights = FarionTriplanarWeights(normalOS);
+                half4 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer);
+                half4 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer);
+                half4 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer);
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
-            half FarionSampleBiomeAmbientOcclusion(float3 positionOS, float3 normalOS, float scale, int layer)
+            half FarionSampleSurfaceRoughness(float3 positionOS, float3 normalOS, float worldTileSize, int layer)
             {
-                float3 normalizedPosition = positionOS / max(_BodyRadius, 0.0001);
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_BiomeAmbientOcclusionArray, sampler_BiomeAmbientOcclusionArray, normalizedPosition.zy * scale, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_BiomeAmbientOcclusionArray, sampler_BiomeAmbientOcclusionArray, normalizedPosition.xz * scale, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_BiomeAmbientOcclusionArray, sampler_BiomeAmbientOcclusionArray, normalizedPosition.xy * scale, layer).r;
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceRoughnessArray, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceRoughnessArray, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceRoughnessArray, samplePosition.xy, layer).r;
+                return x * weights.x + y * weights.y + z * weights.z;
+            }
+
+            half FarionSampleSurfaceAmbientOcclusion(float3 positionOS, float3 normalOS, float worldTileSize, int layer)
+            {
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
+                float3 weights = FarionTriplanarWeights(normalOS);
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceAmbientOcclusionArray, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceAmbientOcclusionArray, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceAmbientOcclusionArray, samplePosition.xy, layer).r;
+                return x * weights.x + y * weights.y + z * weights.z;
+            }
+
+            half FarionSampleSurfaceHeight(float3 positionOS, float3 normalOS, float worldTileSize, int layer)
+            {
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
+                float3 weights = FarionTriplanarWeights(normalOS);
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceHeightArray, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceHeightArray, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceHeightArray, samplePosition.xy, layer).r;
+                return x * weights.x + y * weights.y + z * weights.z;
+            }
+
+            half3 FarionSampleSurfaceEmission(float3 positionOS, float3 normalOS, float worldTileSize, int layer)
+            {
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
+                float3 weights = FarionTriplanarWeights(normalOS);
+                half3 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceEmissionArray, samplePosition.zy, layer).rgb;
+                half3 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceEmissionArray, samplePosition.xz, layer).rgb;
+                half3 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceEmissionArray, samplePosition.xy, layer).rgb;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -270,25 +387,25 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
             }
 
-            half3 FarionUnpackBiomeNormalOS(
+            half3 FarionUnpackSurfaceNormalOS(
                 float3 positionOS,
                 float3 normalOS,
-                float scale,
+                float worldTileSize,
                 int layer,
                 half strength)
             {
-                float3 normalizedPosition = positionOS / max(_BodyRadius, 0.0001);
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
                 float3 axisSign = sign(normalOS);
 
                 half3 normalX = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_BiomeNormalArray, sampler_BiomeNormalArray, normalizedPosition.zy * scale, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceNormalArray, samplePosition.zy, layer),
                     strength);
                 half3 normalY = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_BiomeNormalArray, sampler_BiomeNormalArray, normalizedPosition.xz * scale, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceNormalArray, samplePosition.xz, layer),
                     strength);
                 half3 normalZ = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_BiomeNormalArray, sampler_BiomeNormalArray, normalizedPosition.xy * scale, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceNormalArray, samplePosition.xy, layer),
                     strength);
 
                 normalX = half3(normalX.z * axisSign.x, normalX.y, normalX.x);
@@ -296,6 +413,23 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 normalZ = half3(normalZ.x, normalZ.y, normalZ.z * axisSign.z);
 
                 return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
+            }
+
+            InputData FarionBuildPbrInputData(Varyings input, half3 normalWS)
+            {
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+                inputData.positionCS = input.positionHCS;
+                inputData.normalWS = NormalizeNormalPerPixel(normalWS);
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+#if defined(_ADDITIONAL_LIGHTS_VERTEX)
+                inputData.vertexLighting = input.vertexLighting;
+#endif
+                inputData.bakedGI = max(SampleSH(inputData.normalWS), _FarionAmbientColor.rgb);
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionHCS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(float2(0.0, 0.0));
+                return inputData;
             }
 
             half4 Fragment(Varyings input) : SV_Target
@@ -318,14 +452,33 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half detailNoise = input.terrainData.y;
                 half smallNoise = input.terrainData.z;
                 half warpedNoise = input.terrainData.w;
-                half4 biomeWeightsA = saturate(input.biomeWeightsA);
-                half4 biomeWeightsB = saturate(input.biomeWeightsB);
+                half4 surfaceWeightsA = half4(0.0h, 0.0h, 0.0h, 0.0h);
+                half4 surfaceWeightsB = half4(0.0h, 0.0h, 0.0h, 0.0h);
+                half3 surfaceState = half3(0.0h, 0.0h, 0.0h);
+                if (_SurfaceWeightMapEnabled > 0.5h)
+                {
+                    surfaceWeightsA = saturate(SAMPLE_TEXTURECUBE(
+                        _SurfaceWeightsA,
+                        sampler_SurfaceWeightsA,
+                        radialOS));
+                    surfaceWeightsB = saturate(SAMPLE_TEXTURECUBE(
+                        _SurfaceWeightsB,
+                        sampler_SurfaceWeightsB,
+                        radialOS));
+                    surfaceState = saturate(SAMPLE_TEXTURECUBE(
+                        _SurfaceStateMap,
+                        sampler_SurfaceStateMap,
+                        radialOS).rgb);
+                }
 
-                half biomeMask = 0.0h;
-                half biomeTextureMask = 0.0h;
-                half biomeNormalStrength = 0.0h;
-                half biomeSmoothness = 0.0h;
-                half biomeTextureScale = 0.0h;
+                half surfaceMask = 0.0h;
+                half surfaceTextureMask = 0.0h;
+                half surfaceSmoothness = 0.0h;
+                half lavaMask = 0.0h;
+                half snowMask = 0.0h;
+                half wetnessMask = 0.0h;
+                half lavaRoughness = 1.0h;
+                half snowRoughness = 1.0h;
 
                 half steepness = FarionRemap01(1.0h - dot(normalOS, radialOS), 0.0h, 0.65h);
                 half flatHeight01 = FarionRemap01(aboveOcean01, 0.0h, _MaxFlatHeight);
@@ -336,11 +489,11 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half3 flatTerrainB = lerp(_FlatLowB.rgb, _FlatHighB.rgb, flatBlendWeight);
                 flatTerrainB = lerp(flatTerrainB, (_FlatLowB.rgb + _FlatHighB.rgb) * 0.5h, texNoise.a);
 
-                half biomeWeight = saturate(largeNoise * 0.5h + warpedNoise * 0.35h + texNoise.r * 0.15h);
-                half3 flatTerrain = lerp(flatTerrainA, flatTerrainB, biomeWeight);
-                half3 biomeFlatTerrain = half3(0.0h, 0.0h, 0.0h);
-                half biomeVisualWeight = 0.0h;
-                half biomeTextureWeight = 0.0h;
+                half surfaceWeight = saturate(largeNoise * 0.5h + warpedNoise * 0.35h + texNoise.r * 0.15h);
+                half3 flatTerrain = lerp(flatTerrainA, flatTerrainB, surfaceWeight);
+                half3 surfaceFlatTerrain = half3(0.0h, 0.0h, 0.0h);
+                half surfaceVisualWeight = 0.0h;
+                half surfaceTextureWeight = 0.0h;
 
                 half shoreBlendWeight = 1.0h - FarionBlend(_ShoreHeight, _ShoreBlend, flatHeight01);
                 half3 shoreColor = lerp(_ShoreLow.rgb, _ShoreHigh.rgb, FarionRemap01(aboveOcean01, 0.0h, max(_ShoreHeight, 0.0001h)));
@@ -362,61 +515,49 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 banding = (abs(banding - 0.5h) * 2.0h - 0.5h) * _SteepBandStrength;
                 half3 steepTerrain = lerp(_SteepLow.rgb, _SteepHigh.rgb, saturate(aboveOcean01 + banding));
                 half3 baseSteepTerrain = steepTerrain;
-                half3 biomeSteepTerrain = half3(0.0h, 0.0h, 0.0h);
+                half3 surfaceSteepTerrain = half3(0.0h, 0.0h, 0.0h);
 
                 [unroll]
-                for (int biomeSlot = 0; biomeSlot < 8; biomeSlot++)
+                for (int surfaceSlot = 0; surfaceSlot < 8; surfaceSlot++)
                 {
-                    half weight = FarionGetBiomeWeight(biomeSlot, biomeWeightsA, biomeWeightsB);
+                    half weight = FarionGetSurfaceWeight(surfaceSlot, surfaceWeightsA, surfaceWeightsB);
                     if (weight <= 0.0001h)
                     {
                         continue;
                     }
 
-                    if (biomeSlot < _BiomeVisualCount)
+                    if (surfaceSlot < _SurfaceVisualCount)
                     {
-                        half3 slotFlatTerrain = lerp(_BiomeFlatLow[biomeSlot].rgb, _BiomeFlatHigh[biomeSlot].rgb, flatBlendWeight);
-                        slotFlatTerrain = lerp(slotFlatTerrain, (_BiomeFlatLow[biomeSlot].rgb + _BiomeFlatHigh[biomeSlot].rgb) * 0.5h, texNoise.a);
-                        half3 slotSteepTerrain = lerp(_BiomeSteepLow[biomeSlot].rgb, _BiomeSteepHigh[biomeSlot].rgb, saturate(aboveOcean01 + banding));
-                        biomeFlatTerrain += slotFlatTerrain * weight;
-                        biomeSteepTerrain += slotSteepTerrain * weight;
-                        biomeNormalStrength += _BiomeParams[biomeSlot].x * weight;
-                        biomeSmoothness += _BiomeParams[biomeSlot].y * weight;
-                        biomeVisualWeight += weight;
+                        half3 slotFlatTerrain = lerp(_SurfaceFlatLow[surfaceSlot].rgb, _SurfaceFlatHigh[surfaceSlot].rgb, flatBlendWeight);
+                        slotFlatTerrain = lerp(slotFlatTerrain, (_SurfaceFlatLow[surfaceSlot].rgb + _SurfaceFlatHigh[surfaceSlot].rgb) * 0.5h, texNoise.a);
+                        half3 slotSteepTerrain = lerp(_SurfaceSteepLow[surfaceSlot].rgb, _SurfaceSteepHigh[surfaceSlot].rgb, saturate(aboveOcean01 + banding));
+                        surfaceFlatTerrain += slotFlatTerrain * weight;
+                        surfaceSteepTerrain += slotSteepTerrain * weight;
+                        surfaceSmoothness += _SurfaceParams[surfaceSlot].y * weight;
+                        surfaceVisualWeight += weight;
                     }
 
-                    if (biomeSlot < _BiomeTextureCount)
+                    int textureLayer;
+                    if (FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer))
                     {
-                        biomeTextureScale += _BiomeTextureParams[biomeSlot].x * weight;
-                        biomeTextureWeight += weight;
+                        surfaceTextureWeight += weight;
                     }
                 }
 
                 half shorePreservation = saturate(1.0h - shoreBlendWeight * hasOcean * 0.75h);
-                biomeMask = saturate(biomeVisualWeight * _BiomeVisualBlendStrength * shorePreservation);
-                biomeTextureMask = saturate(biomeTextureWeight * _BiomeTextureBlendStrength * shorePreservation);
-                if (biomeVisualWeight > 0.0001h)
+                surfaceMask = saturate(surfaceVisualWeight * _SurfaceVisualBlendStrength * shorePreservation);
+                surfaceTextureMask = saturate(surfaceTextureWeight * _SurfaceTextureBlendStrength * shorePreservation);
+                if (surfaceVisualWeight > 0.0001h)
                 {
-                    biomeFlatTerrain /= biomeVisualWeight;
-                    biomeSteepTerrain /= biomeVisualWeight;
-                    biomeNormalStrength /= biomeVisualWeight;
-                    biomeSmoothness /= biomeVisualWeight;
-                    flatTerrain = lerp(flatTerrain, biomeFlatTerrain, biomeMask);
-                    steepTerrain = lerp(steepTerrain, biomeSteepTerrain, biomeMask);
+                    surfaceFlatTerrain /= surfaceVisualWeight;
+                    surfaceSteepTerrain /= surfaceVisualWeight;
+                    surfaceSmoothness /= surfaceVisualWeight;
+                    flatTerrain = lerp(flatTerrain, surfaceFlatTerrain, surfaceMask);
+                    steepTerrain = lerp(steepTerrain, surfaceSteepTerrain, surfaceMask);
                 }
                 else
                 {
-                    biomeNormalStrength = _NormalStrength;
-                    biomeSmoothness = _LandSmoothness;
-                }
-
-                if (biomeTextureWeight > 0.0001h)
-                {
-                    biomeTextureScale /= biomeTextureWeight;
-                }
-                else
-                {
-                    biomeTextureScale = 1.0h;
+                    surfaceSmoothness = _LandSmoothness;
                 }
 
                 half flatBlendNoise = (texNoise2.r - 0.5h) * _FlatToSteepNoise;
@@ -425,24 +566,80 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 flatStrength *= flatHeightFalloff;
 
                 half3 landColor = lerp(steepTerrain, flatTerrain, flatStrength);
-                if (biomeTextureMask > 0.0h)
+                if (surfaceTextureMask > 0.0h)
                 {
-                    half3 biomeBaseColor = half3(0.0h, 0.0h, 0.0h);
+                    half3 surfaceBaseColor = half3(0.0h, 0.0h, 0.0h);
                     [unroll]
-                    for (int biomeSlot = 0; biomeSlot < 8; biomeSlot++)
+                    for (int surfaceSlot = 0; surfaceSlot < 8; surfaceSlot++)
                     {
-                        half weight = FarionGetBiomeWeight(biomeSlot, biomeWeightsA, biomeWeightsB);
-                        if (biomeSlot < _BiomeTextureCount)
+                        half weight = FarionGetSurfaceWeight(surfaceSlot, surfaceWeightsA, surfaceWeightsB);
+                        if (weight <= 0.0001h)
                         {
-                            biomeBaseColor += FarionSampleBiomeBaseColor(input.positionOS, normalOS, biomeTextureScale, biomeSlot).rgb * weight;
+                            continue;
+                        }
+
+                        int textureLayer;
+                        if (FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer))
+                        {
+                            surfaceBaseColor += FarionSampleSurfaceBaseColor(
+                                input.positionOS,
+                                normalOS,
+                                _SurfaceTextureParams[surfaceSlot].x,
+                                textureLayer).rgb * weight;
                         }
                     }
-                    biomeBaseColor /= max(biomeTextureWeight, 0.0001h);
+                    surfaceBaseColor /= max(surfaceTextureWeight, 0.0001h);
                     half landLuminance = max(dot(landColor, half3(0.2126h, 0.7152h, 0.0722h)), 0.05h);
-                    half textureLuminance = max(dot(biomeBaseColor, half3(0.2126h, 0.7152h, 0.0722h)), 0.05h);
-                    half3 biomeTexturedColor = saturate(biomeBaseColor * (landLuminance / textureLuminance));
-                    landColor = lerp(landColor, biomeTexturedColor, biomeTextureMask * 0.65h);
+                    half textureLuminance = max(dot(surfaceBaseColor, half3(0.2126h, 0.7152h, 0.0722h)), 0.05h);
+                    half3 surfaceTexturedColor = saturate(surfaceBaseColor * (landLuminance / textureLuminance));
+                    landColor = lerp(landColor, surfaceTexturedColor, surfaceTextureMask * 0.65h);
                 }
+
+                if (_SurfaceHeightTextureCount > 0.5h)
+                {
+                    half surfaceHeight = 0.0h;
+                    half surfaceHeightStrength = 0.0h;
+                    half surfaceHeightWeight = 0.0h;
+                    [unroll]
+                    for (int surfaceSlot = 0; surfaceSlot < 8; surfaceSlot++)
+                    {
+                        half weight = FarionGetSurfaceWeight(surfaceSlot, surfaceWeightsA, surfaceWeightsB);
+                        if (weight <= 0.0001h)
+                        {
+                            continue;
+                        }
+
+                        int textureLayer;
+                        if (FarionTryGetSurfaceAuxTextureLayer(
+                            _SurfaceAuxTextureParams[surfaceSlot].y,
+                            _SurfaceHeightTextureCount,
+                            textureLayer))
+                        {
+                            surfaceHeight += FarionSampleSurfaceHeight(
+                                input.positionOS,
+                                normalOS,
+                                _SurfaceTextureParams[surfaceSlot].x,
+                                textureLayer) * weight;
+                            surfaceHeightStrength += _SurfaceTextureParams[surfaceSlot].y * weight;
+                            surfaceHeightWeight += weight;
+                        }
+                    }
+
+                    if (surfaceHeightWeight > 0.0001h)
+                    {
+                        surfaceHeight /= surfaceHeightWeight;
+                        surfaceHeightStrength /= surfaceHeightWeight;
+                        half heightMask = saturate(
+                            surfaceHeightWeight
+                            * _SurfaceVisualBlendStrength
+                            * shorePreservation);
+                        half microRelief = (surfaceHeight - 0.5h)
+                            * saturate(surfaceHeightStrength * 8.0h)
+                            * heightMask;
+                        landColor *= max(0.0h, 1.0h + microRelief * 0.35h);
+                    }
+                }
+
                 landColor *= lerp(0.9h, 1.12h, saturate(smallNoise + detailNoise * 0.2h));
                 landColor = lerp(landColor, shoreColor, shoreBlendWeight * hasOcean);
                 half wetNoise = saturate(texNoise2.g * 0.65h + texNoise.b * 0.35h);
@@ -458,74 +655,239 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half foamMask = shorelineBand * oceanMask * _ShoreFoamStrength * smoothstep(0.42h, 0.9h, foamNoise);
                 albedo = lerp(albedo, half3(0.82h, 0.9h, 0.86h), foamMask);
 
-                half3 rockNormalOS = FarionUnpackTriplanarNormalOS(TEXTURE2D_ARGS(_RockNormal, sampler_RockNormal), input.positionOS, normalOS, _RockNormalScale);
-                if (biomeTextureMask > 0.0h)
+                half landOverlayMask = 1.0h - oceanMask;
+                lavaMask = surfaceState.r * landOverlayMask * saturate(_LavaOverlayEnabled);
+                snowMask = surfaceState.g
+                    * landOverlayMask
+                    * saturate(_SnowOverlayEnabled)
+                    * (1.0h - lavaMask);
+                wetnessMask = surfaceState.b * landOverlayMask * (1.0h - snowMask) * (1.0h - lavaMask);
+
+                if (lavaMask > 0.0001h)
                 {
-                    half3 biomeNormalOS = half3(0.0h, 0.0h, 0.0h);
+                    half3 lavaColor = FarionSampleOverlay(
+                        TEXTURE2D_ARGS(_LavaBaseColor, sampler_LavaBaseColor),
+                        input.positionOS,
+                        normalOS,
+                        _LavaWorldTileSize).rgb;
+                    lavaRoughness = FarionSampleOverlay(
+                        TEXTURE2D_ARGS(_LavaRoughness, sampler_LavaBaseColor),
+                        input.positionOS,
+                        normalOS,
+                        _LavaWorldTileSize).r;
+                    albedo = lerp(albedo, lavaColor, lavaMask);
+                }
+
+                if (snowMask > 0.0001h)
+                {
+                    half3 snowColor = FarionSampleOverlay(
+                        TEXTURE2D_ARGS(_SnowBaseColor, sampler_SnowBaseColor),
+                        input.positionOS,
+                        normalOS,
+                        _SnowWorldTileSize).rgb;
+                    snowRoughness = FarionSampleOverlay(
+                        TEXTURE2D_ARGS(_SnowRoughness, sampler_SnowBaseColor),
+                        input.positionOS,
+                        normalOS,
+                        _SnowWorldTileSize).r;
+                    albedo = lerp(albedo, snowColor, snowMask);
+                }
+
+                albedo *= lerp(1.0h, 0.68h, wetnessMask * 0.55h);
+
+                half3 rockNormalOS = FarionUnpackTriplanarNormalOS(TEXTURE2D_ARGS(_RockNormal, sampler_RockNormal), input.positionOS, normalOS, _RockNormalScale);
+                if (surfaceTextureMask > 0.0h)
+                {
+                    half3 surfaceNormalOS = half3(0.0h, 0.0h, 0.0h);
                     [unroll]
-                    for (int biomeSlot = 0; biomeSlot < 8; biomeSlot++)
+                    for (int surfaceSlot = 0; surfaceSlot < 8; surfaceSlot++)
                     {
-                        half weight = FarionGetBiomeWeight(biomeSlot, biomeWeightsA, biomeWeightsB);
-                        if (biomeSlot < _BiomeTextureCount)
+                        half weight = FarionGetSurfaceWeight(surfaceSlot, surfaceWeightsA, surfaceWeightsB);
+                        if (weight <= 0.0001h)
                         {
-                            biomeNormalOS += FarionUnpackBiomeNormalOS(input.positionOS, normalOS, biomeTextureScale, biomeSlot, biomeNormalStrength) * weight;
+                            continue;
+                        }
+
+                        int textureLayer;
+                        if (FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer))
+                        {
+                            surfaceNormalOS += FarionUnpackSurfaceNormalOS(
+                                input.positionOS,
+                                normalOS,
+                                _SurfaceTextureParams[surfaceSlot].x,
+                                textureLayer,
+                                _SurfaceParams[surfaceSlot].x) * weight;
                         }
                     }
-                    biomeNormalOS = normalize(biomeNormalOS / max(biomeTextureWeight, 0.0001h));
-                    rockNormalOS = normalize(lerp(rockNormalOS, biomeNormalOS, biomeTextureMask));
+                    surfaceNormalOS = normalize(surfaceNormalOS / max(surfaceTextureWeight, 0.0001h));
+                    rockNormalOS = normalize(lerp(rockNormalOS, surfaceNormalOS, surfaceTextureMask));
+                }
+                if (lavaMask > 0.0001h)
+                {
+                    half3 lavaNormalOS = FarionUnpackOverlayNormalOS(
+                        TEXTURE2D_ARGS(_LavaNormal, sampler_LavaBaseColor),
+                        input.positionOS,
+                        normalOS,
+                        _LavaWorldTileSize,
+                        _LavaNormalStrength);
+                    rockNormalOS = normalize(lerp(rockNormalOS, lavaNormalOS, lavaMask));
+                }
+                if (snowMask > 0.0001h)
+                {
+                    half3 snowNormalOS = FarionUnpackOverlayNormalOS(
+                        TEXTURE2D_ARGS(_SnowNormal, sampler_SnowBaseColor),
+                        input.positionOS,
+                        normalOS,
+                        _SnowWorldTileSize,
+                        _SnowNormalStrength);
+                    rockNormalOS = normalize(lerp(rockNormalOS, snowNormalOS, snowMask));
                 }
                 half3 blendedNormalOS = rockNormalOS;
                 blendedNormalOS = normalize(lerp(blendedNormalOS, normalOS, oceanMask * 0.75h));
                 half3 normalWS = normalize(TransformObjectToWorldNormal(blendedNormalOS));
 
-                float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                Light mainLight = GetMainLight(shadowCoord);
-                half3 starDirectionWS = normalize(_FarionStarPositionWS.xyz - input.positionWS);
-                half ndotl = saturate(dot(normalWS, starDirectionWS));
-                half3 ambient = max(SampleSH(normalWS), _FarionAmbientColor.rgb);
-                half3 starRadiance = _FarionStarColor.rgb * _FarionStarIntensity;
-                half shadow = mainLight.shadowAttenuation;
-                if (biomeTextureMask > 0.0h)
+                half surfaceOcclusion = 1.0h;
+                if (_SurfaceAmbientOcclusionTextureCount > 0.5h)
                 {
-                    half biomeAmbientOcclusion = 0.0h;
+                    half surfaceAmbientOcclusion = 0.0h;
+                    half surfaceAmbientOcclusionWeight = 0.0h;
                     [unroll]
-                    for (int biomeSlot = 0; biomeSlot < 8; biomeSlot++)
+                    for (int surfaceSlot = 0; surfaceSlot < 8; surfaceSlot++)
                     {
-                        half weight = FarionGetBiomeWeight(biomeSlot, biomeWeightsA, biomeWeightsB);
-                        if (biomeSlot < _BiomeTextureCount)
+                        half weight = FarionGetSurfaceWeight(surfaceSlot, surfaceWeightsA, surfaceWeightsB);
+                        if (weight <= 0.0001h)
                         {
-                            biomeAmbientOcclusion += FarionSampleBiomeAmbientOcclusion(input.positionOS, normalOS, biomeTextureScale, biomeSlot) * weight;
+                            continue;
+                        }
+
+                        int textureLayer;
+                        if (FarionTryGetSurfaceAuxTextureLayer(
+                            _SurfaceAuxTextureParams[surfaceSlot].x,
+                            _SurfaceAmbientOcclusionTextureCount,
+                            textureLayer))
+                        {
+                            surfaceAmbientOcclusion += FarionSampleSurfaceAmbientOcclusion(
+                                input.positionOS,
+                                normalOS,
+                                _SurfaceTextureParams[surfaceSlot].x,
+                                textureLayer) * weight;
+                            surfaceAmbientOcclusionWeight += weight;
                         }
                     }
-                    biomeAmbientOcclusion /= max(biomeTextureWeight, 0.0001h);
-                    albedo *= lerp(1.0h, biomeAmbientOcclusion, biomeTextureMask * (1.0h - oceanMask) * 0.5h);
+
+                    if (surfaceAmbientOcclusionWeight > 0.0001h)
+                    {
+                        surfaceAmbientOcclusion /= surfaceAmbientOcclusionWeight;
+                        half ambientOcclusionMask = saturate(
+                            surfaceAmbientOcclusionWeight
+                            * _SurfaceVisualBlendStrength
+                            * shorePreservation);
+                        surfaceOcclusion = lerp(
+                            1.0h,
+                            surfaceAmbientOcclusion,
+                            ambientOcclusionMask * (1.0h - oceanMask) * 0.5h);
+                    }
                 }
-                half3 diffuse = albedo * (ambient + starRadiance * ndotl * shadow);
 
                 half smoothness = lerp(_LandSmoothness, _OceanSmoothness, oceanMask);
-                smoothness = lerp(smoothness, biomeSmoothness, biomeMask * (1.0h - oceanMask));
-                if (biomeTextureMask > 0.0h)
+                smoothness = lerp(smoothness, surfaceSmoothness, surfaceMask * (1.0h - oceanMask));
+                if (surfaceTextureMask > 0.0h)
                 {
-                    half biomeTextureSmoothness = 0.0h;
+                    half surfaceTextureSmoothness = 0.0h;
                     [unroll]
-                    for (int biomeSlot = 0; biomeSlot < 8; biomeSlot++)
+                    for (int surfaceSlot = 0; surfaceSlot < 8; surfaceSlot++)
                     {
-                        half weight = FarionGetBiomeWeight(biomeSlot, biomeWeightsA, biomeWeightsB);
-                        if (biomeSlot < _BiomeTextureCount)
+                        half weight = FarionGetSurfaceWeight(surfaceSlot, surfaceWeightsA, surfaceWeightsB);
+                        if (weight <= 0.0001h)
                         {
-                            biomeTextureSmoothness += (1.0h - FarionSampleBiomeRoughness(input.positionOS, normalOS, biomeTextureScale, biomeSlot)) * weight;
+                            continue;
+                        }
+
+                        int textureLayer;
+                        if (FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer))
+                        {
+                            surfaceTextureSmoothness += (1.0h - FarionSampleSurfaceRoughness(
+                                input.positionOS,
+                                normalOS,
+                                _SurfaceTextureParams[surfaceSlot].x,
+                                textureLayer)) * weight;
                         }
                     }
-                    biomeTextureSmoothness /= max(biomeTextureWeight, 0.0001h);
-                    smoothness = lerp(smoothness, biomeTextureSmoothness, biomeTextureMask * (1.0h - oceanMask) * 0.8h);
+                    surfaceTextureSmoothness /= max(surfaceTextureWeight, 0.0001h);
+                    smoothness = lerp(smoothness, surfaceTextureSmoothness, surfaceTextureMask * (1.0h - oceanMask) * 0.8h);
                 }
-                half3 viewDirectionWS = normalize(GetWorldSpaceViewDir(input.positionWS));
-                half3 halfDirection = normalize(starDirectionWS + viewDirectionWS);
-                half specularPower = lerp(8.0h, 128.0h, smoothness);
-                half specular = pow(saturate(dot(normalWS, halfDirection)), specularPower) * smoothness;
-                half3 specularColor = starRadiance * specular * lerp(0.04h, 0.35h, _Metallic);
+                smoothness = lerp(smoothness, 1.0h - lavaRoughness, lavaMask);
+                smoothness = lerp(smoothness, 1.0h - snowRoughness, snowMask);
+                smoothness = lerp(smoothness, max(smoothness, 0.72h), wetnessMask * 0.65h);
 
-                return half4(diffuse + specularColor, 1);
+                half3 surfaceEmission = half3(0.0h, 0.0h, 0.0h);
+                if (_SurfaceEmissionTextureCount > 0.5h)
+                {
+                    half surfaceEmissionWeight = 0.0h;
+                    [unroll]
+                    for (int surfaceSlot = 0; surfaceSlot < 8; surfaceSlot++)
+                    {
+                        half weight = FarionGetSurfaceWeight(surfaceSlot, surfaceWeightsA, surfaceWeightsB);
+                        if (weight <= 0.0001h)
+                        {
+                            continue;
+                        }
+
+                        int textureLayer;
+                        if (FarionTryGetSurfaceAuxTextureLayer(
+                            _SurfaceAuxTextureParams[surfaceSlot].z,
+                            _SurfaceEmissionTextureCount,
+                            textureLayer))
+                        {
+                            surfaceEmission += FarionSampleSurfaceEmission(
+                                input.positionOS,
+                                normalOS,
+                                _SurfaceTextureParams[surfaceSlot].x,
+                                textureLayer)
+                                * _SurfaceEmissionTints[surfaceSlot].rgb
+                                * _SurfaceAuxTextureParams[surfaceSlot].w
+                                * weight;
+                            surfaceEmissionWeight += weight;
+                        }
+                    }
+
+                    if (surfaceEmissionWeight > 0.0001h)
+                    {
+                        surfaceEmission /= surfaceEmissionWeight;
+                        half emissionMask = saturate(
+                            surfaceEmissionWeight
+                            * _SurfaceVisualBlendStrength
+                            * shorePreservation);
+                        surfaceEmission *= emissionMask * (1.0h - oceanMask);
+                    }
+                }
+                if (lavaMask > 0.0001h && _LavaEmissionStrength > 0.0h)
+                {
+                    half3 lavaEmission = FarionSampleOverlay(
+                        TEXTURE2D_ARGS(_LavaEmission, sampler_LavaBaseColor),
+                        input.positionOS,
+                        normalOS,
+                        _LavaWorldTileSize).rgb;
+                    surfaceEmission += lavaEmission
+                        * _LavaEmissionTint.rgb
+                        * _LavaEmissionStrength
+                        * lavaMask;
+                }
+
+                InputData inputData = FarionBuildPbrInputData(input, normalWS);
+                SurfaceData surfaceData = (SurfaceData)0;
+                surfaceData.albedo = saturate(albedo);
+                surfaceData.specular = half3(0.0h, 0.0h, 0.0h);
+                surfaceData.metallic = saturate(_Metallic);
+                surfaceData.smoothness = saturate(smoothness);
+                surfaceData.normalTS = half3(0.0h, 0.0h, 1.0h);
+                surfaceData.emission = surfaceEmission;
+                surfaceData.occlusion = saturate(surfaceOcclusion);
+                surfaceData.alpha = 1.0h;
+                surfaceData.clearCoatMask = 0.0h;
+                surfaceData.clearCoatSmoothness = 1.0h;
+
+                return UniversalFragmentPBR(inputData, surfaceData);
             }
             ENDHLSL
         }

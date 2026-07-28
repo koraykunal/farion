@@ -5,12 +5,15 @@ using Farion.Core.Persistence;
 using Farion.Core.Physics;
 using Farion.Gameplay.Crafting;
 using Farion.Gameplay.Definitions;
+using Farion.Gameplay.Domain.Identity;
+using Farion.Gameplay.Equipment;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Research;
 using Farion.Gameplay.Resources;
+using Farion.Gameplay.Ships;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -21,36 +24,6 @@ using Object = UnityEngine.Object;
 
 namespace Farion.Editor.Validation
 {
-    [InitializeOnLoad]
-    static class FarionStartupValidation
-    {
-        const string SessionKey = "Farion.ProjectValidation.Completed.SpacecraftV4";
-
-        static FarionStartupValidation()
-        {
-            EditorApplication.delayCall += ValidateOncePerSession;
-        }
-
-        static void ValidateOncePerSession()
-        {
-            if (SessionState.GetBool(SessionKey, false))
-            {
-                return;
-            }
-
-            if (EditorApplication.isCompiling ||
-                EditorApplication.isUpdating ||
-                EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                EditorApplication.delayCall += ValidateOncePerSession;
-                return;
-            }
-
-            SessionState.SetBool(SessionKey, true);
-            FarionProjectValidator.ValidateProject().Log();
-        }
-    }
-
     public sealed class FarionProjectValidator : IPreprocessBuildWithReport
     {
         public int callbackOrder => -1000;
@@ -83,6 +56,8 @@ namespace Farion.Editor.Validation
             FarionValidationReport report = new();
             ValidateBuildScenes(report);
             ValidateDefinitionRegistries(report);
+            FarionUiProjectValidator.ValidateProject(report);
+            FarionCelestialVisualProjectValidator.ValidateProjectAssets(report);
             return report;
         }
 
@@ -127,9 +102,16 @@ namespace Farion.Editor.Validation
             {
                 Dictionary<string, PersistentObjectId> persistentIds =
                     new(StringComparer.Ordinal);
+                Dictionary<PersistentEntityId, InventoryContainerComponent> containerIds =
+                    new();
                 foreach (GameObject root in scene.GetRootGameObjects())
                 {
-                    ValidateHierarchy(root, path, persistentIds, report);
+                    ValidateHierarchy(
+                        root,
+                        path,
+                        persistentIds,
+                        containerIds,
+                        report);
                 }
             }
             finally
@@ -145,6 +127,7 @@ namespace Farion.Editor.Validation
             GameObject root,
             string scenePath,
             Dictionary<string, PersistentObjectId> persistentIds,
+            Dictionary<PersistentEntityId, InventoryContainerComponent> containerIds,
             FarionValidationReport report)
         {
             foreach (Transform item in root.GetComponentsInChildren<Transform>(true))
@@ -160,12 +143,28 @@ namespace Farion.Editor.Validation
                     ValidatePersistentId(scenePath, item, persistentObjectId, persistentIds, report);
                 }
 
+                if (gameObject.TryGetComponent(
+                        out InventoryContainerComponent inventoryContainer))
+                {
+                    ValidateInventoryContainer(
+                        scenePath,
+                        item,
+                        inventoryContainer,
+                        containerIds,
+                        report);
+                }
+
                 if (gameObject.TryGetComponent(out CelestialBody celestialBody) &&
                     string.IsNullOrEmpty(celestialBody.PersistentId))
                 {
                     report.AddError(
                         $"{scenePath}: celestial body {GetHierarchyPath(item)} has no persistent id.");
                 }
+
+                FarionCelestialVisualProjectValidator.ValidateSceneObject(
+                    gameObject,
+                    scenePath,
+                    report);
 
                 if (gameObject.TryGetComponent(out PlayerPossessionController possessionController))
                 {
@@ -181,6 +180,7 @@ namespace Farion.Editor.Validation
                 {
                     ValidateRequiredReference(scenePath, sessionController, "flowSettings", report);
                     ValidateRequiredReference(scenePath, sessionController, "saveCoordinator", report);
+                    ValidateGameplaySession(scenePath, sessionController, report);
                 }
 
                 if (gameObject.TryGetComponent(out GameplaySaveCoordinator saveCoordinator))
@@ -197,21 +197,60 @@ namespace Farion.Editor.Validation
             Dictionary<string, PersistentObjectId> ids,
             FarionValidationReport report)
         {
-            if (!persistentObjectId.HasId)
+            if (!PersistentEntityId.TryCreate(
+                    persistentObjectId.Id,
+                    out PersistentEntityId persistentId))
             {
-                report.AddError($"{scenePath}: {GetHierarchyPath(target)} has an empty persistent id.");
+                report.AddError(
+                    $"{scenePath}: {GetHierarchyPath(target)} has an invalid persistent id.");
                 return;
             }
 
-            if (ids.TryGetValue(persistentObjectId.Id, out PersistentObjectId existing))
+            if (ids.TryGetValue(persistentId.Value, out PersistentObjectId existing))
             {
                 report.AddError(
-                    $"{scenePath}: duplicate persistent id '{persistentObjectId.Id}' on " +
+                    $"{scenePath}: duplicate persistent id '{persistentId}' on " +
                     $"{GetHierarchyPath(existing.transform)} and {GetHierarchyPath(target)}.");
                 return;
             }
 
-            ids.Add(persistentObjectId.Id, persistentObjectId);
+            ids.Add(persistentId.Value, persistentObjectId);
+        }
+
+        static void ValidateInventoryContainer(
+            string scenePath,
+            Transform target,
+            InventoryContainerComponent container,
+            Dictionary<PersistentEntityId, InventoryContainerComponent> containerIds,
+            FarionValidationReport report)
+        {
+            if (!target.TryGetComponent(out PersistentObjectId ownerId) ||
+                !PersistentEntityId.TryCreate(ownerId.Id, out _))
+            {
+                report.AddError(
+                    $"{scenePath}: inventory container {GetHierarchyPath(target)} requires a valid PersistentObjectId.");
+                return;
+            }
+
+            PersistentEntityId containerId = container.ContainerId;
+            if (!containerId.IsValid)
+            {
+                report.AddError(
+                    $"{scenePath}: inventory container {GetHierarchyPath(target)} has an invalid container id.");
+                return;
+            }
+
+            if (containerIds.TryGetValue(
+                    containerId,
+                    out InventoryContainerComponent existing))
+            {
+                report.AddError(
+                    $"{scenePath}: duplicate inventory container id '{containerId}' on " +
+                    $"{GetHierarchyPath(existing.transform)} and {GetHierarchyPath(target)}.");
+                return;
+            }
+
+            containerIds.Add(containerId, container);
         }
 
         static void ValidatePossessionController(
@@ -251,6 +290,30 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, coordinator, "possessionController", report);
         }
 
+        static void ValidateGameplaySession(
+            string scenePath,
+            GameplaySessionController controller,
+            FarionValidationReport report)
+        {
+            SerializedProperty localPlayerId =
+                new SerializedObject(controller).FindProperty("localPlayerId");
+            if (localPlayerId == null ||
+                !PersistentEntityId.TryCreate(
+                    localPlayerId.stringValue,
+                    out _))
+            {
+                report.AddError(
+                    $"{scenePath}: {controller.name} has an invalid local player id.");
+                return;
+            }
+
+            if (!controller.TryGetRuntime(out _))
+            {
+                report.AddError(
+                    $"{scenePath}: {controller.name} cannot compose its local gameplay session.");
+            }
+        }
+
         static void ValidateSpacecraft(
             string scenePath,
             SpacecraftMotor motor,
@@ -260,6 +323,7 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, motor, "flightProfile", report);
             ValidateRequiredReference(scenePath, motor, "celestialProbe", report);
             ValidateRequiredReference(scenePath, motor, "surfaceContactProbe", report);
+            ValidatePersonalShipBinding(scenePath, motor, report);
 
             SpacecraftFlightProfile profile = motor.FlightProfile;
             if (profile != null)
@@ -373,6 +437,50 @@ namespace Farion.Editor.Validation
             else
             {
                 ValidateThrusterEffectCoverage(scenePath, motor, effects, report);
+            }
+        }
+
+        static void ValidatePersonalShipBinding(
+            string scenePath,
+            SpacecraftMotor motor,
+            FarionValidationReport report)
+        {
+            PersonalShipRuntimeBinding binding =
+                motor.GetComponent<PersonalShipRuntimeBinding>();
+            if (binding == null)
+            {
+                report.AddError(
+                    $"{scenePath}: {motor.name} has no PersonalShipRuntimeBinding.");
+                return;
+            }
+
+            if (!binding.HasValidAuthoring)
+            {
+                report.AddError(
+                    $"{scenePath}: {motor.name} has invalid personal-ship authoring.");
+            }
+
+            if (binding.Motor != motor)
+            {
+                report.AddError(
+                    $"{scenePath}: {motor.name} personal-ship binding targets another motor.");
+            }
+
+            PersonalShipCargoInventory cargo = binding.Cargo;
+            if (cargo == null || cargo.gameObject != motor.gameObject)
+            {
+                report.AddError(
+                    $"{scenePath}: {motor.name} requires one root-owned PersonalShipCargoInventory.");
+                return;
+            }
+
+            if (!PersistentEntityId.TryCreate(
+                    $"ship_cargo.{binding.ShipId.Value}",
+                    out PersistentEntityId expectedCargoId) ||
+                cargo.ContainerId != expectedCargoId)
+            {
+                report.AddError(
+                    $"{scenePath}: {motor.name} cargo id does not derive from its ship identity.");
             }
         }
 
@@ -562,14 +670,32 @@ namespace Farion.Editor.Validation
                 GameplayDefinitionRegistry registry =
                     AssetDatabase.LoadAssetAtPath<GameplayDefinitionRegistry>(path);
                 SerializedObject serialized = new(registry);
+                SerializedProperty inventoryItems =
+                    serialized.FindProperty("inventoryItems");
+                SerializedProperty equipment =
+                    serialized.FindProperty("equipment");
+                SerializedProperty equipmentSlots =
+                    serialized.FindProperty("equipmentSlots");
                 ValidateDefinitionList<InventoryItemDefinition>(
-                    serialized.FindProperty("inventoryItems"), item => item.ItemId, path, report);
+                    inventoryItems, item => item.ItemId, path, report);
                 ValidateDefinitionList<ResourceNodeDefinition>(
                     serialized.FindProperty("resourceNodes"), item => item.NodeId, path, report);
                 ValidateDefinitionList<RecipeDefinition>(
                     serialized.FindProperty("recipes"), item => item.RecipeId, path, report);
                 ValidateDefinitionList<ResearchDefinition>(
                     serialized.FindProperty("research"), item => item.ResearchId, path, report);
+                ValidateDefinitionList<EquipmentDefinition>(
+                    equipment, item => item.EquipmentId, path, report);
+                ValidateDefinitionList<EquipmentSlotDefinition>(
+                    equipmentSlots, item => item.SlotId, path, report);
+                ValidateResearchCapabilities(
+                    serialized.FindProperty("research"), path, report);
+                ValidateEquipmentDefinitions(
+                    inventoryItems,
+                    equipment,
+                    equipmentSlots,
+                    path,
+                    report);
             }
         }
 
@@ -586,18 +712,157 @@ namespace Farion.Editor.Validation
                 return;
             }
 
-            HashSet<string> ids = new(StringComparer.Ordinal);
+            HashSet<DefinitionId> ids = new();
             for (int i = 0; i < list.arraySize; i++)
             {
                 T definition = list.GetArrayElementAtIndex(i).objectReferenceValue as T;
-                string id = definition != null ? getId(definition)?.Trim() : string.Empty;
-                if (definition == null || string.IsNullOrEmpty(id))
+                string rawId = definition != null ? getId(definition) : string.Empty;
+                if (definition == null ||
+                    !DefinitionId.TryCreate(rawId, out DefinitionId id))
                 {
                     report.AddError($"{registryPath}: invalid {typeof(T).Name} at index {i}.");
                 }
                 else if (!ids.Add(id))
                 {
                     report.AddError($"{registryPath}: duplicate {typeof(T).Name} id '{id}'.");
+                }
+            }
+        }
+
+        static void ValidateResearchCapabilities(
+            SerializedProperty researchList,
+            string registryPath,
+            FarionValidationReport report)
+        {
+            if (researchList == null || !researchList.isArray)
+            {
+                return;
+            }
+
+            for (int i = 0; i < researchList.arraySize; i++)
+            {
+                ResearchDefinition definition =
+                    researchList.GetArrayElementAtIndex(i).objectReferenceValue
+                    as ResearchDefinition;
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                HashSet<DefinitionId> capabilityIds = new();
+                IReadOnlyList<string> unlockedIds = definition.UnlockedCapabilityIds;
+                for (int capabilityIndex = 0;
+                     capabilityIndex < unlockedIds.Count;
+                     capabilityIndex++)
+                {
+                    string rawId = unlockedIds[capabilityIndex];
+                    if (!DefinitionId.TryCreate(rawId, out DefinitionId capabilityId))
+                    {
+                        report.AddError(
+                            $"{registryPath}: {definition.name} has an invalid capability id at index {capabilityIndex}.");
+                    }
+                    else if (!capabilityIds.Add(capabilityId))
+                    {
+                        report.AddError(
+                            $"{registryPath}: {definition.name} has duplicate capability id '{capabilityId}'.");
+                    }
+                }
+            }
+        }
+
+        static void ValidateEquipmentDefinitions(
+            SerializedProperty inventoryItems,
+            SerializedProperty equipment,
+            SerializedProperty equipmentSlots,
+            string registryPath,
+            FarionValidationReport report)
+        {
+            if (inventoryItems == null ||
+                equipment == null ||
+                equipmentSlots == null ||
+                !inventoryItems.isArray ||
+                !equipment.isArray ||
+                !equipmentSlots.isArray)
+            {
+                return;
+            }
+
+            HashSet<InventoryItemDefinition> registeredItems = new();
+            for (int i = 0; i < inventoryItems.arraySize; i++)
+            {
+                InventoryItemDefinition item =
+                    inventoryItems.GetArrayElementAtIndex(i).objectReferenceValue
+                    as InventoryItemDefinition;
+                if (item != null)
+                {
+                    registeredItems.Add(item);
+                }
+            }
+
+            HashSet<DefinitionId> registeredSlotTypes = new();
+            for (int i = 0; i < equipmentSlots.arraySize; i++)
+            {
+                EquipmentSlotDefinition slot =
+                    equipmentSlots.GetArrayElementAtIndex(i).objectReferenceValue
+                    as EquipmentSlotDefinition;
+                if (slot == null || !slot.IsValid)
+                {
+                    if (slot != null)
+                    {
+                        report.AddError(
+                            $"{registryPath}: equipment slot '{slot.name}' is invalid.");
+                    }
+
+                    continue;
+                }
+
+                DefinitionId.TryCreate(slot.SlotTypeId, out DefinitionId slotTypeId);
+                registeredSlotTypes.Add(slotTypeId);
+            }
+
+            for (int i = 0; i < equipment.arraySize; i++)
+            {
+                EquipmentDefinition definition =
+                    equipment.GetArrayElementAtIndex(i).objectReferenceValue
+                    as EquipmentDefinition;
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                if (!definition.IsValid)
+                {
+                    report.AddError(
+                        $"{registryPath}: equipment definition '{definition.name}' is invalid.");
+                    continue;
+                }
+
+                if (!registeredItems.Contains(definition.Item))
+                {
+                    report.AddError(
+                        $"{registryPath}: equipment '{definition.name}' references an item that is not registered.");
+                }
+
+                IReadOnlyList<string> compatibleTypes =
+                    definition.CompatibleSlotTypeIds;
+                HashSet<DefinitionId> uniqueTypes = new();
+                for (int typeIndex = 0;
+                     typeIndex < compatibleTypes.Count;
+                     typeIndex++)
+                {
+                    if (!DefinitionId.TryCreate(
+                            compatibleTypes[typeIndex],
+                            out DefinitionId slotTypeId) ||
+                        !uniqueTypes.Add(slotTypeId))
+                    {
+                        report.AddError(
+                            $"{registryPath}: equipment '{definition.name}' has an invalid or duplicate slot type at index {typeIndex}.");
+                    }
+                    else if (!registeredSlotTypes.Contains(slotTypeId))
+                    {
+                        report.AddError(
+                            $"{registryPath}: equipment '{definition.name}' references unregistered slot type '{slotTypeId}'.");
+                    }
                 }
             }
         }

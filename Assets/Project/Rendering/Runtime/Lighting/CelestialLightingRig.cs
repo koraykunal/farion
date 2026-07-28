@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 
 namespace Farion.Rendering.Lighting
 {
+    [DefaultExecutionOrder(300)]
     [ExecuteAlways]
     [DisallowMultipleComponent]
     public sealed class CelestialLightingRig : MonoBehaviour
@@ -17,7 +18,7 @@ namespace Farion.Rendering.Lighting
 
         [Header("Scene Light")]
         [SerializeField] Light mainDirectionalLight;
-        [SerializeField] bool syncLightPositionToSource = true;
+        [SerializeField] bool syncLightPositionToSource;
 
         [Header("Camera")]
         [SerializeField] Camera sceneCamera;
@@ -66,47 +67,45 @@ namespace Farion.Rendering.Lighting
             Light directionalLight = ResolveMainDirectionalLight();
             Transform focus = ResolveFocus();
 
-            if (source != null && directionalLight != null && focus != null)
+            if (!CelestialLightingState.TryCreate(profile, source, focus, out CelestialLightingState state))
             {
-                ApplyDirectionalLight(source, focus, directionalLight);
+                ApplyRenderSettings(directionalLight);
+                ApplyCameraDefaults();
+                return;
             }
 
-            if (source != null)
+            if (directionalLight != null)
             {
-                CelestialLightingGlobals.Apply(profile, source, directionalLight, focus);
+                ApplyDirectionalLight(state, directionalLight);
             }
 
+            CelestialLightingGlobals.Apply(profile, state);
             ApplyRenderSettings(directionalLight);
             ApplyCameraDefaults();
         }
 
-        void ApplyDirectionalLight(CelestialLightSource source, Transform focus, Light directionalLight)
+        void ApplyDirectionalLight(CelestialLightingState state, Light directionalLight)
         {
-            Vector3 lightTravelDirection = focus.position - source.Position;
-            if (lightTravelDirection.sqrMagnitude <= 0.0001f)
-            {
-                return;
-            }
-
-            float distance = lightTravelDirection.magnitude;
             directionalLight.type = LightType.Directional;
             if (syncLightPositionToSource)
             {
-                directionalLight.transform.position = source.Position;
+                directionalLight.transform.position = state.StarPosition;
             }
 
             Vector3 lightForward = profile.InvertLightDirection
-                ? -lightTravelDirection.normalized
-                : lightTravelDirection.normalized;
+                ? -state.LightTravelDirection
+                : state.LightTravelDirection;
             directionalLight.transform.rotation = Quaternion.LookRotation(lightForward, ResolveStableUp(lightForward));
             directionalLight.color = profile.LightColor;
             directionalLight.useColorTemperature = profile.UseColorTemperature;
-            directionalLight.colorTemperature = source.HasRadiationProfile ? source.ColorTemperatureKelvin : profile.ColorTemperature;
-            directionalLight.intensity = profile.EvaluateIntensity(distance);
+            directionalLight.colorTemperature = state.ColorTemperature;
+            directionalLight.intensity = state.Intensity;
             directionalLight.shadows = profile.Shadows;
             directionalLight.shadowStrength = profile.ShadowStrength;
             directionalLight.shadowNearPlane = profile.ShadowNearPlane;
+#if UNITY_EDITOR
             directionalLight.shadowAngle = profile.DirectionalShadowAngle;
+#endif
             directionalLight.bounceIntensity = profile.BounceIntensity;
         }
 
@@ -174,7 +173,7 @@ namespace Farion.Rendering.Lighting
                 return camera.transform;
             }
 
-            return transform;
+            return null;
         }
 
         Camera ResolveSceneCamera()
@@ -227,35 +226,89 @@ namespace Farion.Rendering.Lighting
 #endif
     }
 
+    readonly struct CelestialLightingState
+    {
+        CelestialLightingState(
+            Vector3 starPosition,
+            Vector3 lightTravelDirection,
+            float intensity,
+            float colorTemperature)
+        {
+            StarPosition = starPosition;
+            LightTravelDirection = lightTravelDirection;
+            Intensity = intensity;
+            ColorTemperature = colorTemperature;
+        }
+
+        public Vector3 StarPosition { get; }
+        public Vector3 LightTravelDirection { get; }
+        public Vector3 DirectionToStar => -LightTravelDirection;
+        public float Intensity { get; }
+        public float ColorTemperature { get; }
+
+        public static bool TryCreate(
+            CelestialLightingProfile profile,
+            CelestialLightSource source,
+            Transform focus,
+            out CelestialLightingState state)
+        {
+            state = default;
+            if (profile == null || source == null || focus == null)
+            {
+                return false;
+            }
+
+            Vector3 travel = focus.position - source.Position;
+            float distance = travel.magnitude;
+            if (distance <= 0.0001f)
+            {
+                return false;
+            }
+
+            float colorTemperature = source.HasRadiationProfile
+                ? source.ColorTemperatureKelvin
+                : profile.ColorTemperature;
+            state = new CelestialLightingState(
+                source.Position,
+                travel / distance,
+                profile.EvaluateIntensity(distance),
+                colorTemperature);
+            return true;
+        }
+    }
+
     static class CelestialLightingGlobals
     {
         static readonly int StarPositionId = Shader.PropertyToID("_FarionStarPositionWS");
+        static readonly int StarDirectionId = Shader.PropertyToID("_FarionStarDirectionWS");
         static readonly int StarColorId = Shader.PropertyToID("_FarionStarColor");
         static readonly int StarIntensityId = Shader.PropertyToID("_FarionStarIntensity");
         static readonly int AmbientColorId = Shader.PropertyToID("_FarionAmbientColor");
 
         public static void Apply(
             CelestialLightingProfile profile,
-            CelestialLightSource source,
-            Light directionalLight,
-            Transform focus)
+            CelestialLightingState state)
         {
-            if (profile == null || source == null)
+            if (profile == null)
             {
                 return;
             }
 
-            float distance = focus != null ? Vector3.Distance(source.Position, focus.position) : 0f;
-            float intensity = distance > 0f
-                ? profile.EvaluateIntensity(distance)
-                : directionalLight != null
-                    ? directionalLight.intensity
-                    : 1f;
-
-            Color starColor = directionalLight != null ? directionalLight.color : profile.LightColor;
-            Shader.SetGlobalVector(StarPositionId, new Vector4(source.Position.x, source.Position.y, source.Position.z, 1f));
+            Color starColor = profile.UseColorTemperature
+                ? profile.LightColor * Mathf.CorrelatedColorTemperatureToRGB(state.ColorTemperature)
+                : profile.LightColor;
+            Shader.SetGlobalVector(StarPositionId, new Vector4(
+                state.StarPosition.x,
+                state.StarPosition.y,
+                state.StarPosition.z,
+                1f));
+            Shader.SetGlobalVector(StarDirectionId, new Vector4(
+                state.DirectionToStar.x,
+                state.DirectionToStar.y,
+                state.DirectionToStar.z,
+                0f));
             Shader.SetGlobalColor(StarColorId, starColor);
-            Shader.SetGlobalFloat(StarIntensityId, intensity);
+            Shader.SetGlobalFloat(StarIntensityId, state.Intensity);
             Shader.SetGlobalColor(AmbientColorId, profile.AmbientLight);
         }
     }

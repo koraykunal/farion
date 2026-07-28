@@ -18,11 +18,6 @@ MonoBehaviour:
   allowedPlanetTypes:
   - 0
   - 2
-  allowedClimates:
-  - 0
-  - 1
   radiusRange: {x: 8, y: 1000000}
   surfaceGravityRange: {x: 0.02, y: 30}
   requiresAtmosphere: 0
-  temperatureRange: {x: -220, y: 15}
-  radiationRange: {x: 0.05, y: 0.35}

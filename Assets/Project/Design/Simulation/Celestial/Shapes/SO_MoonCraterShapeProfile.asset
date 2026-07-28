@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 567d8a7d2ca628d48932e834dd7a0c84, type: 3}
   m_Name: SO_MoonCraterShapeProfile
-  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.MoonCraterShapeProfile
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.MoonCraterShapeProfile
   seed: 70
   craterSeed: 70
   cratersEnabled: 1

@@ -4,7 +4,9 @@
     "references": [
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
+        "Farion.Gameplay.Domain",
         "Farion.Gameplay.Runtime",
+        "Farion.UI.Runtime",
         "Unity.InputSystem"
     ],
     "includePlatforms": [

@@ -13,7 +13,29 @@ MonoBehaviour:
   m_Name: SO_TerrestrialSurfaceProfile
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: 310287156d04410f92928d6675c1283c, type: 2}
-  biomeVisualProfile: {fileID: 11400000, guid: 9631c4b49e4a4c55b2555c6f088613b6, type: 2}
+  surfaceVisualProfile: {fileID: 11400000, guid: 9631c4b49e4a4c55b2555c6f088613b6, type: 2}
+  lavaOverlay:
+    baseColor: {fileID: 2800000, guid: 84a1021b93cd0d747a56107ff2caa58e, type: 3}
+    normal: {fileID: 2800000, guid: 6cff0af52c9b02a409fb8c8bbad688a6, type: 3}
+    roughness: {fileID: 2800000, guid: 374bc874c181d8f49925049bfb4a8310, type: 3}
+    ambientOcclusion: {fileID: 0}
+    height: {fileID: 2800000, guid: 40ae7e027fbd07042aeed6cc8e5a500c, type: 3}
+    emission: {fileID: 2800000, guid: befbbfc12ae75374e8145f5cfa381a59, type: 3}
+    worldTileSize: 9
+    heightStrength: 0.025
+    emissionTint: {r: 1, g: 0.3, b: 0.06, a: 1}
+    emissionStrength: 2.2
+  snowOverlay:
+    baseColor: {fileID: 2800000, guid: 74042347e5240ab42a8a8232d1f1cca0, type: 3}
+    normal: {fileID: 2800000, guid: d5e0ab4b6a6ad0a4ba550288dbab4cf6, type: 3}
+    roughness: {fileID: 2800000, guid: 8859a5aa34a5d0940bafdf30929fe486, type: 3}
+    ambientOcclusion: {fileID: 2800000, guid: 7043011545dfda9448a872b8d2aa4fe2, type: 3}
+    height: {fileID: 2800000, guid: 262ea6188ed4d3f43a091446d3cdc087, type: 3}
+    emission: {fileID: 0}
+    worldTileSize: 6.5
+    heightStrength: 0.025
+    emissionTint: {r: 1, g: 1, b: 1, a: 1}
+    emissionStrength: 0
   metallic: 0
   landSmoothness: 0.125
   oceanSmoothness: 0.851

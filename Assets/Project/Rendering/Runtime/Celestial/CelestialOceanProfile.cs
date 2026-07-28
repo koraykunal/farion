@@ -47,7 +47,7 @@ namespace Farion.Rendering.Celestial
         [SerializeField] float specularStrength = 1.35f;
         [SerializeField] Color specularColor = new(0.96f, 1f, 0.88f, 1f);
         [Min(0.001f)]
-        [SerializeField] float referenceLightIntensity = 6f;
+        [SerializeField] float referenceLightIntensity = 1.1f;
         [Range(0f, 1f)]
         [SerializeField] float fresnelStrength = 0.45f;
 

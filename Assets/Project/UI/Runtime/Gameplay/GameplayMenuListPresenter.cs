@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Farion.UI.Common;
+using Farion.UI.Localization;
+using Farion.UI.Navigation;
 using UnityEngine;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
 
 namespace Farion.UI.Gameplay
 {
@@ -24,14 +28,19 @@ namespace Farion.UI.Gameplay
 
         [Header("References")]
         [SerializeField] GameplayUiController controller;
+        [SerializeField] UiScreenView screenView;
         [SerializeField] Transform buttonContainer;
+        [SerializeField] Transform sessionButtonContainer;
         [SerializeField] MenuButtonView buttonPrefab;
 
         [Header("Entries")]
         [SerializeField] List<MenuEntry> entries = new();
 
         readonly List<MenuButtonView> generatedButtons = new();
+        readonly List<MenuEntry> generatedEntries = new();
         bool built;
+
+        public MenuButtonView FirstAvailableButton { get; private set; }
 
         void Awake()
         {
@@ -42,6 +51,18 @@ namespace Farion.UI.Gameplay
         void OnEnable()
         {
             ResolveReferences();
+            if (Application.isPlaying)
+            {
+                LocalizationSettings.SelectedLocaleChanged += HandleLocaleChanged;
+                RefreshLocalizedContent();
+            }
+
+            AssignInitialSelection();
+        }
+
+        void OnDisable()
+        {
+            LocalizationSettings.SelectedLocaleChanged -= HandleLocaleChanged;
         }
 
         public void Rebuild()
@@ -62,22 +83,32 @@ namespace Farion.UI.Gameplay
             for (int i = 0; i < entries.Count; i++)
             {
                 MenuEntry entry = entries[i];
-                if (entry == null)
+                if (entry == null || !entry.Available)
                 {
                     continue;
                 }
 
-                MenuButtonView button = Instantiate(buttonPrefab, parent);
+                Transform entryParent = IsSessionAction(entry.Action) &&
+                                        sessionButtonContainer != null
+                    ? sessionButtonContainer
+                    : parent;
+                MenuButtonView button = Instantiate(buttonPrefab, entryParent);
                 button.name = $"UI_MenuButton_{entry.Action}";
-                button.ConfigureContent(entry.Title, string.Empty, entry.Icon);
-                button.SetAvailable(entry.Available);
+                button.ConfigureContent(ResolveTitle(entry), string.Empty, entry.Icon);
+                button.SetAvailable(true);
 
                 GameplayMenuAction action = entry.Action;
                 button.Clicked += () => Handle(action);
                 generatedButtons.Add(button);
+                generatedEntries.Add(entry);
+                if (FirstAvailableButton == null)
+                {
+                    FirstAvailableButton = button;
+                }
             }
 
             built = true;
+            AssignInitialSelection();
         }
 
         void ClearGeneratedButtons()
@@ -101,6 +132,8 @@ namespace Farion.UI.Gameplay
             }
 
             generatedButtons.Clear();
+            generatedEntries.Clear();
+            FirstAvailableButton = null;
         }
 
         void Handle(GameplayMenuAction action)
@@ -120,6 +153,62 @@ namespace Farion.UI.Gameplay
             {
                 controller = GetComponentInParent<GameplayUiController>();
             }
+
+            screenView ??= GetComponentInParent<UiScreenView>();
+        }
+
+        void AssignInitialSelection()
+        {
+            if (screenView == null ||
+                screenView.HasExplicitFirstSelection ||
+                FirstAvailableButton == null)
+            {
+                return;
+            }
+
+            screenView.SetFirstSelection(FirstAvailableButton.Button);
+        }
+
+        void HandleLocaleChanged(Locale _)
+        {
+            RefreshLocalizedContent();
+        }
+
+        void RefreshLocalizedContent()
+        {
+            int count = Mathf.Min(generatedButtons.Count, generatedEntries.Count);
+            for (int i = 0; i < count; i++)
+            {
+                if (generatedButtons[i] != null && generatedEntries[i] != null)
+                {
+                    generatedButtons[i].SetTitle(ResolveTitle(generatedEntries[i]));
+                }
+            }
+        }
+
+        static string ResolveTitle(MenuEntry entry)
+        {
+            (string key, string fallback) = entry.Action switch
+            {
+                GameplayMenuAction.Resume => ("pause.resume", entry.Title),
+                GameplayMenuAction.Inventory => ("pause.inventory", entry.Title),
+                GameplayMenuAction.Blueprints => ("pause.blueprints", entry.Title),
+                GameplayMenuAction.Journal => ("pause.journal", entry.Title),
+                GameplayMenuAction.Ship => ("pause.ship", entry.Title),
+                GameplayMenuAction.Map => ("pause.map", entry.Title),
+                GameplayMenuAction.Options => ("pause.options", entry.Title),
+                GameplayMenuAction.Save => ("pause.save", entry.Title),
+                GameplayMenuAction.ExitToMainMenu => ("pause.main_menu", entry.Title),
+                GameplayMenuAction.QuitGame => ("pause.quit", entry.Title),
+                _ => (string.Empty, entry.Title)
+            };
+            return UiLocalization.Get(key, fallback);
+        }
+
+        static bool IsSessionAction(GameplayMenuAction action)
+        {
+            return action is GameplayMenuAction.ExitToMainMenu or
+                GameplayMenuAction.QuitGame;
         }
     }
 }

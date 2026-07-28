@@ -11,7 +11,9 @@ namespace Farion.Simulation.Planetary
             float altitude,
             float slopeDegrees,
             float temperatureCelsius,
-            float moisture,
+            float precipitation,
+            float effectiveMoisture,
+            float aridity,
             float radiation)
         {
             Context = context;
@@ -20,7 +22,9 @@ namespace Farion.Simulation.Planetary
             Altitude = altitude;
             SlopeDegrees = slopeDegrees;
             TemperatureCelsius = temperatureCelsius;
-            Moisture = Mathf.Clamp01(moisture);
+            Precipitation = Mathf.Clamp01(precipitation);
+            EffectiveMoisture = Mathf.Clamp01(effectiveMoisture);
+            Aridity = Mathf.Clamp01(aridity);
             Radiation = Mathf.Clamp01(radiation);
         }
 
@@ -30,7 +34,9 @@ namespace Farion.Simulation.Planetary
         public float Altitude { get; }
         public float SlopeDegrees { get; }
         public float TemperatureCelsius { get; }
-        public float Moisture { get; }
+        public float Precipitation { get; }
+        public float EffectiveMoisture { get; }
+        public float Aridity { get; }
         public float Radiation { get; }
     }
 }

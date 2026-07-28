@@ -2,7 +2,11 @@
     "name": "Farion.Tests.PlayMode",
     "rootNamespace": "Farion.Tests.PlayMode",
     "references": [
-        "Farion.Gameplay.Runtime"
+        "Farion.Core.Runtime",
+        "Farion.Gameplay.Runtime",
+        "Farion.Rendering.Runtime",
+        "Farion.UI.Runtime",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

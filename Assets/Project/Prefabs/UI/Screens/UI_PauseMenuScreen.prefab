@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 100001}
   - component: {fileID: 100003}
   - component: {fileID: 100004}
+  - component: {fileID: 100005}
   m_Layer: 5
   m_Name: UI_PauseMenuScreen
   m_TagString: Untagged
@@ -34,12 +35,13 @@ RectTransform:
   - {fileID: 210001}
   - {fileID: 300001}
   - {fileID: 400001}
+  - {fileID: 700001}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 238, y: 0}
-  m_SizeDelta: {x: 420, y: -96}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 96, y: 0}
+  m_SizeDelta: {x: 480, y: 620}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &100003
 MonoBehaviour:
@@ -53,6 +55,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4940213388404a5d8100df50040d9b23, type: 3}
   m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Common.FarionPanelFader
+  theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   canvasGroup: {fileID: 100004}
   motionRoot: {fileID: 100001}
   showDuration: 0.16
@@ -72,6 +75,27 @@ CanvasGroup:
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
+--- !u!114 &100005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
+  screenId: 110
+  layer: 100
+  firstSelection: {fileID: 0}
+  closeOnCancel: 1
+  locksGameplayInput: 1
+  visibleOnAwake: 0
+  blocksRaycastsWhenVisible: 1
+  canvasGroup: {fileID: 100004}
+  panelFader: {fileID: 100003}
 --- !u!1 &200000
 GameObject:
   m_ObjectHideFlags: 0
@@ -130,7 +154,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.0196, g: 0.0314, b: 0.0431, a: 0.94}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -205,7 +229,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.78, g: 0.9, b: 0.7, a: 0.95}
+  m_Color: {r: 0.5608, g: 0.6824, b: 0.7608, a: 0.72}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -256,8 +280,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 28, y: -24}
-  m_SizeDelta: {x: -56, y: 136}
+  m_AnchoredPosition: {x: 32, y: -24}
+  m_SizeDelta: {x: -64, y: 136}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &500000
 GameObject:
@@ -293,8 +317,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -6}
-  m_SizeDelta: {x: -40, y: 86}
+  m_AnchoredPosition: {x: 0, y: -8}
+  m_SizeDelta: {x: -48, y: 64}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &500002
 CanvasRenderer:
@@ -345,6 +369,7 @@ GameObject:
   - component: {fileID: 600001}
   - component: {fileID: 600002}
   - component: {fileID: 600003}
+  - component: {fileID: 600004}
   m_Layer: 5
   m_Name: ScreenTitle
   m_TagString: Untagged
@@ -368,8 +393,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -96}
-  m_SizeDelta: {x: 0, y: 28}
+  m_AnchoredPosition: {x: 0, y: -92}
+  m_SizeDelta: {x: 0, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &600002
 CanvasRenderer:
@@ -399,7 +424,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: PAUSED
+  m_text: PAUSE MENU
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -409,7 +434,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0.78, g: 0.9, b: 0.7, a: 0.95}
+  m_fontColor: {r: 0.8784, g: 0.9098, b: 0.9294, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -436,7 +461,7 @@ MonoBehaviour:
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
-  m_characterSpacing: 8
+  m_characterSpacing: 5
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
@@ -471,6 +496,21 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &600004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 600000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496a4f992d9d19d4f9e3830fb5f109fe, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Localization.UiLocalizedText
+  target: {fileID: 600003}
+  entryKey: pause.title
+  fallback: PAUSE MENU
 --- !u!1 &400000
 GameObject:
   m_ObjectHideFlags: 0
@@ -505,8 +545,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 28, y: -176}
-  m_SizeDelta: {x: -56, y: 560}
+  m_AnchoredPosition: {x: 32, y: -168}
+  m_SizeDelta: {x: -64, y: 248}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &400002
 MonoBehaviour:
@@ -526,7 +566,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 0
+  m_Spacing: 8
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -547,7 +587,9 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.GameplayMenuListPresenter
   controller: {fileID: 0}
+  screenView: {fileID: 100005}
   buttonContainer: {fileID: 400001}
+  sessionButtonContainer: {fileID: 700001}
   buttonPrefab: {fileID: 257921394558794705, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
   entries:
   - action: 0
@@ -558,26 +600,10 @@ MonoBehaviour:
     title: INVENTORY
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671002, type: 3}
     available: 1
-  - action: 20
-    title: BLUEPRINTS
-    icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671003, type: 3}
-    available: 0
-  - action: 30
-    title: JOURNAL
-    icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671004, type: 3}
-    available: 0
-  - action: 40
-    title: SHIP
-    icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671005, type: 3}
-    available: 0
-  - action: 50
-    title: MAP
-    icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671006, type: 3}
-    available: 0
   - action: 60
     title: OPTIONS
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671007, type: 3}
-    available: 0
+    available: 1
   - action: 70
     title: SAVE
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671008, type: 3}
@@ -590,3 +616,65 @@ MonoBehaviour:
     title: QUIT GAME
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af67100a, type: 3}
     available: 1
+--- !u!1 &700000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 700001}
+  - component: {fileID: 700002}
+  m_Layer: 5
+  m_Name: SessionButtonList
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &700001
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 100001}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 32, y: -458}
+  m_SizeDelta: {x: -64, y: 120}
+  m_Pivot: {x: 0, y: 1}
+--- !u!114 &700002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 8
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 1
+  m_ChildControlHeight: 1
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0

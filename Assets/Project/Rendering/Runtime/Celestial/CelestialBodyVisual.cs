@@ -33,8 +33,6 @@ namespace Farion.Rendering.Celestial
         [Header("Collision")]
         [SerializeField] bool syncSphereCollider = true;
         [SerializeField] bool generateMeshCollider;
-        [Range(0, 64)]
-        [SerializeField] int meshColliderResolution = 12;
         [SerializeField] bool bakeMeshCollider = true;
 
         [Header("Material Override")]
@@ -47,7 +45,7 @@ namespace Farion.Rendering.Celestial
         [SerializeField] bool rebuildInEditMode = true;
 
         Mesh[] renderMeshes;
-        Mesh collisionMesh;
+        PlanetSurfaceWeightMap surfaceWeightMap;
         MaterialPropertyBlock propertyBlock;
         PlanetSurfaceModel subscribedSurfaceModel;
         CelestialShapeProfile subscribedShapeProfile;
@@ -60,6 +58,8 @@ namespace Farion.Rendering.Celestial
         [SerializeField] bool meshColliderSkippedBecauseBodyIsDynamic;
 #if UNITY_EDITOR
         bool editorRebuildQueued;
+        bool editorPositionInitialized;
+        Vector3 editorLastPosition;
 #endif
 
         public CelestialBody Body => body != null ? body : body = GetComponent<CelestialBody>();
@@ -67,7 +67,10 @@ namespace Farion.Rendering.Celestial
         public bool HasRenderRadiusRange => renderRadiusMinMax.x > 0f && renderRadiusMinMax.y >= renderRadiusMinMax.x;
         public int ActiveLodIndex => activeLodIndex;
         public bool MeshColliderSkippedBecauseBodyIsDynamic => meshColliderSkippedBecauseBodyIsDynamic;
+        internal CelestialShapeProfile ShapeProfile => shapeProfile;
+        internal CelestialSurfaceProfileBase SurfaceProfile => surfaceProfile;
         public event System.Action Rebuilt;
+        public event System.Action MaterialPropertiesChanged;
 
         public void Configure(
             CelestialShapeProfile newShapeProfile,
@@ -104,8 +107,38 @@ namespace Farion.Rendering.Celestial
             }
             else if (rebuildInEditMode)
             {
+#if UNITY_EDITOR
+                editorLastPosition = transform.position;
+                editorPositionInitialized = true;
+#endif
                 RebuildEditorPreview();
             }
+        }
+
+        void Update()
+        {
+#if UNITY_EDITOR
+            if (Application.isPlaying || !rebuildInEditMode)
+            {
+                return;
+            }
+
+            Vector3 currentPosition = transform.position;
+            if (!editorPositionInitialized)
+            {
+                editorLastPosition = currentPosition;
+                editorPositionInitialized = true;
+                return;
+            }
+
+            if ((currentPosition - editorLastPosition).sqrMagnitude <= 0.000001f)
+            {
+                return;
+            }
+
+            editorLastPosition = currentPosition;
+            QueueEditorRebuild();
+#endif
         }
 
         void OnValidate()
@@ -151,6 +184,13 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                editorLastPosition = transform.position;
+                editorPositionInitialized = true;
+            }
+#endif
             ResolveSurfaceModel();
             SyncProfileSubscriptions();
             if (surfaceModel != null && surfaceModel.ShapeProfile != null)
@@ -173,6 +213,8 @@ namespace Farion.Rendering.Celestial
             {
                 BuildRenderMeshes(sourceBody);
             }
+
+            RebuildSurfaceWeightMap();
             activeLodIndex = -1;
             SetLodLevel(Application.isPlaying ? GetLodCount() - 1 : editModePreviewLod);
 
@@ -239,14 +281,44 @@ namespace Farion.Rendering.Celestial
             }
 
             ApplyMaterialProperties(terrainMeshRenderer);
+            MaterialPropertiesChanged?.Invoke();
+        }
+
+        internal void ConfigureSurfaceRenderer(MeshRenderer meshRenderer)
+        {
+            if (meshRenderer == null)
+            {
+                return;
+            }
+
+            Material resolvedMaterial = ResolveMaterial();
+            if (resolvedMaterial != null)
+            {
+                meshRenderer.sharedMaterial = resolvedMaterial;
+            }
+
+            ApplyMaterialProperties(meshRenderer);
+        }
+
+        internal void SetPrimaryTerrainEnabled(bool renderEnabled, bool collisionEnabled)
+        {
+            GameObject meshObject = GetOrCreateMeshObject();
+            terrainMeshRenderer = meshObject.GetComponent<MeshRenderer>();
+            terrainMeshRenderer.enabled = renderEnabled;
+
+            MeshCollider meshCollider = meshObject.GetComponent<MeshCollider>();
+            if (meshCollider != null)
+            {
+                meshCollider.enabled = collisionEnabled && meshCollider.sharedMesh != null;
+            }
         }
 
 #if UNITY_EDITOR
-        [ContextMenu("Log Biome Visual Coverage Report")]
-        public void LogBiomeVisualCoverageReport()
+        [ContextMenu("Log Surface Coverage Report")]
+        public void LogSurfaceCoverageReport()
         {
             ResolveSurfaceModel();
-            if (!CelestialBiomeVisualCoverageReportBuilder.TryBuild(
+            if (!CelestialSurfaceCoverageReportBuilder.TryBuild(
                     name,
                     surfaceModel,
                     surfaceProfile,
@@ -274,8 +346,7 @@ namespace Farion.Rendering.Celestial
                     $"{sourceBody.BodyName} LOD{i} Render Mesh",
                     out Vector2 lodRadiusMinMax,
                     shapeProfile,
-                    surfaceProfile,
-                    surfaceModel);
+                    surfaceProfile);
 
                 if (i == 0)
                 {
@@ -296,8 +367,7 @@ namespace Farion.Rendering.Celestial
                 $"{sourceBody.BodyName} Editor Preview Mesh",
                 out renderRadiusMinMax,
                 shapeProfile,
-                surfaceProfile,
-                surfaceModel);
+                surfaceProfile);
         }
 
         int FindAvailableLodIndex()
@@ -323,18 +393,6 @@ namespace Farion.Rendering.Celestial
             return lodProfile != null ? lodProfile.GetResolution(lodIndex) : renderResolution;
         }
 
-        float EvaluateSurfaceRadius(float bodyRadius, Vector3 unitDirection)
-        {
-            if (shapeProfile != null)
-            {
-                return shapeProfile.EvaluateSample(bodyRadius, unitDirection).Radius;
-            }
-
-            return surfaceProfile != null
-                ? surfaceProfile.EvaluateRadius(bodyRadius, unitDirection)
-                : bodyRadius;
-        }
-
         void ConfigureMeshCollider(GameObject meshObject, CelestialBody sourceBody)
         {
             MeshCollider meshCollider = meshObject.GetComponent<MeshCollider>();
@@ -348,7 +406,6 @@ namespace Farion.Rendering.Celestial
                     meshCollider.enabled = false;
                 }
 
-                ReplaceMesh(ref collisionMesh);
                 return;
             }
 
@@ -359,20 +416,22 @@ namespace Farion.Rendering.Celestial
 
             meshCollider.enabled = true;
             meshCollider.convex = false;
-            ReplaceMesh(ref collisionMesh);
-            collisionMesh = CelestialSphereMeshBuilder.Build(
-                sourceBody.Radius,
-                meshColliderResolution,
-                $"{sourceBody.BodyName} Collision Mesh",
-                shapeProfile,
-                surfaceProfile);
             meshCollider.sharedMesh = null;
-            if (bakeMeshCollider)
+            Mesh sourceMesh = renderMeshes != null && renderMeshes.Length > 0
+                ? renderMeshes[0]
+                : null;
+            if (sourceMesh == null)
             {
-                CelestialMeshColliderBaker.BakeImmediate(collisionMesh);
+                meshCollider.enabled = false;
+                return;
             }
 
-            meshCollider.sharedMesh = collisionMesh;
+            if (bakeMeshCollider)
+            {
+                CelestialMeshColliderBaker.BakeImmediate(sourceMesh);
+            }
+
+            meshCollider.sharedMesh = sourceMesh;
         }
 
         void DisablePreviewMeshCollider(GameObject meshObject)
@@ -384,7 +443,6 @@ namespace Farion.Rendering.Celestial
                 meshCollider.enabled = false;
             }
 
-            ReplaceMesh(ref collisionMesh);
         }
 
         Material ResolveMaterial()
@@ -419,7 +477,31 @@ namespace Farion.Rendering.Celestial
                 surfaceProfile.ApplyMaterialProperties(propertyBlock, Body.Radius, renderRadiusMinMax);
             }
 
+            if (surfaceWeightMap != null)
+            {
+                surfaceWeightMap.Apply(propertyBlock);
+            }
+            else
+            {
+                PlanetSurfaceWeightMap.Clear(propertyBlock);
+            }
+
             meshRenderer.SetPropertyBlock(propertyBlock);
+        }
+
+        void RebuildSurfaceWeightMap()
+        {
+            ReplaceSurfaceWeightMap();
+            if (surfaceModel == null ||
+                surfaceProfile is not TerrestrialSurfaceProfile terrestrialSurface ||
+                terrestrialSurface.SurfaceVisualProfile == null)
+            {
+                return;
+            }
+
+            surfaceWeightMap = PlanetSurfaceWeightMap.Build(
+                surfaceModel,
+                terrestrialSurface.SurfaceVisualProfile);
         }
 
         void ApplyAuthoringCleanup(CelestialBody sourceBody)
@@ -499,12 +581,19 @@ namespace Farion.Rendering.Celestial
         void OnDisable()
         {
             UnsubscribeFromProfiles();
+            ReplaceSurfaceWeightMap();
 
             if (Application.isPlaying)
             {
+                ClearTerrainMeshCollider();
                 ReplaceRenderMeshes();
-                ReplaceMesh(ref collisionMesh);
             }
+        }
+
+        void ReplaceSurfaceWeightMap()
+        {
+            surfaceWeightMap?.Dispose();
+            surfaceWeightMap = null;
         }
 
         void ReplaceRenderMeshes()
@@ -514,6 +603,7 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
+            ClearTerrainMeshCollider();
             for (int i = 0; i < renderMeshes.Length; i++)
             {
                 ReplaceMesh(ref renderMeshes[i]);
@@ -521,6 +611,20 @@ namespace Farion.Rendering.Celestial
 
             renderMeshes = null;
             activeLodIndex = -1;
+        }
+
+        void ClearTerrainMeshCollider()
+        {
+            if (terrainMeshFilter == null)
+            {
+                return;
+            }
+
+            MeshCollider meshCollider = terrainMeshFilter.GetComponent<MeshCollider>();
+            if (meshCollider != null)
+            {
+                meshCollider.sharedMesh = null;
+            }
         }
 
         static void ReplaceMesh(ref Mesh mesh)

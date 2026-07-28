@@ -1,4 +1,6 @@
 using System.IO;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 
 namespace Farion.Core.Persistence
@@ -6,9 +8,24 @@ namespace Farion.Core.Persistence
     public static class SaveGameSlotCatalog
     {
         public const string DefaultSlotName = "autosave";
+        public const string ManualSlotOneName = "manual-01";
+        public const string ManualSlotTwoName = "manual-02";
+        public const string ManualSlotThreeName = "manual-03";
 
         const string SaveDirectoryName = "Saves";
         const string SaveFileExtension = ".json";
+
+        static readonly ReadOnlyCollection<string> playerSlotNames =
+            new(
+                new[]
+                {
+                    DefaultSlotName,
+                    ManualSlotOneName,
+                    ManualSlotTwoName,
+                    ManualSlotThreeName
+                });
+
+        public static IReadOnlyList<string> PlayerSlotNames => playerSlotNames;
 
         public static string GetSaveDirectory()
         {

@@ -15,8 +15,7 @@ namespace Farion.Gameplay.Interaction
             if (currentMode == nextMode)
             {
                 return request == PlayerPossessionTransitionRequest.Bootstrap ||
-                       request == PlayerPossessionTransitionRequest.RestoreSnapshot ||
-                       request == PlayerPossessionTransitionRequest.EnterPilotSeat;
+                       request == PlayerPossessionTransitionRequest.RestoreSnapshot;
             }
 
             switch (request)
@@ -26,8 +25,7 @@ namespace Farion.Gameplay.Interaction
                     return true;
                 case PlayerPossessionTransitionRequest.EnterPilotSeat:
                     return nextMode == PlayerPossessionMode.Spacecraft &&
-                           (currentMode == PlayerPossessionMode.OnFoot ||
-                            currentMode == PlayerPossessionMode.ShipInterior);
+                           currentMode == PlayerPossessionMode.ShipInterior;
                 case PlayerPossessionTransitionRequest.ExitPilotSeat:
                     return currentMode == PlayerPossessionMode.Spacecraft &&
                            (nextMode == PlayerPossessionMode.ShipInterior ||

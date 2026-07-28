@@ -20,7 +20,20 @@ On `Simulation`:
 1. Add `GravitySimulation`.
 2. Assign `Assets/Project/Design/Physics/Gravity/DefaultGravitySettings.asset`.
 3. Add `Test Star`, `Test Planet`, and `Test Moon` to `Registered Bodies`.
-4. Keep `Auto Discover Bodies` disabled once those references are assigned.
+4. Assign the currently explorable `Test Planet` to `Physics Reference Body`.
+5. Keep `Auto Discover Bodies` disabled once those references are assigned.
+
+`Physics Reference Body` is not a position lock and does not remove the
+planet's orbit. `CelestialBody.InertialVelocity` continues to evolve through
+the N-body solver. The local Unity physics scene subtracts the reference
+body's translation from every registered celestial body and applies the
+matching reference-frame acceleration correction to actors. This keeps the
+explorable non-convex terrain collider stationary under the ship and explorer
+without falsifying relative orbits.
+
+Only the active reference body may own adaptive terrain collision. Switching
+exploration to another planet must be an explicit reference-frame transition,
+not a second moving terrain collider.
 
 ### Celestial Frame Provider
 
@@ -130,14 +143,13 @@ visible and physics works, move to generated visual meshes:
    body was created from a Unity primitive sphere.
 6. Assign a `CelestialSurfaceProfile`.
 7. Assign a `CelestialShapeProfile` if the body should have procedural terrain.
-8. Keep `Sync Sphere Collider` enabled for moving planets and moons. This gives
-   the body a correct spherical collision surface while the gravity model is
-   still radius-based.
-9. Keep `Generate Mesh Collider` disabled for moving planets and moons. Use it
-   only on locked/static bodies. When mesh collision is active, the generated
-   `Terrain Mesh` child receives a separate baked `MeshCollider`, and the root
-   sphere collider is disabled so terrain shape owns surface contact.
-10. Keep `Bake Mesh Collider` enabled for static/locked body collision tests.
+8. Keep `Sync Sphere Collider` enabled for dynamic N-body planets and moons.
+   Their physical collision remains spherical.
+9. Use `Generate Mesh Collider` only on kinematic bodies. The generated
+   `Terrain Mesh` child then assigns its exact LOD0 render mesh to the
+   `MeshCollider`; there is no separate collision-resolution mesh. The root
+   sphere collider is disabled so one surface owns contact.
+10. Keep `Bake Mesh Collider` enabled for kinematic body collision.
 11. Start with `Render Resolution = 32`.
 12. Use the component context menu `Rebuild Visual Mesh` if the child mesh does
    not update immediately.
@@ -147,10 +159,10 @@ owned by `CelestialBodyVisual`; do not manually scale it to fake the radius.
 
 ### Celestial LOD Setup
 
-The first LOD pass follows the Solar-System reference approach: each body
+The orbital-distance LOD path follows the Solar-System reference approach: each body
 prebuilds a small set of complete sphere meshes, then switches the active
-`MeshFilter.sharedMesh` based on the body's viewport height. This is not the
-future landing-distance chunk terrain system.
+`MeshFilter.sharedMesh` based on the body's viewport height. Authored explorable
+bodies hand over to the adaptive patch system near the surface.
 
 Assets created for the first pass:
 
@@ -176,13 +188,63 @@ Default profile values:
 
 - `LOD0 Screen Height`: `0.5`
 - `LOD1 Screen Height`: `0.2`
-- `LOD0 Resolution`: `64`
-- `LOD1 Resolution`: `32`
-- `LOD2 Resolution`: `16`
+- `LOD0 Resolution`: `96`
+- `LOD1 Resolution`: `48`
+- `LOD2 Resolution`: `24`
 
 Raise `LOD0 Resolution` only after ocean, atmosphere, lighting, and camera
-movement are stable. Collision remains separate: moving planets and moons still
-use spherical collision by default.
+movement are stable. Dynamic N-body planets and moons still use spherical
+collision by default.
+
+### Adaptive Surface Patch Setup
+
+Use adaptive patches only on a kinematic body that the player can approach,
+land on, or explore:
+
+1. Add `CelestialSurfacePatchSystem` beside `CelestialBodyVisual`.
+2. Assign
+   `Assets/Project/Design/Rendering/Celestial/SO_CelestialSurfacePatchProfile.asset`.
+3. Assign the same body's `CelestialBodyVisual`.
+4. Assign the authored gameplay camera; do not use periodic camera discovery.
+5. Assign a `collisionObserverSource` that implements
+   `ICelestialSurfaceCollisionObserver`. The sandbox uses
+   `PlayerPossessionController`, which reports the spacecraft while piloting or
+   inside it and the explorer while on foot.
+6. Keep the body on a motion mode whose `CelestialBody` supports a non-convex
+   surface collider.
+
+Below the entry altitude, the system disables the complete `Terrain Mesh`
+renderer and renders a pooled cube-sphere quadtree instead. Collision has a
+separate `GlobalFallback -> LocalPreparing -> LocalAuthoritative` handoff. The
+global `Terrain Mesh` collider stays authoritative until deepest-level patches
+cover the controlled actor's current position, safety margin, and predicted
+motion corridor. Only then do local colliders enable before the global collider
+disables. Unsafe speed, missing coverage, a visual rebuild, ascent, or an
+observer change restores the global collider first. At no point may collision
+authority be empty.
+
+Each local collider shares its renderer's exact mesh. Entry/exit hysteresis
+prevents rapid whole-system toggling; ghost border normals and patch skirts
+prevent lighting seams and visible cracks. Split/merge hysteresis prevents a
+branch from oscillating at its LOD boundary, and every adaptive level uses the
+same sampling footprint so a topology change does not resample shared vertices
+at a different height.
+
+Patch topology changes are transactional. New meshes and cooked colliders are
+prepared behind the currently active surface within the profile's per-frame
+build-count and millisecond budgets. The global terrain remains visible and
+collidable during first activation; an existing patch set remains authoritative
+during later refreshes. Only a fully prepared set may commit. Do not restore a
+single-frame rebuild path or disable the fallback terrain before staging
+finishes.
+
+The default profile uses `16` cells per patch, subdivision level `6`, entry/exit
+altitude ratios `0.7/0.9`, collision within `0.16` body radii, a `0.75 s`
+prediction horizon, `0.5` coverage safety ratio, and a `0.015` body-radius
+safety margin. Tune these as one performance and safety budget; do not raise
+patch resolution, subdivision depth, collision radius, prediction horizon,
+build count, and millisecond budget together. The sandbox baseline permits at
+most `6` patch operations and approximately `2 ms` of patch work per frame.
 
 ### Orbit Line Display
 
@@ -274,15 +336,10 @@ The moon shape profile writes shader data into mesh UV0. If ejecta rays or
 biome variation do not appear after changing shape settings, run
 `CelestialBodyVisual > Rebuild Visual Mesh` on the moon object.
 
-Useful texture transfers from the Solar-System reference:
-
-- `Assets/Celestial Body/Textures/Normals/Rock1.jpg`
-- `Assets/Celestial Body/Textures/Normals/SnowOld.jpg`
-
-Import these into `Assets/Project/Art/Textures/Celestial/Normals` and mark them
-as normal maps in Unity's texture importer before assigning them to
-`Normal Map Flat` or `Normal Map Steep`. If you do not assign normal maps yet,
-the shader still works, but it will rely mostly on geometry and color blending.
+The active moon maps live under
+`Assets/Project/Art/Textures/Celestial/Moon`. Older Solar-System comparison
+maps are retained under `Assets/Project/Art/Source/Celestial/Legacy`; do not
+assign those legacy copies to runtime profiles without an explicit art pass.
 
 ### Terrestrial Planet Setup
 
@@ -297,7 +354,7 @@ Assets created for this pass:
 - `Assets/Project/Design/Rendering/Celestial/SO_TerrestrialSurfaceProfile.asset`
 - `Assets/Project/Design/Rendering/Celestial/SO_DefaultOceanProfile.asset`
 - `Assets/Project/Design/Rendering/Celestial/SO_DefaultAtmosphereProfile.asset`
-- `Assets/Project/Art/Materials/Celestial/Terrestrial.mat`
+- `Assets/Project/Art/Materials/Celestial/MAT_Celestial_Terrestrial.mat`
 - `Assets/Project/Art/Shaders/Celestial/FarionTerrestrialTriplanar.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionOceanPostProcess.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionAtmospherePostProcess.shader`
@@ -312,17 +369,19 @@ On `Test Planet`:
    full screen pass from the profile data.
 5. `CelestialBodyVisual > Material`: leave empty so the surface profile owns
    the material.
-6. `CelestialBodyVisual > Render Resolution`: start at `64`; increase later
-   only after shader import
-   and profile tuning are stable.
+6. Assign `SO_CelestialLodProfile`; its `96/48/24` full-sphere meshes cover
+   orbital and medium-distance presentation. Do not raise the fallback
+   `Render Resolution` when a LOD profile is assigned.
 7. Use `TerrestrialPlanetVisual > Apply Planet Visual Profile` if the linked
    profiles do not apply immediately.
 
 Texture inputs used by `SO_TerrestrialSurfaceProfile`:
 
-- `Noise Texture`: `Assets/Project/Art/Textures/Celestial/Terrestrial Noise.psd`
-- `Rock Normal`: `Assets/Project/Art/Textures/Celestial/Normals/Rock5.tif`
-- `Snow Normal`: `Assets/Project/Art/Textures/Celestial/Normals/Snow.tif`
+- `Noise Texture`: `Assets/Project/Art/Textures/Celestial/Terrestrial/TX_Celestial_Terrestrial_Noise.psd`
+- `Rock Normal`: `Assets/Project/Art/Textures/Celestial/Terrestrial/TX_Celestial_Terrestrial_Rock_Normal.tif`
+- Snow and frozen-surface detail comes from the texture sets under
+  `Assets/Project/Art/Textures/Celestial/SurfaceMaterials`, not from a material-owned
+  legacy snow normal.
 
 The continent-ridge shape profile follows the Solar-System reference structure:
 
@@ -330,11 +389,14 @@ The continent-ridge shape profile follows the Solar-System reference structure:
 - `Ocean Floor Depth` and `Ocean Floor Smoothing` flatten deep ocean regions.
 - `Ridge Noise` creates mountain chains.
 - `Mountain Mask Noise` controls where mountains can appear.
-- UV0 stores four extra noise channels for biome and detail shading.
+- UV0 stores four shape-detail channels for large, detail, small, and warped
+  shading noise. Surface-material weights and state use fixed-resolution
+  cubemaps and are independent from mesh LOD.
 
 The land shader still colors terrain below sea level for continuity under the
-screen-space ocean pass. Sea level should be tuned on
-`SO_TerrestrialPlanetVisualProfile`.
+screen-space ocean pass. Sea level is authored once on
+`SO_TestPlanetHydrosphere`; `SO_TerrestrialPlanetVisualProfile` owns only the
+ocean and atmosphere rendering styles.
 
 ### Ocean And Atmosphere Post-Process Setup
 
@@ -365,24 +427,39 @@ Renderer setup:
 Texture inputs used by `SO_DefaultOceanProfile` and sampled by the screen-space
 ocean shader:
 
-- `Wave Normal A`: `Assets/Project/Art/Textures/Celestial/Normals/Wave A.png`
-- `Wave Normal B`: `Assets/Project/Art/Textures/Celestial/Normals/Wave B.png`
+- `Wave Normal A`: `Assets/Project/Art/Textures/Celestial/Ocean/TX_Celestial_Ocean_WaveA_Normal.png`
+- `Wave Normal B`: `Assets/Project/Art/Textures/Celestial/Ocean/TX_Celestial_Ocean_WaveB_Normal.png`
 
 These are not optional decoration. The full screen pass samples them with
 triplanar mapping at the ray/ocean-sphere hit point, matching the Solar-System
 reference approach of shading water from camera rays rather than from a visible
-ocean mesh.
+ocean mesh. The celestial import policy keeps both maps linear, repeatable,
+mipmapped, trilinear, and imported as normal maps.
 
 Useful first tuning values:
 
 - `Ocean Level`: tune this on `SO_TerrestrialPlanetVisualProfile`.
-- `Normal Strength`: `0.35` to `0.6`
+- `Wave Strength`: `0.25` to `0.45`
 - `Smoothness`: `0.85` to `0.95`
 - `Specular Strength`: `1` to `2`
 
-Atmosphere is present as a lightweight screen-space scattering baseline. The
-next quality step is a baked optical-depth texture like the Solar-System
-reference, not a transparent mesh shell.
+Atmosphere uses the same screen-space ownership model and a profile-generated
+baked optical-depth lookup:
+
+- `FarionAtmosphereOpticalDepth.compute` integrates normalized atmospheric
+  density into a reusable floating-point lookup.
+- `FarionAtmospherePostProcess.shader` ray-marches visible atmosphere segments
+  and uses the lookup for both view and star-ray extinction.
+- `SO_DefaultAtmosphereProfile` owns thickness, density falloff, wavelengths,
+  scattering strength, sample counts, and dither controls.
+- Ray-march jitter uses URP's package-owned
+  `Textures/BlueNoise256/LDR_LLL1_0`. Do not replace it with a color texture,
+  sparse dot mask, or sRGB noise.
+
+Atmosphere and ocean must be judged in Game view from at least three positions:
+orbit with a visible limb, surface daylight looking toward the horizon, and the
+night-side terminator. Parameter tuning from Scene view alone is not a release
+validation.
 
 ## Actor Probe
 
@@ -409,24 +486,49 @@ Create a simple test actor under `Actors`:
 
 ### Star Material
 
-1. Create a material under `Assets/Project/Art/Materials/Celestial` named
-   `Star`.
-2. Set its shader to `Farion/Lighting/Star Emission`.
-3. Start with:
-   - `Emission Color`: warm white/orange.
-   - `Intensity`: `6` to `10`.
-   - `Rim Power`: `1.5` to `3`.
-   - `Rim Strength`: `1` to `2`.
-4. Assign this material to the star's `CelestialSurfaceProfile`, or directly to
-   `CelestialBodyVisual > Material` if you are still testing.
-5. On `Test Star > CelestialLightSource`, assign the same material to
-   `Emission Material`.
-6. Keep `Apply Emission Material`, `Disable Shadow Casting`, `Disable Shadow
-   Receiving`, and `Disable Probe Lighting` enabled.
+The current authored assets are:
+
+- `Assets/Project/Art/Materials/Celestial/MAT_Celestial_Star.mat`
+- `Assets/Project/Art/Shaders/Lighting/FarionStarEmission.shader`
+- `Assets/Project/Design/Rendering/Celestial/SO_TestStarVisualProfile.asset`
+
+Use this ownership hierarchy:
+
+1. Keep the physical `CelestialBody`, collider, radiation source, and
+   `CelestialLightSource` on `Test Star`.
+2. Add a child named `Star Visual` with the sphere `MeshFilter` and
+   `MeshRenderer`.
+3. Add `CelestialStarVisual` to `Test Star`.
+4. Assign:
+   - `Profile`: `SO_TestStarVisualProfile`
+   - `Light Source`: the root `CelestialLightSource`
+   - `Star Renderer`: `Star Visual > MeshRenderer`
+   - `Star Visual Transform`: the `Star Visual` child
+   - `Observer Camera`: the authored gameplay camera
+5. Keep the child renderer's shadow casting, shadow receiving, light probes,
+   reflection probes, and motion vectors disabled. `CelestialStarVisual`
+   enforces these settings when it applies the profile.
+
+Do not place `CelestialStarVisual` on the child and do not assign the physical
+root as `Star Visual Transform`. Scaled-space placement is allowed to move only
+the render child, never the physical body.
 
 The star must not use a lit planet/moon material. It should be rendered as an
 unlit emissive body; otherwise the scene Directional Light will visibly shade
-the star surface, which is physically and visually wrong for this setup.
+the star surface, which is physically and visually wrong for this setup. The
+photosphere shader uses seamless object-space granulation, larger convection
+cells, sunspots, limb darkening, subtle rotation, and HDR emission. Scene bloom
+provides the corona response.
+
+`SO_TestStarVisualProfile` keeps the physical star at its simulation position
+while rendering the visual proxy at `3000` units when it is outside the safe
+camera range. The proxy scale is reduced by the same distance ratio, so the
+star's screen-space direction and angular size remain unchanged. This avoids
+raising the camera far clip to the full star distance.
+
+Use `CelestialVisualValidation.md` as the shared automated and Game View quality
+gate after changing any celestial material, profile, texture, or renderer
+feature.
 
 ### Celestial Lighting Rig
 
@@ -444,39 +546,39 @@ Create an authored lighting setup:
    - `Profile`: `SO_SolarLightingProfile`
    - `Primary Source`: `Test Star`
    - `Main Directional Light`: the Directional Light under `Lighting`
-   - `Sync Light Position To Source`: enabled
-   - `Lighting Focus`: `Player Starter Shuttle` while flying, or `CameraRig` while viewing
-     the sandbox.
+   - `Sync Light Position To Source`: disabled; Directional Light position has
+     no lighting meaning.
+   - `Lighting Focus`: the main gameplay camera transform.
    - `Scene Camera`: the main camera.
-8. Disable `Auto Find Primary Source`, `Auto Find Main Directional Light`, and
-   `Auto Find Main Camera` after the explicit references above are assigned.
-   Keep `Use Main Camera As Fallback Focus` disabled for the authored sandbox.
+8. Keep `Use Main Camera As Fallback Focus` enabled as a recovery path; the
+   explicit `Lighting Focus` remains authoritative.
 9. Use the component context menu `Apply Lighting Now`.
 
 Useful first profile values:
 
 - `Reference Distance`: `350`
-- `Reference Intensity`: `6`
+- `Reference Intensity`: `1.1`
 - `Invert Light Direction`: disabled
-- `Use Inverse Square Falloff`: disabled for the first visual calibration
-- `Minimum Falloff Distance`: `80`
-- `Minimum Intensity`: `1.25`
-- `Maximum Intensity`: `8` to `12`
+- `Use Inverse Square Falloff`: disabled for a Directional Light
+- `Minimum Falloff Distance`: `50`
+- `Minimum Intensity`: `0`
+- `Maximum Intensity`: `4`
 - `Shadows`: `Soft`
-- `Shadow Strength`: `0.85` to `0.95`
+- `Shadow Strength`: around `0.86`
 - `Directional Shadow Angle`: `0.4` to `0.8`
-- `Ambient Light`: dark blue/grey, around `(0.04, 0.045, 0.055)`
+- `Ambient Light`: dark blue/grey, around `(0.018, 0.021, 0.028)`
 - `Far Clip Plane`: `5000` for the current sandbox scale
 
-The rig rotates the Directional Light so lit sides face the star. Directional
-Light position does not affect Unity lighting, but `Sync Light Position To
-Source` keeps the authored light object on the star so the hierarchy remains
-easy to reason about.
+The rig rotates the Directional Light so lit sides face the star. Keep its
+transform at the `Lighting` root rather than moving it to astronomical
+coordinates. Physical radiation falloff belongs to simulation profiles;
+the local URP Directional Light is a stable, effectively infinite source.
 
 Farion celestial shaders use the global star properties published by
-`CelestialLightingRig`, so moon/planet lighting direction is calculated from
-the authored star position. The Directional Light still stays in the scene for
-URP main-light compatibility and shadow-map support.
+`CelestialLightingRig`. Terrain, atmosphere, and ocean consume the same
+camera-focused direction-to-star state. The Directional Light remains the URP
+main light and shadow-map owner; shaders must not derive a second competing
+direction independently.
 
 Shadow map resolution is controlled by the URP Render Pipeline Asset, not by
 `CelestialLightingRig`. For the PC profile, use
@@ -490,7 +592,7 @@ does not affect gravity, lighting, atmosphere scattering, or navigation.
 Assets created for the first pass:
 
 - `Assets/Project/Design/Rendering/Space/SO_StarDomeProfile.asset`
-- `Assets/Project/Art/Materials/Space/StarDome.mat`
+- `Assets/Project/Art/Materials/Space/MAT_Space_StarDome.mat`
 - `Assets/Project/Art/Shaders/Space/FarionProceduralStarDome.shader`
 
 Setup:
@@ -509,9 +611,9 @@ lower `Star Density` first before lowering exposure.
 
 ### Post Processing
 
-The scene can have a single `Global Volume` under `Lighting`:
+The scene must have exactly one `GlobalVolume` under `Lighting`:
 
-1. Create or select `Global Volume`.
+1. Create or select `GlobalVolume`.
 2. Enable `Is Global`.
 3. Create/assign a scene Volume Profile under
    `Assets/Project/Scenes/SC_PhysicsSandbox`.
@@ -526,6 +628,8 @@ The scene can have a single `Global Volume` under `Lighting`:
 
 Keep the post-process profile subtle. The moon surface should still read from
 real geometry, normals, and shadows, not from over-bloomed exposure.
+For the sandbox baseline use Bloom threshold `1.1`, intensity `1`, scatter
+`0.55`, post exposure `-0.1`, and contrast `4`.
 
 ## Validation
 
@@ -809,7 +913,9 @@ Create a test explorer under `Actors`:
 13. Start with `Rigidbody > Mass = 80`, `Drag = 0`, and `Angular Drag = 0.05`.
 14. Start with `CapsuleCollider > Radius = 0.35`, `Height = 1.8`, and
     `Center = (0, 0, 0)`.
-15. Place the explorer slightly above a locked/static planet mesh collider.
+15. Place the explorer slightly above the active physics-reference planet mesh
+    collider. The body may retain `KinematicOrbit`; do not move its collider
+    through Unity space while it is the exploration reference.
 
 For the first-person camera:
 
@@ -820,6 +926,11 @@ For the first-person camera:
 5. Assign `Player Explorer > KeyboardFirstPersonInput` to `Input Source`.
 6. Start with `Eye Height = 1.65`.
 7. Keep `Lock Cursor On Enable` enabled in Play Mode.
+
+`FirstPersonCameraRig` smooths only the eye offset relative to the interpolated
+player pose. Do not reintroduce absolute world-position smoothing: it turns
+planetary translation and origin rebases into visible camera lag against the
+ground.
 
 On `Simulation > WorldOriginRebaser`, keep `Actors` and `CameraRig` in
 `Shifted Roots`. While testing the explorer alone, set `Tracking Target` to
@@ -964,6 +1075,12 @@ Resource node definitions must have explicit `Visual Prefab` assignments;
 missing prefabs are skipped instead of being replaced with primitive fallback
 objects.
 
+Possession changes only schedule resource streaming; they must not synchronously
+spawn a complete surface population. The sandbox limits one refresh to `8`
+successful spawns and `32` candidate evaluations. Remaining deposits stream on
+later refreshes, preventing ship exit and camera handoff from becoming a
+single-frame generation spike.
+
 The current test distribution uses real starter resources instead of generic
 surface pickups. Iron is limited to rocky, basalt, and temperate biomes; nickel
 is limited to rocky and basalt biomes; ice crystal is limited to frozen crust.
@@ -1063,46 +1180,35 @@ is planned for co-op. ESC, inventory, and later station screens block local
 player controls through `PlayerControlLock` while gravity, ships, resources,
 and other players keep running.
 
-Shared visual components:
+The production source of truth is now:
 
-- `MenuButtonView` owns menu button visuals, hover/selection animation, icon,
-  title, subtitle, disabled state, and DOTween motion.
-- `MainMenuButton` only binds the shared button view to `MainMenuAction`.
-- `GameplayMenuButton` only binds the shared button view to
-  `GameplayMenuAction`.
-- `FarionPanelFader` is optional on panels and gives the same fade/slide
-  behavior to main menu and gameplay panels.
+```text
+GameplayCanvas
+|-- HudRoot                     UiScreenView: GameplayHud / Hud
+|-- UI_PauseMenuScreen          UiScreenView: PauseMenu / Screen
+|-- UI_InventoryScreen          UiScreenView: Inventory / Screen
+|-- UI_SettingsScreen           UiScreenView: Settings / Screen
+|-- UI_SaveLoadScreen           UiScreenView: SaveLoad / Screen
+|-- UI_SystemRoot               scene-scoped services
+|-- UI_ConfirmationDialog       UiScreenView: Confirmation / Modal
+|-- UI_LoadingOverlay           UiScreenView: Loading / System
+`-- UI_FeedbackOverlay          queued non-blocking messages
+```
 
-Create a gameplay UI root in `SC_PhysicsSandbox`:
+`GameplayUiController` receives one explicit `UiSystemRoot` reference.
+`UiScreenRouter` is the sole owner of screen visibility, history, cancel, focus
+restoration, and UI-related `PlayerControlLock`. The router merges its explicit
+screen list with all `UiScreenView` instances owned by the same Canvas,
+including Settings, Save/Load, Confirmation, Loading, and Feedback.
 
-1. Add a screen-space `Canvas`.
-2. Add an `EventSystem` with `InputSystemUIInputModule` if the scene does not
-   already have one.
-3. Add `GameplayUiController` to the canvas root. Unity also adds the required
-   `PlayerControlLock` component.
-4. Add `GameplayPanelSwitcher` to the same root.
-5. Create these child roots and assign them to `GameplayPanelSwitcher`:
-   - `HudRoot`
-   - `PauseMenuPanel`
-   - `InventoryPanel`
-6. Keep `HudRoot` active. Keep `PauseMenuPanel` and `InventoryPanel` inactive
-   in the authored scene.
-7. Assign `Player Explorer > PlayerInventory` to `GameplayUiController >
-   Player Inventory`.
-8. Assign `Player Explorer > PlayerInteractionRaycaster` to
-   `GameplayUiController > Interaction Raycaster`.
-9. Add a TMP text child under `HudRoot` for the interaction prompt and assign it
-   to `GameplayUiController > Interaction Prompt Text`.
-10. Add `InventoryPanelPresenter` to `InventoryPanel`.
-11. Create an inventory slot child prefab or scene object with
-   `InventorySlotView` and TMP text fields for name, detail, and quantity.
-12. Assign the slot container and slot prefab/view list to
-    `InventoryPanelPresenter`.
+The scene has exactly one EventSystem. `UiInputModuleBinder` assigns the
+`FarionInputActions` UI map only in Play Mode. Never serialize a generated
+runtime action asset or action references into the scene.
 
 Runtime behavior:
 
-- `Escape` toggles `PauseMenuPanel`.
-- `I` toggles `InventoryPanel`.
+- `Escape` opens Pause or closes only the current top cancelable screen.
+- `I` toggles Inventory through the same router.
 - Opening either panel unlocks and shows the cursor.
 - Closing all panels locks and hides the cursor.
 - `HudRoot` stays active during gameplay. The interaction prompt text is shown
@@ -1114,78 +1220,54 @@ Runtime behavior:
 
 ### Pause Menu Visual Target
 
-Use the shared `MenuButtonView` look for the reference-style vertical menu.
-The reusable button prefab is:
+Use the authored
+`Assets/Project/Prefabs/UI/Screens/UI_PauseMenuScreen.prefab`. It owns the
+restrained full-screen panel, `CanvasGroup`, `FarionPanelFader`,
+`GameplayMenuListPresenter`, and menu entries. The presenter creates
+`UI_MenuButton` views from its serialized entries and submits
+`GameplayMenuAction` values to `GameplayUiController`.
 
-`Assets/Project/Prefabs/UI/Common/UI_MenuButton.prefab`
-
-Recommended pause hierarchy:
-
-```text
-GameplayCanvas
-`-- PauseMenuPanel
-    |-- BackgroundScrim
-    `-- MenuColumn
-        |-- BrandText
-        |-- StateText
-        |-- ResumeButton
-        |-- InventoryButton
-        |-- BlueprintsButton
-        |-- JournalButton
-        |-- ShipButton
-        |-- MapButton
-        |-- OptionsButton
-        |-- SaveButton
-        |-- ExitToMainMenuButton
-        `-- QuitGameButton
-```
-
-`PauseMenuPanel`:
-
-- Full stretch anchors.
-- Add `CanvasGroup`.
-- Add `FarionPanelFader`.
-- Add a dark transparent image as `BackgroundScrim`.
-- Keep the panel inactive in the authored scene.
-
-`MenuColumn`:
-
-- Left anchored.
-- Suggested width: `520`.
-- Suggested left padding: `32`.
-- Use a `VerticalLayoutGroup` for the button list only, not for the full panel
-  background.
-
-Each button:
-
-- Use `Assets/Project/Prefabs/UI/Common/UI_MenuButton.prefab`.
-- Add `GameplayMenuButton` on gameplay menu instances.
-- Set `Action` to the matching `GameplayMenuAction`.
-- Add `MainMenuButton` on main-menu instances. Do not create a second visual
-  button prefab unless a screen genuinely needs a different layout.
+Do not add per-button action components or a second panel switcher. New menu
+actions belong in `GameplayMenuAction`, their presentation data belongs in the
+pause prefab entry list, and the outcome remains in `GameplayUiController` or a
+lower application/gameplay service.
 
 ### Terrain Mesh Collision
 
-The Solar-System reference generates a separate collision-resolution mesh and
-assigns it to a `MeshCollider`. Farion follows that idea only for locked/static
-celestial bodies because dynamic N-body planets should not use full concave
-terrain mesh colliders as the primary gameplay surface.
+Farion deliberately does not retain the Solar-System reference's independent
+collision-resolution sphere. A visible mesh and a separately sampled collider
+can disagree near steep terrain. Kinematic bodies therefore share render
+geometry with collision; dynamic N-body bodies retain spherical collision.
 
-For a static terrain-collision test:
+For a stable terrain-collision test:
 
 1. Select the target body definition, such as `SO_TestPlanet`.
-2. Enable `Lock Position`.
-3. Apply the definition to the scene body.
+2. Assign the scene body to `GravitySimulation > Physics Reference Body`.
+3. Apply the definition to the scene body. It may remain `KinematicOrbit`;
+   the reference frame, not a static-data workaround, owns local stability.
 4. Select the body's `CelestialBodyVisual`.
 5. Enable `Generate Mesh Collider`.
-6. Set `Mesh Collider Resolution` to `24` or `32` first.
-7. Keep `Bake Mesh Collider` enabled.
-8. Use `Rebuild Visual Mesh`.
+6. Keep `Bake Mesh Collider` enabled.
+7. Use `Rebuild Visual Mesh`.
 
 After rebuilding, the generated `Terrain Mesh` child should have an enabled
 `MeshCollider`. The root `SphereCollider` should be disabled while mesh
-collision is active. For moving planets, leave `Generate Mesh Collider`
-disabled until the future local terrain patch/surface query system exists.
+collision is active, and `MeshFilter.sharedMesh` must be the same object as
+`MeshCollider.sharedMesh`.
+
+The player spacecraft uses `ContinuousDynamic` collision detection because its
+Rigidbody owns a compound of primitive colliders and can approach the static
+terrain MeshCollider at flight speed. Keep the on-foot capsule on
+`ContinuousSpeculative`; changing CCD modes does not replace the global/local
+collision-authority handoff.
+
+For the authored explorable test planet, also use the adaptive surface patch
+setup above. Near the ground, the global renderer is disabled. Its collider
+remains the fallback until local patch colliders have complete predicted
+coverage, then collision ownership transfers without an empty authority frame.
+Dynamic N-body bodies must leave `Generate Mesh Collider` disabled. Project
+validation rejects an adaptive collision body that is not the scene
+simulation's physics reference body.
 
 Tune `SO_PlayerStarterShuttleLandingProfile` only after confirming the sample
 values make sense in Play Mode. Its touchdown altitude includes the current

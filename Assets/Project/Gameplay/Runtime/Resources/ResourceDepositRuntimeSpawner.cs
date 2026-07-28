@@ -24,6 +24,8 @@ namespace Farion.Gameplay.Resources
         [SerializeField, Min(0f)] float spawnRadius = 160f;
         [SerializeField, Min(0f)] float despawnRadius = 220f;
         [SerializeField, Min(0.05f)] float streamRefreshInterval = 0.35f;
+        [SerializeField, Min(1)] int maximumSpawnsPerRefresh = 8;
+        [SerializeField, Min(1)] int maximumCandidateEvaluationsPerRefresh = 32;
         [SerializeField, Min(0f)] float surfaceOffset = 0.85f;
         [SerializeField] bool skipOceanCoveredDeposits = true;
         [SerializeField, Min(0f)] float oceanSurfaceClearance = 0.05f;
@@ -85,6 +87,10 @@ namespace Farion.Gameplay.Resources
             spawnRadius = Mathf.Max(0f, spawnRadius);
             despawnRadius = Mathf.Max(spawnRadius, despawnRadius);
             streamRefreshInterval = Mathf.Max(0.05f, streamRefreshInterval);
+            maximumSpawnsPerRefresh = Mathf.Max(1, maximumSpawnsPerRefresh);
+            maximumCandidateEvaluationsPerRefresh = Mathf.Max(
+                maximumSpawnsPerRefresh,
+                maximumCandidateEvaluationsPerRefresh);
             surfaceOffset = Mathf.Max(0f, surfaceOffset);
             oceanSurfaceClearance = Mathf.Max(0f, oceanSurfaceClearance);
         }
@@ -113,7 +119,7 @@ namespace Farion.Gameplay.Resources
         public void SetTrackingTarget(Transform target)
         {
             trackingTarget = target;
-            RefreshStreaming();
+            nextStreamRefreshTime = Application.isPlaying ? Time.time : 0f;
         }
 
         void RefreshStreaming()
@@ -140,8 +146,17 @@ namespace Farion.Gameplay.Resources
             DespawnOutOfRangeNodes(trackingDirection);
             CollectSpawnCandidates(trackingDirection);
 
+            int spawnCount = 0;
+            int evaluationCount = 0;
             for (int i = 0; i < spawnCandidates.Count; i++)
             {
+                if (spawnCount >= maximumSpawnsPerRefresh ||
+                    evaluationCount >= maximumCandidateEvaluationsPerRefresh)
+                {
+                    break;
+                }
+
+                evaluationCount++;
                 ResourceDepositData deposit = spawnCandidates[i].Deposit;
 
                 if (spawnedNodes.Count >= maxSpawnedDeposits &&
@@ -162,6 +177,7 @@ namespace Farion.Gameplay.Resources
                 }
 
                 spawnedNodes.Add(deposit.DepositId, new SpawnedDepositNode(deposit, node));
+                spawnCount++;
             }
 
             spawnedNodeCount = spawnedNodes.Count;

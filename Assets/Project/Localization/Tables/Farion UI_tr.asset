@@ -1,0 +1,398 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Farion UI_tr
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: tr
+  m_SharedData: {fileID: 11400000, guid: 72af187e65cb61841aeacb6ac01ea56d, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 1222115328
+    m_Localized: AYARLAR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1259864064
+    m_Localized: "ER\u0130\u015E\u0130LEB\u0130L\u0130RL\u0130K"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058368
+    m_Localized: "ARAY\xDCZ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058371
+    m_Localized: Dil
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058372
+    m_Localized: "Men\xFClerde ve sistem mesajlar\u0131nda kullan\u0131lacak dili
+      se\xE7."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058373
+    m_Localized: "Aray\xFCz \xF6l\xE7e\u011Fi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058374
+    m_Localized: "Men\xFClerin ve operasyon g\xF6stergelerinin boyutunu art\u0131r."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058375
+    m_Localized: "Azalt\u0131lm\u0131\u015F hareket"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058376
+    m_Localized: "\xC7o\u011Fu aray\xFCz ge\xE7i\u015Fini anl\u0131k durum de\u011Fi\u015Fimleriyle
+      de\u011Fi\u015Ftir."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058377
+    m_Localized: "Altyaz\u0131lar"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058378
+    m_Localized: "Konu\u015Fmalar\u0131 ve \xF6nemli telsiz ileti\u015Fimini g\xF6ster."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058379
+    m_Localized: "Altyaz\u0131 boyutu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058380
+    m_Localized: "Diyalog altyaz\u0131lar\u0131nda kullan\u0131lacak okuma boyutunu
+      belirle."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058381
+    m_Localized: "\u0130ngilizce"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058382
+    m_Localized: "T\xFCrk\xE7e"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058383
+    m_Localized: "A\xE7\u0131k"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058384
+    m_Localized: "Kapal\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058385
+    m_Localized: Standart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058386
+    m_Localized: "B\xFCy\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058387
+    m_Localized: "GER\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058388
+    m_Localized: "\u0130PTAL"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058389
+    m_Localized: "\xC7IKI\u015E"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058390
+    m_Localized: Devam et
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058391
+    m_Localized: Yeni oyun
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058392
+    m_Localized: "Oyun y\xFCkle"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058393
+    m_Localized: Ayarlar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058394
+    m_Localized: Jenerik
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058395
+    m_Localized: "\xC7\u0131k\u0131\u015F"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058396
+    m_Localized: Devam et
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058397
+    m_Localized: Envanter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058398
+    m_Localized: Planlar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058399
+    m_Localized: "G\xFCnl\xFCk"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058400
+    m_Localized: Gemi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058401
+    m_Localized: Harita
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058402
+    m_Localized: Ayarlar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058403
+    m_Localized: Kaydet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058404
+    m_Localized: "Ana men\xFCye d\xF6n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058405
+    m_Localized: "Oyundan \xE7\u0131k"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058406
+    m_Localized: DURAKLATMA MENÜSÜ
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058407
+    m_Localized: ENVANTER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058408
+    m_Localized: YUVA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058409
+    m_Localized: "E\u015EYA DETAYI"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058410
+    m_Localized: "BO\u015E YUVA"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058411
+    m_Localized: "Toplanan malzeme ve bile\u015Fenler i\xE7in kullan\u0131labilir."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058412
+    m_Localized: "M\u0130KTAR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058413
+    m_Localized: "ARA\u015ETIRMA ALANI"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058414
+    m_Localized: "S\u0130STEM GE\xC7\u0130\u015E\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058415
+    m_Localized: SEFER HAZIRLANIYOR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058416
+    m_Localized: "G\xF6rev ortam\u0131 y\xFCkleniyor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058417
+    m_Localized: "ANA MEN\xDCYE D\xD6N\xDCL\xDCYOR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058418
+    m_Localized: "Komuta aray\xFCz\xFC haz\u0131rlan\u0131yor"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058419
+    m_Localized: Sil
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058420
+    m_Localized: Kaydet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058421
+    m_Localized: "Y\xFCkle"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058422
+    m_Localized: SEFER KAYDI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058423
+    m_Localized: "SEFERE D\xD6N"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058424
+    m_Localized: OYUNU KAYDET
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058425
+    m_Localized: "OYUNU Y\xDCKLE"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058426
+    m_Localized: "Mevcut sefer durumu i\xE7in bir yuva se\xE7."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058427
+    m_Localized: "Sefere devam etmek i\xE7in uyumlu bir kay\u0131t se\xE7."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058428
+    m_Localized: KAYIT TAR\u0130H\u0130
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058429
+    m_Localized: "KAYIT S\xDCR\xDCM\xDC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058430
+    m_Localized: "KULLANILAMAZ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058431
+    m_Localized: "Bu kay\u0131t y\xFCklenemiyor."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058432
+    m_Localized: "Kaydetme kullan\u0131lam\u0131yor."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058433
+    m_Localized: ANA KAYIT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058434
+    m_Localized: "MANUEL KAYIT {0:00}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058435
+    m_Localized: "KAYIT VER\u0130S\u0130 YOK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058436
+    m_Localized: HAZIR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058437
+    m_Localized: YEDEK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058438
+    m_Localized: UYUMSUZ
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058439
+    m_Localized: HASARLI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058440
+    m_Localized: "BO\u015E"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058441
+    m_Localized: "Y\xDCKLEMEYE HAZIR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058442
+    m_Localized: "KURTARMA YEDE\u011E\u0130 HAZIR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058443
+    m_Localized: "KAYIT S\xDCR\xDCM\xDC DESTEKLENM\u0130YOR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058444
+    m_Localized: "KAYIT VER\u0130S\u0130 OKUNAMADI"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058445
+    m_Localized: "YEN\u0130 KAYIT \u0130\xC7\u0130N UYGUN"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058446
+    m_Localized: "Bu kay\u0131t mevcut oyun s\xFCr\xFCm\xFCyle uyumlu."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058447
+    m_Localized: "Ana kay\u0131t kullan\u0131lam\u0131yor. Uyumlu kurtarma kopyas\u0131 kullan\u0131lacak."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058448
+    m_Localized: "Bu kay\u0131t uyumsuz bir oyun s\xFCr\xFCm\xFCyle olu\u015Fturulmu\u015F."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058449
+    m_Localized: "Kay\u0131t var ancak i\xE7eri\u011Fi ge\xE7erli de\u011Fil."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058450
+    m_Localized: "Bu yuvaya hen\xFCz bir sefer kayd\u0131 yaz\u0131lmad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058451
+    m_Localized: "KAYDIN \xDCZER\u0130NE YAZ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058452
+    m_Localized: "Bu yuvadaki mevcut kay\u0131t de\u011Fi\u015Ftirilecek."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058453
+    m_Localized: "\xDCZER\u0130NE YAZ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058454
+    m_Localized: "KAYDI S\u0130L"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058455
+    m_Localized: "Bu kay\u0131t ve kurtarma yede\u011Fi kal\u0131c\u0131 olarak silinecek."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058456
+    m_Localized: "Kaydetme ba\u015Far\u0131s\u0131z: {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058457
+    m_Localized: "Oyun kaydedildi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058458
+    m_Localized: "Silme ba\u015Far\u0131s\u0131z: {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058459
+    m_Localized: "Kay\u0131t silindi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058460
+    m_Localized: "Onay ekran\u0131 kullan\u0131lam\u0131yor."
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

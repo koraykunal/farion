@@ -10,13 +10,13 @@ Shader "Farion/Celestial/Moon Triplanar"
         _SteepColorStrength("Steep Color Strength", Range(0, 1)) = 0.75
 
         [Header(Triplanar)]
-        [NoScaleOffset] _AlbedoTex("Albedo Noise", 2D) = "white" {}
+        [NoScaleOffset] _SurfaceNoiseTex("Surface Noise (Linear Data)", 2D) = "white" {}
         [NoScaleOffset] _EjectaRayTex("Ejecta Ray", 2D) = "black" {}
         [NoScaleOffset] _NormalMapFlat("Normal Flat", 2D) = "bump" {}
         [NoScaleOffset] _NormalMapSteep("Normal Steep", 2D) = "bump" {}
-        _AlbedoScale("Albedo Scale", Float) = 12
-        _NormalFlatScale("Normal Flat Scale", Float) = 18
-        _NormalSteepScale("Normal Steep Scale", Float) = 12
+        _SurfaceNoiseWorldTileSize("Surface Noise Tile Size (m)", Float) = 180
+        _NormalFlatWorldTileSize("Flat Normal Tile Size (m)", Float) = 10
+        _NormalSteepWorldTileSize("Steep Normal Tile Size (m)", Float) = 7.5
         _NormalStrength("Normal Strength", Range(0, 1)) = 0.35
         _BiomeBlendStrength("Biome Blend Strength", Range(0, 2)) = 0.8
         _EjectaStrength("Ejecta Strength", Range(0, 2)) = 0.65
@@ -26,6 +26,7 @@ Shader "Farion/Celestial/Moon Triplanar"
         [Header(Surface)]
         _Metallic("Metallic", Range(0, 1)) = 0
         _Smoothness("Smoothness", Range(0, 1)) = 0.35
+        _EjectaSmoothness("Ejecta Smoothness", Range(0, 1)) = 0.12
         _BodyRadius("Body Radius", Float) = 1
         _RadiusMinMax("Radius Min Max", Vector) = (1, 1, 0, 0)
     }
@@ -37,7 +38,10 @@ Shader "Farion/Celestial/Moon Triplanar"
             "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
             "Queue" = "Geometry"
+            "UniversalMaterialType" = "Lit"
+            "IgnoreProjector" = "True"
         }
+        LOD 300
 
         Pass
         {
@@ -50,15 +54,24 @@ Shader "Farion/Celestial/Moon Triplanar"
             #pragma fragment Fragment
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_ATLAS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 
-            TEXTURE2D(_AlbedoTex);
-            SAMPLER(sampler_AlbedoTex);
+            TEXTURE2D(_SurfaceNoiseTex);
+            SAMPLER(sampler_SurfaceNoiseTex);
             TEXTURE2D(_EjectaRayTex);
             SAMPLER(sampler_EjectaRayTex);
             TEXTURE2D(_NormalMapFlat);
@@ -74,11 +87,12 @@ Shader "Farion/Celestial/Moon Triplanar"
                 half _SteepColorStrength;
                 half _Metallic;
                 half _Smoothness;
+                half _EjectaSmoothness;
                 float _BodyRadius;
                 float4 _RadiusMinMax;
-                float _AlbedoScale;
-                float _NormalFlatScale;
-                float _NormalSteepScale;
+                float _SurfaceNoiseWorldTileSize;
+                float _NormalFlatWorldTileSize;
+                float _NormalSteepWorldTileSize;
                 half _NormalStrength;
                 half _BiomeBlendStrength;
                 half _EjectaStrength;
@@ -86,9 +100,6 @@ Shader "Farion/Celestial/Moon Triplanar"
                 half _UseEjectaRayTex;
             CBUFFER_END
 
-            float4 _FarionStarPositionWS;
-            half4 _FarionStarColor;
-            float _FarionStarIntensity;
             half4 _FarionAmbientColor;
 
             struct Attributes
@@ -106,6 +117,9 @@ Shader "Farion/Celestial/Moon Triplanar"
                 float3 normalOS : TEXCOORD2;
                 float3 normalWS : TEXCOORD3;
                 float4 terrainData : TEXCOORD4;
+#if defined(_ADDITIONAL_LIGHTS_VERTEX)
+                half3 vertexLighting : TEXCOORD5;
+#endif
             };
 
             Varyings Vertex(Attributes input)
@@ -118,6 +132,9 @@ Shader "Farion/Celestial/Moon Triplanar"
                 output.normalOS = normalize(input.normalOS);
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.terrainData = input.texcoord;
+#if defined(_ADDITIONAL_LIGHTS_VERTEX)
+                output.vertexLighting = VertexLighting(positionInputs.positionWS, output.normalWS);
+#endif
                 return output;
             }
 
@@ -127,14 +144,14 @@ Shader "Farion/Celestial/Moon Triplanar"
                 return weights / max(dot(weights, 1.0), 0.0001);
             }
 
-            half4 SampleTriplanarColor(float3 positionOS, float3 normalOS, float scale)
+            half4 SampleTriplanarSurfaceNoise(float3 positionOS, float3 normalOS, float worldTileSize)
             {
-                float3 normalizedPosition = positionOS / max(_BodyRadius, 0.0001);
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = TriplanarWeights(normalOS);
 
-                half4 x = SAMPLE_TEXTURE2D(_AlbedoTex, sampler_AlbedoTex, normalizedPosition.zy * scale);
-                half4 y = SAMPLE_TEXTURE2D(_AlbedoTex, sampler_AlbedoTex, normalizedPosition.xz * scale);
-                half4 z = SAMPLE_TEXTURE2D(_AlbedoTex, sampler_AlbedoTex, normalizedPosition.xy * scale);
+                half4 x = SAMPLE_TEXTURE2D(_SurfaceNoiseTex, sampler_SurfaceNoiseTex, samplePosition.zy);
+                half4 y = SAMPLE_TEXTURE2D(_SurfaceNoiseTex, sampler_SurfaceNoiseTex, samplePosition.xz);
+                half4 z = SAMPLE_TEXTURE2D(_SurfaceNoiseTex, sampler_SurfaceNoiseTex, samplePosition.xy);
 
                 return x * weights.x + y * weights.y + z * weights.z;
             }
@@ -143,20 +160,20 @@ Shader "Farion/Celestial/Moon Triplanar"
                 TEXTURE2D_PARAM(normalTexture, normalSampler),
                 float3 positionOS,
                 float3 normalOS,
-                float scale)
+                float worldTileSize)
             {
-                float3 normalizedPosition = positionOS / max(_BodyRadius, 0.0001);
+                float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = TriplanarWeights(normalOS);
                 float3 axisSign = sign(normalOS);
 
                 half3 normalX = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, normalizedPosition.zy * scale),
+                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, samplePosition.zy),
                     _NormalStrength);
                 half3 normalY = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, normalizedPosition.xz * scale),
+                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, samplePosition.xz),
                     _NormalStrength);
                 half3 normalZ = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, normalizedPosition.xy * scale),
+                    SAMPLE_TEXTURE2D(normalTexture, normalSampler, samplePosition.xy),
                     _NormalStrength);
 
                 normalX = half3(normalX.z * axisSign.x, normalX.y, normalX.x);
@@ -164,6 +181,23 @@ Shader "Farion/Celestial/Moon Triplanar"
                 normalZ = half3(normalZ.x, normalZ.y, normalZ.z * axisSign.z);
 
                 return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
+            }
+
+            InputData BuildPbrInputData(Varyings input, half3 normalWS)
+            {
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+                inputData.positionCS = input.positionHCS;
+                inputData.normalWS = NormalizeNormalPerPixel(normalWS);
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+#if defined(_ADDITIONAL_LIGHTS_VERTEX)
+                inputData.vertexLighting = input.vertexLighting;
+#endif
+                inputData.bakedGI = max(SampleSH(inputData.normalWS), _FarionAmbientColor.rgb);
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionHCS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(float2(0.0, 0.0));
+                return inputData;
             }
 
             half4 Fragment(Varyings input) : SV_Target
@@ -175,58 +209,74 @@ Shader "Farion/Celestial/Moon Triplanar"
                 float height01 = saturate((length(input.positionOS) - _RadiusMinMax.x) / heightRange);
 
                 float steepness = saturate((1.0 - dot(normalOS, radialOS)) / 0.3);
-                half4 triplanarNoise = SampleTriplanarColor(input.positionOS, normalOS, _AlbedoScale);
+                half4 surfaceNoise = SampleTriplanarSurfaceNoise(
+                    input.positionOS,
+                    normalOS,
+                    _SurfaceNoiseWorldTileSize);
                 float4 terrainData = input.terrainData;
                 half detailNoise = terrainData.z;
                 half biomeNoise = saturate(terrainData.w / max(_BiomeBlendStrength * 3.0h, 0.0001h));
                 half biomeMask = 1.0h - biomeNoise;
 
-                half colorNoise = (triplanarNoise.r - 0.5h) * 0.4h + (triplanarNoise.g - 0.5h) * 0.25h + detailNoise * 0.18h;
+                half colorNoise =
+                    (surfaceNoise.r - 0.5h) * 0.4h
+                    + (surfaceNoise.g - 0.5h) * 0.25h
+                    + detailNoise * 0.18h;
                 half heightBlend = smoothstep(0.25h, 0.85h, height01 + colorNoise);
                 half3 baseBlend = lerp(_SecondaryColor.rgb, _BaseColor.rgb, heightBlend);
                 baseBlend = lerp(baseBlend, _SecondaryColor.rgb, biomeMask * 0.35h);
                 half3 albedo = lerp(baseBlend, _SteepColor.rgb, steepness * _SteepColorStrength);
-                albedo *= lerp(0.82h, 1.18h, triplanarNoise.b);
+                albedo *= lerp(0.82h, 1.18h, surfaceNoise.b);
 
-                half ejectaDistance = terrainData.y;
-                half ejectaFade = saturate(1.0h - ejectaDistance);
-                half rayPattern = pow(saturate(sin(terrainData.x * _EjectaRayFrequency + detailNoise * 8.0h) * 0.5h + 0.5h), 6.0h);
-                float2 ejectaUv = 0.5 + float2(cos(terrainData.x), sin(terrainData.x)) * ejectaDistance;
+                half ejectaDistance = max(terrainData.y, 0.0h);
+                half ejectaDomain = 1.0h - smoothstep(0.44h, 0.52h, ejectaDistance);
+                half raySignal =
+                    sin(terrainData.x * _EjectaRayFrequency + detailNoise * 8.0h)
+                    * 0.5h
+                    + 0.5h;
+                half rayPattern = smoothstep(0.68h, 0.93h, raySignal);
+                float2 ejectaDirection = float2(cos(terrainData.x), sin(terrainData.x));
+                float2 ejectaUv = 0.5 + ejectaDirection * min(ejectaDistance, 0.5h);
                 half ejectaTexture = SAMPLE_TEXTURE2D(_EjectaRayTex, sampler_EjectaRayTex, ejectaUv).r;
                 half ejectaPattern = lerp(rayPattern, ejectaTexture, saturate(_UseEjectaRayTex));
-                half ejectaMask = saturate(ejectaPattern * ejectaFade * ejectaFade * _EjectaStrength);
+                half ejectaMask = saturate(ejectaPattern * ejectaDomain * _EjectaStrength);
                 albedo = lerp(albedo, _EjectaColor.rgb, ejectaMask);
 
                 half3 flatNormalOS = UnpackTriplanarNormalOS(
                     TEXTURE2D_ARGS(_NormalMapFlat, sampler_NormalMapFlat),
                     input.positionOS,
                     normalOS,
-                    _NormalFlatScale);
+                    _NormalFlatWorldTileSize);
 
                 half3 steepNormalOS = UnpackTriplanarNormalOS(
                     TEXTURE2D_ARGS(_NormalMapSteep, sampler_NormalMapSteep),
                     input.positionOS,
                     normalOS,
-                    _NormalSteepScale);
+                    _NormalSteepWorldTileSize);
 
                 half3 blendedNormalOS = normalize(lerp(flatNormalOS, steepNormalOS, steepness));
                 half3 normalWS = normalize(TransformObjectToWorldNormal(blendedNormalOS));
 
-                float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                Light mainLight = GetMainLight(shadowCoord);
-                half3 starDirectionWS = normalize(_FarionStarPositionWS.xyz - input.positionWS);
-                half ndotl = saturate(dot(normalWS, starDirectionWS));
-                half3 ambient = max(SampleSH(normalWS), _FarionAmbientColor.rgb);
-                half3 starRadiance = _FarionStarColor.rgb * _FarionStarIntensity;
-                half3 diffuse = albedo * (ambient + starRadiance * ndotl * mainLight.shadowAttenuation);
+                half surfaceSmoothness = lerp(
+                    saturate(_Smoothness * lerp(1.0h, 0.72h, steepness)),
+                    saturate(_EjectaSmoothness),
+                    ejectaMask);
+                half surfaceOcclusion = lerp(1.0h, 0.88h, steepness);
 
-                half3 viewDirectionWS = normalize(GetWorldSpaceViewDir(input.positionWS));
-                half3 halfDirection = normalize(starDirectionWS + viewDirectionWS);
-                half specularPower = lerp(8.0h, 96.0h, _Smoothness);
-                half specular = pow(saturate(dot(normalWS, halfDirection)), specularPower) * _Smoothness;
-                half3 specularColor = starRadiance * specular * lerp(0.04h, 0.35h, _Metallic);
+                InputData inputData = BuildPbrInputData(input, normalWS);
+                SurfaceData surfaceData = (SurfaceData)0;
+                surfaceData.albedo = saturate(albedo);
+                surfaceData.specular = half3(0.0h, 0.0h, 0.0h);
+                surfaceData.metallic = saturate(_Metallic);
+                surfaceData.smoothness = surfaceSmoothness;
+                surfaceData.normalTS = half3(0.0h, 0.0h, 1.0h);
+                surfaceData.emission = half3(0.0h, 0.0h, 0.0h);
+                surfaceData.occlusion = surfaceOcclusion;
+                surfaceData.alpha = 1.0h;
+                surfaceData.clearCoatMask = 0.0h;
+                surfaceData.clearCoatSmoothness = 1.0h;
 
-                return half4(diffuse + specularColor, 1);
+                return UniversalFragmentPBR(inputData, surfaceData);
             }
             ENDHLSL
         }

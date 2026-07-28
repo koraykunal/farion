@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Simulation.Planetary
 {
@@ -13,9 +14,12 @@ namespace Farion.Simulation.Planetary
         [SerializeField] List<BiomeDefinition> allowedBiomes = new();
         [SerializeField] Vector2 altitudeRange = new(-1000000f, 1000000f);
         [SerializeField] Vector2 slopeRange = new(0f, 90f);
-        [SerializeField] Vector2 localTemperatureRange = new(-1000000f, 1000000f);
-        [SerializeField] Vector2 localMoistureRange = new(0f, 1f);
-        [SerializeField] Vector2 localRadiationRange = new(0f, 1f);
+        [FormerlySerializedAs("localTemperatureRange")]
+        [SerializeField] Vector2 temperatureRange = new(-1000000f, 1000000f);
+        [FormerlySerializedAs("localMoistureRange")]
+        [SerializeField] Vector2 effectiveMoistureRange = new(0f, 1f);
+        [FormerlySerializedAs("localRadiationRange")]
+        [SerializeField] Vector2 radiationRange = new(0f, 1f);
         [Range(0f, 1f)]
         [SerializeField] float minFeatureNoise;
         [Range(0f, 1f)]
@@ -38,12 +42,24 @@ namespace Farion.Simulation.Planetary
             }
 
             float score = SelectionPriority;
-            score *= EvaluateRange(altitudeRange, altitude, profile != null ? profile.AltitudeBlend : 0f, -1000000f, 1000000f);
-            score *= EvaluateRange(slopeRange, slopeDegrees, profile != null ? profile.SlopeBlendDegrees : 0f, 0f, 90f);
-            score *= EvaluateRange(localTemperatureRange, climate.TemperatureCelsius, profile != null ? profile.LocalTemperatureBlendCelsius : 0f, -1000000f, 1000000f);
-            score *= EvaluateRange(localMoistureRange, climate.Moisture, profile != null ? profile.LocalMoistureBlend : 0f, 0f, 1f);
-            score *= EvaluateRange(localRadiationRange, climate.Radiation, profile != null ? profile.LocalRadiationBlend : 0f, 0f, 1f);
-            score *= EvaluateRange(new Vector2(minFeatureNoise, maxFeatureNoise), featureNoise, profile != null ? profile.NoiseBlend : 0f, 0f, 1f);
+            score *= PlanetarySampling.EvaluateRange(altitudeRange, altitude, profile.AltitudeBlend);
+            score *= PlanetarySampling.EvaluateRange(slopeRange, slopeDegrees, profile.SlopeBlendDegrees);
+            score *= PlanetarySampling.EvaluateRange(
+                temperatureRange,
+                climate.TemperatureCelsius,
+                profile.TemperatureBlendCelsius);
+            score *= PlanetarySampling.EvaluateRange(
+                effectiveMoistureRange,
+                climate.EffectiveMoisture,
+                profile.EffectiveMoistureBlend);
+            score *= PlanetarySampling.EvaluateRange(
+                radiationRange,
+                climate.Radiation,
+                profile.RadiationBlend);
+            score *= PlanetarySampling.EvaluateRange(
+                new Vector2(minFeatureNoise, maxFeatureNoise),
+                featureNoise,
+                profile.NoiseBlend);
             return Mathf.Max(0f, score);
         }
 
@@ -73,31 +89,6 @@ namespace Farion.Simulation.Planetary
             }
 
             return false;
-        }
-
-        static float EvaluateRange(Vector2 range, float value, float blend, float defaultMin, float defaultMax)
-        {
-            bool unconfiguredSerializedRange = Mathf.Approximately(range.x, 0f) && Mathf.Approximately(range.y, 0f);
-            float min = unconfiguredSerializedRange ? defaultMin : range.x;
-            float max = unconfiguredSerializedRange ? defaultMax : range.y;
-            if (max < min)
-            {
-                max = min;
-            }
-
-            if (value < min - blend || value > max + blend)
-            {
-                return 0f;
-            }
-
-            if (blend <= 0f)
-            {
-                return value >= min && value <= max ? 1f : 0f;
-            }
-
-            float lower = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(min - blend, min + blend, value));
-            float upper = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(max - blend, max + blend, value));
-            return Mathf.Clamp01(Mathf.Min(lower, upper));
         }
     }
 }

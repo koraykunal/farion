@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Rendering.Celestial
 {
@@ -15,18 +16,24 @@ namespace Farion.Rendering.Celestial
         [SerializeField] float metallic;
         [Range(0f, 1f)]
         [SerializeField] float smoothness = 0.45f;
+        [Range(0f, 1f)]
+        [SerializeField] float ejectaSmoothness = 0.12f;
 
         [Header("Triplanar")]
-        [SerializeField] Texture2D albedoTexture;
+        [FormerlySerializedAs("albedoTexture")]
+        [SerializeField] Texture2D surfaceNoiseTexture;
         [SerializeField] Texture2D ejectaRayTexture;
         [SerializeField] Texture2D normalMapFlat;
         [SerializeField] Texture2D normalMapSteep;
         [Min(0.001f)]
-        [SerializeField] float albedoScale = 12f;
+        [FormerlySerializedAs("albedoScale")]
+        [SerializeField] float surfaceNoiseWorldTileSize = 180f;
         [Min(0.001f)]
-        [SerializeField] float normalFlatScale = 18f;
+        [FormerlySerializedAs("normalFlatScale")]
+        [SerializeField] float normalFlatWorldTileSize = 10f;
         [Min(0.001f)]
-        [SerializeField] float normalSteepScale = 12f;
+        [FormerlySerializedAs("normalSteepScale")]
+        [SerializeField] float normalSteepWorldTileSize = 7.5f;
         [Range(0f, 1f)]
         [SerializeField] float normalStrength = 0.35f;
         [Range(0f, 1f)]
@@ -58,13 +65,14 @@ namespace Farion.Rendering.Celestial
         public Color EjectaColor => ejectaColor;
         public float Metallic => metallic;
         public float Smoothness => smoothness;
-        public Texture2D AlbedoTexture => albedoTexture;
+        public float EjectaSmoothness => ejectaSmoothness;
+        public Texture2D SurfaceNoiseTexture => surfaceNoiseTexture;
         public Texture2D EjectaRayTexture => ejectaRayTexture;
         public Texture2D NormalMapFlat => normalMapFlat;
         public Texture2D NormalMapSteep => normalMapSteep;
-        public float AlbedoScale => albedoScale;
-        public float NormalFlatScale => normalFlatScale;
-        public float NormalSteepScale => normalSteepScale;
+        public float SurfaceNoiseWorldTileSize => surfaceNoiseWorldTileSize;
+        public float NormalFlatWorldTileSize => normalFlatWorldTileSize;
+        public float NormalSteepWorldTileSize => normalSteepWorldTileSize;
         public float NormalStrength => normalStrength;
         public float SteepColorStrength => steepColorStrength;
         public float BiomeBlendStrength => biomeBlendStrength;
@@ -90,27 +98,26 @@ namespace Farion.Rendering.Celestial
             Vector2 radiusMinMax)
         {
             propertyBlock.SetColor("_BaseColor", baseColor);
-            propertyBlock.SetColor("_Color", baseColor);
             propertyBlock.SetColor("_SecondaryColor", secondaryColor);
             propertyBlock.SetColor("_SteepColor", steepColor);
             propertyBlock.SetColor("_EjectaColor", ejectaColor);
             propertyBlock.SetFloat("_Metallic", metallic);
             propertyBlock.SetFloat("_Smoothness", smoothness);
-            propertyBlock.SetFloat("_Glossiness", smoothness);
+            propertyBlock.SetFloat("_EjectaSmoothness", ejectaSmoothness);
             propertyBlock.SetFloat("_BodyRadius", bodyRadius);
             propertyBlock.SetVector("_RadiusMinMax", radiusMinMax);
-            propertyBlock.SetFloat("_AlbedoScale", albedoScale);
-            propertyBlock.SetFloat("_NormalFlatScale", normalFlatScale);
-            propertyBlock.SetFloat("_NormalSteepScale", normalSteepScale);
+            propertyBlock.SetFloat("_SurfaceNoiseWorldTileSize", surfaceNoiseWorldTileSize);
+            propertyBlock.SetFloat("_NormalFlatWorldTileSize", normalFlatWorldTileSize);
+            propertyBlock.SetFloat("_NormalSteepWorldTileSize", normalSteepWorldTileSize);
             propertyBlock.SetFloat("_NormalStrength", normalStrength);
             propertyBlock.SetFloat("_SteepColorStrength", steepColorStrength);
             propertyBlock.SetFloat("_BiomeBlendStrength", biomeBlendStrength);
             propertyBlock.SetFloat("_EjectaStrength", ejectaStrength);
             propertyBlock.SetFloat("_EjectaRayFrequency", ejectaRayFrequency);
 
-            if (albedoTexture != null)
+            if (surfaceNoiseTexture != null)
             {
-                propertyBlock.SetTexture("_AlbedoTex", albedoTexture);
+                propertyBlock.SetTexture("_SurfaceNoiseTex", surfaceNoiseTexture);
             }
 
             if (ejectaRayTexture != null)
@@ -181,9 +188,9 @@ namespace Farion.Rendering.Celestial
             heightAmplitude = Mathf.Max(0f, heightAmplitude);
             noiseScale = Mathf.Max(0.001f, noiseScale);
             noiseLacunarity = Mathf.Max(1f, noiseLacunarity);
-            albedoScale = Mathf.Max(0.001f, albedoScale);
-            normalFlatScale = Mathf.Max(0.001f, normalFlatScale);
-            normalSteepScale = Mathf.Max(0.001f, normalSteepScale);
+            surfaceNoiseWorldTileSize = Mathf.Max(0.001f, surfaceNoiseWorldTileSize);
+            normalFlatWorldTileSize = Mathf.Max(0.001f, normalFlatWorldTileSize);
+            normalSteepWorldTileSize = Mathf.Max(0.001f, normalSteepWorldTileSize);
             ejectaRayFrequency = Mathf.Max(1f, ejectaRayFrequency);
             NotifyChanged();
         }

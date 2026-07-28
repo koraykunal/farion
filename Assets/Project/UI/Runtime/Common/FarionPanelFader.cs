@@ -1,4 +1,6 @@
 using DG.Tweening;
+using Farion.UI.Foundation;
+using Farion.UI.Styling;
 using UnityEngine;
 
 namespace Farion.UI.Common
@@ -8,6 +10,7 @@ namespace Farion.UI.Common
     public sealed class FarionPanelFader : MonoBehaviour
     {
         [Header("References")]
+        [SerializeField] UiTheme theme;
         [SerializeField] CanvasGroup canvasGroup;
         [SerializeField] RectTransform motionRoot;
 
@@ -17,19 +20,24 @@ namespace Farion.UI.Common
         [SerializeField] Ease showEase = Ease.OutQuart;
         [SerializeField] Ease hideEase = Ease.OutCubic;
         [SerializeField] Vector2 hiddenOffset = new(-24f, 0f);
+        [SerializeField] bool fadeOnly;
 
         bool capturedPosition;
         Vector2 shownPosition;
         Sequence sequence;
 
+        public bool FadeOnly => fadeOnly;
+
         void Reset()
         {
             ResolveReferences();
+            ApplyTheme();
         }
 
         void Awake()
         {
             ResolveReferences();
+            ApplyTheme();
             CapturePosition();
         }
 
@@ -42,9 +50,10 @@ namespace Farion.UI.Common
         public void SetVisible(bool visible, bool animated)
         {
             ResolveReferences();
+            ApplyTheme();
             CapturePosition();
 
-            if (!animated || !Application.isPlaying)
+            if (!animated || !Application.isPlaying || IsReducedMotionEnabled())
             {
                 sequence?.Kill();
                 sequence = null;
@@ -83,7 +92,7 @@ namespace Farion.UI.Common
                         duration)
                     .SetEase(ease));
 
-            if (motionRoot != null)
+            if (!fadeOnly && motionRoot != null)
             {
                 sequence.Join(
                     DOTween.To(
@@ -111,7 +120,7 @@ namespace Farion.UI.Common
                 canvasGroup.blocksRaycasts = visible;
             }
 
-            if (motionRoot != null)
+            if (!fadeOnly && motionRoot != null)
             {
                 motionRoot.anchoredPosition = visible ? shownPosition : shownPosition + hiddenOffset;
             }
@@ -128,6 +137,24 @@ namespace Farion.UI.Common
             {
                 motionRoot = transform as RectTransform;
             }
+
+            if (theme == null)
+            {
+                UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
+                theme = root != null ? root.Theme : null;
+            }
+        }
+
+        void ApplyTheme()
+        {
+            if (theme == null)
+            {
+                return;
+            }
+
+            showDuration = theme.StateEnterDuration;
+            hideDuration = theme.StateExitDuration;
+            hiddenOffset = theme.PanelHiddenOffset;
         }
 
         void CapturePosition()
@@ -139,6 +166,12 @@ namespace Farion.UI.Common
 
             shownPosition = motionRoot.anchoredPosition;
             capturedPosition = true;
+        }
+
+        bool IsReducedMotionEnabled()
+        {
+            UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
+            return root != null && root.ReducedMotion;
         }
     }
 }

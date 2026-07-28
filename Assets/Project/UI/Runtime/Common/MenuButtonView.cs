@@ -1,5 +1,7 @@
 using System;
 using DG.Tweening;
+using Farion.UI.Foundation;
+using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,6 +23,7 @@ namespace Farion.UI.Common
         [SerializeField] Image iconImage;
 
         [Header("Visuals")]
+        [SerializeField] UiTheme theme;
         [SerializeField] Image panelBackground;
         [SerializeField] Image accentBar;
         [SerializeField] Image selectionFrame;
@@ -33,19 +36,19 @@ namespace Farion.UI.Common
         [SerializeField] Vector2 contentSizeWithoutIcon = new(-52f, 0f);
 
         [Header("Colors")]
-        [SerializeField] Color normalPanel = new(0.004f, 0.018f, 0.017f, 0.48f);
-        [SerializeField] Color highlightedPanel = new(0.004f, 0.018f, 0.017f, 0.68f);
-        [SerializeField] Color normalTitle = new(0.62f, 0.65f, 0.59f, 0.88f);
-        [SerializeField] Color highlightedTitle = new(0.94f, 0.91f, 0.83f, 1f);
-        [SerializeField] Color normalSubtitle = new(0.38f, 0.48f, 0.58f, 1f);
-        [SerializeField] Color highlightedSubtitle = new(0.55f, 0.72f, 0.88f, 1f);
-        [SerializeField] Color accentColor = new(0.78f, 0.9f, 0.7f, 0.95f);
+        [SerializeField] Color normalPanel = new(0.024f, 0.037f, 0.052f, 0.72f);
+        [SerializeField] Color highlightedPanel = new(0.055f, 0.086f, 0.118f, 0.92f);
+        [SerializeField] Color normalTitle = new(0.54f, 0.6f, 0.65f, 0.9f);
+        [SerializeField] Color highlightedTitle = new(0.88f, 0.91f, 0.93f, 1f);
+        [SerializeField] Color normalSubtitle = new(0.54f, 0.6f, 0.65f, 0.9f);
+        [SerializeField] Color highlightedSubtitle = new(0.68f, 0.76f, 0.81f, 1f);
+        [SerializeField] Color accentColor = new(0.56f, 0.68f, 0.76f, 1f);
 
         [Header("Motion")]
         [SerializeField] Vector2 normalContentOffset;
         [SerializeField] Vector2 highlightedContentOffset;
-        [SerializeField, Min(0.01f)] float hoverInDuration = 0.14f;
-        [SerializeField, Min(0.01f)] float hoverOutDuration = 0.2f;
+        [SerializeField, Min(0.01f)] float hoverInDuration = 0.16f;
+        [SerializeField, Min(0.01f)] float hoverOutDuration = 0.1f;
         [SerializeField] Ease hoverInEase = Ease.OutQuart;
         [SerializeField] Ease hoverOutEase = Ease.OutCubic;
         [SerializeField] Vector3 normalIconScale = Vector3.one;
@@ -63,16 +66,26 @@ namespace Farion.UI.Common
 
         public event Action Clicked;
         public bool Available => available;
+        public Button Button
+        {
+            get
+            {
+                ResolveReferences();
+                return button;
+            }
+        }
 
         void Reset()
         {
             ResolveReferences();
+            ApplyTheme();
             ConfigureButtonTransition();
         }
 
         void Awake()
         {
             ResolveReferences();
+            ApplyTheme();
             ConfigureButtonTransition();
             ApplyIconState(iconImage != null ? iconImage.sprite : null);
             RefreshVisualState(immediate: true);
@@ -81,6 +94,7 @@ namespace Farion.UI.Common
         void OnEnable()
         {
             ResolveReferences();
+            ApplyTheme();
             CaptureContentRootPosition();
             if (button != null)
             {
@@ -110,10 +124,7 @@ namespace Farion.UI.Common
 
         public void ConfigureContent(string title, string subtitle, Sprite icon)
         {
-            if (titleText != null)
-            {
-                titleText.text = ToMenuLabel(title);
-            }
+            SetTitle(title);
 
             if (subtitleText != null)
             {
@@ -122,6 +133,14 @@ namespace Farion.UI.Common
 
             ApplyIconState(icon);
             RefreshVisualState(immediate: true);
+        }
+
+        public void SetTitle(string title)
+        {
+            if (titleText != null)
+            {
+                titleText.text = ToMenuLabel(title);
+            }
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -133,12 +152,6 @@ namespace Farion.UI.Common
         public void OnPointerExit(PointerEventData eventData)
         {
             pointerInside = false;
-            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject)
-            {
-                EventSystem.current.SetSelectedGameObject(null);
-                selected = false;
-            }
-
             RefreshVisualState(immediate: false);
         }
 
@@ -170,6 +183,30 @@ namespace Farion.UI.Common
             {
                 button = GetComponent<Button>();
             }
+
+            if (theme == null)
+            {
+                UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
+                theme = root != null ? root.Theme : null;
+            }
+        }
+
+        void ApplyTheme()
+        {
+            if (theme == null)
+            {
+                return;
+            }
+
+            normalPanel = theme.ButtonSurface;
+            highlightedPanel = theme.ButtonSurfaceHighlighted;
+            normalTitle = theme.SecondaryText;
+            highlightedTitle = theme.PrimaryText;
+            normalSubtitle = theme.SecondaryText;
+            highlightedSubtitle = theme.SupportingText;
+            accentColor = theme.Focus;
+            hoverInDuration = theme.StateEnterDuration;
+            hoverOutDuration = theme.StateExitDuration;
         }
 
         void ApplyAvailability()
@@ -193,6 +230,7 @@ namespace Farion.UI.Common
         void RefreshVisualState(bool immediate)
         {
             CaptureContentRootPosition();
+            immediate |= IsReducedMotionEnabled();
 
             bool isInteractable = available && button != null && button.interactable;
             bool highlighted = isInteractable && (pointerInside || selected);
@@ -371,6 +409,12 @@ namespace Farion.UI.Common
             return string.IsNullOrWhiteSpace(value)
                 ? string.Empty
                 : value.ToUpperInvariant();
+        }
+
+        bool IsReducedMotionEnabled()
+        {
+            UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
+            return root != null && root.ReducedMotion;
         }
     }
 }

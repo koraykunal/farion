@@ -1,11 +1,12 @@
+using System;
 using System.Collections.Generic;
 using Farion.Core.Persistence;
+using Farion.Core.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Resources;
-using Farion.Simulation.Celestial;
 using Farion.Simulation.World;
 using UnityEngine;
 
@@ -13,7 +14,9 @@ namespace Farion.Gameplay.Interaction
 {
     [DefaultExecutionOrder(300)]
     [DisallowMultipleComponent]
-    public sealed class PlayerPossessionController : MonoBehaviour
+    public sealed class PlayerPossessionController :
+        MonoBehaviour,
+        ICelestialSurfaceCollisionObserver
     {
         [Header("Mode")]
         [SerializeField] PlayerPossessionMode initialMode = PlayerPossessionMode.Spacecraft;
@@ -76,6 +79,8 @@ namespace Farion.Gameplay.Interaction
         readonly SpacecraftExteriorCollisionGate exteriorCollisionGate = new();
         readonly ShipInteriorExitGate shipInteriorExitGate = new();
 
+        public event Action<PlayerPossessionMode> ModeChanged;
+
         public PlayerPossessionMode CurrentMode => currentMode;
         public SpacecraftPilotCameraView CurrentPilotCameraView => currentPilotCameraView;
         public bool IsPilotingSpacecraft => currentMode == PlayerPossessionMode.Spacecraft;
@@ -85,6 +90,14 @@ namespace Farion.Gameplay.Interaction
             {
                 ResolveReferences();
                 return spacecraftMotor;
+            }
+        }
+        public PlayerInteractionRaycaster ExplorerInteractionRaycaster
+        {
+            get
+            {
+                ResolveReferences();
+                return explorerInteractionRaycaster;
             }
         }
         public bool IsOnFoot => currentMode == PlayerPossessionMode.OnFoot;
@@ -119,6 +132,23 @@ namespace Farion.Gameplay.Interaction
             }
         }
 
+        public bool TryGetSurfaceCollisionObserver(
+            out CelestialSurfaceCollisionObserverState observer)
+        {
+            ResolveReferences();
+            Rigidbody target = currentMode == PlayerPossessionMode.OnFoot
+                ? explorerRigidbody
+                : spacecraftRigidbody;
+            if (target == null || !target.gameObject.activeInHierarchy)
+            {
+                observer = default;
+                return false;
+            }
+
+            observer = new CelestialSurfaceCollisionObserverState(target);
+            return true;
+        }
+
         public bool HasPersistentSpacecraftTarget
         {
             get
@@ -129,6 +159,23 @@ namespace Farion.Gameplay.Interaction
         }
 
         public bool HasPersistentTargets => HasPersistentExplorerTarget && HasPersistentSpacecraftTarget;
+        public string ExplorerPersistentId
+        {
+            get
+            {
+                ResolveReferences();
+                return ResolveExplorerPersistentId();
+            }
+        }
+
+        public string SpacecraftPersistentId
+        {
+            get
+            {
+                ResolveReferences();
+                return ResolveSpacecraftPersistentId();
+            }
+        }
 
         public PlayerPossessionSnapshot CaptureSnapshot()
         {
@@ -315,7 +362,10 @@ namespace Farion.Gameplay.Interaction
             }
 
             SetSpacecraftExteriorCollisionIgnored(spawnInsideShipOnPilotExit);
-            PlaceExplorerAtTransform(ResolvePilotExitTransform(), !spawnInsideShipOnPilotExit);
+            PlayerExplorerPlacement.PlaceAtTransform(
+                CreateExplorerPlacementContext(),
+                ResolvePilotExitTransform(),
+                !spawnInsideShipOnPilotExit);
             ApplyMode(nextMode, PlayerPossessionTransitionRequest.ExitPilotSeat);
             return true;
         }
@@ -333,7 +383,10 @@ namespace Farion.Gameplay.Interaction
             }
 
             SetSpacecraftExteriorCollisionIgnored(true);
-            PlaceExplorerAtTransform(ResolveExteriorEntryTransform(), false);
+            PlayerExplorerPlacement.PlaceAtTransform(
+                CreateExplorerPlacementContext(),
+                ResolveExteriorEntryTransform(),
+                snapToExteriorSurface: false);
             ApplyMode(PlayerPossessionMode.ShipInterior, PlayerPossessionTransitionRequest.EnterShipInterior);
             return true;
         }
@@ -346,6 +399,7 @@ namespace Farion.Gameplay.Interaction
                 return;
             }
 
+            PlayerPossessionMode previousMode = currentMode;
             currentMode = nextMode;
 
             bool piloting = currentMode == PlayerPossessionMode.Spacecraft;
@@ -403,169 +457,10 @@ namespace Farion.Gameplay.Interaction
             }
 
             SetSpacecraftExteriorCollisionIgnored(currentMode == PlayerPossessionMode.ShipInterior);
-        }
-
-        void PlaceExplorerAtTransform(Transform targetTransform, bool snapToExteriorSurface)
-        {
-            if (explorerRoot == null)
+            if (previousMode != currentMode)
             {
-                return;
+                ModeChanged?.Invoke(currentMode);
             }
-
-            if (targetTransform == null)
-            {
-                return;
-            }
-
-            explorerRoot.SetActive(true);
-
-            Vector3 up = targetTransform.up.sqrMagnitude > 0.0001f ? targetTransform.up.normalized : Vector3.up;
-            Vector3 forward = Vector3.ProjectOnPlane(targetTransform.forward, up);
-            if (forward.sqrMagnitude <= 0.0001f && spacecraftRoot != null)
-            {
-                forward = Vector3.ProjectOnPlane(spacecraftRoot.forward, up);
-            }
-
-            if (forward.sqrMagnitude <= 0.0001f)
-            {
-                forward = Vector3.ProjectOnPlane(Vector3.forward, up);
-            }
-
-            if (forward.sqrMagnitude <= 0.0001f)
-            {
-                forward = Vector3.ProjectOnPlane(Vector3.right, up);
-            }
-
-            forward = forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.forward;
-            Quaternion rotation = Quaternion.LookRotation(forward, up);
-            Vector3 position = targetTransform.position + up * exitPoseClearance;
-
-            if (snapToExteriorSurface)
-            {
-                TryResolveExteriorSurfacePose(ref position, ref rotation);
-            }
-
-            ApplyExplorerPose(position, rotation, true);
-
-            if (explorerMotor != null)
-            {
-                explorerMotor.ResetMotorState();
-            }
-        }
-
-        void ApplyExplorerPose(Vector3 position, Quaternion rotation, bool inheritSpacecraftVelocity)
-        {
-            if (explorerRigidbody != null)
-            {
-                explorerRigidbody.position = position;
-                explorerRigidbody.rotation = rotation;
-                explorerRigidbody.linearVelocity = inheritSpacecraftVelocity && spacecraftRigidbody != null
-                    ? spacecraftRigidbody.linearVelocity
-                    : Vector3.zero;
-                explorerRigidbody.angularVelocity = Vector3.zero;
-            }
-            else
-            {
-                explorerRoot.transform.SetPositionAndRotation(position, rotation);
-            }
-
-        }
-
-        bool TryResolveExteriorSurfacePose(ref Vector3 position, ref Quaternion rotation)
-        {
-            if (!snapExplorerToExteriorSurface)
-            {
-                return false;
-            }
-
-            Vector3 velocity = explorerRigidbody != null
-                ? explorerRigidbody.linearVelocity
-                : spacecraftRigidbody != null
-                    ? spacecraftRigidbody.linearVelocity
-                    : Vector3.zero;
-
-            if (!TrySampleExitFrame(position, velocity, out CelestialFrameSample frame))
-            {
-                return false;
-            }
-
-            CelestialSurfacePlacementOptions options = new(
-                ResolveExplorerGroundCenterOffset(),
-                exteriorSurfaceClearance,
-                CelestialSurfacePlacementMode.TerrainSurface);
-            if (!CelestialSurfacePlacement.TryResolvePose(
-                    frame,
-                    position,
-                    rotation * Vector3.forward,
-                    options,
-                    out CelestialSurfacePlacementResult placement))
-            {
-                return false;
-            }
-
-            position = placement.Position;
-            rotation = placement.Rotation;
-            return true;
-        }
-
-        bool TrySampleExitFrame(Vector3 position, Vector3 velocity, out CelestialFrameSample frame)
-        {
-            CelestialFrameProvider frameProvider = ResolveExitFrameProvider();
-            if (frameProvider != null)
-            {
-                return frameProvider.TrySample(position, velocity, out frame);
-            }
-
-            if (spacecraftCelestialProbe != null && spacecraftCelestialProbe.HasSample)
-            {
-                frame = spacecraftCelestialProbe.CurrentSample;
-                return frame.HasBody;
-            }
-
-            if (explorerCelestialProbe != null && explorerCelestialProbe.HasSample)
-            {
-                frame = explorerCelestialProbe.CurrentSample;
-                return frame.HasBody;
-            }
-
-            frame = CelestialFrameSample.Empty(position, velocity);
-            return false;
-        }
-
-        CelestialFrameProvider ResolveExitFrameProvider()
-        {
-            ResolveReferences();
-
-            if (explorerCelestialProbe != null && explorerCelestialProbe.FrameProvider != null)
-            {
-                return explorerCelestialProbe.FrameProvider;
-            }
-
-            if (spacecraftCelestialProbe != null && spacecraftCelestialProbe.FrameProvider != null)
-            {
-                return spacecraftCelestialProbe.FrameProvider;
-            }
-
-            return null;
-        }
-
-        float ResolveExplorerGroundCenterOffset()
-        {
-            if (explorerMotor != null)
-            {
-                CapsuleCollider capsule = explorerMotor.Capsule;
-                if (capsule != null)
-                {
-                    return Mathf.Max(capsule.height * 0.5f, capsule.radius) + exteriorGroundClearance;
-                }
-            }
-
-            if (explorerRoot != null && explorerRoot.TryGetComponent(out CapsuleCollider rootCapsule))
-            {
-                return Mathf.Max(rootCapsule.height * 0.5f, rootCapsule.radius) + exteriorGroundClearance;
-            }
-
-            return exitPoseClearance + exteriorGroundClearance;
         }
 
         void ResolveReferences()
@@ -739,35 +634,27 @@ namespace Farion.Gameplay.Interaction
                     exteriorTransitionCooldownSeconds,
                     exteriorTransitionProgressDistance))
             {
-                SnapExplorerToExteriorSurface();
+                PlayerExplorerPlacement.SnapToExteriorSurface(
+                    CreateExplorerPlacementContext());
                 ApplyMode(PlayerPossessionMode.OnFoot, PlayerPossessionTransitionRequest.ExitShipInterior);
             }
         }
 
-        void SnapExplorerToExteriorSurface()
+        PlayerExplorerPlacementContext CreateExplorerPlacementContext()
         {
-            if (explorerRoot == null)
-            {
-                return;
-            }
-
-            Vector3 position = explorerRigidbody != null
-                ? explorerRigidbody.position
-                : explorerRoot.transform.position;
-            Quaternion rotation = explorerRigidbody != null
-                ? explorerRigidbody.rotation
-                : explorerRoot.transform.rotation;
-
-            if (!TryResolveExteriorSurfacePose(ref position, ref rotation))
-            {
-                return;
-            }
-
-            ApplyExplorerPose(position, rotation, true);
-            if (explorerMotor != null)
-            {
-                explorerMotor.ResetMotorState();
-            }
+            ResolveReferences();
+            return new PlayerExplorerPlacementContext(
+                explorerRoot,
+                explorerRigidbody,
+                explorerMotor,
+                explorerCelestialProbe,
+                spacecraftRoot,
+                spacecraftRigidbody,
+                spacecraftCelestialProbe,
+                exitPoseClearance,
+                snapExplorerToExteriorSurface,
+                exteriorGroundClearance,
+                exteriorSurfaceClearance);
         }
 
         void SetSpacecraftExteriorCollisionIgnored(bool ignore)

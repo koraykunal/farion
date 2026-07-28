@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Farion.Gameplay.Character;
+using Farion.Gameplay.Commands;
 using Farion.Gameplay.Input;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ namespace Farion.Gameplay.Interaction
         readonly List<MonoBehaviour> behaviourBuffer = new(8);
         IFirstPersonInputSource resolvedInput;
         Collider[] ownColliders;
+        IGameplayCommandGateway commandGateway;
         IInteractable currentInteractable;
         RaycastHit currentHit;
 
@@ -56,6 +58,11 @@ namespace Farion.Gameplay.Interaction
             }
         }
 
+        void OnDisable()
+        {
+            ClearTarget();
+        }
+
         void Update()
         {
             ResolveInputSource();
@@ -71,7 +78,11 @@ namespace Farion.Gameplay.Interaction
             FirstPersonInputState input = resolvedInput?.CurrentInput ?? FirstPersonInputState.None;
             if (input.Interact && currentInteractable != null)
             {
-                InteractionContext context = new(gameObject, viewReference, currentHit);
+                InteractionContext context = new(
+                    gameObject,
+                    viewReference,
+                    currentHit,
+                    commandGateway);
                 if (currentInteractable.CanInteract(context))
                 {
                     currentInteractable.Interact(context);
@@ -82,6 +93,11 @@ namespace Farion.Gameplay.Interaction
         public void SetControlLock(PlayerControlLock nextControlLock)
         {
             controlLock = nextControlLock;
+        }
+
+        public void SetCommandGateway(IGameplayCommandGateway nextCommandGateway)
+        {
+            commandGateway = nextCommandGateway;
         }
 
         void ClearTarget()
@@ -128,7 +144,11 @@ namespace Farion.Gameplay.Interaction
                     continue;
                 }
 
-                InteractionContext context = new(gameObject, view, hit);
+                InteractionContext context = new(
+                    gameObject,
+                    view,
+                    hit,
+                    commandGateway);
                 if (!interactable.CanInteract(context))
                 {
                     continue;

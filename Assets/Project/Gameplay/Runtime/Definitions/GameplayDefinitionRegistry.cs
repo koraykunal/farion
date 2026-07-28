@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Farion.Gameplay.Crafting;
+using Farion.Gameplay.Domain.Identity;
+using Farion.Gameplay.Equipment;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Research;
 using Farion.Gameplay.Resources;
@@ -16,34 +18,116 @@ namespace Farion.Gameplay.Definitions
         [SerializeField] List<ResourceNodeDefinition> resourceNodes = new();
         [SerializeField] List<RecipeDefinition> recipes = new();
         [SerializeField] List<ResearchDefinition> research = new();
+        [SerializeField] List<EquipmentDefinition> equipment = new();
+        [SerializeField] List<EquipmentSlotDefinition> equipmentSlots = new();
 
-        Dictionary<string, InventoryItemDefinition> inventoryItemsById;
-        Dictionary<string, ResourceNodeDefinition> resourceNodesById;
-        Dictionary<string, RecipeDefinition> recipesById;
-        Dictionary<string, ResearchDefinition> researchById;
+        Dictionary<DefinitionId, InventoryItemDefinition> inventoryItemsById;
+        Dictionary<DefinitionId, ResourceNodeDefinition> resourceNodesById;
+        Dictionary<DefinitionId, RecipeDefinition> recipesById;
+        Dictionary<DefinitionId, ResearchDefinition> researchById;
+        Dictionary<DefinitionId, EquipmentDefinition> equipmentById;
+        Dictionary<DefinitionId, EquipmentSlotDefinition> equipmentSlotsById;
 
         public bool TryGetInventoryItem(string itemId, out InventoryItemDefinition item)
         {
+            item = null;
+            return DefinitionId.TryCreate(itemId, out DefinitionId definitionId) &&
+                   TryGetInventoryItem(definitionId, out item);
+        }
+
+        public bool TryGetInventoryItem(
+            DefinitionId itemId,
+            out InventoryItemDefinition item)
+        {
+            item = null;
             EnsureBuilt();
-            return inventoryItemsById.TryGetValue(NormalizeId(itemId), out item);
+            return itemId.IsValid && inventoryItemsById.TryGetValue(itemId, out item);
         }
 
         public bool TryGetResourceNode(string nodeId, out ResourceNodeDefinition node)
         {
+            node = null;
+            return DefinitionId.TryCreate(nodeId, out DefinitionId definitionId) &&
+                   TryGetResourceNode(definitionId, out node);
+        }
+
+        public bool TryGetResourceNode(
+            DefinitionId nodeId,
+            out ResourceNodeDefinition node)
+        {
+            node = null;
             EnsureBuilt();
-            return resourceNodesById.TryGetValue(NormalizeId(nodeId), out node);
+            return nodeId.IsValid && resourceNodesById.TryGetValue(nodeId, out node);
         }
 
         public bool TryGetRecipe(string recipeId, out RecipeDefinition recipe)
         {
+            recipe = null;
+            return DefinitionId.TryCreate(recipeId, out DefinitionId definitionId) &&
+                   TryGetRecipe(definitionId, out recipe);
+        }
+
+        public bool TryGetRecipe(DefinitionId recipeId, out RecipeDefinition recipe)
+        {
+            recipe = null;
             EnsureBuilt();
-            return recipesById.TryGetValue(NormalizeId(recipeId), out recipe);
+            return recipeId.IsValid && recipesById.TryGetValue(recipeId, out recipe);
         }
 
         public bool TryGetResearch(string researchId, out ResearchDefinition definition)
         {
+            definition = null;
+            return DefinitionId.TryCreate(researchId, out DefinitionId definitionId) &&
+                   TryGetResearch(definitionId, out definition);
+        }
+
+        public bool TryGetResearch(
+            DefinitionId researchId,
+            out ResearchDefinition definition)
+        {
+            definition = null;
             EnsureBuilt();
-            return researchById.TryGetValue(NormalizeId(researchId), out definition);
+            return researchId.IsValid && researchById.TryGetValue(researchId, out definition);
+        }
+
+        public bool TryGetEquipment(
+            string equipmentId,
+            out EquipmentDefinition definition)
+        {
+            definition = null;
+            return DefinitionId.TryCreate(
+                       equipmentId,
+                       out DefinitionId definitionId) &&
+                   TryGetEquipment(definitionId, out definition);
+        }
+
+        public bool TryGetEquipment(
+            DefinitionId equipmentId,
+            out EquipmentDefinition definition)
+        {
+            definition = null;
+            EnsureBuilt();
+            return equipmentId.IsValid &&
+                   equipmentById.TryGetValue(equipmentId, out definition);
+        }
+
+        public bool TryGetEquipmentSlot(
+            string slotId,
+            out EquipmentSlotDefinition definition)
+        {
+            definition = null;
+            return DefinitionId.TryCreate(slotId, out DefinitionId definitionId) &&
+                   TryGetEquipmentSlot(definitionId, out definition);
+        }
+
+        public bool TryGetEquipmentSlot(
+            DefinitionId slotId,
+            out EquipmentSlotDefinition definition)
+        {
+            definition = null;
+            EnsureBuilt();
+            return slotId.IsValid &&
+                   equipmentSlotsById.TryGetValue(slotId, out definition);
         }
 
         void OnValidate()
@@ -52,6 +136,8 @@ namespace Farion.Gameplay.Definitions
             RemoveNulls(resourceNodes);
             RemoveNulls(recipes);
             RemoveNulls(research);
+            RemoveNulls(equipment);
+            RemoveNulls(equipmentSlots);
             ClearLookupCache();
         }
 
@@ -62,15 +148,23 @@ namespace Farion.Gameplay.Definitions
                 return;
             }
 
-            inventoryItemsById = new Dictionary<string, InventoryItemDefinition>();
-            resourceNodesById = new Dictionary<string, ResourceNodeDefinition>();
-            recipesById = new Dictionary<string, RecipeDefinition>();
-            researchById = new Dictionary<string, ResearchDefinition>();
+            inventoryItemsById = new Dictionary<DefinitionId, InventoryItemDefinition>();
+            resourceNodesById = new Dictionary<DefinitionId, ResourceNodeDefinition>();
+            recipesById = new Dictionary<DefinitionId, RecipeDefinition>();
+            researchById = new Dictionary<DefinitionId, ResearchDefinition>();
+            equipmentById = new Dictionary<DefinitionId, EquipmentDefinition>();
+            equipmentSlotsById =
+                new Dictionary<DefinitionId, EquipmentSlotDefinition>();
 
             AddDefinitions(inventoryItems, inventoryItemsById, item => item.ItemId);
             AddDefinitions(resourceNodes, resourceNodesById, node => node.NodeId);
             AddDefinitions(recipes, recipesById, recipe => recipe.RecipeId);
             AddDefinitions(research, researchById, definition => definition.ResearchId);
+            AddDefinitions(equipment, equipmentById, definition => definition.EquipmentId);
+            AddDefinitions(
+                equipmentSlots,
+                equipmentSlotsById,
+                definition => definition.SlotId);
         }
 
         void ClearLookupCache()
@@ -79,11 +173,13 @@ namespace Farion.Gameplay.Definitions
             resourceNodesById = null;
             recipesById = null;
             researchById = null;
+            equipmentById = null;
+            equipmentSlotsById = null;
         }
 
         static void AddDefinitions<T>(
             List<T> definitions,
-            Dictionary<string, T> lookup,
+            Dictionary<DefinitionId, T> lookup,
             System.Func<T, string> getId)
             where T : Object
         {
@@ -100,11 +196,11 @@ namespace Farion.Gameplay.Definitions
                     continue;
                 }
 
-                string id = NormalizeId(getId(definition));
-                if (string.IsNullOrEmpty(id))
+                string rawId = getId(definition);
+                if (!DefinitionId.TryCreate(rawId, out DefinitionId id))
                 {
                     throw new InvalidOperationException(
-                        $"{typeof(T).Name} '{definition.name}' has an empty persistent definition id.");
+                        $"{typeof(T).Name} '{definition.name}' has an invalid persistent definition id.");
                 }
 
                 if (!lookup.TryAdd(id, definition))
@@ -113,11 +209,6 @@ namespace Farion.Gameplay.Definitions
                         $"Duplicate {typeof(T).Name} id '{id}' in {nameof(GameplayDefinitionRegistry)}.");
                 }
             }
-        }
-
-        static string NormalizeId(string id)
-        {
-            return string.IsNullOrWhiteSpace(id) ? string.Empty : id.Trim();
         }
 
         static void RemoveNulls<T>(List<T> definitions)

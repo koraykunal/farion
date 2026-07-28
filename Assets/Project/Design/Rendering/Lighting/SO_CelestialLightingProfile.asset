@@ -12,24 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b97311c785c45c79723fe67ec08dce8, type: 3}
   m_Name: SO_CelestialLightingProfile
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightingProfile
-  lightColor: {r: 1, g: 0.96, b: 0.86, a: 1}
+  lightColor: {r: 1, g: 0.985, b: 0.95, a: 1}
   useColorTemperature: 1
   colorTemperature: 5778
   referenceDistance: 350
-  referenceIntensity: 15
-  useInverseSquareFalloff: 1
+  referenceIntensity: 1.1
+  useInverseSquareFalloff: 0
   invertLightDirection: 0
   minimumFalloffDistance: 50
-  minimumIntensity: 1.03
-  maximumIntensity: 12
+  minimumIntensity: 0
+  maximumIntensity: 4
   shadows: 2
-  shadowStrength: 0.9
+  shadowStrength: 0.86
   shadowNearPlane: 0.2
   directionalShadowAngle: 0.55
   bounceIntensity: 0
   applyRenderSettings: 1
   ambientMode: 3
-  ambientLight: {r: 0.012, g: 0.014, b: 0.018, a: 1}
+  ambientLight: {r: 0.018, g: 0.021, b: 0.028, a: 1}
   ambientIntensity: 1
   disableFog: 1
   applyCameraDefaults: 1

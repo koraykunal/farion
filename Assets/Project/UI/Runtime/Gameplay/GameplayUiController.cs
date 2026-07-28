@@ -3,25 +3,36 @@ using Farion.App.Flow;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Inventory;
+using Farion.UI.Feedback;
+using Farion.UI.Foundation;
+using Farion.UI.Input;
+using Farion.UI.Loading;
+using Farion.UI.Navigation;
+using Farion.UI.SaveLoad;
 using TMPro;
 using UnityEngine;
 
 namespace Farion.UI.Gameplay
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(PlayerControlLock))]
     [RequireComponent(typeof(GameplaySessionController))]
     public sealed class GameplayUiController : MonoBehaviour
     {
         [Header("State")]
-        [SerializeField] GameplayScreenState currentScreen = GameplayScreenState.None;
+        [SerializeField] UiScreenId currentScreen = UiScreenId.GameplayHud;
 
         [Header("References")]
-        [SerializeField] PlayerControlLock controlLock;
-        [SerializeField] GameplayPanelSwitcher panelSwitcher;
         [SerializeField] InventoryPanelPresenter inventoryPanel;
-        [SerializeField] PlayerInventory playerInventory;
         [SerializeField] GameplaySessionController sessionController;
+
+        [Header("UI Foundation")]
+        [SerializeField] UiSystemRoot uiSystemRoot;
+        [SerializeField] UiScreenRouter screenRouter;
+        [SerializeField] UiInputDeviceService inputDeviceService;
+        [SerializeField] UiFeedbackService feedbackService;
+        [SerializeField] UiConfirmationDialog confirmationDialog;
+        [SerializeField] UiLoadingOverlayPresenter loadingOverlay;
+        [SerializeField] UiSaveLoadScreenPresenter saveLoadScreen;
 
         [Header("HUD")]
         [SerializeField] PlayerInteractionRaycaster interactionRaycaster;
@@ -31,28 +42,36 @@ namespace Farion.UI.Gameplay
         [Header("Cursor")]
         [SerializeField] bool lockCursorDuringGameplay = true;
 
-        public event Action<GameplayScreenState> ScreenChanged;
-        public GameplayScreenState CurrentScreen => currentScreen;
-        public bool IsUiFocused => currentScreen != GameplayScreenState.None;
+        InventoryContainerComponent playerInventory;
+
+        public event Action<UiScreenId> ScreenChanged;
+        public UiScreenId CurrentScreen => currentScreen;
+        public bool IsUiFocused => screenRouter != null && screenRouter.HasOpenScreen;
 
         void Awake()
         {
             ResolveReferences();
-            ApplyScreenState();
+            InitializeNavigation();
         }
 
         void OnEnable()
         {
             FarionInputActions.Enable();
             ResolveReferences();
-            ApplyScreenState();
+            if (screenRouter != null)
+            {
+                screenRouter.TopScreenChanged -= HandleTopScreenChanged;
+                screenRouter.TopScreenChanged += HandleTopScreenChanged;
+            }
+
+            InitializeNavigation();
         }
 
         void OnDisable()
         {
-            if (controlLock != null)
+            if (screenRouter != null)
             {
-                controlLock.SetLocked(PlayerControlLockReason.UserInterface, false);
+                screenRouter.TopScreenChanged -= HandleTopScreenChanged;
             }
         }
 
@@ -60,6 +79,12 @@ namespace Farion.UI.Gameplay
         {
             if (FarionInputActions.UiPause.WasPressedThisFrame())
             {
+                if (screenRouter != null && screenRouter.CancelHandledThisFrame)
+                {
+                    SynchronizeScreenStateFromRouter(notify: true);
+                    return;
+                }
+
                 HandlePausePressed();
                 return;
             }
@@ -70,6 +95,21 @@ namespace Farion.UI.Gameplay
             }
         }
 
+        void SynchronizeScreenStateFromRouter(bool notify)
+        {
+            if (screenRouter == null)
+            {
+                return;
+            }
+
+            UiScreenId routedState = screenRouter.TopScreenId != UiScreenId.None
+                ? screenRouter.TopScreenId
+                : UiScreenId.GameplayHud;
+            SetCurrentScreen(routedState, notify);
+            ApplyCursorState(screenRouter.HasOpenScreen);
+            RefreshHud();
+        }
+
         void LateUpdate()
         {
             RefreshHud();
@@ -77,27 +117,37 @@ namespace Farion.UI.Gameplay
 
         public void ShowPauseMenu()
         {
-            Show(GameplayScreenState.PauseMenu);
+            OpenScreen(UiScreenId.PauseMenu);
         }
 
         public void ShowInventory()
         {
-            Show(GameplayScreenState.Inventory);
+            OpenScreen(UiScreenId.Inventory);
         }
 
         public void CloseActiveScreen()
         {
-            Show(GameplayScreenState.None);
+            if (screenRouter != null && screenRouter.CloseTop())
+            {
+                return;
+            }
+
+            SynchronizeScreenStateFromRouter(notify: true);
         }
 
         public void ToggleInventory()
         {
-            Show(currentScreen == GameplayScreenState.Inventory
-                ? GameplayScreenState.None
-                : GameplayScreenState.Inventory);
+            if (screenRouter != null &&
+                screenRouter.IsOpen(UiScreenId.Inventory))
+            {
+                screenRouter.Close(UiScreenId.Inventory);
+                return;
+            }
+
+            ShowInventory();
         }
 
-        public void SetPlayerInventory(PlayerInventory inventory)
+        public void SetPlayerInventory(InventoryContainerComponent inventory)
         {
             playerInventory = inventory;
             if (inventoryPanel != null)
@@ -117,61 +167,101 @@ namespace Farion.UI.Gameplay
                     ShowInventory();
                     break;
                 case GameplayMenuAction.ExitToMainMenu:
-                    sessionController?.ExitToMainMenu();
+                    RequestConfirmation(
+                        "RETURN TO MAIN MENU",
+                        "Unsaved progress may be lost.",
+                        "RETURN",
+                        BeginReturnToMainMenu);
                     break;
                 case GameplayMenuAction.QuitGame:
-                    sessionController?.Quit();
+                    RequestConfirmation(
+                        "QUIT TO DESKTOP",
+                        "Unsaved progress may be lost.",
+                        "QUIT",
+                        () => sessionController?.Quit());
                     break;
                 case GameplayMenuAction.Blueprints:
                 case GameplayMenuAction.Journal:
                 case GameplayMenuAction.Ship:
                 case GameplayMenuAction.Map:
+                    break;
                 case GameplayMenuAction.Options:
+                    OpenScreen(UiScreenId.Settings);
                     break;
                 case GameplayMenuAction.Save:
-                    sessionController?.Save();
-                    ShowPauseMenu();
+                    OpenSaveGameScreen();
                     break;
             }
         }
 
         void HandlePausePressed()
         {
-            if (currentScreen == GameplayScreenState.None)
+            if (screenRouter == null)
             {
-                ShowPauseMenu();
+                ShowFeedback(
+                    "UI navigation is not configured.",
+                    UiFeedbackSeverity.Error);
                 return;
             }
 
-            CloseActiveScreen();
-        }
-
-        void Show(GameplayScreenState nextScreen)
-        {
-            if (nextScreen == currentScreen)
+            if (screenRouter.HasOpenScreen)
             {
+                screenRouter.CloseTop();
                 return;
             }
 
-            currentScreen = nextScreen;
-            ApplyScreenState();
-            ScreenChanged?.Invoke(currentScreen);
+            ShowPauseMenu();
         }
 
-        void ApplyScreenState()
+        void OpenScreen(UiScreenId screenId)
         {
             ResolveReferences();
-            panelSwitcher?.Show(currentScreen);
-            inventoryPanel?.SetInventory(playerInventory);
-
-            bool uiFocused = currentScreen != GameplayScreenState.None;
-            if (controlLock != null)
+            if (screenRouter != null && screenRouter.Open(screenId))
             {
-                controlLock.SetLocked(PlayerControlLockReason.UserInterface, uiFocused);
+                return;
             }
 
-            ApplyCursorState(uiFocused);
+            ShowFeedback(
+                $"UI screen '{screenId}' is not configured.",
+                UiFeedbackSeverity.Error);
+        }
+
+        void InitializeNavigation()
+        {
+            ResolveReferences();
+            if (screenRouter == null)
+            {
+#if UNITY_EDITOR
+                Debug.LogError(
+                    $"{nameof(GameplayUiController)} requires an explicit {nameof(UiScreenRouter)} reference.",
+                    this);
+#endif
+                return;
+            }
+
+            screenRouter.Open(UiScreenId.GameplayHud, animated: false);
+            inventoryPanel?.SetInventory(playerInventory);
+            SynchronizeScreenStateFromRouter(notify: false);
             RefreshHud();
+        }
+
+        void HandleTopScreenChanged(UiScreenId _)
+        {
+            SynchronizeScreenStateFromRouter(notify: true);
+        }
+
+        void SetCurrentScreen(UiScreenId screenId, bool notify)
+        {
+            if (currentScreen == screenId)
+            {
+                return;
+            }
+
+            currentScreen = screenId;
+            if (notify)
+            {
+                ScreenChanged?.Invoke(currentScreen);
+            }
         }
 
         void ApplyCursorState(bool uiFocused)
@@ -197,16 +287,6 @@ namespace Farion.UI.Gameplay
 
         void ResolveReferences()
         {
-            if (controlLock == null)
-            {
-                controlLock = GetComponent<PlayerControlLock>();
-            }
-
-            if (panelSwitcher == null)
-            {
-                panelSwitcher = GetComponent<GameplayPanelSwitcher>();
-            }
-
             if (inventoryPanel == null)
             {
                 inventoryPanel = GetComponentInChildren<InventoryPanelPresenter>(true);
@@ -215,6 +295,32 @@ namespace Farion.UI.Gameplay
             if (sessionController == null)
             {
                 sessionController = GetComponent<GameplaySessionController>();
+            }
+
+            uiSystemRoot ??= UiCompositionScope.FindSystemRoot(this);
+            uiSystemRoot ??= GetComponentInChildren<UiSystemRoot>(true);
+            if (uiSystemRoot != null)
+            {
+                screenRouter ??= uiSystemRoot.ScreenRouter;
+                inputDeviceService ??= uiSystemRoot.InputDeviceService;
+                feedbackService ??= uiSystemRoot.FeedbackService;
+                confirmationDialog ??= uiSystemRoot.ConfirmationDialog;
+                loadingOverlay ??= uiSystemRoot.LoadingOverlay;
+                saveLoadScreen ??=
+                    UiCompositionScope.FindFirstInScope<UiSaveLoadScreenPresenter>(
+                        uiSystemRoot);
+            }
+
+            if (confirmationDialog == null)
+            {
+                confirmationDialog = GetComponentInChildren<UiConfirmationDialog>(true);
+            }
+
+            if (playerInventory == null &&
+                sessionController != null &&
+                sessionController.TryGetRuntime(out var sessionRuntime))
+            {
+                playerInventory = sessionRuntime.LocalInventory;
             }
         }
 
@@ -225,8 +331,9 @@ namespace Farion.UI.Gameplay
                 return;
             }
 
-            bool showPrompt = currentScreen == GameplayScreenState.None &&
+            bool showPrompt = currentScreen == UiScreenId.GameplayHud &&
                 interactionRaycaster != null &&
+                interactionRaycaster.isActiveAndEnabled &&
                 interactionRaycaster.HasTarget &&
                 !string.IsNullOrWhiteSpace(interactionRaycaster.CurrentPrompt);
 
@@ -238,9 +345,96 @@ namespace Farion.UI.Gameplay
             }
 
             string prompt = interactionRaycaster.CurrentPrompt.Trim();
-            interactionPromptText.text = string.IsNullOrWhiteSpace(interactionPromptPrefix)
+            string binding = UiBindingDisplay.GetDisplayString(
+                FarionInputActions.OnFootInteract,
+                inputDeviceService != null
+                    ? inputDeviceService.CurrentDevice
+                    : UiInputDeviceKind.KeyboardMouse);
+            if (string.IsNullOrWhiteSpace(binding))
+            {
+                binding = interactionPromptPrefix;
+            }
+
+            interactionPromptText.text = string.IsNullOrWhiteSpace(binding)
                 ? prompt
-                : $"{interactionPromptPrefix.Trim()} - {prompt}";
+                : $"{binding.Trim()}  {prompt}";
+        }
+
+        void OpenSaveGameScreen()
+        {
+            if (sessionController == null)
+            {
+                ShowFeedback(
+                    "Save is unavailable because the gameplay session is not ready.",
+                    UiFeedbackSeverity.Error);
+                return;
+            }
+
+            if (saveLoadScreen != null &&
+                saveLoadScreen.OpenForSave(
+                    sessionController.Save,
+                    sessionController.SaveSlotName))
+            {
+                return;
+            }
+
+            ShowFeedback(
+                "The save game screen is not configured.",
+                UiFeedbackSeverity.Error);
+        }
+
+        void BeginReturnToMainMenu()
+        {
+            ResolveReferences();
+            if (sessionController == null || loadingOverlay == null)
+            {
+                ShowFeedback(
+                    "The loading screen is not configured.",
+                    UiFeedbackSeverity.Error);
+                return;
+            }
+
+            loadingOverlay.TryBegin(
+                sessionController.ExitToMainMenuAsync,
+                UiLoadingPresentation.ReturningToMainMenu,
+                () => ShowFeedback(
+                    "The main menu could not be loaded.",
+                    UiFeedbackSeverity.Error));
+        }
+
+        void RequestConfirmation(
+            string title,
+            string body,
+            string confirmLabel,
+            Action confirmedAction)
+        {
+            ResolveReferences();
+            if (confirmationDialog != null &&
+                confirmationDialog.Present(
+                    title,
+                    body,
+                    confirmLabel,
+                    confirmedAction))
+            {
+                return;
+            }
+
+            ShowFeedback(
+                "Confirmation screen is not configured.",
+                UiFeedbackSeverity.Error);
+        }
+
+        void ShowFeedback(string message, UiFeedbackSeverity severity)
+        {
+            if (feedbackService != null)
+            {
+                feedbackService.Show(message, severity);
+                return;
+            }
+
+#if UNITY_EDITOR
+            Debug.LogWarning(message, this);
+#endif
         }
 
     }

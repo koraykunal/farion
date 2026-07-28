@@ -10,20 +10,30 @@ prototype-only systems into production gameplay.
    `SO_GameFlowSettings` and `GameFlowService`.
 3. `SC_PhysicsSandbox` remains the current gameplay proving ground until the
    first vertical slice is stable enough to be renamed or split.
+4. The target game loop starts from an authored capital ship, sends each player
+   out in a personal ship, and returns expedition results to fleet progression.
+
+The long-term progression chain is:
+
+`Planet -> Resources -> Machines -> Components -> Ship Upgrades -> New Systems
+-> Rare Technology -> Capital Ship Expansion -> New Gameplay`
+
+Resources are inputs to capability unlocks, not progression goals by themselves.
 
 ## Beta-0 Vertical Slice
 
-The first beta target is a complete single-player loop:
+The first beta target proves the expedition loop locally before transport-level
+multiplayer:
 
 1. Start from the main menu.
-2. Spawn in or near the active ship.
-3. Fly to the authored planet.
-4. Enter atmosphere and land with readable guidance.
-5. Exit the ship as the explorer.
-6. Collect one surface resource.
-7. Return to the ship.
-8. Apply one ship or suit upgrade.
-9. Unlock one new objective marker or story beat.
+2. Load an authored fleet/capital-ship session.
+3. Board the assigned personal ship and depart.
+4. Fly to the authored planet, enter atmosphere, and land.
+5. Exit as the explorer and collect one useful resource.
+6. Return to the personal ship and then to the capital ship.
+7. Refine the resource into a component.
+8. Apply one personal-ship or capital-ship capability upgrade.
+9. Unlock a destination, planet class, or activity that was unreachable before.
 
 Do not add co-op networking before this loop works locally. Multiplayer should
 replicate a proven loop, not define the loop while the foundation is still
@@ -61,6 +71,12 @@ moving.
   collection nodes. Resource nodes should use `ResourceNodeInteractable` and a
   `ResourceNodeDefinition` asset; item definitions are yielded by resource
   definitions, not assigned directly on scene nodes.
+- `PlayerInventory` is an adapter over `InventoryContainerState`. New cargo,
+  storage, machine, and suit inventories must reuse the same container domain;
+  they must not copy the old player-specific stack mutation logic.
+- Stackable resources/components and unique equipment are different persistence
+  models. A unique equipment item must have a persistent instance id before it
+  can carry condition, serial number, modules, or upgrades.
 - Item progression is category-driven, not linear tier-driven. Item definitions
   carry `InventoryItemCategory`, `InventoryItemForm`, and `TechnologyDomain` so
   crafting, research, upgrades, and future co-op authority can reason about
@@ -85,22 +101,43 @@ moving.
 ## Next Implementation Order
 
 Completed foundation: deterministic planetary/resource generation, local
-resource streaming and pooling, inventory and definition registries, gameplay
-UI focus, possession/boarding composition, schema-4 save/load, centralized
-input actions, application flow, audio assembly isolation, and build validation.
+resource streaming and pooling, revisioned inventory/equipment/fleet domain
+aggregates, reusable inventory Unity projection, authoritative equipment
+location ledger and loadout transactions, equipment/slot authoring contracts,
+registry installation policy, inventory and definition registries, gameplay UI
+focus, possession/boarding composition, schema-4 save/load, centralized input
+actions, application flow, audio assembly isolation, compiler-enforced pure
+domain assembly, explicit local-session identity, shared runtime/save
+composition bindings, build validation, session-owned harvesting/crafting
+commands, and the authored starter-shuttle `PersonalShipState`/cargo binding.
 
-1. Play Mode-prove the complete pilot exit, interior, exterior, board, and
-   re-enter loop.
-2. Add a runtime crafting station service and one readable raw-to-refined
-   resource transaction.
-3. Add research runtime state and persist researched capability ids.
-4. Apply one real suit or ship upgrade through a dedicated upgrade service.
-5. Add one objective that observes the economy/upgrade result and persist it.
-6. Play Mode-tune and accessibility-test the implemented production flight and
-   landing HUD.
-7. Add local terrain-collision patches before generated moving planets become
-   regular landing targets.
-8. Profile resource patch streaming and ocean/atmosphere render budgets on
-   target hardware.
-9. Defer weather, fauna, Addressables, ECS, and networking until this local loop
-   is readable, tested, and save-safe.
+1. Run the new domain EditMode tests and Play Mode-prove the current
+   possession, inventory, resource, and save/load behavior did not regress.
+2. Add one authored immediate processing terminal using the existing recipe
+   transaction. Do not add queues, power, heat, workers, or maintenance yet.
+3. Compose the first concrete equipment-instance repository and add the
+   application install/uninstall command handler when its authored container
+   owner exists.
+4. Apply one produced component through a real personal-ship upgrade and prove
+   that its runtime effect has a single authority.
+5. Design schema `5` snapshots and schema-4 migration for the now-active
+   session, personal ship, containers, and equipment repository. Validate all
+   cross-references before replacing live state.
+6. Connect research completion to `FleetKnowledgeState` capability/blueprint
+   unlocks instead of direct stat bonuses.
+7. Prove the local planet, collection, processing, upgrade, and save/load loop
+   before capital-ship production work.
+8. Define the machine aggregate, including queue, power, heat, condition,
+   efficiency, and maintenance, only after the immediate processing loop is
+   useful and measurable.
+9. Define authored capital-ship room sockets and machine-placement contracts;
+   keep meshes and prefabs replaceable.
+10. Add the authored capital ship and explicit new-game/load-game fleet
+   bootstrap. Do not procedurally invent the fleet in a scene component.
+11. Prove the complete capital ship, personal ship, planet, return, processing,
+   upgrade, and unlock loop locally.
+12. Add host-authoritative command/replication adapters around the proven
+   aggregate boundaries, then validate two players before scaling to four.
+13. Profile terrain streaming and ocean/atmosphere budgets on target hardware.
+14. Defer weather, fauna, Addressables, and ECS until the expedition loop is
+   readable, save-safe, and measurable.

@@ -11,59 +11,39 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0da32fb713494f21a1cfe3a465b8f58e, type: 3}
   m_Name: SO_TestBiomeDistribution
-  m_EditorClassIdentifier: 
-  seedSalt: 2001
-  fallbackBiome: {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
-  temperatureNoiseScale: 1.75
-  moistureNoiseScale: 2.25
+  m_EditorClassIdentifier:
+  fallbackBiome: {fileID: 11400000, guid: efc4474a4cfc46739600e347366c7f8c, type: 2}
   altitudeBlend: 4
   slopeBlendDegrees: 10
-  noiseBlend: 0.14
-  localTemperatureBlendCelsius: 8
-  localMoistureBlend: 0.16
-  localRadiationBlend: 0.08
+  temperatureBlendCelsius: 8
+  aridityBlend: 0.12
+  radiationBlend: 0.08
   rules:
-  - biome: {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
-    selectionPriority: 1.05
-    altitudeRange: {x: -1000000, y: 1000000}
-    slopeRange: {x: 0, y: 70}
-    minTemperatureNoise: 0
-    maxTemperatureNoise: 1
-    minMoistureNoise: 0
-    maxMoistureNoise: 1
-    localTemperatureRange: {x: 35, y: 180}
-    localMoistureRange: {x: 0, y: 1}
-    localRadiationRange: {x: 0, y: 0.8}
   - biome: {fileID: 11400000, guid: ec69e337fda94e90b1e1d0900b3536ed, type: 2}
     selectionPriority: 1.2
     altitudeRange: {x: -1000000, y: 1000000}
-    slopeRange: {x: 0, y: 50}
-    minTemperatureNoise: 0
-    maxTemperatureNoise: 0.28
-    minMoistureNoise: 0
-    maxMoistureNoise: 1
-    localTemperatureRange: {x: -220, y: 5}
-    localMoistureRange: {x: 0, y: 1}
-    localRadiationRange: {x: 0, y: 0.4}
+    slopeRange: {x: 0, y: 90}
+    temperatureRange: {x: -273.15, y: 5}
+    aridityRange: {x: 0, y: 1}
+    radiationRange: {x: 0, y: 0.65}
   - biome: {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
     selectionPriority: 1.1
     altitudeRange: {x: 0.2, y: 1000000}
     slopeRange: {x: 18, y: 90}
-    minTemperatureNoise: 0.2
-    maxTemperatureNoise: 1
-    minMoistureNoise: 0
-    maxMoistureNoise: 0.75
-    localTemperatureRange: {x: -20, y: 18}
-    localMoistureRange: {x: 0, y: 0.95}
-    localRadiationRange: {x: 0, y: 0.5}
+    temperatureRange: {x: -60, y: 55}
+    aridityRange: {x: 0.15, y: 1}
+    radiationRange: {x: 0, y: 0.8}
   - biome: {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
     selectionPriority: 1
-    altitudeRange: {x: -10, y: 40}
-    slopeRange: {x: 0, y: 35}
-    minTemperatureNoise: 0.25
-    maxTemperatureNoise: 1
-    minMoistureNoise: 0.25
-    maxMoistureNoise: 1
-    localTemperatureRange: {x: -5, y: 28}
-    localMoistureRange: {x: 0.35, y: 1}
-    localRadiationRange: {x: 0, y: 0.25}
+    altitudeRange: {x: -1000000, y: 55}
+    slopeRange: {x: 0, y: 42}
+    temperatureRange: {x: -5, y: 34}
+    aridityRange: {x: 0, y: 0.62}
+    radiationRange: {x: 0, y: 0.62}
+  - biome: {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    selectionPriority: 1.05
+    altitudeRange: {x: -1000000, y: 1000000}
+    slopeRange: {x: 0, y: 58}
+    temperatureRange: {x: 22, y: 90}
+    aridityRange: {x: 0.52, y: 1}
+    radiationRange: {x: 0, y: 0.82}

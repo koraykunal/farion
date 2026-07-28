@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Rendering.Celestial
 {
@@ -7,7 +8,10 @@ namespace Farion.Rendering.Celestial
     {
         [Header("Material")]
         [SerializeField] Material material;
-        [SerializeField] BiomeVisualProfile biomeVisualProfile;
+        [FormerlySerializedAs("biomeVisualProfile")]
+        [SerializeField] SurfaceVisualProfile surfaceVisualProfile;
+        [SerializeField] SurfaceTextureSet lavaOverlay = new();
+        [SerializeField] SurfaceTextureSet snowOverlay = new();
         [Range(0f, 1f)]
         [SerializeField] float metallic;
         [Range(0f, 1f)]
@@ -67,8 +71,20 @@ namespace Farion.Rendering.Celestial
         [Range(0f, 0.2f)]
         [SerializeField] float flatToSteepNoise = 0.026f;
 
+        [System.NonSerialized] SurfaceVisualProfile subscribedSurfaceVisualProfile;
+
         public override Material Material => material;
-        public BiomeVisualProfile BiomeVisualProfile => biomeVisualProfile;
+        public SurfaceVisualProfile SurfaceVisualProfile => surfaceVisualProfile;
+
+        void OnEnable()
+        {
+            SyncSurfaceVisualProfileSubscription();
+        }
+
+        void OnDisable()
+        {
+            UnsubscribeFromSurfaceVisualProfile();
+        }
 
         public override void ApplyMaterialProperties(
             MaterialPropertyBlock propertyBlock,
@@ -102,14 +118,17 @@ namespace Farion.Rendering.Celestial
             propertyBlock.SetFloat("_LandSmoothness", landSmoothness);
             propertyBlock.SetFloat("_OceanSmoothness", oceanSmoothness);
 
-            if (biomeVisualProfile != null)
+            if (surfaceVisualProfile != null)
             {
-                biomeVisualProfile.ApplyMaterialProperties(propertyBlock);
+                surfaceVisualProfile.ApplyMaterialProperties(propertyBlock);
             }
             else
             {
-                BiomeVisualProfile.ClearMaterialProperties(propertyBlock);
+                SurfaceVisualProfile.ClearMaterialProperties(propertyBlock);
             }
+
+            ApplyOverlayProperties(propertyBlock, "_Lava", lavaOverlay);
+            ApplyOverlayProperties(propertyBlock, "_Snow", snowOverlay);
 
             propertyBlock.SetColor("_OceanLow", oceanLow);
             propertyBlock.SetColor("_OceanHigh", oceanHigh);
@@ -159,6 +178,64 @@ namespace Farion.Rendering.Celestial
             oceanEdgeBlend = Mathf.Clamp(oceanEdgeBlend, 0.001f, 0.12f);
             shoreWetness = Mathf.Clamp01(shoreWetness);
             shoreFoamStrength = Mathf.Clamp01(shoreFoamStrength);
+            SyncSurfaceVisualProfileSubscription();
+            NotifyChanged();
+        }
+
+        static void ApplyOverlayProperties(
+            MaterialPropertyBlock propertyBlock,
+            string propertyPrefix,
+            SurfaceTextureSet textures)
+        {
+            bool enabled = textures != null && textures.HasSurfaceTextures;
+            propertyBlock.SetFloat($"{propertyPrefix}OverlayEnabled", enabled ? 1f : 0f);
+            if (!enabled)
+            {
+                return;
+            }
+
+            propertyBlock.SetTexture($"{propertyPrefix}BaseColor", textures.BaseColor);
+            propertyBlock.SetTexture($"{propertyPrefix}Normal", textures.Normal);
+            propertyBlock.SetTexture($"{propertyPrefix}Roughness", textures.Roughness);
+            if (textures.Emission != null)
+            {
+                propertyBlock.SetTexture($"{propertyPrefix}Emission", textures.Emission);
+            }
+
+            propertyBlock.SetFloat($"{propertyPrefix}WorldTileSize", textures.WorldTileSize);
+            propertyBlock.SetFloat($"{propertyPrefix}NormalStrength", 1f);
+            propertyBlock.SetColor($"{propertyPrefix}EmissionTint", textures.EmissionTint);
+            propertyBlock.SetFloat($"{propertyPrefix}EmissionStrength", textures.EmissionStrength);
+        }
+
+        void SyncSurfaceVisualProfileSubscription()
+        {
+            if (subscribedSurfaceVisualProfile == surfaceVisualProfile)
+            {
+                return;
+            }
+
+            UnsubscribeFromSurfaceVisualProfile();
+            subscribedSurfaceVisualProfile = surfaceVisualProfile;
+            if (subscribedSurfaceVisualProfile != null)
+            {
+                subscribedSurfaceVisualProfile.Changed += HandleSurfaceVisualProfileChanged;
+            }
+        }
+
+        void UnsubscribeFromSurfaceVisualProfile()
+        {
+            if (subscribedSurfaceVisualProfile == null)
+            {
+                return;
+            }
+
+            subscribedSurfaceVisualProfile.Changed -= HandleSurfaceVisualProfileChanged;
+            subscribedSurfaceVisualProfile = null;
+        }
+
+        void HandleSurfaceVisualProfileChanged()
+        {
             NotifyChanged();
         }
     }

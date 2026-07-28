@@ -134,7 +134,7 @@ namespace Farion.Gameplay.Flight
         void ConfigureRigidbody()
         {
             Rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-            Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         }
     }
 }

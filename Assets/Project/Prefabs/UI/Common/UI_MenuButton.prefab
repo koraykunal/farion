@@ -58,7 +58,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.004, g: 0.018, b: 0.017, a: 0.48}
+  m_Color: {r: 0.024, g: 0.037, b: 0.052, a: 0.72}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -170,7 +170,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.78, g: 0.9, b: 0.7, a: 0}
+  m_Color: {r: 0.56, g: 0.68, b: 0.76, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -262,7 +262,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.54, g: 0.6, b: 0.65, a: 0.9}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -382,7 +382,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.78, g: 0.9, b: 0.7, a: 0.72}
+  m_Color: {r: 0.56, g: 0.68, b: 0.76, a: 0.72}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -474,7 +474,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.54, g: 0.6, b: 0.65, a: 0.9}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -699,6 +699,7 @@ MonoBehaviour:
   titleText: {fileID: 2411182823004995970}
   subtitleText: {fileID: 6273784691779864178}
   iconImage: {fileID: 7757196561709597353}
+  theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   panelBackground: {fileID: 3105810004}
   accentBar: {fileID: 0}
   selectionFrame: {fileID: 1639098098836289599}
@@ -707,17 +708,17 @@ MonoBehaviour:
   contentOffsetWithoutIcon: {x: 32, y: 0}
   contentSizeWithIcon: {x: -96, y: 0}
   contentSizeWithoutIcon: {x: -52, y: 0}
-  normalPanel: {r: 0.004, g: 0.018, b: 0.017, a: 0.48}
-  highlightedPanel: {r: 0.004, g: 0.018, b: 0.017, a: 0.68}
-  normalTitle: {r: 0.62, g: 0.65, b: 0.59, a: 0.88}
-  highlightedTitle: {r: 0.94, g: 0.91, b: 0.83, a: 1}
-  normalSubtitle: {r: 0.38, g: 0.48, b: 0.58, a: 1}
-  highlightedSubtitle: {r: 0.55, g: 0.72, b: 0.88, a: 1}
-  accentColor: {r: 0.78, g: 0.9, b: 0.7, a: 0.95}
+  normalPanel: {r: 0.024, g: 0.037, b: 0.052, a: 0.72}
+  highlightedPanel: {r: 0.055, g: 0.086, b: 0.118, a: 0.92}
+  normalTitle: {r: 0.54, g: 0.6, b: 0.65, a: 0.9}
+  highlightedTitle: {r: 0.88, g: 0.91, b: 0.93, a: 1}
+  normalSubtitle: {r: 0.54, g: 0.6, b: 0.65, a: 0.9}
+  highlightedSubtitle: {r: 0.68, g: 0.76, b: 0.81, a: 1}
+  accentColor: {r: 0.56, g: 0.68, b: 0.76, a: 1}
   normalContentOffset: {x: 0, y: 0}
   highlightedContentOffset: {x: 0, y: 0}
-  hoverInDuration: 0.14
-  hoverOutDuration: 0.2
+  hoverInDuration: 0.16
+  hoverOutDuration: 0.1
   hoverInEase: 12
   hoverOutEase: 9
   normalIconScale: {x: 1, y: 1, z: 1}

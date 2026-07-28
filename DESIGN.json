@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-27T17:01:10.6454923+03:00",
+  "title": "Design System: Farion",
+  "extensions": {
+    "colorMeta": {
+      "farion-void": {
+        "role": "neutral",
+        "displayName": "Farion Void",
+        "canonical": "#010505",
+        "tonalRamp": ["#010505", "#071110", "#0D1D1B", "#18302D", "#2B4B46", "#53716B", "#91A6A0", "#E5EFEC"]
+      },
+      "cabin-ivory": {
+        "role": "neutral",
+        "displayName": "Cabin Ivory",
+        "canonical": "#F0E8D4",
+        "tonalRamp": ["#201D17", "#3A3428", "#574D3B", "#786A50", "#9C8968", "#C2AD88", "#E0D1B2", "#F7F1E5"]
+      },
+      "expedition-green": {
+        "role": "primary",
+        "displayName": "Expedition Green",
+        "canonical": "#C7E6B3",
+        "tonalRamp": ["#172014", "#283B22", "#3E5B35", "#5C7D4F", "#7FA36F", "#A4C592", "#C7E6B3", "#EDF8E6"]
+      },
+      "navigation-ice": {
+        "role": "secondary",
+        "displayName": "Navigation Ice",
+        "canonical": "#85F0E6",
+        "tonalRamp": ["#0D211F", "#143A36", "#1D5650", "#2B756D", "#41978E", "#61BCB2", "#85F0E6", "#E7FCFA"]
+      },
+      "caution-amber": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "canonical": "#FFB83D",
+        "tonalRamp": ["#281A04", "#4A2E05", "#704508", "#9A620C", "#C78016", "#E99C27", "#FFB83D", "#FFF1D2"]
+      },
+      "critical-red": {
+        "role": "tertiary",
+        "displayName": "Critical Red",
+        "canonical": "#FF4233",
+        "tonalRamp": ["#2A0906", "#4D100C", "#741A14", "#9E241C", "#CA3026", "#ED3A2E", "#FF6B60", "#FFE9E6"]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Screen titles and major operational states."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Menu actions and selected item names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, explanations, and system outcomes."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Metadata, control labels, and telemetry categories."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state-enter",
+        "value": "160ms cubic-bezier(0.165, 0.84, 0.44, 1)",
+        "purpose": "Screen, selection, and focus entry."
+      },
+      {
+        "name": "state-exit",
+        "value": "100ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        "purpose": "Non-blocking state exit."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0ms linear",
+        "purpose": "Immediate state application when reduced motion is enabled."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-pc",
+        "value": "1366x768"
+      },
+      {
+        "name": "reference-pc",
+        "value": "1920x1080"
+      },
+      {
+        "name": "ultrawide-pc",
+        "value": "2560x1080"
+      },
+      {
+        "name": "high-density-pc",
+        "value": "3840x2160"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Menu Button",
+      "kind": "button",
+      "refersTo": "menu-button",
+      "description": "The canonical full-width action used by main and pause menus.",
+      "html": "<button class=\"ds-menu-button\"><span class=\"ds-menu-button__label\">CONTINUE</span></button>",
+      "css": ".ds-menu-button { width: 344px; height: 56px; padding: 0 32px; border: 1px solid transparent; border-radius: 4px; background: #0105057A; color: #9EA696; font: 500 19px/1.2 Arial, sans-serif; letter-spacing: 0.03em; text-align: left; transition: background-color 160ms cubic-bezier(0.165, 0.84, 0.44, 1), color 160ms cubic-bezier(0.165, 0.84, 0.44, 1), border-color 160ms cubic-bezier(0.165, 0.84, 0.44, 1); } .ds-menu-button:hover, .ds-menu-button:focus-visible { outline: none; background: #010505AD; color: #F0E8D4; border-color: #C7E6B3; } .ds-menu-button:active { background: #071110; } .ds-menu-button:disabled { color: #59605A; border-color: transparent; }"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "menu-button",
+      "description": "A compact operational action with the same focus vocabulary as menu buttons.",
+      "html": "<button class=\"ds-icon-button\" aria-label=\"Close\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button>",
+      "css": ".ds-icon-button { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 4px; background: #0105057A; color: #C7E6B3; transition: background-color 160ms cubic-bezier(0.165, 0.84, 0.44, 1), border-color 160ms cubic-bezier(0.165, 0.84, 0.44, 1); } .ds-icon-button svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; } .ds-icon-button:hover, .ds-icon-button:focus-visible { outline: none; background: #010505AD; border-color: #C7E6B3; } .ds-icon-button:active { background: #071110; }"
+    },
+    {
+      "name": "Operational Panel",
+      "kind": "card",
+      "refersTo": "operational-panel",
+      "description": "A task-focused inventory, station, or ship-management surface.",
+      "html": "<section class=\"ds-panel\"><h2>INVENTORY</h2><p>Personal expedition storage</p></section>",
+      "css": ".ds-panel { width: 420px; padding: 24px; border: 1px solid #C7E6B34D; border-radius: 6px; background: #010505D1; color: #F0E8D4; } .ds-panel h2 { margin: 0 0 8px; font: 400 22px/1.2 Arial, sans-serif; letter-spacing: 0.04em; } .ds-panel p { margin: 0; color: #9EA696; font: 400 14px/1.45 Arial, sans-serif; }"
+    },
+    {
+      "name": "Inventory Slot",
+      "kind": "custom",
+      "refersTo": "operational-panel",
+      "description": "A selectable stack summary with quantity and metadata.",
+      "html": "<button class=\"ds-inventory-slot\"><span class=\"ds-inventory-slot__icon\"></span><span><strong>IRON ORE</strong><small>STRUCTURAL / RAW</small></span><b>12</b></button>",
+      "css": ".ds-inventory-slot { width: 100%; min-height: 72px; display: grid; grid-template-columns: 40px 1fr auto; gap: 16px; align-items: center; padding: 12px 16px; border: 1px solid transparent; border-radius: 4px; background: #01050585; color: #F0E8D4; text-align: left; } .ds-inventory-slot__icon { width: 32px; height: 32px; border: 1px solid #C7E6B366; border-radius: 4px; } .ds-inventory-slot strong, .ds-inventory-slot small { display: block; } .ds-inventory-slot strong { font: 500 17px/1.2 Arial, sans-serif; } .ds-inventory-slot small { margin-top: 4px; color: #9EA696; font: 500 13px/1.2 Arial, sans-serif; letter-spacing: 0.05em; } .ds-inventory-slot b { color: #C7E6B3; font: 500 16px/1 Arial, sans-serif; } .ds-inventory-slot:hover, .ds-inventory-slot:focus-visible { outline: none; border-color: #C7E6B3; background: #010505AD; }"
+    },
+    {
+      "name": "Interaction Prompt",
+      "kind": "custom",
+      "refersTo": "menu-button",
+      "description": "A device-aware contextual action shown only for a valid target.",
+      "html": "<div class=\"ds-prompt\"><kbd>E</kbd><span>Board spacecraft</span></div>",
+      "css": ".ds-prompt { display: inline-flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 4px; background: #010505D1; color: #F0E8D4; font: 500 14px/1.2 Arial, sans-serif; } .ds-prompt kbd { min-width: 28px; padding: 5px 7px; border: 1px solid #C7E6B3; border-radius: 4px; color: #C7E6B3; font: 500 13px/1 Arial, sans-serif; text-align: center; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Quiet Expedition Console",
+    "overview": "Farion's interface feels like credible expedition equipment: composed, purposeful, and connected to the spacecraft and fleet around it. It is interesting through proportion, typography, selective signal color, responsive feedback, and restrained mechanical detail. It never depends on constant visual noise.",
+    "keyCharacteristics": [
+      "Dark tinted operational surfaces with warm readable text.",
+      "Expedition green reserved for focus, selection, and affirmative state.",
+      "Navigation ice reserved for live guidance and telemetry.",
+      "Compact motion that confirms state without delaying interaction.",
+      "One coherent component vocabulary across keyboard, mouse, and gamepad."
+    ],
+    "rules": [
+      {
+        "name": "The Scarce Signal Rule",
+        "body": "Expedition Green, Navigation Ice, Caution Amber, and Critical Red communicate state. They never fill large inactive areas.",
+        "section": "colors"
+      },
+      {
+        "name": "The Severity Rule",
+        "body": "Warning color is always paired with explicit text, an icon, shape, sound, or motion. Color alone is forbidden.",
+        "section": "colors"
+      },
+      {
+        "name": "The Legibility Before Lore Rule",
+        "body": "Abbreviations are allowed only when they are standard, repeatedly taught, or constrained by a true instrument surface. Invented microtext is forbidden.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tonal Depth Rule",
+        "body": "If two surfaces cannot be separated without a heavy shadow, their hierarchy or spacing is wrong.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep gameplay HUDs restrained and reveal deeper telemetry on demand.",
+      "Do use Expedition Green only for focus, selection, confirmation, and actionable state.",
+      "Do make every screen usable with keyboard, mouse, and gamepad.",
+      "Do pair warning colors with explicit language and another sensory or structural cue.",
+      "Do use authored prefabs and presentation contracts so visuals can change without gameplay rewrites."
+    ],
+    "donts": [
+      "Don't use excessive neon cyberpunk styling.",
+      "Don't use constant holographic decoration or visual noise.",
+      "Don't build crowded HUDs that show every available metric at all times.",
+      "Don't use decorative glassmorphism and blur as a default surface treatment.",
+      "Don't use generic science-fiction panels disconnected from the actual game systems.",
+      "Don't use unreadable microtext, ornamental abbreviations, or color-only warnings.",
+      "Don't ship empty buttons, placeholder screens, prototype overlays, or dead-end flows in production scenes."
+    ]
+  }
+}

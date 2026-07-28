@@ -2,6 +2,7 @@
     "name": "Farion.Gameplay.Runtime",
     "rootNamespace": "Farion.Gameplay",
     "references": [
+        "Farion.Gameplay.Domain",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Unity.InputSystem"

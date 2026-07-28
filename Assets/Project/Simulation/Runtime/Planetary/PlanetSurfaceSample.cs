@@ -12,6 +12,8 @@ namespace Farion.Simulation.Planetary
             float surfaceRadius,
             PlanetClimateSample climate,
             BiomeSample biome,
+            SurfaceMaterialSample surfaceMaterial,
+            PlanetSurfaceStateSample surfaceState,
             TerrainFeatureSample terrainFeature)
         {
             Context = context;
@@ -21,6 +23,8 @@ namespace Farion.Simulation.Planetary
             TerrainAltitude = SurfaceRadius - context.Radius;
             Climate = climate;
             Biome = biome;
+            SurfaceMaterial = surfaceMaterial;
+            SurfaceState = surfaceState;
             TerrainFeature = terrainFeature;
         }
 
@@ -31,6 +35,8 @@ namespace Farion.Simulation.Planetary
         public float TerrainAltitude { get; }
         public PlanetClimateSample Climate { get; }
         public BiomeSample Biome { get; }
+        public SurfaceMaterialSample SurfaceMaterial { get; }
+        public PlanetSurfaceStateSample SurfaceState { get; }
         public TerrainFeatureSample TerrainFeature { get; }
         public bool HasBody => Surface.HasBody;
     }

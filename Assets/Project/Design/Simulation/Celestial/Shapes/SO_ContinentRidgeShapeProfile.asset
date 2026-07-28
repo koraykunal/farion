@@ -34,18 +34,18 @@ MonoBehaviour:
     Persistence: 0.55
     Scale: 1.09
     Elevation: 1
-    VerticalShift: 2
+    VerticalShift: 0.02
     Offset: {x: 0, y: 0, z: 0}
   ridgeNoise:
-    Octaves: 5
-    Lacunarity: 4
+    Octaves: 4
+    Lacunarity: 2
     Persistence: 0.5
     Scale: 1.5
-    Power: 2.18
-    Elevation: 4.2
+    Power: 1.85
+    Elevation: 3.8
     Gain: 0.8
     VerticalShift: 0.09
-    PeakSmoothing: 1
+    SpatialSmoothing: 0.03
     Offset: {x: 0, y: 0, z: 0}
   detailWarpNoise:
     Octaves: 4

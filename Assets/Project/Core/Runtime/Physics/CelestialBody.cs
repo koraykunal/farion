@@ -25,6 +25,7 @@ namespace Farion.Core.Physics
         Rigidbody cachedRigidbody;
         Vector3 simulatedVelocity;
         Vector3 simulatedAngularVelocity;
+        Vector3 physicsReferenceFrameVelocity;
         float mass;
 
         public string BodyName => bodyName;
@@ -42,7 +43,8 @@ namespace Farion.Core.Physics
         public float SurfaceGravity => surfaceGravity;
         public Vector3 InitialVelocity => initialVelocity;
         public Vector3 InitialAngularVelocityDegreesPerSecond => initialAngularVelocityDegreesPerSecond;
-        public Vector3 Velocity => simulatedVelocity;
+        public Vector3 InertialVelocity => simulatedVelocity;
+        public Vector3 Velocity => ResolvedInertialVelocity - physicsReferenceFrameVelocity;
         public Vector3 AngularVelocity => simulatedAngularVelocity;
         public float Mass => mass;
         public bool ParticipatesInNBody => participatesInNBody;
@@ -142,6 +144,7 @@ namespace Farion.Core.Physics
         {
             simulatedVelocity = initialVelocity;
             simulatedAngularVelocity = initialAngularVelocityDegreesPerSecond * Mathf.Deg2Rad;
+            physicsReferenceFrameVelocity = Vector3.zero;
         }
 
         public void RecalculateMass(float gravitationalConstant)
@@ -181,16 +184,21 @@ namespace Farion.Core.Physics
             simulatedVelocity += acceleration * deltaTime;
         }
 
-        public void IntegratePosition(float deltaTime)
+        internal void SetPhysicsReferenceFrameVelocity(Vector3 frameVelocity)
         {
-            if (!IntegratesOrbit)
+            physicsReferenceFrameVelocity = frameVelocity;
+        }
+
+        public void IntegratePosition(float deltaTime, Vector3 referenceFrameVelocity)
+        {
+            physicsReferenceFrameVelocity = referenceFrameVelocity;
+            Vector3 frameRelativeVelocity = Velocity;
+            if (frameRelativeVelocity.sqrMagnitude > 0.00000001f)
             {
-                return;
+                Rigidbody.MovePosition(Rigidbody.position + frameRelativeVelocity * deltaTime);
             }
 
-            Rigidbody.MovePosition(Rigidbody.position + simulatedVelocity * deltaTime);
-
-            if (simulatedAngularVelocity.sqrMagnitude > 0.000001f)
+            if (IntegratesOrbit && simulatedAngularVelocity.sqrMagnitude > 0.000001f)
             {
                 Quaternion deltaRotation = Quaternion.Euler(simulatedAngularVelocity * Mathf.Rad2Deg * deltaTime);
                 Rigidbody.MoveRotation(Rigidbody.rotation * deltaRotation);
@@ -199,7 +207,7 @@ namespace Farion.Core.Physics
 
         public Vector3 GetVelocityAtPoint(Vector3 point)
         {
-            return simulatedVelocity + Vector3.Cross(simulatedAngularVelocity, point - Position);
+            return Velocity + Vector3.Cross(simulatedAngularVelocity, point - Position);
         }
 
         public CelestialBodySnapshot CaptureSnapshot()
@@ -244,5 +252,10 @@ namespace Farion.Core.Physics
 
             return string.Equals(snapshot.BodyName, BodyName, System.StringComparison.Ordinal);
         }
+
+        Vector3 ResolvedInertialVelocity =>
+            ParticipatesInNBody && IntegratesOrbit
+                ? simulatedVelocity
+                : Vector3.zero;
     }
 }

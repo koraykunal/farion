@@ -19,11 +19,6 @@ MonoBehaviour:
   - 0
   - 3
   - 5
-  allowedClimates:
-  - 1
-  - 2
   radiusRange: {x: 6, y: 1000000}
   surfaceGravityRange: {x: 0.01, y: 30}
   requiresAtmosphere: 0
-  temperatureRange: {x: 35, y: 180}
-  radiationRange: {x: 0, y: 0.8}

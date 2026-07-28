@@ -68,8 +68,8 @@ namespace Farion.Gameplay.Resources
                 maxSlope = Mathf.Max(maxSlope, sample.Surface.SlopeAngleDegrees);
                 minTemperature = Mathf.Min(minTemperature, sample.Climate.TemperatureCelsius);
                 maxTemperature = Mathf.Max(maxTemperature, sample.Climate.TemperatureCelsius);
-                minMoisture = Mathf.Min(minMoisture, sample.Climate.Moisture);
-                maxMoisture = Mathf.Max(maxMoisture, sample.Climate.Moisture);
+                minMoisture = Mathf.Min(minMoisture, sample.Climate.EffectiveMoisture);
+                maxMoisture = Mathf.Max(maxMoisture, sample.Climate.EffectiveMoisture);
                 minRadiation = Mathf.Min(minRadiation, sample.Climate.Radiation);
                 maxRadiation = Mathf.Max(maxRadiation, sample.Climate.Radiation);
 

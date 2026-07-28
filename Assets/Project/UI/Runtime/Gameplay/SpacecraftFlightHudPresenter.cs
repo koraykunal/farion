@@ -3,6 +3,8 @@ using System.Text;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
+using Farion.UI.Foundation;
+using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
 
@@ -11,10 +13,13 @@ namespace Farion.UI.Gameplay
     [DisallowMultipleComponent]
     public sealed class SpacecraftFlightHudPresenter : MonoBehaviour
     {
-        static readonly Color NominalColor = new(0.52f, 0.94f, 0.9f, 0.96f);
-        static readonly Color CautionColor = new(1f, 0.72f, 0.24f, 0.98f);
-        static readonly Color CriticalColor = new(1f, 0.26f, 0.2f, 1f);
+        static readonly Color FallbackNominalColor = new(0.52f, 0.94f, 0.9f, 0.96f);
+        static readonly Color FallbackCautionColor = new(1f, 0.72f, 0.24f, 0.98f);
+        static readonly Color FallbackCriticalColor = new(1f, 0.26f, 0.2f, 1f);
         static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
+
+        [Header("Design")]
+        [SerializeField] UiTheme theme;
 
         [Header("Sources")]
         [SerializeField] PlayerPossessionController possessionController;
@@ -40,23 +45,46 @@ namespace Farion.UI.Gameplay
 
         void Awake()
         {
+            ResolveTheme();
             ResolveSources();
+            ApplyTheme();
+            SetVisible(false);
+        }
+
+        void OnEnable()
+        {
+            ResolveSources();
+            if (possessionController != null)
+            {
+                possessionController.ModeChanged -= HandlePossessionModeChanged;
+                possessionController.ModeChanged += HandlePossessionModeChanged;
+            }
+
+            RefreshVisibility();
+        }
+
+        void OnDisable()
+        {
+            if (possessionController != null)
+            {
+                possessionController.ModeChanged -= HandlePossessionModeChanged;
+            }
+
             SetVisible(false);
         }
 
         void OnValidate()
         {
             refreshRate = Mathf.Max(1f, refreshRate);
+            ResolveTheme();
+            ApplyTheme();
         }
 
         void Update()
         {
             ResolveSources();
-            bool shouldShow = possessionController != null &&
-                possessionController.IsPilotingSpacecraft &&
-                motor != null;
-            SetVisible(shouldShow);
-            if (!shouldShow || Time.unscaledTime < nextRefreshTime)
+            RefreshVisibility();
+            if (!visible || Time.unscaledTime < nextRefreshTime)
             {
                 return;
             }
@@ -102,7 +130,13 @@ namespace Farion.UI.Gameplay
             SetText(flightText, flightBuilder);
 
             navigationBuilder.Clear();
-            if (celestialProbe != null && celestialProbe.HasSample)
+            SpacecraftLandingAssessment landingAssessment =
+                landingComputer != null
+                    ? landingComputer.CurrentAssessment
+                    : default;
+            if (celestialProbe != null &&
+                celestialProbe.HasSample &&
+                landingAssessment.HasFrame)
             {
                 var frame = celestialProbe.CurrentSample;
                 navigationBuilder
@@ -120,7 +154,7 @@ namespace Farion.UI.Gameplay
             }
             else
             {
-                navigationBuilder.Append("NO SURFACE FRAME");
+                navigationBuilder.Append("NAV  CRUISE");
             }
 
             navigationBuilder
@@ -166,28 +200,37 @@ namespace Farion.UI.Gameplay
                 : SpacecraftLandingGuidanceLevel.Offline;
             return level switch
             {
-                SpacecraftLandingGuidanceLevel.Critical => CriticalColor,
-                SpacecraftLandingGuidanceLevel.Warning => CautionColor,
-                SpacecraftLandingGuidanceLevel.Caution => CautionColor,
-                _ => NominalColor
+                SpacecraftLandingGuidanceLevel.Critical => ResolveCriticalColor(),
+                SpacecraftLandingGuidanceLevel.Warning => ResolveCautionColor(),
+                SpacecraftLandingGuidanceLevel.Caution => ResolveCautionColor(),
+                _ => ResolveNominalColor()
             };
         }
 
         void SetVisible(bool shouldShow)
         {
-            if (visible == shouldShow)
-            {
-                return;
-            }
-
+            bool changed = visible != shouldShow;
             visible = shouldShow;
             SetActive(flightText, visible);
             SetActive(navigationText, visible);
             SetActive(advisoryText, visible);
-            if (visible)
+            if (changed && visible)
             {
                 nextRefreshTime = 0f;
             }
+        }
+
+        void HandlePossessionModeChanged(PlayerPossessionMode _)
+        {
+            RefreshVisibility();
+        }
+
+        void RefreshVisibility()
+        {
+            SetVisible(
+                possessionController != null &&
+                possessionController.IsPilotingSpacecraft &&
+                motor != null);
         }
 
         static void SetText(TMP_Text target, StringBuilder builder)
@@ -204,6 +247,46 @@ namespace Farion.UI.Gameplay
             {
                 target.gameObject.SetActive(active);
             }
+        }
+
+        void ResolveTheme()
+        {
+            if (theme != null)
+            {
+                return;
+            }
+
+            UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
+            theme = root != null ? root.Theme : null;
+        }
+
+        void ApplyTheme()
+        {
+            Color nominal = ResolveNominalColor();
+            if (flightText != null)
+            {
+                flightText.color = nominal;
+            }
+
+            if (navigationText != null)
+            {
+                navigationText.color = nominal;
+            }
+        }
+
+        Color ResolveNominalColor()
+        {
+            return theme != null ? theme.Nominal : FallbackNominalColor;
+        }
+
+        Color ResolveCautionColor()
+        {
+            return theme != null ? theme.Caution : FallbackCautionColor;
+        }
+
+        Color ResolveCriticalColor()
+        {
+            return theme != null ? theme.Critical : FallbackCriticalColor;
         }
     }
 

@@ -17,7 +17,7 @@ MonoBehaviour:
   designTemperatureBiasCelsius: 0
   baselineHeatRedistribution: 0.35
   atmosphereHeatRedistribution: 0.25
-  localInsolationSwingCelsius: 0
+  localInsolationSwingCelsius: 90
   stellarRadiationContribution: 0.12
   unshieldedSurfaceRadiationBonus: 0.12
   atmosphereRadiationShielding: 0.6

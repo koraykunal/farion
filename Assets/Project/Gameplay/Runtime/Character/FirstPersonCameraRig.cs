@@ -57,20 +57,35 @@ namespace Farion.Gameplay.Character
             pitch = Mathf.Clamp(pitch - input.Look.y, -pitchLimit, pitchLimit);
 
             Vector3 up = target.LocalUp.sqrMagnitude > 0.0001f ? target.LocalUp : target.transform.up;
-            Vector3 desiredPosition = target.transform.position + up * eyeHeight;
-            Quaternion desiredRotation = Quaternion.AngleAxis(pitch, target.transform.right) * target.transform.rotation;
+            Vector3 targetPosition = target.transform.position;
+            Vector3 desiredLocalOffset = up * eyeHeight;
+            Vector3 currentLocalOffset = transform.position - targetPosition;
+            Quaternion targetRotation = target.transform.rotation;
+            Quaternion desiredLocalRotation = Quaternion.AngleAxis(pitch, Vector3.right);
+            Quaternion currentLocalRotation = Quaternion.Inverse(targetRotation) * transform.rotation;
 
-            if (snapNextFrame || Vector3.Distance(transform.position, desiredPosition) > snapDistance)
+            if (snapNextFrame || Vector3.Distance(currentLocalOffset, desiredLocalOffset) > snapDistance)
             {
-                transform.SetPositionAndRotation(desiredPosition, desiredRotation);
+                transform.SetPositionAndRotation(
+                    targetPosition + desiredLocalOffset,
+                    targetRotation * desiredLocalRotation);
                 snapNextFrame = false;
                 return;
             }
 
             float positionT = ResponsivenessToLerp(positionResponsiveness);
             float rotationT = ResponsivenessToLerp(rotationResponsiveness);
-            transform.position = Vector3.Lerp(transform.position, desiredPosition, positionT);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationT);
+            Vector3 smoothedLocalOffset = Vector3.Lerp(
+                currentLocalOffset,
+                desiredLocalOffset,
+                positionT);
+            Quaternion smoothedLocalRotation = Quaternion.Slerp(
+                currentLocalRotation,
+                desiredLocalRotation,
+                rotationT);
+            transform.SetPositionAndRotation(
+                targetPosition + smoothedLocalOffset,
+                targetRotation * smoothedLocalRotation);
         }
 
         public void SetTarget(FirstPersonMotor nextTarget)

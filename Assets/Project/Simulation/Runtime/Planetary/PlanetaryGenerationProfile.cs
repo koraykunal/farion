@@ -9,34 +9,33 @@ namespace Farion.Simulation.Planetary
     {
         [SerializeField] int planetSeed = 1001;
         [SerializeField] PlanetType planetType = PlanetType.Rocky;
-        [SerializeField] ClimateType climate = ClimateType.Temperate;
+
         [Header("Environment")]
-        [SerializeField] bool hasAtmosphere = true;
         [Min(0f)]
         [SerializeField] float atmosphereDensity = 1f;
-        [SerializeField] bool hasStableLiquidSurface;
         [Range(0f, 1f)]
-        [SerializeField] float liquidCoverage;
-        [SerializeField] float meanTemperatureCelsius = 15f;
-        [Range(0f, 1f)]
-        [SerializeField] float radiationLevel = 0.05f;
+        [SerializeField] float backgroundRadiation = 0.05f;
 
         [Header("Layers")]
         [SerializeField] CelestialShapeProfile shapeProfile;
+        [SerializeField] PlanetClimateProfile climateProfile;
+        [SerializeField] PlanetHydrosphereProfile hydrosphereProfile;
         [SerializeField] BiomeDistributionProfile biomeDistribution;
+        [SerializeField] SurfaceMaterialDistributionProfile surfaceMaterialDistribution;
+        [SerializeField] PlanetSurfaceStateProfile surfaceStateProfile;
         [SerializeField] TerrainFeatureDistributionProfile terrainFeatureDistribution;
 
         public int PlanetSeed => planetSeed;
         public PlanetType PlanetType => planetType;
-        public ClimateType Climate => climate;
-        public bool HasAtmosphere => hasAtmosphere;
         public float AtmosphereDensity => atmosphereDensity;
-        public bool HasStableLiquidSurface => hasStableLiquidSurface;
-        public float LiquidCoverage => liquidCoverage;
-        public float MeanTemperatureCelsius => meanTemperatureCelsius;
-        public float RadiationLevel => radiationLevel;
+        public bool HasAtmosphere => atmosphereDensity > 0f;
+        public float BackgroundRadiation => backgroundRadiation;
         public CelestialShapeProfile ShapeProfile => shapeProfile;
+        public PlanetClimateProfile ClimateProfile => climateProfile;
+        public PlanetHydrosphereProfile HydrosphereProfile => hydrosphereProfile;
         public BiomeDistributionProfile BiomeDistribution => biomeDistribution;
+        public SurfaceMaterialDistributionProfile SurfaceMaterialDistribution => surfaceMaterialDistribution;
+        public PlanetSurfaceStateProfile SurfaceStateProfile => surfaceStateProfile;
         public TerrainFeatureDistributionProfile TerrainFeatureDistribution => terrainFeatureDistribution;
 
         public PlanetGenerationContext CreateContext(float radius, float surfaceGravity)
@@ -46,13 +45,8 @@ namespace Farion.Simulation.Planetary
                 radius,
                 surfaceGravity,
                 planetType,
-                climate,
-                hasAtmosphere,
                 atmosphereDensity,
-                hasStableLiquidSurface,
-                liquidCoverage,
-                meanTemperatureCelsius,
-                radiationLevel);
+                backgroundRadiation);
         }
 
         public void CollectValidationIssues(float radius, float surfaceGravity, List<PlanetGenerationValidationIssue> issues)
@@ -65,22 +59,57 @@ namespace Farion.Simulation.Planetary
             PlanetGenerationContext context = CreateContext(radius, surfaceGravity);
             CollectEnvironmentIssues(context, issues);
 
+            if (climateProfile == null)
+            {
+                issues.Add(PlanetGenerationValidationIssue.Error(name, "Climate profile is missing."));
+            }
+
             if (biomeDistribution == null)
             {
                 issues.Add(PlanetGenerationValidationIssue.Error(name, "Biome distribution profile is missing."));
-                return;
+            }
+            else
+            {
+                List<BiomeDefinition> validatedBiomes = new();
+                CollectBiomeIssues(
+                    biomeDistribution.FallbackBiome,
+                    context,
+                    issues,
+                    validatedBiomes,
+                    "Fallback biome");
+                foreach (BiomeDistributionRule rule in biomeDistribution.Rules)
+                {
+                    if (rule == null)
+                    {
+                        continue;
+                    }
+
+                    CollectBiomeIssues(rule.Biome, context, issues, validatedBiomes, "Biome rule");
+                }
             }
 
-            List<BiomeDefinition> validatedBiomes = new();
-            CollectBiomeIssues(biomeDistribution.FallbackBiome, context, issues, validatedBiomes, "Fallback biome");
-            foreach (BiomeDistributionRule rule in biomeDistribution.Rules)
+            if (surfaceMaterialDistribution == null)
             {
-                if (rule == null)
+                issues.Add(PlanetGenerationValidationIssue.Error(name, "Surface material distribution profile is missing."));
+            }
+            else
+            {
+                if (surfaceMaterialDistribution.FallbackMaterial == null)
                 {
-                    continue;
+                    issues.Add(PlanetGenerationValidationIssue.Error(
+                        surfaceMaterialDistribution.name,
+                        "Surface material fallback is missing."));
                 }
 
-                CollectBiomeIssues(rule.Biome, context, issues, validatedBiomes, "Biome rule");
+                foreach (SurfaceMaterialDistributionRule rule in surfaceMaterialDistribution.Rules)
+                {
+                    if (rule != null && rule.HasMissingMaterial())
+                    {
+                        issues.Add(PlanetGenerationValidationIssue.Error(
+                            surfaceMaterialDistribution.name,
+                            "Surface material distribution contains an enabled rule without a material reference."));
+                    }
+                }
             }
 
             if (terrainFeatureDistribution == null)
@@ -101,14 +130,13 @@ namespace Farion.Simulation.Planetary
 
         void OnValidate()
         {
-            atmosphereDensity = hasAtmosphere ? Mathf.Max(0f, atmosphereDensity) : 0f;
-            liquidCoverage = hasStableLiquidSurface ? Mathf.Clamp01(liquidCoverage) : 0f;
-            radiationLevel = Mathf.Clamp01(radiationLevel);
+            atmosphereDensity = Mathf.Max(0f, atmosphereDensity);
+            backgroundRadiation = Mathf.Clamp01(backgroundRadiation);
         }
 
         void CollectEnvironmentIssues(PlanetGenerationContext context, List<PlanetGenerationValidationIssue> issues)
         {
-            if (!context.HasStableLiquidSurface)
+            if (hydrosphereProfile == null || !hydrosphereProfile.HasSurfaceOcean)
             {
                 return;
             }
@@ -119,19 +147,11 @@ namespace Farion.Simulation.Planetary
                     name,
                     "Stable surface liquid is enabled but the generation environment has no atmosphere."));
             }
-
-            if (context.SurfaceGravity < 0.2f && context.LiquidCoverage > 0.1f)
+            else if (context.SurfaceGravity < 0.2f && hydrosphereProfile.WaterAvailability > 0.1f)
             {
                 issues.Add(PlanetGenerationValidationIssue.Warning(
                     name,
-                    $"Surface gravity {context.SurfaceGravity:0.###} is very low for stable liquid coverage {context.LiquidCoverage:0.##}."));
-            }
-
-            if (context.MeanTemperatureCelsius < -80f || context.MeanTemperatureCelsius > 120f)
-            {
-                issues.Add(PlanetGenerationValidationIssue.Warning(
-                    name,
-                    $"Mean temperature {context.MeanTemperatureCelsius:0.###}C is extreme for stable surface liquid."));
+                    $"Surface gravity {context.SurfaceGravity:0.###} is very low for water availability {hydrosphereProfile.WaterAvailability:0.##}."));
             }
         }
 

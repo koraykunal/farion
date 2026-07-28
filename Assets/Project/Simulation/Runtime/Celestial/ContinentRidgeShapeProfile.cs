@@ -1,4 +1,6 @@
+using Farion.Simulation.Planetary;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Simulation.Celestial
 {
@@ -54,7 +56,7 @@ namespace Farion.Simulation.Celestial
             Elevation = 8.7f,
             Gain = 0.8f,
             VerticalShift = 0.09f,
-            PeakSmoothing = 1f,
+            SpatialSmoothing = 0.015f,
             Offset = Vector3.zero
         };
 
@@ -98,20 +100,42 @@ namespace Farion.Simulation.Celestial
 
         public override float EvaluateDisplacement(float baseRadius, Vector3 unitDirection)
         {
-            return (EvaluateHeightRatio(unitDirection) - 1f) * Mathf.Max(0.01f, baseRadius);
+            return (EvaluateHeightRatio(unitDirection, 0f) - 1f) * Mathf.Max(0.01f, baseRadius);
         }
 
         public override CelestialShapeSample EvaluateSample(float baseRadius, Vector3 unitDirection)
         {
+            return EvaluateSample(baseRadius, unitDirection, 0f);
+        }
+
+        public override float EvaluateRadius(
+            float baseRadius,
+            Vector3 unitDirection,
+            float angularSampleFootprint)
+        {
+            baseRadius = Mathf.Max(0.01f, baseRadius);
+            unitDirection = unitDirection.sqrMagnitude > 0f ? unitDirection.normalized : Vector3.up;
+            return Mathf.Max(
+                0.01f,
+                baseRadius * EvaluateHeightRatio(unitDirection, ResolveRidgeFilterRadius(angularSampleFootprint)));
+        }
+
+        public override CelestialShapeSample EvaluateSample(
+            float baseRadius,
+            Vector3 unitDirection,
+            float angularSampleFootprint)
+        {
             baseRadius = Mathf.Max(0.01f, baseRadius);
             unitDirection = unitDirection.sqrMagnitude > 0f ? unitDirection.normalized : Vector3.up;
 
-            float heightRatio = EvaluateHeightRatio(unitDirection);
+            float heightRatio = EvaluateHeightRatio(
+                unitDirection,
+                ResolveRidgeFilterRadius(angularSampleFootprint));
             float radius = Mathf.Max(0.01f, baseRadius * heightRatio);
             return new CelestialShapeSample(radius, EvaluateShadingData(unitDirection));
         }
 
-        float EvaluateHeightRatio(Vector3 unitDirection)
+        float EvaluateHeightRatio(Vector3 unitDirection, float ridgeFilterRadius)
         {
             float continentShape = continentNoise.Sample(unitDirection, seed + 100);
             continentShape = SmoothMax(continentShape, -oceanFloorDepth, oceanFloorSmoothing);
@@ -123,10 +147,15 @@ namespace Farion.Simulation.Celestial
                 continentShape *= 1f + oceanDepthMultiplier * Mathf.Lerp(1f, deepWaterFactor, coastalShelfStrength);
             }
 
-            float mountainShape = ridgeNoise.Sample(unitDirection, seed + 200);
+            float mountainShape = ridgeNoise.Sample(unitDirection, seed + 200, ridgeFilterRadius);
             float mountainMask = Blend(0f, mountainBlend, mountainMaskNoise.Sample(unitDirection, seed + 300));
             mountainMask *= 1f - coastProximity * coastalMountainFade;
             return 1f + continentShape * 0.01f + mountainShape * 0.01f * mountainMask;
+        }
+
+        float ResolveRidgeFilterRadius(float angularSampleFootprint)
+        {
+            return Mathf.Max(0f, angularSampleFootprint) * 1.5f;
         }
 
         Vector4 EvaluateShadingData(Vector3 unitDirection)
@@ -230,22 +259,14 @@ namespace Farion.Simulation.Celestial
 
             public float Sample(Vector3 direction, int noiseSeed)
             {
-                float amplitude = 1f;
-                float frequency = Scale;
-                float total = 0f;
-                float amplitudeTotal = 0f;
-                Vector3 seededOffset = Offset + SeedOffset(noiseSeed);
-
-                for (int octave = 0; octave < Mathf.Max(1, Octaves); octave++)
-                {
-                    total += SampleSignedNoise(direction + seededOffset, frequency, noiseSeed + octave * 101) * amplitude;
-                    amplitudeTotal += amplitude;
-                    amplitude *= Persistence;
-                    frequency *= Lacunarity;
-                }
-
-                float normalized = amplitudeTotal > 0f ? total / amplitudeTotal : 0f;
-                return normalized * Elevation + VerticalShift;
+                float noise = PlanetarySampling.SampleFractalSigned(
+                    direction + Offset,
+                    Scale,
+                    Octaves,
+                    Lacunarity,
+                    Persistence,
+                    noiseSeed);
+                return noise * Elevation + VerticalShift;
             }
 
             public void Clamp()
@@ -268,34 +289,56 @@ namespace Farion.Simulation.Celestial
             public float Elevation;
             [Min(0f)] public float Gain;
             public float VerticalShift;
-            [Min(0f)] public float PeakSmoothing;
+            [FormerlySerializedAs("PeakSmoothing")]
+            [Range(0f, 0.1f)]
+            public float SpatialSmoothing;
             public Vector3 Offset;
 
-            public float Sample(Vector3 direction, int noiseSeed)
+            public float Sample(Vector3 direction, int noiseSeed, float minimumSpatialSmoothing)
             {
-                float amplitude = 1f;
-                float frequency = Scale;
-                float total = 0f;
-                float amplitudeTotal = 0f;
-                Vector3 seededOffset = Offset + SeedOffset(noiseSeed);
-
-                for (int octave = 0; octave < Mathf.Max(1, Octaves); octave++)
+                direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.up;
+                float center = SampleRaw(direction, noiseSeed);
+                float filterRadius = Mathf.Max(SpatialSmoothing, minimumSpatialSmoothing);
+                if (filterRadius <= 0f)
                 {
-                    float value = 1f - Mathf.Abs(SampleSignedNoise(direction + seededOffset, frequency, noiseSeed + octave * 137));
-                    value = Mathf.Pow(Mathf.Max(0f, value), Power);
-                    if (PeakSmoothing > 0f)
-                    {
-                        value = Mathf.SmoothStep(0f, 1f, value / Mathf.Max(0.0001f, PeakSmoothing));
-                    }
-
-                    total += value * amplitude;
-                    amplitudeTotal += amplitude;
-                    amplitude *= Mathf.Lerp(Persistence, Persistence * Gain, 0.5f);
-                    frequency *= Lacunarity;
+                    return center;
                 }
 
-                float normalized = amplitudeTotal > 0f ? total / amplitudeTotal : 0f;
-                return (normalized * 2f - 1f) * Elevation + VerticalShift;
+                Vector3 tangentA = Vector3.Cross(
+                    Mathf.Abs(direction.y) < 0.95f ? Vector3.up : Vector3.right,
+                    direction).normalized;
+                Vector3 tangentB = Vector3.Cross(direction, tangentA).normalized;
+                Vector3 diagonalA = (tangentA + tangentB).normalized;
+                Vector3 diagonalB = (tangentA - tangentB).normalized;
+                float smoothed = center * 0.24f;
+                smoothed += SampleOffset(direction, tangentA, filterRadius, noiseSeed) * 0.12f;
+                smoothed += SampleOffset(direction, -tangentA, filterRadius, noiseSeed) * 0.12f;
+                smoothed += SampleOffset(direction, tangentB, filterRadius, noiseSeed) * 0.12f;
+                smoothed += SampleOffset(direction, -tangentB, filterRadius, noiseSeed) * 0.12f;
+                smoothed += SampleOffset(direction, diagonalA, filterRadius, noiseSeed) * 0.07f;
+                smoothed += SampleOffset(direction, -diagonalA, filterRadius, noiseSeed) * 0.07f;
+                smoothed += SampleOffset(direction, diagonalB, filterRadius, noiseSeed) * 0.07f;
+                smoothed += SampleOffset(direction, -diagonalB, filterRadius, noiseSeed) * 0.07f;
+                return smoothed;
+            }
+
+            float SampleOffset(Vector3 direction, Vector3 tangent, float distance, int noiseSeed)
+            {
+                return SampleRaw((direction + tangent * distance).normalized, noiseSeed);
+            }
+
+            float SampleRaw(Vector3 direction, int noiseSeed)
+            {
+                float ridge = PlanetarySampling.SampleRidged01(
+                    direction + Offset,
+                    Scale,
+                    Octaves,
+                    Lacunarity,
+                    Persistence,
+                    Power,
+                    Gain,
+                    noiseSeed);
+                return (ridge * 2f - 1f) * Elevation + VerticalShift;
             }
 
             public void Clamp()
@@ -306,35 +349,8 @@ namespace Farion.Simulation.Celestial
                 Scale = Mathf.Max(0.001f, Scale);
                 Power = Mathf.Max(0.1f, Power);
                 Gain = Mathf.Max(0f, Gain);
-                PeakSmoothing = Mathf.Max(0f, PeakSmoothing);
+                SpatialSmoothing = Mathf.Clamp(SpatialSmoothing, 0f, 0.1f);
             }
-        }
-
-        static Vector3 SeedOffset(int noiseSeed)
-        {
-            float x = Mathf.Sin(noiseSeed * 12.9898f) * 43758.5453f;
-            float y = Mathf.Sin(noiseSeed * 78.233f) * 24634.6345f;
-            float z = Mathf.Sin(noiseSeed * 37.719f) * 12515.8731f;
-            return new Vector3(x - Mathf.Floor(x), y - Mathf.Floor(y), z - Mathf.Floor(z)) * 1000f;
-        }
-
-        static float SampleSignedNoise(Vector3 direction, float frequency, int sampleSeed)
-        {
-            float seedOffset = sampleSeed * 0.137f;
-
-            float xy = Mathf.PerlinNoise(
-                (direction.x + seedOffset) * frequency,
-                (direction.y - seedOffset) * frequency);
-
-            float yz = Mathf.PerlinNoise(
-                (direction.y + seedOffset) * frequency,
-                (direction.z - seedOffset) * frequency);
-
-            float zx = Mathf.PerlinNoise(
-                (direction.z + seedOffset) * frequency,
-                (direction.x - seedOffset) * frequency);
-
-            return ((xy + yz + zx) / 3f) * 2f - 1f;
         }
     }
 }

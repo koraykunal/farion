@@ -72,13 +72,14 @@ namespace Farion.Rendering.Celestial
 
         public bool TryGetOceanLevel(out float oceanLevel)
         {
-            if (profile == null || !profile.HasOcean)
+            PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
+            if (profile == null || profile.OceanProfile == null || hydrosphere == null || !hydrosphere.HasSurfaceOcean)
             {
                 oceanLevel = 0f;
                 return false;
             }
 
-            oceanLevel = profile.OceanLevel;
+            oceanLevel = hydrosphere.OceanLevel;
             return true;
         }
 
@@ -97,12 +98,13 @@ namespace Farion.Rendering.Celestial
                 ? terrainVisual.RenderRadiusMinMax
                 : new Vector2(bodyRadius, bodyRadius);
 
-            bool hasOcean = profile.HasOcean;
+            PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
+            bool hasOcean = profile.OceanProfile != null && hydrosphere != null && hydrosphere.HasSurfaceOcean;
             float oceanRadius = hasOcean
-                ? profile.OceanProfile.GetOceanRadius(bodyRadius, terrainRadiusRange, profile.OceanLevel)
+                ? profile.OceanProfile.GetOceanRadius(bodyRadius, terrainRadiusRange, hydrosphere.OceanLevel)
                 : 0f;
 
-            bool hasAtmosphere = profile.AtmosphereProfile != null;
+            bool hasAtmosphere = profile.AtmosphereProfile != null && HasSimulatedAtmosphere();
             float atmosphereRadius = hasAtmosphere
                 ? profile.AtmosphereProfile.GetAtmosphereRadius(GetAtmosphereBaseRadius(bodyRadius, terrainRadiusRange))
                 : 0f;
@@ -115,7 +117,11 @@ namespace Farion.Rendering.Celestial
         {
             data = default;
 
-            if (profile == null || !profile.HasOcean)
+            PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
+            if (profile == null
+                || profile.OceanProfile == null
+                || hydrosphere == null
+                || !hydrosphere.HasSurfaceOcean)
             {
                 return false;
             }
@@ -133,7 +139,10 @@ namespace Farion.Rendering.Celestial
                 ? terrainVisual.RenderRadiusMinMax
                 : new Vector2(bodyRadius, bodyRadius);
 
-            float oceanRadius = profile.OceanProfile.GetOceanRadius(bodyRadius, terrainRadiusRange, profile.OceanLevel);
+            float oceanRadius = profile.OceanProfile.GetOceanRadius(
+                bodyRadius,
+                terrainRadiusRange,
+                hydrosphere.OceanLevel);
             data = new CelestialOceanEffectData(
                 sourceBody.transform.position,
                 bodyRadius,
@@ -147,7 +156,7 @@ namespace Farion.Rendering.Celestial
         {
             data = default;
 
-            if (profile == null || profile.AtmosphereProfile == null)
+            if (profile == null || profile.AtmosphereProfile == null || !HasSimulatedAtmosphere())
             {
                 return false;
             }
@@ -178,12 +187,35 @@ namespace Farion.Rendering.Celestial
 
         float GetAtmosphereBaseRadius(float bodyRadius, Vector2 terrainRadiusRange)
         {
-            if (profile != null && profile.HasOcean)
+            PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
+            if (profile != null
+                && profile.OceanProfile != null
+                && hydrosphere != null
+                && hydrosphere.HasSurfaceOcean)
             {
-                return profile.OceanProfile.GetOceanRadius(bodyRadius, terrainRadiusRange, profile.OceanLevel);
+                return profile.OceanProfile.GetOceanRadius(
+                    bodyRadius,
+                    terrainRadiusRange,
+                    hydrosphere.OceanLevel);
             }
 
             return Mathf.Max(0.01f, bodyRadius);
+        }
+
+        PlanetHydrosphereProfile ResolveHydrosphere()
+        {
+            ResolveComponents();
+            return surfaceModel != null && surfaceModel.GenerationProfile != null
+                ? surfaceModel.GenerationProfile.HydrosphereProfile
+                : null;
+        }
+
+        bool HasSimulatedAtmosphere()
+        {
+            ResolveComponents();
+            return surfaceModel != null
+                && surfaceModel.GenerationProfile != null
+                && surfaceModel.GenerationProfile.HasAtmosphere;
         }
 
         [ContextMenu("Apply Planet Visual Profile")]

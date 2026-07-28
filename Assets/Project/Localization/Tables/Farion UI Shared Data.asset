@@ -1,0 +1,400 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: Farion UI Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: Farion UI
+  m_TableCollectionNameGuidString: 72af187e65cb61841aeacb6ac01ea56d
+  m_Entries:
+  - m_Id: 1222115328
+    m_Key: settings.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1259864064
+    m_Key: settings.subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058368
+    m_Key: settings.section.interface
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058371
+    m_Key: settings.language.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058372
+    m_Key: settings.language.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058373
+    m_Key: settings.scale.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058374
+    m_Key: settings.scale.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058375
+    m_Key: settings.motion.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058376
+    m_Key: settings.motion.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058377
+    m_Key: settings.subtitles.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058378
+    m_Key: settings.subtitles.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058379
+    m_Key: settings.subtitle_size.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058380
+    m_Key: settings.subtitle_size.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058381
+    m_Key: language.english
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058382
+    m_Key: language.turkish
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058383
+    m_Key: value.on
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058384
+    m_Key: value.off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058385
+    m_Key: value.standard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058386
+    m_Key: value.large
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058387
+    m_Key: common.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058388
+    m_Key: common.cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058389
+    m_Key: common.quit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058390
+    m_Key: main_menu.continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058391
+    m_Key: main_menu.new_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058392
+    m_Key: main_menu.load_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058393
+    m_Key: main_menu.settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058394
+    m_Key: main_menu.credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058395
+    m_Key: main_menu.exit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058396
+    m_Key: pause.resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058397
+    m_Key: pause.inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058398
+    m_Key: pause.blueprints
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058399
+    m_Key: pause.journal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058400
+    m_Key: pause.ship
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058401
+    m_Key: pause.map
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058402
+    m_Key: pause.options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058403
+    m_Key: pause.save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058404
+    m_Key: pause.main_menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058405
+    m_Key: pause.quit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058406
+    m_Key: pause.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058407
+    m_Key: inventory.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058408
+    m_Key: inventory.slots
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058409
+    m_Key: inventory.detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058410
+    m_Key: inventory.empty.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058411
+    m_Key: inventory.empty.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058412
+    m_Key: inventory.stack
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058413
+    m_Key: inventory.domain
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058414
+    m_Key: loading.system
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058415
+    m_Key: loading.gameplay.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058416
+    m_Key: loading.gameplay.status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058417
+    m_Key: loading.main_menu.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058418
+    m_Key: loading.main_menu.status
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058419
+    m_Key: common.delete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058420
+    m_Key: common.save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058421
+    m_Key: common.load
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058422
+    m_Key: save_load.eyebrow.save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058423
+    m_Key: save_load.eyebrow.load
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058424
+    m_Key: save_load.title.save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058425
+    m_Key: save_load.title.load
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058426
+    m_Key: save_load.description.save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058427
+    m_Key: save_load.description.load
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058428
+    m_Key: save_load.saved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058429
+    m_Key: save_load.version
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058430
+    m_Key: save_load.not_available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058431
+    m_Key: save_load.feedback.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058432
+    m_Key: save_load.feedback.save_unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058433
+    m_Key: save_load.slot.primary
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058434
+    m_Key: save_load.slot.manual
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058435
+    m_Key: save_load.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058436
+    m_Key: save_load.state.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058437
+    m_Key: save_load.state.backup
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058438
+    m_Key: save_load.state.unsupported
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058439
+    m_Key: save_load.state.invalid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058440
+    m_Key: save_load.state.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058441
+    m_Key: save_load.detail.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058442
+    m_Key: save_load.detail.backup
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058443
+    m_Key: save_load.detail.unsupported
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058444
+    m_Key: save_load.detail.invalid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058445
+    m_Key: save_load.detail.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058446
+    m_Key: save_load.detail.ready_description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058447
+    m_Key: save_load.detail.backup_description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058448
+    m_Key: save_load.detail.unsupported_description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058449
+    m_Key: save_load.detail.invalid_description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058450
+    m_Key: save_load.detail.empty_description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058451
+    m_Key: save_load.overwrite.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058452
+    m_Key: save_load.overwrite.body
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058453
+    m_Key: save_load.overwrite.confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058454
+    m_Key: save_load.delete.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058455
+    m_Key: save_load.delete.body
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058456
+    m_Key: save_load.feedback.save_failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058457
+    m_Key: save_load.feedback.saved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058458
+    m_Key: save_load.feedback.delete_failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058459
+    m_Key: save_load.feedback.deleted
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058460
+    m_Key: save_load.feedback.confirmation_unavailable
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 1074832622038286598
+  references:
+    version: 2
+    RefIds:
+    - rid: 1074832622038286598
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1785195101384

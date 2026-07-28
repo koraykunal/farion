@@ -8,7 +8,9 @@
         "GUID:79d66216f5791484e80222a254d4310b",
         "GUID:55953e8541b8cd64e8aae70aae77a229",
         "Farion.Application.Runtime",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Localization",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

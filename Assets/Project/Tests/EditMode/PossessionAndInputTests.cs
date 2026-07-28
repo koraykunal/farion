@@ -43,6 +43,12 @@ namespace Farion.Tests.EditMode
                 PlayerPossessionTransitionPolicy.CanTransition(
                     PlayerPossessionMode.OnFoot,
                     PlayerPossessionMode.Spacecraft,
+                    PlayerPossessionTransitionRequest.EnterPilotSeat),
+                Is.False);
+            Assert.That(
+                PlayerPossessionTransitionPolicy.CanTransition(
+                    PlayerPossessionMode.OnFoot,
+                    PlayerPossessionMode.Spacecraft,
                     PlayerPossessionTransitionRequest.ExitPilotSeat),
                 Is.False);
             Assert.That(
@@ -63,6 +69,15 @@ namespace Farion.Tests.EditMode
             Assert.That(FarionInputActions.FlightToggleAssist, Is.Not.Null);
             Assert.That(FarionInputActions.FlightToggleLandingGear, Is.Not.Null);
             Assert.That(FarionInputActions.UiPause, Is.Not.Null);
+            Assert.That(FarionInputActions.UiInventory, Is.Not.Null);
+            Assert.That(FarionInputActions.UiNavigate, Is.Not.Null);
+            Assert.That(FarionInputActions.UiSubmit, Is.Not.Null);
+            Assert.That(FarionInputActions.UiCancel, Is.Not.Null);
+            Assert.That(FarionInputActions.UiPoint, Is.Not.Null);
+            Assert.That(FarionInputActions.UiLeftClick, Is.Not.Null);
+            Assert.That(FarionInputActions.UiMiddleClick, Is.Not.Null);
+            Assert.That(FarionInputActions.UiRightClick, Is.Not.Null);
+            Assert.That(FarionInputActions.UiScrollWheel, Is.Not.Null);
             Assert.That(
                 FarionInputActions.FlightTranslate.bindings.Any(binding =>
                     binding.path == "<Gamepad>/leftStick" &&
@@ -72,6 +87,18 @@ namespace Farion.Tests.EditMode
                 FarionInputActions.FlightLook.bindings.Any(binding =>
                     binding.path == "<Gamepad>/rightStick" &&
                     binding.processors.Contains("stickDeadzone")),
+                Is.True);
+            Assert.That(
+                FarionInputActions.UiNavigate.bindings.Any(binding =>
+                    binding.path == "<Gamepad>/dpad"),
+                Is.True);
+            Assert.That(
+                FarionInputActions.UiSubmit.bindings.Any(binding =>
+                    binding.path == "<Gamepad>/buttonSouth"),
+                Is.True);
+            Assert.That(
+                FarionInputActions.UiCancel.bindings.Any(binding =>
+                    binding.path == "<Gamepad>/buttonEast"),
                 Is.True);
         }
     }

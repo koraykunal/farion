@@ -31,6 +31,14 @@ namespace Farion.Gameplay.Input
 
         public static InputAction UiPause => Find("UI", "Pause");
         public static InputAction UiInventory => Find("UI", "Inventory");
+        public static InputAction UiNavigate => Find("UI", "Navigate");
+        public static InputAction UiSubmit => Find("UI", "Submit");
+        public static InputAction UiCancel => Find("UI", "Cancel");
+        public static InputAction UiPoint => Find("UI", "Point");
+        public static InputAction UiLeftClick => Find("UI", "LeftClick");
+        public static InputAction UiMiddleClick => Find("UI", "MiddleClick");
+        public static InputAction UiRightClick => Find("UI", "RightClick");
+        public static InputAction UiScrollWheel => Find("UI", "ScrollWheel");
 
         public static InputActionAsset Asset
         {
@@ -114,6 +122,7 @@ namespace Farion.Gameplay.Input
 
             asset = ScriptableObject.CreateInstance<InputActionAsset>();
             asset.name = nameof(FarionInputActions);
+            asset.hideFlags = HideFlags.HideAndDontSave;
             BuildOnFootMap(asset);
             BuildFlightMap(asset);
             BuildVehicleMap(asset);
@@ -191,6 +200,55 @@ namespace Farion.Gameplay.Input
             InputActionMap map = inputAsset.AddActionMap("UI");
             AddButton(map, "Pause", "<Keyboard>/escape", "<Gamepad>/start");
             AddButton(map, "Inventory", "<Keyboard>/i", "<Gamepad>/select");
+
+            InputAction navigate = map.AddAction(
+                "Navigate",
+                InputActionType.Value,
+                expectedControlLayout: "Vector2");
+            AddWasd(navigate);
+            navigate.AddCompositeBinding("2DVector")
+                .With("Up", "<Keyboard>/upArrow")
+                .With("Down", "<Keyboard>/downArrow")
+                .With("Left", "<Keyboard>/leftArrow")
+                .With("Right", "<Keyboard>/rightArrow");
+            navigate.AddBinding("<Gamepad>/leftStick")
+                .WithProcessor("stickDeadzone(min=0.2,max=0.95)");
+            navigate.AddBinding("<Gamepad>/dpad");
+
+            InputAction submit = AddButton(
+                map,
+                "Submit",
+                "<Keyboard>/enter",
+                "<Gamepad>/buttonSouth");
+            submit.AddBinding("<Keyboard>/space");
+
+            AddButton(map, "Cancel", "<Keyboard>/escape", "<Gamepad>/buttonEast");
+
+            map.AddAction(
+                "Point",
+                InputActionType.PassThrough,
+                "<Mouse>/position",
+                expectedControlLayout: "Vector2");
+            map.AddAction(
+                "LeftClick",
+                InputActionType.PassThrough,
+                "<Mouse>/leftButton",
+                expectedControlLayout: "Button");
+            map.AddAction(
+                "MiddleClick",
+                InputActionType.PassThrough,
+                "<Mouse>/middleButton",
+                expectedControlLayout: "Button");
+            map.AddAction(
+                "RightClick",
+                InputActionType.PassThrough,
+                "<Mouse>/rightButton",
+                expectedControlLayout: "Button");
+            map.AddAction(
+                "ScrollWheel",
+                InputActionType.PassThrough,
+                "<Mouse>/scroll",
+                expectedControlLayout: "Vector2");
         }
 
         static void AddWasd(InputAction action)
@@ -202,11 +260,16 @@ namespace Farion.Gameplay.Input
                 .With("Right", "<Keyboard>/d");
         }
 
-        static void AddButton(InputActionMap map, string name, string keyboardPath, string gamepadPath)
+        static InputAction AddButton(
+            InputActionMap map,
+            string name,
+            string keyboardPath,
+            string gamepadPath)
         {
             InputAction action = map.AddAction(name, InputActionType.Button, expectedControlLayout: "Button");
             action.AddBinding(keyboardPath);
             action.AddBinding(gamepadPath);
+            return action;
         }
     }
 }

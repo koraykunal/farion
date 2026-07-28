@@ -86,7 +86,7 @@ namespace Farion.Simulation.Celestial
                 body.AngularVelocity,
                 surfaceSample.Point,
                 surfaceSample.Normal,
-                gravitySample.Acceleration,
+                source.CalculateReferenceFrameAcceleration(position),
                 surfaceSample.CenterDistance,
                 surfaceSample.SurfaceDistance,
                 surfaceSample.SlopeAngleDegrees,

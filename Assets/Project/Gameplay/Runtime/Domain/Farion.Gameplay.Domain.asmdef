@@ -1,0 +1,14 @@
+{
+    "name": "Farion.Gameplay.Domain",
+    "rootNamespace": "Farion.Gameplay.Domain",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

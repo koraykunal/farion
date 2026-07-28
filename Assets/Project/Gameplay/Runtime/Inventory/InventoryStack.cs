@@ -21,34 +21,5 @@ namespace Farion.Gameplay.Inventory
             this.quantity = Mathf.Max(0, quantity);
         }
 
-        public int Add(int amount)
-        {
-            if (item == null || amount <= 0)
-            {
-                return amount;
-            }
-
-            int accepted = Mathf.Min(amount, RemainingCapacity);
-            quantity += accepted;
-            return amount - accepted;
-        }
-
-        public int Remove(int amount)
-        {
-            if (item == null || amount <= 0)
-            {
-                return 0;
-            }
-
-            int removed = Mathf.Min(quantity, amount);
-            quantity -= removed;
-            return removed;
-        }
-
-        public void Clear()
-        {
-            item = null;
-            quantity = 0;
-        }
     }
 }

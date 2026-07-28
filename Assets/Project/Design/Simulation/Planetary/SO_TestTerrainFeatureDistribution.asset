@@ -17,9 +17,9 @@ MonoBehaviour:
   altitudeBlend: 4
   slopeBlendDegrees: 8
   noiseBlend: 0.08
-  localTemperatureBlendCelsius: 8
-  localMoistureBlend: 0.12
-  localRadiationBlend: 0.08
+  temperatureBlendCelsius: 8
+  effectiveMoistureBlend: 0.12
+  radiationBlend: 0.08
   rules:
   - feature: {fileID: 11400000, guid: daa32ecf28f74e899ea5cb81f382024c, type: 2}
     selectionPriority: 1.15
@@ -27,9 +27,9 @@ MonoBehaviour:
     - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
     altitudeRange: {x: 0.2, y: 1000000}
     slopeRange: {x: 28, y: 90}
-    localTemperatureRange: {x: -80, y: 45}
-    localMoistureRange: {x: 0, y: 0.9}
-    localRadiationRange: {x: 0, y: 0.7}
+    temperatureRange: {x: -80, y: 45}
+    effectiveMoistureRange: {x: 0, y: 0.9}
+    radiationRange: {x: 0, y: 0.7}
     minFeatureNoise: 0.42
     maxFeatureNoise: 1
   - feature: {fileID: 11400000, guid: 25ddf18c485e48228be69c75dd094a1b, type: 2}
@@ -39,8 +39,8 @@ MonoBehaviour:
     - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
     altitudeRange: {x: -1000000, y: 1000000}
     slopeRange: {x: 0, y: 55}
-    localTemperatureRange: {x: -220, y: 60}
-    localMoistureRange: {x: 0, y: 0.85}
-    localRadiationRange: {x: 0, y: 0.8}
+    temperatureRange: {x: -220, y: 60}
+    effectiveMoistureRange: {x: 0, y: 0.85}
+    radiationRange: {x: 0, y: 0.8}
     minFeatureNoise: 0.62
     maxFeatureNoise: 1

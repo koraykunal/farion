@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e14c25d36f874a68a901b2c3d4e5f607, type: 3}
+  m_Name: SO_CelestialSurfacePatchProfile
+  m_EditorClassIdentifier:
+  enterAltitudeRatio: 0.7
+  exitAltitudeRatio: 0.9
+  patchResolution: 16
+  maxSubdivisionLevel: 6
+  splitDistanceMultiplier: 1.5
+  splitHysteresisRatio: 0.15
+  maxActivePatches: 384
+  skirtDepthRatio: 0.0025
+  collisionRadiusRatio: 0.16
+  minimumCollisionLevel: 6
+  bakeCollisionMeshes: 1
+  collisionPredictionSeconds: 0.75
+  collisionCoverageSafetyRatio: 0.5
+  collisionSafetyMarginRatio: 0.015
+  observerMoveThresholdRatio: 0.001
+  observerAngleThresholdDegrees: 0.08
+  maximumPatchBuildsPerFrame: 6
+  patchBuildBudgetMilliseconds: 2

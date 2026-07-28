@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Farion.Simulation.Celestial;
-using Farion.Simulation.Planetary;
 using UnityEngine;
 
 namespace Farion.Rendering.Celestial
@@ -14,10 +13,9 @@ namespace Farion.Rendering.Celestial
             int resolution,
             string meshName,
             CelestialShapeProfile shapeProfile = null,
-            CelestialSurfaceProfileBase surfaceProfile = null,
-            PlanetSurfaceModel surfaceModel = null)
+            CelestialSurfaceProfileBase surfaceProfile = null)
         {
-            return Build(radius, resolution, meshName, out _, shapeProfile, surfaceProfile, surfaceModel);
+            return Build(radius, resolution, meshName, out _, shapeProfile, surfaceProfile);
         }
 
         public static Mesh Build(
@@ -26,49 +24,30 @@ namespace Farion.Rendering.Celestial
             string meshName,
             out Vector2 radiusMinMax,
             CelestialShapeProfile shapeProfile = null,
-            CelestialSurfaceProfileBase surfaceProfile = null,
-            PlanetSurfaceModel surfaceModel = null)
+            CelestialSurfaceProfileBase surfaceProfile = null)
         {
             radius = Mathf.Max(0.01f, radius);
             SphereData data = GetSphereData(resolution);
+            float angularSampleFootprint = CalculateAngularSampleFootprint(resolution);
 
             Vector3[] vertices = new Vector3[data.Vertices.Length];
             Vector4[] shadingData = new Vector4[data.Vertices.Length];
-            Vector4[] biomeWeightsA = new Vector4[data.Vertices.Length];
-            Vector4[] biomeWeightsB = new Vector4[data.Vertices.Length];
             float minRadius = float.PositiveInfinity;
             float maxRadius = float.NegativeInfinity;
-            BiomeVisualProfile biomeVisualProfile = surfaceProfile is TerrestrialSurfaceProfile terrestrialSurface
-                ? terrestrialSurface.BiomeVisualProfile
-                : null;
-            List<BiomeWeight> biomeWeightScratch = new(BiomeVisualProfile.MaxBiomeSlots);
 
             for (int i = 0; i < vertices.Length; i++)
             {
                 Vector3 unitDirection = data.Vertices[i];
-                float vertexRadius;
-                if (shapeProfile != null)
-                {
-                    CelestialShapeSample shapeSample = shapeProfile.EvaluateSample(radius, unitDirection);
-                    vertexRadius = shapeSample.Radius;
-                    shadingData[i] = shapeSample.ShadingData;
-                }
-                else
-                {
-                    vertexRadius = surfaceProfile != null
-                    ? surfaceProfile.EvaluateRadius(radius, unitDirection)
-                    : radius;
-                    shadingData[i] = new Vector4(0f, 1f, 0f, 999f);
-                }
+                CelestialShapeSample shapeSample = CelestialSurfaceSampling.EvaluateSample(
+                    radius,
+                    unitDirection,
+                    angularSampleFootprint,
+                    shapeProfile,
+                    surfaceProfile);
+                float vertexRadius = shapeSample.Radius;
+                shadingData[i] = shapeSample.ShadingData;
 
                 vertices[i] = unitDirection * vertexRadius;
-                ResolveBiomeVisualWeights(
-                    surfaceModel,
-                    biomeVisualProfile,
-                    unitDirection,
-                    biomeWeightScratch,
-                    out biomeWeightsA[i],
-                    out biomeWeightsB[i]);
                 minRadius = Mathf.Min(minRadius, vertexRadius);
                 maxRadius = Mathf.Max(maxRadius, vertexRadius);
             }
@@ -87,194 +66,15 @@ namespace Farion.Rendering.Celestial
             mesh.SetVertices(vertices);
             mesh.SetTriangles(data.Triangles, 0, true);
             mesh.SetUVs(0, shadingData);
-            mesh.SetUVs(1, biomeWeightsA);
-            mesh.SetUVs(2, biomeWeightsB);
 
             mesh.RecalculateNormals();
-            mesh.RecalculateTangents();
             mesh.RecalculateBounds();
             return mesh;
         }
 
-        static void ResolveBiomeVisualWeights(
-            PlanetSurfaceModel surfaceModel,
-            BiomeVisualProfile biomeVisualProfile,
-            Vector3 localDirection,
-            List<BiomeWeight> biomeWeightScratch,
-            out Vector4 weightsA,
-            out Vector4 weightsB)
+        internal static float CalculateAngularSampleFootprint(int resolution)
         {
-            weightsA = Vector4.zero;
-            weightsB = Vector4.zero;
-
-            if (surfaceModel == null || biomeVisualProfile == null)
-            {
-                return;
-            }
-
-            float totalSampleWeight = 0f;
-            totalSampleWeight += AddBiomeVisualWeights(surfaceModel, biomeVisualProfile, localDirection, biomeWeightScratch, 1f, ref weightsA, ref weightsB);
-            totalSampleWeight += AddFeatheredBiomeVisualWeights(surfaceModel, biomeVisualProfile, localDirection, biomeWeightScratch, ref weightsA, ref weightsB);
-            ScaleWeights(ref weightsA, ref weightsB, totalSampleWeight);
-        }
-
-        static float AddFeatheredBiomeVisualWeights(
-            PlanetSurfaceModel surfaceModel,
-            BiomeVisualProfile biomeVisualProfile,
-            Vector3 localDirection,
-            List<BiomeWeight> biomeWeightScratch,
-            ref Vector4 weightsA,
-            ref Vector4 weightsB)
-        {
-            float featherStrength = biomeVisualProfile.EdgeFeatherStrength;
-            float step = biomeVisualProfile.EdgeFeatherSampleStep;
-            int sampleCount = biomeVisualProfile.EdgeFeatherSampleCount;
-            if (featherStrength <= 0f || step <= 0f)
-            {
-                return 0f;
-            }
-
-            Vector3 normal = localDirection.sqrMagnitude > 0.0001f ? localDirection.normalized : Vector3.up;
-            Vector3 tangentA = Vector3.ProjectOnPlane(Vector3.forward, normal);
-            if (tangentA.sqrMagnitude <= 0.0001f)
-            {
-                tangentA = Vector3.ProjectOnPlane(Vector3.right, normal);
-            }
-
-            if (tangentA.sqrMagnitude <= 0.0001f)
-            {
-                return 0f;
-            }
-
-            tangentA.Normalize();
-            Vector3 tangentB = Vector3.Cross(normal, tangentA).normalized;
-            float sampleWeight = featherStrength / Mathf.Max(1, sampleCount);
-            float totalWeight = 0f;
-            const float Tau = Mathf.PI * 2f;
-            for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++)
-            {
-                float angle = Tau * sampleIndex / sampleCount;
-                Vector3 sampleOffset = tangentA * Mathf.Cos(angle) + tangentB * Mathf.Sin(angle);
-                totalWeight += AddBiomeVisualWeights(
-                    surfaceModel,
-                    biomeVisualProfile,
-                    (normal + sampleOffset * step).normalized,
-                    biomeWeightScratch,
-                    sampleWeight,
-                    ref weightsA,
-                    ref weightsB);
-            }
-
-            return totalWeight;
-        }
-
-        static float AddBiomeVisualWeights(
-            PlanetSurfaceModel surfaceModel,
-            BiomeVisualProfile biomeVisualProfile,
-            Vector3 localDirection,
-            List<BiomeWeight> biomeWeightScratch,
-            float sampleWeight,
-            ref Vector4 weightsA,
-            ref Vector4 weightsB)
-        {
-            if (sampleWeight <= 0f)
-            {
-                return 0f;
-            }
-
-            if (!TrySamplePlanetSurface(surfaceModel, localDirection, out PlanetSurfaceSample sample))
-            {
-                return 0f;
-            }
-
-            BiomeDistributionProfile distribution = surfaceModel.GenerationProfile != null
-                ? surfaceModel.GenerationProfile.BiomeDistribution
-                : null;
-            int weightCount = distribution != null
-                ? distribution.SampleBiomeWeights(
-                    sample.Context,
-                    sample.Climate,
-                    sample.LocalDirection,
-                    sample.TerrainAltitude,
-                    sample.Surface.SlopeAngleDegrees,
-                    biomeWeightScratch)
-                : 0;
-
-            if (weightCount <= 0 && sample.Biome.Biome != null)
-            {
-                biomeWeightScratch.Clear();
-                biomeWeightScratch.Add(new BiomeWeight(sample.Biome.Biome, 1f));
-                weightCount = 1;
-            }
-
-            float addedWeight = 0f;
-            for (int i = 0; i < weightCount; i++)
-            {
-                BiomeWeight biomeWeight = biomeWeightScratch[i];
-                addedWeight += AddBiomeVisualWeight(biomeVisualProfile, biomeWeight.Biome, biomeWeight.Weight * sampleWeight, ref weightsA, ref weightsB);
-            }
-
-            return addedWeight;
-        }
-
-        static float AddBiomeVisualWeight(
-            BiomeVisualProfile biomeVisualProfile,
-            BiomeDefinition biome,
-            float weight,
-            ref Vector4 weightsA,
-            ref Vector4 weightsB)
-        {
-            int index = biomeVisualProfile.ResolveBiomeIndex(biome);
-            if (index < 0 || weight <= 0f)
-            {
-                return 0f;
-            }
-
-            if (index < 4)
-            {
-                weightsA[index] += weight;
-            }
-            else
-            {
-                weightsB[index - 4] += weight;
-            }
-
-            return weight;
-        }
-
-        static void ScaleWeights(ref Vector4 weightsA, ref Vector4 weightsB, float totalSampleWeight)
-        {
-            if (totalSampleWeight <= 0f)
-            {
-                return;
-            }
-
-            weightsA /= totalSampleWeight;
-            weightsB /= totalSampleWeight;
-        }
-
-        static bool TrySamplePlanetSurface(
-            PlanetSurfaceModel surfaceModel,
-            Vector3 localDirection,
-            out PlanetSurfaceSample sample)
-        {
-            sample = default;
-            if (surfaceModel == null)
-            {
-                return false;
-            }
-
-            if (surfaceModel.Body == null)
-            {
-                return false;
-            }
-
-            Vector3 worldDirection = surfaceModel.Body.transform.TransformDirection(localDirection.normalized);
-            float probeRadius = surfaceModel.ShapeProfile != null
-                ? surfaceModel.ShapeProfile.EvaluateSample(surfaceModel.Body.Radius, localDirection.normalized).Radius
-                : surfaceModel.Body.Radius;
-            Vector3 probePosition = surfaceModel.Body.Position + worldDirection * probeRadius;
-            return surfaceModel.TrySamplePlanetSurface(surfaceModel.Body, probePosition, out sample);
+            return Mathf.PI * 0.5f / (Mathf.Max(0, resolution) + 1f);
         }
 
         static SphereData GetSphereData(int resolution)

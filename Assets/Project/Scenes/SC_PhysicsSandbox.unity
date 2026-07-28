@@ -161,13 +161,347 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
   weight: 1
   sharedProfile: {fileID: 11400000, guid: b2cced2787023854b91388ab8146a209, type: 2}
+--- !u!1001 &152738350
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1891705753}
+    m_Modifications:
+    - target: {fileID: 147236557250293472, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 147236557250293472, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 155732720720656474, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 1621531018
+      objectReference: {fileID: 0}
+    - target: {fileID: 155732720720656474, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 888583316588151484, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 888583316588151484, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 1891361598228229016, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291805869
+      objectReference: {fileID: 0}
+    - target: {fileID: 1891361598228229016, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946572664330908750, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946572664330908750, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946572664330908750, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946572664330908750, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946572664330908750, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946572664330908750, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1946572664330908750, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410554539635188229, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410554539635188229, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410554539635188229, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410554539635188229, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410554539635188229, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410554539635188229, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3410554539635188229, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5366473636653450694, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 1037025965
+      objectReference: {fileID: 0}
+    - target: {fileID: 5366473636653450694, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379309636052152262, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379309636052152262, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379309636052152262, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379309636052152262, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379309636052152262, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379309636052152262, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379309636052152262, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5610072797605337493, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 1037025965
+      objectReference: {fileID: 0}
+    - target: {fileID: 5610072797605337493, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 5876394852617529862, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 5876394852617529862, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 5904174351683847846, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 5904174351683847846, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 5906381253585825109, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5906381253585825109, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5906381253585825109, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5906381253585825109, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5906381253585825109, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5906381253585825109, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241599095609158903, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3522029792
+      objectReference: {fileID: 0}
+    - target: {fileID: 6241599095609158903, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 6996357835298573097, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 6996357835298573097, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233486039415303952, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233486039415303952, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233486039415303952, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233486039415303952, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233486039415303952, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233486039415303952, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7233486039415303952, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7533469193385493942, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_Name
+      value: UI_SettingsScreen
+      objectReference: {fileID: 0}
+    - target: {fileID: 7799582001703705958, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3522029792
+      objectReference: {fileID: 0}
+    - target: {fileID: 7799582001703705958, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 9141202034728261409, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 1621531018
+      objectReference: {fileID: 0}
+    - target: {fileID: 9141202034728261409, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+--- !u!224 &152738351 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+  m_PrefabInstance: {fileID: 152738350}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -259,12 +593,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.0002691144, y: 0.70756674, z: -0.0002694649, w: 0.70664644}
-  m_LocalPosition: {x: -315245, y: 174.6, z: 311}
+  m_LocalRotation: {x: -0.07625317, y: -0.5513458, z: -0.0506995, w: 0.82923627}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 777299651}
   m_LocalEulerAnglesHint: {x: -46.276, y: 2084.356, z: 2.317}
 --- !u!114 &410087042
 MonoBehaviour:
@@ -276,8 +610,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
   m_CustomShadowLayers: 0
@@ -324,14 +658,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0c6fcab710c8e94c902e2f6d8590e62, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.GravitySimulation
   settings: {fileID: 11400000, guid: 2edfb3b296b04fc4d9f69762ba589d6a, type: 2}
+  physicsReferenceBody: {fileID: 922402147}
   autoDiscoverBodies: 0
   registeredBodies:
   - {fileID: 2107307731}
   - {fileID: 922402147}
   - {fileID: 733625513}
+  referenceFrameVelocity: {x: 0, y: 0, z: 0}
+  referenceFrameAcceleration: {x: 0, y: 0, z: 0}
 --- !u!4 &476981472
 Transform:
   m_ObjectHideFlags: 0
@@ -357,7 +694,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6e3fa050e50a4743a3992d022eca79f6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.World.WorldOriginRebaser
   settings: {fileID: 11400000, guid: 6799d7f003dd4eacb53a2104a65fbba1, type: 2}
   trackingTarget: {fileID: 0}
@@ -381,7 +718,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7b4d1f8c2a6b4ab3aa5591e6b0db57f1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialFrameProvider
   simulation: {fileID: 476981471}
   environmentSources:
@@ -496,7 +833,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -544,7 +881,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 60b9fe0006befcd46beb11974c08121a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftCameraRig
   exteriorTarget: {fileID: 1678406297}
   cockpitTarget: {fileID: 0}
@@ -576,16 +913,22 @@ MonoBehaviour:
   flightOffsetResponsiveness: 4
   fovResponsiveness: 6
   boostFovIncrease: 7
---- !u!1 &709315112 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-  m_PrefabInstance: {fileID: 1136215600}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &709315115 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
   m_PrefabInstance: {fileID: 1136215600}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &709315116 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100005, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
+  m_PrefabInstance: {fileID: 1136215600}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
 --- !u!1 &733625510
 GameObject:
   m_ObjectHideFlags: 0
@@ -595,8 +938,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 733625511}
-  - component: {fileID: 733625517}
-  - component: {fileID: 733625516}
   - component: {fileID: 733625515}
   - component: {fileID: 733625514}
   - component: {fileID: 733625513}
@@ -604,6 +945,7 @@ GameObject:
   - component: {fileID: 733625518}
   - component: {fileID: 733625519}
   - component: {fileID: 733625520}
+  - component: {fileID: 733625521}
   m_Layer: 0
   m_Name: Test Star
   m_TagString: Untagged
@@ -620,10 +962,11 @@ Transform:
   m_GameObject: {fileID: 733625510}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -315245, y: 174.6, z: 311}
+  m_LocalPosition: {x: 25000, y: -5091, z: -10582}
   m_LocalScale: {x: 2400, y: 2400, z: 2400}
   m_ConstrainProportionsScale: 1
-  m_Children: []
+  m_Children:
+  - {fileID: 733625522}
   m_Father: {fileID: 1738582684}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &733625512
@@ -636,7 +979,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 9fe158cc1956f8c43b75bff5cc5e49d5, type: 2}
   applyInEditMode: 1
@@ -652,7 +995,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.CelestialBody
   bodyName: Test Star
   bodyType: 0
@@ -664,19 +1007,6 @@ MonoBehaviour:
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 0
---- !u!114 &733625520
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733625510}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
-  persistentId: celestial.test-star
 --- !u!54 &733625514
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -731,13 +1061,13 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733625510}
+  m_GameObject: {fileID: 733625523}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
-  m_MotionVectors: 1
+  m_MotionVectors: 2
   m_LightProbeUsage: 0
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 2
@@ -780,7 +1110,7 @@ MeshFilter:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733625510}
+  m_GameObject: {fileID: 733625523}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!114 &733625518
 MonoBehaviour:
@@ -792,15 +1122,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614eb7b496224fbd82ffa684591be353, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightSource
   body: {fileID: 733625513}
   radiationSource: {fileID: 733625519}
-  emissionMaterial: {fileID: 2100000, guid: 98ed93bb6c325ab44acca22492c3138c, type: 2}
-  applyEmissionMaterial: 1
-  disableShadowCasting: 1
-  disableShadowReceiving: 1
-  disableProbeLighting: 1
 --- !u!114 &733625519
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -811,10 +1136,75 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e485273ad23c4c778982d5d5829118f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialRadiationSource
   body: {fileID: 733625513}
   profile: {fileID: 11400000, guid: 076a8bd9b2ab4b3f818b8c563a906a44, type: 2}
+--- !u!114 &733625520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733625510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: celestial.test-star
+--- !u!114 &733625521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733625510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49367193ace64547a9bbfe5a80876247, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialStarVisual
+  profile: {fileID: 11400000, guid: 80bfee7118864b1db71aa07fc0508041, type: 2}
+  lightSource: {fileID: 733625518}
+  starRenderer: {fileID: 733625516}
+  starVisualTransform: {fileID: 733625522}
+  observerCamera: {fileID: 2069305681}
+  applyInEditMode: 1
+  updateEveryFrame: 1
+--- !u!4 &733625522
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733625523}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8.879229, y: 1.4765652, z: 3.2641983}
+  m_LocalScale: {x: 0.11547604, y: 0.11547604, z: 0.11547604}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 733625511}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &733625523
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 733625522}
+  - component: {fileID: 733625517}
+  - component: {fileID: 733625516}
+  m_Layer: 0
+  m_Name: Star Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &777299649
 GameObject:
   m_ObjectHideFlags: 0
@@ -845,14 +1235,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73ff7679bce941f0949a9fa36fb21f9a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightingRig
   profile: {fileID: 11400000, guid: 2b4d723e74a0ac94fac5a7927c8ec78c, type: 2}
   primarySource: {fileID: 733625518}
-  lightingFocus: {fileID: 0}
-  useMainCameraAsFallbackFocus: 0
+  lightingFocus: {fileID: 2069305678}
+  useMainCameraAsFallbackFocus: 1
   mainDirectionalLight: {fileID: 410087040}
-  syncLightPositionToSource: 1
+  syncLightPositionToSource: 0
   sceneCamera: {fileID: 2069305681}
   updateInEditMode: 1
   updateEveryFrame: 1
@@ -865,10 +1255,11 @@ Transform:
   m_GameObject: {fileID: 777299649}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.59466, y: -65.52361, z: -99.31499}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 410087041}
   - {fileID: 29999713}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -882,7 +1273,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d2dc33b0c7c74af8b8b4f6b94de6229a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Space.StarDomeController
   profile: {fileID: 11400000, guid: ada5dcf8924d49079d431e09b24c8b30, type: 2}
   applyOnEnable: 1
@@ -899,7 +1290,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a58b5d9828e947359ec7e7a4c05af062, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialLodController
   targetCamera: {fileID: 2069305681}
   visuals:
@@ -917,7 +1308,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 93889cbb63db486187f7c03cfe7eac33, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialOrbitLineRenderer
   simulation: {fileID: 476981471}
   showOrbitLines: 1
@@ -929,55 +1320,6 @@ MonoBehaviour:
   lineMaterial: {fileID: 0}
   drawLockedBodies: 0
   drawUnboundTrajectories: 0
---- !u!1 &832575517
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 832575519}
-  - component: {fileID: 832575518}
-  m_Layer: 0
-  m_Name: Global Volume
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &832575518
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: b2cced2787023854b91388ab8146a209, type: 2}
---- !u!4 &832575519
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 832575517}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &900100000
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1038,16 +1380,71 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 310003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 320003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291805869
+      objectReference: {fileID: 0}
+    - target: {fileID: 510003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4290948495
+      objectReference: {fileID: 0}
+    - target: {fileID: 510003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 510003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 520003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 520003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 520003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 530003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 530003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 530003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 550003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 550003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 560003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 560003, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
---- !u!1 &900100001 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 100000, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
-  m_PrefabInstance: {fileID: 900100000}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &900100002 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 100001, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
@@ -1058,12 +1455,23 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 100002, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
   m_PrefabInstance: {fileID: 900100000}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 900100001}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f927aa0bca054ea6805e496fc833c886, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.InventoryPanelPresenter
+--- !u!114 &900100004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 100005, guid: ac3c4dd99d934aa68c39354038bf5747, type: 3}
+  m_PrefabInstance: {fileID: 900100000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
 --- !u!1 &900200000
 GameObject:
   m_ObjectHideFlags: 0
@@ -1073,6 +1481,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 900200001}
+  - component: {fileID: 900200002}
+  - component: {fileID: 900200003}
   m_Layer: 5
   m_Name: HudRoot
   m_TagString: Untagged
@@ -1101,6 +1511,39 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &900200002
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900200000}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
+--- !u!114 &900200003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900200000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
+  screenId: 100
+  layer: 0
+  firstSelection: {fileID: 0}
+  closeOnCancel: 0
+  locksGameplayInput: 0
+  visibleOnAwake: 1
+  blocksRaycastsWhenVisible: 0
+  canvasGroup: {fileID: 900200002}
+  panelFader: {fileID: 0}
 --- !u!1 &900200010
 GameObject:
   m_ObjectHideFlags: 0
@@ -1156,7 +1599,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 0.94, g: 0.91, b: 0.83, a: 0.92}
@@ -1166,7 +1609,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text:
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1287,8 +1730,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d6f583d467b54e60b67bb5399a099de1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.SpacecraftFlightHudPresenter
+  theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   possessionController: {fileID: 1917591035}
   flightText: {fileID: 900210013}
   navigationText: {fileID: 900210023}
@@ -1349,23 +1793,88 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 0.52, g: 0.94, b: 0.9, a: 0.96}
   m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
   m_text: FLIGHT ASSIST  ON
+  m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4122000020
+  m_fontColor: {r: 0.58, g: 0.73, b: 0.69, a: 0.96}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
   m_fontSize: 18
   m_fontSizeBase: 18
   m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 0
+  m_fontSizeMax: 0
+  m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 1024
+  m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
   m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
   m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &900210020
 GameObject:
   m_ObjectHideFlags: 0
@@ -1421,23 +1930,88 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 0.52, g: 0.94, b: 0.9, a: 0.96}
   m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
   m_text: NO SURFACE FRAME
+  m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4122000020
+  m_fontColor: {r: 0.58, g: 0.73, b: 0.69, a: 0.96}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
   m_fontSize: 18
   m_fontSizeBase: 18
   m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 0
+  m_fontSizeMax: 0
+  m_fontStyle: 0
   m_HorizontalAlignment: 4
   m_VerticalAlignment: 1024
+  m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
   m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
   m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &900210030
 GameObject:
   m_ObjectHideFlags: 0
@@ -1493,23 +2067,491 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 0.52, g: 0.94, b: 0.9, a: 0.96}
   m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
   m_text: NO FRAME
+  m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
   m_fontSize: 18
   m_fontSizeBase: 18
   m_fontWeight: 600
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 0
+  m_fontSizeMax: 0
+  m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
+  m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
   m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
   m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1001 &900300000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1891705753}
+    m_Modifications:
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: controlLock
+      value: 
+      objectReference: {fileID: 1891705759}
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: screens.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: 'screens.Array.data[0]'
+      value: 
+      objectReference: {fileID: 900200003}
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: 'screens.Array.data[1]'
+      value: 
+      objectReference: {fileID: 709315116}
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: 'screens.Array.data[2]'
+      value: 
+      objectReference: {fileID: 900100004}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+--- !u!224 &900300002 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 900001, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+  m_PrefabInstance: {fileID: 900300000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &900300003 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 900002, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+  m_PrefabInstance: {fileID: 900300000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18663dcf01964076a96e66b8c610cb00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Foundation.UiSystemRoot
+--- !u!114 &900300004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 900003, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+  m_PrefabInstance: {fileID: 900300000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43015c45ce424f7181dca745ea8e8478, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Input.UiInputDeviceService
+--- !u!114 &900300005 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+  m_PrefabInstance: {fileID: 900300000}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fe827a9ec6b4efaa3ef4a2d2b6809e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenRouter
+--- !u!1001 &901000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1891705753}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c9c4bb8f7db6486789d27ba957844aa1, type: 3}
+--- !u!224 &901000001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: c9c4bb8f7db6486789d27ba957844aa1, type: 3}
+  m_PrefabInstance: {fileID: 901000000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &901000010
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1891705753}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 889f75bfa3db43ca99a21ce7ec821a61, type: 3}
+--- !u!224 &901000011 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: 889f75bfa3db43ca99a21ce7ec821a61, type: 3}
+  m_PrefabInstance: {fileID: 901000010}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &901000020
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1891705753}
+    m_Modifications:
+    - target: {fileID: 300003, guid: 1cb42bb615d34cf5a34de5b6adce85e0, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4292143344
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1cb42bb615d34cf5a34de5b6adce85e0, type: 3}
+--- !u!224 &901000021 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: 1cb42bb615d34cf5a34de5b6adce85e0, type: 3}
+  m_PrefabInstance: {fileID: 901000020}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &901000030
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1891705753}
+    m_Modifications:
+    - target: {fileID: 63805109052198445, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 63805109052198445, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 493308925417046019, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291805869
+      objectReference: {fileID: 0}
+    - target: {fileID: 493308925417046019, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 793903818226261606, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 793903818226261606, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 796919177243661440, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 796919177243661440, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 800788843398070600, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 800788843398070600, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 1136027787561418412, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 1136027787561418412, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 1139476340610345828, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 1139476340610345828, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 1597119882032004943, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 1597119882032004943, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2020548832141354833, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4290948495
+      objectReference: {fileID: 0}
+    - target: {fileID: 2020548832141354833, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2138519129325001397, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 2138519129325001397, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2143233075437621117, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2143233075437621117, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2174172655355060792, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2174172655355060792, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2256498409945970753, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2256498409945970753, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2367747537108957958, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2367747537108957958, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2425023527908352383, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2425023527908352383, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2595462765299352802, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2595462765299352802, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2700022848909844123, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2700022848909844123, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 2925669368763273077, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 2925669368763273077, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 3885236899370473590, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 3885236899370473590, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 3889107391365451198, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 3889107391365451198, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 3921121469608927483, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 3921121469608927483, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 3949860413767587907, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 3949860413767587907, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 3969387508146174594, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 3969387508146174594, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 4619164869625650741, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 4619164869625650741, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 4864335486132324057, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4290948495
+      objectReference: {fileID: 0}
+    - target: {fileID: 4864335486132324057, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 5169033475380372271, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 5169033475380372271, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804671684099683344, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291805869
+      objectReference: {fileID: 0}
+    - target: {fileID: 6804671684099683344, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 7360369717129896237, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 7360369717129896237, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 8327611080543709491, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291805869
+      objectReference: {fileID: 0}
+    - target: {fileID: 8327611080543709491, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410503497013065492, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4293781728
+      objectReference: {fileID: 0}
+    - target: {fileID: 8410503497013065492, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 9038438976420445325, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291805869
+      objectReference: {fileID: 0}
+    - target: {fileID: 9038438976420445325, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 9045493462288410844, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 3869677962
+      objectReference: {fileID: 0}
+    - target: {fileID: 9045493462288410844, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+--- !u!224 &901000031 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8147431654212776514, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+  m_PrefabInstance: {fileID: 901000030}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &922402144
 GameObject:
   m_ObjectHideFlags: 0
@@ -1530,6 +2572,7 @@ GameObject:
   - component: {fileID: 922402157}
   - component: {fileID: 922402158}
   - component: {fileID: 922402159}
+  - component: {fileID: 922402160}
   m_Layer: 0
   m_Name: Test Planet
   m_TagString: Untagged
@@ -1545,14 +2588,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 922402144}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8174.6, y: 175.7, z: 177}
+  m_LocalRotation: {x: -0.8362809, y: -0.061302356, z: 0.5404859, w: 0.06893021}
+  m_LocalPosition: {x: 264282, y: 0, z: -126935}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 657189157}
   m_Father: {fileID: 1738582684}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -2.81, y: -834, z: 169.79}
 --- !u!114 &922402146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1563,7 +2606,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 05ea708a8f4fcb64d80047baab728a2e, type: 2}
   applyInEditMode: 1
@@ -1579,7 +2622,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.CelestialBody
   bodyName: Test Planet
   bodyType: 1
@@ -1591,19 +2634,6 @@ MonoBehaviour:
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 1
---- !u!114 &922402159
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 922402144}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
-  persistentId: celestial.test-planet
 --- !u!54 &922402148
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1719,7 +2749,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 922402147}
   surfaceModel: {fileID: 922402157}
@@ -1728,10 +2758,9 @@ MonoBehaviour:
   meshObjectName: Terrain Mesh
   renderResolution: 57
   lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
-  editModePreviewLod: 2
+  editModePreviewLod: 1
   syncSphereCollider: 1
   generateMeshCollider: 1
-  meshColliderResolution: 64
   bakeMeshCollider: 1
   material: {fileID: 0}
   normalizeBodyTransformScale: 1
@@ -1749,7 +2778,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
   profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
   terrainVisual: {fileID: 922402152}
@@ -1766,19 +2795,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 922402147}
   generationProfile: {fileID: 11400000, guid: 1ff9db461b1b46e48af26cd43336dcae, type: 2}
   shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
   primaryRadiationSource: {fileID: 733625519}
-  thermalProfile: {fileID: 11400000, guid: af97295a30154624a0785bcc53feaf35, type: 2}
-  polarTemperatureDrop: 35
-  altitudeCoolingPerUnit: 0.045
-  temperatureNoiseAmplitude: 8
-  temperatureNoiseScale: 2.25
-  moistureNoiseScale: 3
-  atmosphereMoistureRetention: 0.35
   surfaceNormalSampleStep: 0.004
 --- !u!114 &922402158
 MonoBehaviour:
@@ -1790,7 +2812,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
   body: {fileID: 922402147}
   surfaceModel: {fileID: 922402157}
@@ -1803,9 +2825,44 @@ MonoBehaviour:
   spawnRadius: 360
   despawnRadius: 520
   streamRefreshInterval: 0.35
+  maximumSpawnsPerRefresh: 8
+  maximumCandidateEvaluationsPerRefresh: 32
   surfaceOffset: 1.96
   skipOceanCoveredDeposits: 1
   oceanSurfaceClearance: 0.05
+--- !u!114 &922402159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 922402144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: celestial.test-planet
+--- !u!114 &922402160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 922402144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d24e35f46a784b89ab12c3d4e5f60718, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialSurfacePatchSystem
+  profile: {fileID: 11400000, guid: a34f56b78c904d12ae34f56b78c90d12, type: 2}
+  bodyVisual: {fileID: 922402152}
+  targetCamera: {fileID: 2069305681}
+  collisionObserverSource: {fileID: 1917591035}
+  surfaceModeActive: 0
+  activePatchCount: 0
+  activeColliderCount: 0
+  deepestActiveLevel: 0
 --- !u!1 &990561836
 GameObject:
   m_ObjectHideFlags: 0
@@ -1937,7 +2994,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
   mouseSensitivity: 1
   gamepadLookDegreesPerSecond: 150
@@ -1979,7 +3036,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
   profile: {fileID: 11400000, guid: 83dee516fa8b4632bcbb28acd5b0e3f5, type: 2}
   inputSource: {fileID: 990561841}
@@ -2006,10 +3063,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d25fd99b97c4ca48f4aebe4425840b2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Actors.CelestialActorProbe
   frameProvider: {fileID: 476981474}
-  dominantBodyName:
+  dominantBodyName: 
   surfaceAltitude: 0
   surfaceSlopeAngleDegrees: 0
   oceanAltitude: 0
@@ -2033,7 +3090,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
   inputSource: {fileID: 990561841}
   controlLock: {fileID: 1891705759}
@@ -2045,7 +3102,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   triggerInteraction: 2
   hasTarget: 0
-  currentPrompt:
+  currentPrompt: 
   currentTargetTransform: {fileID: 0}
 --- !u!114 &990561846
 MonoBehaviour:
@@ -2057,8 +3114,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
+  containerId: inventory.local
   slotCapacity: 12
   stacks: []
 --- !u!114 &990561847
@@ -2071,7 +3129,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: player.explorer
 --- !u!1001 &1136215600
@@ -2082,97 +3140,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1891705753}
     m_Modifications:
-    - target: {fileID: 100000, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_Name
-      value: PauseMenuPanel
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_Pivot.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_Pivot.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 420
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: -96
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 24
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100001, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400002, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
-      propertyPath: m_Spacing
-      value: 5
-      objectReference: {fileID: 0}
     - target: {fileID: 600003, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
       propertyPath: m_fontColor32.rgba
-      value: 4071810759
+      value: 4293781728
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2225,7 +3195,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e4e1358212cc86449edc2c485798f10, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.GravityActor
   simulation: {fileID: 476981471}
   alignUpAgainstGravity: 1
@@ -2446,7 +3416,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
@@ -2465,15 +3435,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3756892544726139654, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4918412385370244340, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5383031462875425764, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2517,7 +3487,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8165542165073250860, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value:
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2538,7 +3508,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a37fae9001c495cbc8611c85c486f84, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftRig
 --- !u!114 &1678406299 stripped
 MonoBehaviour:
@@ -2549,7 +3519,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 240ea934eebc42bf9fd3088b670f8e90, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
 --- !u!114 &1678406301 stripped
 MonoBehaviour:
@@ -2560,7 +3530,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9bd89b4c96f34fd4e9d670f2eb2c0a02, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftMotor
 --- !u!114 &1678406302 stripped
 MonoBehaviour:
@@ -2571,7 +3541,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
 --- !u!54 &1678406309 stripped
 Rigidbody:
@@ -2626,7 +3596,6 @@ GameObject:
   - component: {fileID: 1891705754}
   - component: {fileID: 1891705759}
   - component: {fileID: 1891705758}
-  - component: {fileID: 1891705757}
   - component: {fileID: 1891705760}
   - component: {fileID: 1891705761}
   m_Layer: 5
@@ -2651,6 +3620,12 @@ RectTransform:
   - {fileID: 900200001}
   - {fileID: 709315115}
   - {fileID: 900100002}
+  - {fileID: 152738351}
+  - {fileID: 901000031}
+  - {fileID: 900300002}
+  - {fileID: 901000021}
+  - {fileID: 901000011}
+  - {fileID: 901000001}
   m_Father: {fileID: 2069590343}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2668,7 +3643,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -2685,7 +3660,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -2722,21 +3697,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!114 &1891705757
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1891705752}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cdfc4682b72b4979bf8fddc44de31f7f, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.GameplayPanelSwitcher
-  hudRoot: {fileID: 900200000}
-  pauseMenuPanel: {fileID: 709315112}
-  inventoryPanel: {fileID: 900100001}
 --- !u!114 &1891705758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2747,14 +3707,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc97f6f987a24a7da3c79acef9cfa4f1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.GameplayUiController
-  currentScreen: 0
-  controlLock: {fileID: 1891705759}
-  panelSwitcher: {fileID: 1891705757}
+  currentScreen: 100
   inventoryPanel: {fileID: 900100003}
-  playerInventory: {fileID: 990561846}
   sessionController: {fileID: 1891705761}
+  uiSystemRoot: {fileID: 900300003}
+  screenRouter: {fileID: 900300005}
+  inputDeviceService: {fileID: 900300004}
+  feedbackService: {fileID: 0}
+  confirmationDialog: {fileID: 0}
+  loadingOverlay: {fileID: 0}
+  saveLoadScreen: {fileID: 0}
   interactionRaycaster: {fileID: 990561845}
   interactionPromptText: {fileID: 900200013}
   interactionPromptPrefix: E
@@ -2769,7 +3733,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a739a33de0447638f2977c488050d22, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Input.PlayerControlLock
   activeReasons: 0
 --- !u!114 &1891705760
@@ -2782,7 +3746,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05a0c010b8cca7f4283fe3fc6a17d3b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Persistence.GameplaySaveCoordinator
   slotName: autosave
   consumeStartupRequestOnStart: 1
@@ -2803,8 +3767,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71b1c94751624c24ae13a79cce587eb6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Application.Runtime::Farion.App.Flow.GameplaySessionController
+  localPlayerId: player.local
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
   saveCoordinator: {fileID: 1891705760}
 --- !u!1 &1917591032
@@ -2850,7 +3815,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f51b22b953e42e9a984584a2737ed88, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.KeyboardBoardingInput
 --- !u!114 &1917591035
 MonoBehaviour:
@@ -2862,7 +3827,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27301337013f42f48461e2c5149285d9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerPossessionController
   initialMode: 0
   currentMode: 0
@@ -2911,6 +3876,7 @@ GameObject:
   - component: {fileID: 1939519867}
   - component: {fileID: 1939519869}
   - component: {fileID: 1939519868}
+  - component: {fileID: 1939519870}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -2943,21 +3909,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
   m_MoveRepeatRate: 0.1
   m_XRTrackingOrigin: {fileID: 0}
-  m_ActionsAsset: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_PointAction: {fileID: -1654692200621890270, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_ActionsAsset: {fileID: 0}
+  m_PointAction: {fileID: 0}
+  m_MoveAction: {fileID: 0}
+  m_SubmitAction: {fileID: 0}
+  m_CancelAction: {fileID: 0}
+  m_LeftClickAction: {fileID: 0}
+  m_MiddleClickAction: {fileID: 0}
+  m_RightClickAction: {fileID: 0}
+  m_ScrollWheelAction: {fileID: 0}
   m_TrackedDevicePositionAction: {fileID: 6564999863303420839, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
   m_TrackedDeviceOrientationAction: {fileID: 7970375526676320489, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
   m_DeselectOnBackgroundClick: 1
@@ -2974,11 +3940,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
+--- !u!114 &1939519870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1939519866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d048faec1174ec5875d598c5330938e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Input.UiInputModuleBinder
+  inputModule: {fileID: 1939519868}
 --- !u!1 &1944801545
 GameObject:
   m_ObjectHideFlags: 0
@@ -3004,7 +3983,7 @@ Transform:
   m_GameObject: {fileID: 1944801545}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 262666, y: 0, z: -124825}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3059,7 +4038,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
@@ -3154,7 +4133,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ced45a73ad04689b7acff5d28915f41, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonCameraRig
   target: {fileID: 990561843}
   inputSource: {fileID: 990561841}
@@ -3173,7 +4152,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
   nonRigidbodyVelocity: 1
   attenuationObject: {fileID: 0}
@@ -3242,14 +4221,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2107307728}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0.37867525, y: 0.40240952, z: -0.18764663, w: 0.81207174}
   m_LocalPosition: {x: 818, y: 229.63, z: 3131}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1533031734}
   m_Father: {fileID: 1738582684}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 50, y: 52.72, z: 0}
 --- !u!114 &2107307730
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3260,7 +4239,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: c9716310537b1f74ba20424113e5f417, type: 2}
   applyInEditMode: 1
@@ -3276,7 +4255,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Physics.CelestialBody
   bodyName: Test Moon
   bodyType: 2
@@ -3288,19 +4267,6 @@ MonoBehaviour:
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 1
---- !u!114 &2107307737
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2107307728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
-  persistentId: celestial.test-moon
 --- !u!54 &2107307732
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3416,7 +4382,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 2107307731}
   surfaceModel: {fileID: 0}
@@ -3424,11 +4390,10 @@ MonoBehaviour:
   surfaceProfile: {fileID: 11400000, guid: a4a9f7524b98c32409adc6a4a7227b8b, type: 2}
   meshObjectName: Terrain Mesh
   renderResolution: 64
-  lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
+  lodProfile: {fileID: 11400000, guid: 4ef0f81e8f084cda9864f3f5775c074e, type: 2}
   editModePreviewLod: 2
   syncSphereCollider: 1
   generateMeshCollider: 1
-  meshColliderResolution: 32
   bakeMeshCollider: 1
   material: {fileID: 0}
   normalizeBodyTransformScale: 1
@@ -3436,12 +4401,23 @@ MonoBehaviour:
   disableRootColliders: 1
   rebuildInEditMode: 1
   meshColliderSkippedBecauseBodyIsDynamic: 0
+--- !u!114 &2107307737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2107307728}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: celestial.test-moon
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 410087041}
-  - {fileID: 832575519}
   - {fileID: 476981472}
   - {fileID: 672124905}
   - {fileID: 1738582684}

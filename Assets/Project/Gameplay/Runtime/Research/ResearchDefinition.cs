@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Farion.Gameplay.Crafting;
+using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Inventory;
 using UnityEngine;
 
@@ -44,6 +45,12 @@ namespace Farion.Gameplay.Research
             for (int i = 0; i < requiredItems.Count; i++)
             {
                 requiredItems[i]?.OnValidate();
+            }
+
+            for (int i = 0; i < unlockedCapabilityIds.Count; i++)
+            {
+                unlockedCapabilityIds[i] =
+                    DefinitionId.Normalize(unlockedCapabilityIds[i]);
             }
         }
     }

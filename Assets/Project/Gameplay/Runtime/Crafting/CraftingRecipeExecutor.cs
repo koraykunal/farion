@@ -6,7 +6,7 @@ namespace Farion.Gameplay.Crafting
     {
         public static CraftingRecipeResult CanCraft(
             RecipeDefinition recipe,
-            PlayerInventory inventory,
+            IInventoryContainer inventory,
             bool hasRequiredResearch)
         {
             if (recipe == null)
@@ -41,7 +41,7 @@ namespace Farion.Gameplay.Crafting
 
         public static CraftingRecipeResult TryCraft(
             RecipeDefinition recipe,
-            PlayerInventory inventory,
+            IInventoryContainer inventory,
             bool hasRequiredResearch)
         {
             CraftingRecipeResult result = CanCraft(recipe, inventory, hasRequiredResearch);

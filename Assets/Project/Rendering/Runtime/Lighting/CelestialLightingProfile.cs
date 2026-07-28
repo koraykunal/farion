@@ -7,28 +7,28 @@ namespace Farion.Rendering.Lighting
     public sealed class CelestialLightingProfile : ScriptableObject
     {
         [Header("Main Light")]
-        [SerializeField] Color lightColor = new(1f, 0.96f, 0.86f, 1f);
+        [SerializeField] Color lightColor = new(1f, 0.985f, 0.95f, 1f);
         [SerializeField] bool useColorTemperature = true;
         [Min(1000f)]
         [SerializeField] float colorTemperature = 5778f;
         [Min(0.001f)]
         [SerializeField] float referenceDistance = 350f;
         [Min(0f)]
-        [SerializeField] float referenceIntensity = 6f;
+        [SerializeField] float referenceIntensity = 1.1f;
         [SerializeField] bool useInverseSquareFalloff;
         [Tooltip("Flip only if the lit side appears opposite the authored star direction.")]
         [SerializeField] bool invertLightDirection;
         [Min(0.001f)]
         [SerializeField] float minimumFalloffDistance = 50f;
         [Min(0f)]
-        [SerializeField] float minimumIntensity = 1.25f;
+        [SerializeField] float minimumIntensity;
         [Min(0f)]
-        [SerializeField] float maximumIntensity = 12f;
+        [SerializeField] float maximumIntensity = 4f;
 
         [Header("Shadows")]
         [SerializeField] LightShadows shadows = LightShadows.Soft;
         [Range(0f, 1f)]
-        [SerializeField] float shadowStrength = 0.9f;
+        [SerializeField] float shadowStrength = 0.86f;
         [Min(0.001f)]
         [SerializeField] float shadowNearPlane = 0.2f;
         [Range(0f, 10f)]
@@ -39,7 +39,7 @@ namespace Farion.Rendering.Lighting
         [Header("Space Ambient")]
         [SerializeField] bool applyRenderSettings = true;
         [SerializeField] AmbientMode ambientMode = AmbientMode.Flat;
-        [SerializeField] Color ambientLight = new(0.04f, 0.045f, 0.055f, 1f);
+        [SerializeField] Color ambientLight = new(0.018f, 0.021f, 0.028f, 1f);
         [Range(0f, 4f)]
         [SerializeField] float ambientIntensity = 1f;
         [SerializeField] bool disableFog = true;

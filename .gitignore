@@ -112,6 +112,10 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
+# Unity crash and unsaved-scene recovery snapshots
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
+
 # FMOD Studio authoring caches and imported reference projects
 /Assets/Plugins/FMOD/Cache/
 /Assets/Plugins/FMOD/Cache.meta

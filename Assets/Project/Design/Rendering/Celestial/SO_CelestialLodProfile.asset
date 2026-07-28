@@ -15,6 +15,6 @@ MonoBehaviour:
   lod0ScreenHeight: 0.5
   lod1ScreenHeight: 0.2
   hysteresis: 0.04
-  lod0Resolution: 64
-  lod1Resolution: 32
-  lod2Resolution: 16
+  lod0Resolution: 96
+  lod1Resolution: 48
+  lod2Resolution: 24

@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MAT_Celestial_Moon
+  m_Shader: {fileID: 4800000, guid: 6266b0a30e904a84793c2207b3e2efd2, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _SurfaceNoiseTex:
+        m_Texture: {fileID: 2800000, guid: 410a6d04427a91f44b3c19623fd252c4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EjectaRayTex:
+        m_Texture: {fileID: 2800000, guid: 9ea2a298caf216d4d86a7502233337c2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMapFlat:
+        m_Texture: {fileID: 2800000, guid: 3a077b82f9f6da9409eb8d426d152312, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMapSteep:
+        m_Texture: {fileID: 2800000, guid: 008d1ed4f435ca94886796d421112870, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BiomeBlendStrength: 0.8
+    - _BodyRadius: 1
+    - _EjectaSmoothness: 0.08
+    - _EjectaRayFrequency: 36
+    - _EjectaStrength: 0.65
+    - _Metallic: 0
+    - _NormalFlatWorldTileSize: 10
+    - _NormalSteepWorldTileSize: 7.5
+    - _NormalStrength: 0.493
+    - _Smoothness: 0.12
+    - _SteepColorStrength: 0.781
+    - _SurfaceNoiseWorldTileSize: 180
+    - _UseEjectaRayTex: 1
+    m_Colors:
+    - _BaseColor: {r: 0.44, g: 0.435, b: 0.42, a: 1}
+    - _EjectaColor: {r: 0.62, g: 0.58, b: 0.5, a: 1}
+    - _RadiusMinMax: {r: 1, g: 1, b: 0, a: 0}
+    - _SecondaryColor: {r: 0.27, g: 0.265, b: 0.25, a: 1}
+    - _SteepColor: {r: 0.12, g: 0.118, b: 0.112, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!114 &8284055090494850016
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10

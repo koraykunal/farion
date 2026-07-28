@@ -20,13 +20,13 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientSkyColor: {r: 0.012, g: 0.014, b: 0.018, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: bf8fff59b40549ddae7aa92d7f6c96ba, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -174,7 +174,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -199,41 +199,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
   m_PrefabInstance: {fileID: 1838131443}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &477776708
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 477776709}
-  m_Layer: 0
-  m_Name: ConfirmDialog
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &477776709
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 477776708}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1354690711}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &497820098 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
@@ -273,7 +238,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.x
@@ -281,15 +246,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 480
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 56
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -321,15 +286,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -150
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671008, type: 3}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Enabled
@@ -357,7 +322,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 2
   controller: {fileID: 1323367404}
@@ -399,41 +364,6 @@ Transform:
   - {fileID: 723013328}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &659909989
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 659909990}
-  m_Layer: 0
-  m_Name: LoadingOverlay
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &659909990
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 659909989}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1354690711}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &723013327
 GameObject:
   m_ObjectHideFlags: 0
@@ -478,7 +408,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
@@ -690,7 +620,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
   m_Padding:
     m_Left: 0
@@ -750,6 +680,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 946050620}
+  - component: {fileID: 946050621}
+  - component: {fileID: 946050622}
   m_Layer: 0
   m_Name: MainPanel
   m_TagString: Untagged
@@ -780,6 +712,39 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &946050621
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946050619}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &946050622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 946050619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
+  screenId: 10
+  layer: 100
+  firstSelection: {fileID: 1268675401}
+  closeOnCancel: 0
+  locksGameplayInput: 0
+  visibleOnAwake: 1
+  blocksRaycastsWhenVisible: 1
+  canvasGroup: {fileID: 946050621}
+  panelFader: {fileID: 0}
 --- !u!1001 &960282490
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -814,7 +779,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.x
@@ -822,15 +787,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 480
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 56
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -862,15 +827,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -333
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671009, type: 3}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Enabled
@@ -898,7 +863,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 5
   controller: {fileID: 1323367404}
@@ -942,7 +907,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.x
@@ -950,15 +915,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 480
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 56
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -990,15 +955,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -272
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 21300000, guid: 537c5bcec20df1e43a5deb19aa8819c6, type: 3}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Enabled
@@ -1026,7 +991,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 4
   controller: {fileID: 1323367404}
@@ -1041,41 +1006,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
   m_PrefabInstance: {fileID: 986605211}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1174507937
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1174507938}
-  m_Layer: 0
-  m_Name: CreditsPanel
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1174507938
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1174507937}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1354690711}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1206754696
 GameObject:
   m_ObjectHideFlags: 0
@@ -1087,6 +1017,7 @@ GameObject:
   - component: {fileID: 1206754697}
   - component: {fileID: 1206754699}
   - component: {fileID: 1206754698}
+  - component: {fileID: 1206754700}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -1119,23 +1050,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
   m_MoveRepeatRate: 0.1
   m_XRTrackingOrigin: {fileID: 0}
-  m_ActionsAsset: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_PointAction: {fileID: -1654692200621890270, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_TrackedDevicePositionAction: {fileID: 6564999863303420839, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_TrackedDeviceOrientationAction: {fileID: 7970375526676320489, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_ActionsAsset: {fileID: 0}
+  m_PointAction: {fileID: 0}
+  m_MoveAction: {fileID: 0}
+  m_SubmitAction: {fileID: 0}
+  m_CancelAction: {fileID: 0}
+  m_LeftClickAction: {fileID: 0}
+  m_MiddleClickAction: {fileID: 0}
+  m_RightClickAction: {fileID: 0}
+  m_ScrollWheelAction: {fileID: 0}
+  m_TrackedDevicePositionAction: {fileID: 0}
+  m_TrackedDeviceOrientationAction: {fileID: 0}
   m_DeselectOnBackgroundClick: 1
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
@@ -1150,11 +1081,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 1268675400}
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
+--- !u!114 &1206754700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1206754696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d048faec1174ec5875d598c5330938e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Input.UiInputModuleBinder
+  inputModule: {fileID: 1206754698}
 --- !u!1001 &1268675397
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1189,7 +1133,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.x
@@ -1197,15 +1141,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 480
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 56
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1237,11 +1181,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -89
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1257,7 +1201,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 21300000, guid: b48bc638f6cd2da41931273f6d57011b, type: 3}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Color.b
@@ -1273,7 +1217,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Material
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Name
@@ -1302,7 +1246,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 1
   controller: {fileID: 1323367404}
@@ -1312,6 +1256,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
   m_PrefabInstance: {fileID: 1268675397}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1268675401 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8863559326310386402, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+  m_PrefabInstance: {fileID: 1268675397}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1268675400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1001 &1268675497
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1346,7 +1301,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.x
@@ -1354,15 +1309,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 480
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 56
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1394,15 +1349,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -28
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671001, type: 3}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Enabled
@@ -1435,7 +1390,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 0
   controller: {fileID: 1323367404}
@@ -1445,41 +1400,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8032272040452449987, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
   m_PrefabInstance: {fileID: 1268675497}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1268834543
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1268834544}
-  m_Layer: 0
-  m_Name: SettingsPanel
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1268834544
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1268834543}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1354690711}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1323367402
 GameObject:
   m_ObjectHideFlags: 0
@@ -1490,7 +1410,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1323367403}
   - component: {fileID: 1323367404}
-  - component: {fileID: 1323367405}
   m_Layer: 0
   m_Name: MainMenuController
   m_TagString: Untagged
@@ -1523,30 +1442,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f02b833af00a43b986ee3fad6802609a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuController
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
   saveGameAvailability: {fileID: 1354690715}
-  panelSwitcher: {fileID: 1323367405}
+  uiSystemRoot: {fileID: 1506823812}
+  screenRouter: {fileID: 1506823814}
+  feedbackService: {fileID: 0}
+  confirmationDialog: {fileID: 0}
   continueButton: {fileID: 1268675499}
   loadGameButton: {fileID: 517460369}
---- !u!114 &1323367405
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1323367402}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf27687871d4d63a4f1418f23c2a27f, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuPanelSwitcher
-  mainPanel: {fileID: 946050619}
-  settingsPanel: {fileID: 1268834543}
-  creditsPanel: {fileID: 1174507937}
-  confirmDialog: {fileID: 477776708}
-  loadingOverlay: {fileID: 659909989}
 --- !u!1 &1354690710
 GameObject:
   m_ObjectHideFlags: 0
@@ -1579,11 +1484,13 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1268834544}
-  - {fileID: 1174507938}
-  - {fileID: 477776709}
-  - {fileID: 659909990}
   - {fileID: 946050620}
+  - {fileID: 1401736745}
+  - {fileID: 1600000031}
+  - {fileID: 1506823811}
+  - {fileID: 1600000021}
+  - {fileID: 1600000011}
+  - {fileID: 1600000001}
   m_Father: {fileID: 2058303147}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1601,7 +1508,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -1618,7 +1525,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -1665,9 +1572,163 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c7c0227bf94c4fe79973a60a02fa55f7, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.LocalSaveGameAvailabilityProvider
   slotName: autosave
+--- !u!1001 &1401736744
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1354690711}
+    m_Modifications:
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7533469193385493942, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_Name
+      value: UI_SettingsScreen
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+--- !u!224 &1401736745 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4211680274235235110, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+  m_PrefabInstance: {fileID: 1401736744}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1506823809
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1354690711}
+    m_Modifications:
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: initialScreen
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: screens.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+      propertyPath: 'screens.Array.data[0]'
+      value: 
+      objectReference: {fileID: 946050622}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+--- !u!224 &1506823811 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 900001, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+  m_PrefabInstance: {fileID: 1506823809}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1506823812 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 900002, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+  m_PrefabInstance: {fileID: 1506823809}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18663dcf01964076a96e66b8c610cb00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Foundation.UiSystemRoot
+--- !u!114 &1506823814 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
+  m_PrefabInstance: {fileID: 1506823809}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fe827a9ec6b4efaa3ef4a2d2b6809e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenRouter
 --- !u!1 &1590722550
 GameObject:
   m_ObjectHideFlags: 0
@@ -1701,6 +1762,82 @@ Transform:
   - {fileID: 1206754697}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1600000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1354690711}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c9c4bb8f7db6486789d27ba957844aa1, type: 3}
+--- !u!224 &1600000001 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: c9c4bb8f7db6486789d27ba957844aa1, type: 3}
+  m_PrefabInstance: {fileID: 1600000000}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1600000010
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1354690711}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 889f75bfa3db43ca99a21ce7ec821a61, type: 3}
+--- !u!224 &1600000011 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: 889f75bfa3db43ca99a21ce7ec821a61, type: 3}
+  m_PrefabInstance: {fileID: 1600000010}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1600000020
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1354690711}
+    m_Modifications:
+    - target: {fileID: 300003, guid: 1cb42bb615d34cf5a34de5b6adce85e0, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4292143344
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1cb42bb615d34cf5a34de5b6adce85e0, type: 3}
+--- !u!224 &1600000021 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 100001, guid: 1cb42bb615d34cf5a34de5b6adce85e0, type: 3}
+  m_PrefabInstance: {fileID: 1600000020}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1600000030
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1354690711}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+--- !u!224 &1600000031 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8147431654212776514, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+  m_PrefabInstance: {fileID: 1600000030}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1614323547
 GameObject:
   m_ObjectHideFlags: 0
@@ -1728,12 +1865,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b662dc20dafe4ad40a4c23475957ddc6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.SceneAudioPlayer
   playOnEnable: 1
   logPlayback: 0
   loops:
-  - label:
+  - label: 
     source: {fileID: 0}
     clip: {fileID: 8300000, guid: eb7dd9b42eda08348a6df2dd61c52cd0, type: 3}
     outputGroup: {fileID: 6102394581318822121, guid: 7d1540dba34875148b7c319f81ec6a19, type: 2}
@@ -1791,7 +1928,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.x
@@ -1799,15 +1936,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 480
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 56
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1839,15 +1976,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 240
       objectReference: {fileID: 0}
     - target: {fileID: 6452155054660090891, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -211
       objectReference: {fileID: 0}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Sprite
-      value:
+      value: 
       objectReference: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671007, type: 3}
     - target: {fileID: 7757196561709597353, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_Enabled
@@ -1875,7 +2012,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb3b8111310c4d80b54fa335d9768f3f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuButton
   action: 3
   controller: {fileID: 1323367404}

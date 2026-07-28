@@ -79,6 +79,51 @@ namespace Farion.Core.Persistence
             return ReadPath(path, out payload);
         }
 
+        public static SaveGameOperationResult DeleteSlot(string slotName)
+        {
+            string resolvedSlotName = SaveGameSlotCatalog.ResolveSlotName(slotName);
+            if (string.IsNullOrWhiteSpace(resolvedSlotName))
+            {
+                return SaveGameOperationResult.Failure(
+                    SaveGameOperationStatus.InvalidSlotName,
+                    string.Empty);
+            }
+
+            string path = SaveGameSlotCatalog.GetSlotPath(resolvedSlotName);
+            string backupPath = path + BackupFileExtension;
+            string tempPath = path + TemporaryFileExtension;
+            if (!File.Exists(path) &&
+                !File.Exists(backupPath) &&
+                !File.Exists(tempPath))
+            {
+                return SaveGameOperationResult.Failure(
+                    SaveGameOperationStatus.NoSaveFound,
+                    path);
+            }
+
+            try
+            {
+                DeleteIfPresent(path);
+                DeleteIfPresent(backupPath);
+                DeleteIfPresent(tempPath);
+                return SaveGameOperationResult.Success(path);
+            }
+            catch (IOException exception)
+            {
+                return SaveGameOperationResult.Failure(
+                    SaveGameOperationStatus.IoError,
+                    path,
+                    exception);
+            }
+            catch (System.UnauthorizedAccessException exception)
+            {
+                return SaveGameOperationResult.Failure(
+                    SaveGameOperationStatus.IoError,
+                    path,
+                    exception);
+            }
+        }
+
         static SaveGameOperationResult ReadPath(string path, out string payload)
         {
             payload = string.Empty;
@@ -120,6 +165,14 @@ namespace Farion.Core.Persistence
             }
             catch (System.UnauthorizedAccessException)
             {
+            }
+        }
+
+        static void DeleteIfPresent(string path)
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
             }
         }
     }

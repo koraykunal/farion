@@ -256,6 +256,37 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void CelestialBodyPreservesInertialOrbitInsideStationaryPhysicsFrame()
+        {
+            GameObject bodyObject = new("Reference Frame Body");
+            CelestialBodyDefinition definition =
+                ScriptableObject.CreateInstance<CelestialBodyDefinition>();
+            try
+            {
+                JsonUtility.FromJsonOverwrite(
+                    "{\"bodyName\":\"Reference Frame Body\"," +
+                    "\"initialVelocity\":{\"x\":0,\"y\":0,\"z\":28.46}," +
+                    "\"participatesInNBody\":true,\"motionMode\":1}",
+                    definition);
+
+                CelestialBody body = bodyObject.AddComponent<CelestialBody>();
+                body.ApplyDefinition(definition);
+                body.ResetSimulationState();
+                body.IntegratePosition(
+                    0.01f,
+                    new Vector3(0f, 0f, 28.46f));
+
+                Assert.That(body.InertialVelocity.z, Is.EqualTo(28.46f).Within(0.0001f));
+                Assert.That(body.Velocity, Is.EqualTo(Vector3.zero));
+            }
+            finally
+            {
+                Object.DestroyImmediate(bodyObject);
+                Object.DestroyImmediate(definition);
+            }
+        }
+
+        [Test]
         public void MechanicalPartPoseBuildsLinkedHierarchyWithoutChangingDeployedPose()
         {
             GameObject rootObject = new("Visual Root");

@@ -44,6 +44,7 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
             float4 _FarionAtmosphereSampleParams[FARION_MAX_ATMOSPHERE_EFFECTS];
 
             float4 _FarionStarPositionWS;
+            float4 _FarionStarDirectionWS;
             half4 _FarionStarColor;
             float _FarionStarIntensity;
 
@@ -164,9 +165,9 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                 float3 scatterOrigin = rayOrigin + rayDirection * (dstToAtmosphere + epsilon);
                 float scatterLength = max(0.0, dstThroughAtmosphere - epsilon * 2.0);
                 int inStepCount = max(2, (int)_FarionAtmosphereSampleParams[index].x);
-                float stepSize = scatterLength / max(inStepCount - 1, 1);
+                float stepSize = scatterLength / max(inStepCount, 1);
 
-                float3 dirToStar = normalize(_FarionStarPositionWS.xyz - centre);
+                float3 dirToStar = normalize(_FarionStarDirectionWS.xyz);
                 float3 scatteringCoefficients = _FarionAtmosphereScatteringCoefficients[index].xyz;
                 float intensity = _FarionAtmosphereOpticalParams[index].y;
                 float ditherStrength = _FarionAtmosphereOpticalParams[index].z;
@@ -180,7 +181,8 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
 
                 float3 inScatteredLight = 0.0;
                 float viewRayOpticalDepth = 0.0;
-                float3 samplePoint = scatterOrigin;
+                float sampleOffset = saturate(0.5 + dither) * stepSize;
+                float3 samplePoint = scatterOrigin + rayDirection * sampleOffset;
 
                 for (int i = 0; i < FARION_MAX_SCATTER_STEPS; i++)
                 {
@@ -190,10 +192,18 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                     }
 
                     float localDensity = DensityAtPoint(index, samplePoint);
-                    float sunRayOpticalDepth = OpticalDepthBaked(index, samplePoint + dirToStar * ditherStrength, dirToStar);
-                    viewRayOpticalDepth = OpticalDepthBakedBetweenPoints(index, scatterOrigin, rayDirection, stepSize * i);
+                    float sunRayOpticalDepth = OpticalDepthBaked(index, samplePoint, dirToStar);
+                    float sampleDistance = min(sampleOffset + stepSize * i, scatterLength);
+                    viewRayOpticalDepth = OpticalDepthBakedBetweenPoints(
+                        index,
+                        scatterOrigin,
+                        rayDirection,
+                        sampleDistance);
 
-                    float3 transmittance = exp(-(sunRayOpticalDepth + viewRayOpticalDepth) * scatteringCoefficients / planetRadius);
+                    float3 transmittance = exp(
+                        -(sunRayOpticalDepth + viewRayOpticalDepth)
+                        * scatteringCoefficients
+                        * intensity);
                     inScatteredLight += localDensity * transmittance;
                     samplePoint += rayDirection * stepSize;
                 }
@@ -205,10 +215,12 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                 float maxScatter = max(max(scatteringCoefficients.x, scatteringCoefficients.y), scatteringCoefficients.z);
                 float3 scatterTint = scatteringCoefficients / max(maxScatter, 0.001);
                 float finalViewOpticalDepth = OpticalDepthBakedBetweenPoints(index, scatterOrigin, rayDirection, scatterLength);
-                float3 viewTransmittance = exp(-finalViewOpticalDepth * scatteringCoefficients * intensity / planetRadius);
+                float3 viewTransmittance = exp(
+                    -finalViewOpticalDepth
+                    * scatteringCoefficients
+                    * intensity);
                 float airMass = 1.0 - saturate(dot(viewTransmittance, float3(0.2126, 0.7152, 0.0722)));
                 inScatteredLight += scatterTint * starRadiance * airMass * 0.018;
-                inScatteredLight += float3(dither, dither, dither) * 0.01;
 
                 return sourceColor * viewTransmittance + inScatteredLight;
             }

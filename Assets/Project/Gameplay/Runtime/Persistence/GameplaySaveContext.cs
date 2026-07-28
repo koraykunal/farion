@@ -4,33 +4,25 @@ using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Resources;
+using Farion.Gameplay.Session;
 using Farion.Simulation.World;
 
 namespace Farion.Gameplay.Persistence
 {
     public readonly struct GameplaySaveContext
     {
-        public GameplaySaveContext(
-            GameplayDefinitionRegistry definitions,
-            GravitySimulation gravitySimulation,
-            WorldOriginRebaser originRebaser,
-            PlayerInventory playerInventory,
-            PlayerPossessionController possessionController,
-            IReadOnlyList<ResourceDepositRuntimeSpawner> resourceStreamers)
+        public GameplaySaveContext(GameplayRuntimeBindings bindings)
         {
-            Definitions = definitions;
-            GravitySimulation = gravitySimulation;
-            OriginRebaser = originRebaser;
-            PlayerInventory = playerInventory;
-            PossessionController = possessionController;
-            ResourceStreamers = resourceStreamers;
+            Bindings = bindings;
         }
 
-        public GameplayDefinitionRegistry Definitions { get; }
-        public GravitySimulation GravitySimulation { get; }
-        public WorldOriginRebaser OriginRebaser { get; }
-        public PlayerInventory PlayerInventory { get; }
-        public PlayerPossessionController PossessionController { get; }
-        public IReadOnlyList<ResourceDepositRuntimeSpawner> ResourceStreamers { get; }
+        public GameplayRuntimeBindings Bindings { get; }
+        public GameplayDefinitionRegistry Definitions => Bindings?.Definitions;
+        public GravitySimulation GravitySimulation => Bindings?.GravitySimulation;
+        public WorldOriginRebaser OriginRebaser => Bindings?.OriginRebaser;
+        public PlayerInventory PlayerInventory => Bindings?.LocalPlayerInventory;
+        public PlayerPossessionController PossessionController => Bindings?.Possession;
+        public IReadOnlyList<ResourceDepositRuntimeSpawner> ResourceStreamers =>
+            Bindings?.ResourceStreamers;
     }
 }

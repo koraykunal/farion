@@ -1,5 +1,7 @@
 using Farion.Core.Persistence;
+using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Resources;
+using Farion.Gameplay.Session;
 using Farion.Simulation.World;
 using Farion.Simulation.World.Generation;
 using Farion.Simulation.World.Identity;
@@ -85,6 +87,40 @@ namespace Farion.Tests.EditMode
 
             Assert.That(store.GetExtractedAmount(oldId), Is.Zero);
             Assert.That(store.GetExtractedAmount(newId), Is.EqualTo(7));
+        }
+
+        [Test]
+        public void GameplaySessionIdentityKeepsPlayerActorShipAndInventoryDistinct()
+        {
+            PersistentEntityId inventoryId =
+                new("inventory.player.explorer");
+
+            bool created = GameplaySessionIdentity.TryCreate(
+                "player.local",
+                "player.explorer",
+                "ship.starter",
+                inventoryId,
+                out GameplaySessionIdentity identity);
+
+            Assert.That(created, Is.True);
+            Assert.That(identity.IsValid, Is.True);
+            Assert.That(identity.LocalPlayerId.Value, Is.EqualTo("player.local"));
+            Assert.That(identity.ExplorerActorId.Value, Is.EqualTo("player.explorer"));
+            Assert.That(identity.PersonalShipId.Value, Is.EqualTo("ship.starter"));
+            Assert.That(identity.CarriedInventoryId, Is.EqualTo(inventoryId));
+        }
+
+        [Test]
+        public void GameplaySessionIdentityRejectsInvalidCrossReferences()
+        {
+            bool created = GameplaySessionIdentity.TryCreate(
+                "player.local",
+                "player explorer",
+                "ship.starter",
+                new PersistentEntityId("inventory.player.explorer"),
+                out _);
+
+            Assert.That(created, Is.False);
         }
     }
 }

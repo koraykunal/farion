@@ -46,7 +46,9 @@ namespace Farion.Gameplay.Flight
         public void RefreshGuidance()
         {
             ResolveComponents();
-            if (landingComputer == null || celestialProbe == null || !celestialProbe.HasSample)
+            if (landingComputer == null ||
+                celestialProbe == null ||
+                !celestialProbe.HasSample)
             {
                 currentGuidance = SpacecraftLandingGuidanceSample.Offline;
                 ApplyRuntimeState();
@@ -54,6 +56,13 @@ namespace Farion.Gameplay.Flight
             }
 
             SpacecraftLandingAssessment assessment = landingComputer.CurrentAssessment;
+            if (!assessment.HasFrame)
+            {
+                currentGuidance = SpacecraftLandingGuidanceSample.Offline;
+                ApplyRuntimeState();
+                return;
+            }
+
             float verticalRatio = assessment.VerticalSpeedLimit > 0f
                 ? Mathf.Max(0f, -assessment.Frame.SurfaceNormalVelocity) / assessment.VerticalSpeedLimit
                 : 0f;

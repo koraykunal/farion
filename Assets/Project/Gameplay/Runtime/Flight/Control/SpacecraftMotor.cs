@@ -149,7 +149,7 @@ namespace Farion.Gameplay.Flight
         {
             Rigidbody.useGravity = false;
             Rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-            Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            Rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
             if (flightProfile != null)
             {
@@ -214,7 +214,8 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            lastGravityAcceleration = source.CalculateAcceleration(Rigidbody.position);
+            lastGravityAcceleration =
+                source.CalculateReferenceFrameAcceleration(Rigidbody.position);
             Rigidbody.AddForce(lastGravityAcceleration, ForceMode.Acceleration);
         }
 

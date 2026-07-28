@@ -16,15 +16,6 @@ namespace Farion.Simulation.Planetary
 
         [Header("Stellar Heating")]
         [SerializeField] CelestialRadiationSource primaryRadiationSource;
-        [SerializeField] PlanetThermalProfile thermalProfile;
-
-        [Header("Climate")]
-        [SerializeField] float polarTemperatureDrop = 35f;
-        [SerializeField] float altitudeCoolingPerUnit = 0.45f;
-        [SerializeField] float temperatureNoiseAmplitude = 8f;
-        [SerializeField] float temperatureNoiseScale = 2.25f;
-        [SerializeField] float moistureNoiseScale = 3f;
-        [SerializeField] float atmosphereMoistureRetention = 0.35f;
 
         [Header("Sampling")]
         [SerializeField, Range(0.0005f, 0.05f)] float surfaceNormalSampleStep = 0.004f;
@@ -43,12 +34,6 @@ namespace Farion.Simulation.Planetary
         void OnValidate()
         {
             ResolveBody();
-            polarTemperatureDrop = Mathf.Max(0f, polarTemperatureDrop);
-            altitudeCoolingPerUnit = Mathf.Max(0f, altitudeCoolingPerUnit);
-            temperatureNoiseAmplitude = Mathf.Max(0f, temperatureNoiseAmplitude);
-            temperatureNoiseScale = Mathf.Max(0.01f, temperatureNoiseScale);
-            moistureNoiseScale = Mathf.Max(0.01f, moistureNoiseScale);
-            atmosphereMoistureRetention = Mathf.Clamp01(atmosphereMoistureRetention);
             surfaceNormalSampleStep = Mathf.Clamp(surfaceNormalSampleStep, 0.0005f, 0.05f);
             Changed?.Invoke();
         }
@@ -91,13 +76,39 @@ namespace Farion.Simulation.Planetary
                 return false;
             }
 
-            PlanetGenerationContext context = CreateContext(source);
             Vector3 centerToPoint = position - source.Position;
             float centerDistance = centerToPoint.magnitude;
             Vector3 worldDirection = centerDistance > 0.0001f ? centerToPoint / centerDistance : source.transform.up;
             Vector3 localDirection = source.transform.InverseTransformDirection(worldDirection);
             localDirection = localDirection.sqrMagnitude > 0.0001f ? localDirection.normalized : Vector3.up;
+            return TryBuildPlanetSurfaceSample(source, localDirection, centerDistance, out sample);
+        }
 
+        public bool TrySamplePlanetSurface(Vector3 localDirection, out PlanetSurfaceSample sample)
+        {
+            sample = default;
+            CelestialBody source = ResolveBody();
+            if (source == null)
+            {
+                return false;
+            }
+
+            Vector3 direction = localDirection.sqrMagnitude > 0.0001f
+                ? localDirection.normalized
+                : Vector3.up;
+            float surfaceRadius = EvaluateSurfaceRadius(source.Radius, direction, ResolveShapeProfile());
+            return TryBuildPlanetSurfaceSample(source, direction, surfaceRadius, out sample);
+        }
+
+        bool TryBuildPlanetSurfaceSample(
+            CelestialBody source,
+            Vector3 localDirection,
+            float centerDistance,
+            out PlanetSurfaceSample sample)
+        {
+            sample = default;
+            PlanetGenerationContext context = CreateContext(source);
+            Vector3 worldDirection = source.transform.TransformDirection(localDirection).normalized;
             CelestialShapeProfile shape = ResolveShapeProfile();
             float surfaceRadius = EvaluateSurfaceRadius(source.Radius, localDirection, shape);
             Vector3 localSurfacePoint = localDirection * surfaceRadius;
@@ -119,13 +130,29 @@ namespace Farion.Simulation.Planetary
                 source,
                 context,
                 localDirection,
-                worldSurfacePoint,
-                worldNormal,
                 terrainAltitude,
                 slopeAngle);
             BiomeSample biome = generationProfile != null && generationProfile.BiomeDistribution != null
-                ? generationProfile.BiomeDistribution.SampleBiome(context, climate, localDirection, terrainAltitude, slopeAngle)
-                : new BiomeSample(null, climate.TemperatureCelsius, climate.Moisture, terrainAltitude, slopeAngle);
+                ? generationProfile.BiomeDistribution.SampleBiome(context, climate, terrainAltitude, slopeAngle)
+                : new BiomeSample(null, 0f);
+            SurfaceMaterialSample surfaceMaterial =
+                generationProfile != null && generationProfile.SurfaceMaterialDistribution != null
+                    ? generationProfile.SurfaceMaterialDistribution.SampleDominant(
+                        context,
+                        climate,
+                        biome.Biome,
+                        localDirection,
+                        terrainAltitude,
+                        slopeAngle)
+                    : default;
+            PlanetSurfaceStateSample surfaceState =
+                generationProfile != null && generationProfile.SurfaceStateProfile != null
+                    ? generationProfile.SurfaceStateProfile.Evaluate(
+                        context,
+                        climate,
+                        localDirection,
+                        slopeAngle)
+                    : default;
             TerrainFeatureSample terrainFeature = generationProfile != null && generationProfile.TerrainFeatureDistribution != null
                 ? generationProfile.TerrainFeatureDistribution.SampleFeature(
                     context,
@@ -136,7 +163,16 @@ namespace Farion.Simulation.Planetary
                     slopeAngle)
                 : new TerrainFeatureSample(null, 0f, terrainAltitude, slopeAngle);
 
-            sample = new PlanetSurfaceSample(context, surface, localDirection, surfaceRadius, climate, biome, terrainFeature);
+            sample = new PlanetSurfaceSample(
+                context,
+                surface,
+                localDirection,
+                surfaceRadius,
+                climate,
+                biome,
+                surfaceMaterial,
+                surfaceState,
+                terrainFeature);
             return true;
         }
 
@@ -191,73 +227,46 @@ namespace Farion.Simulation.Planetary
             CelestialBody sourceBody,
             PlanetGenerationContext context,
             Vector3 localDirection,
-            Vector3 worldSurfacePoint,
-            Vector3 worldNormal,
             float altitude,
             float slopeDegrees)
         {
-            float latitudeDegrees = Mathf.Asin(Mathf.Clamp(localDirection.y, -1f, 1f)) * Mathf.Rad2Deg;
-            float polarFactor = Mathf.Pow(Mathf.Abs(localDirection.y), 1.5f);
-            float temperatureNoise = SampleSignedDirectionalNoise(
-                localDirection,
-                temperatureNoiseScale,
-                SeedUtility.Derive(context.PlanetSeed, "climate.temperature"));
-            float moistureNoise = SampleDirectionalNoise(
-                localDirection,
-                moistureNoiseScale,
-                SeedUtility.Derive(context.PlanetSeed, "climate.moisture"));
-
-            float climateBias = context.Climate switch
-            {
-                ClimateType.Cold => -18f,
-                ClimateType.Hot => 22f,
-                ClimateType.Toxic => 10f,
-                ClimateType.Irradiated => 6f,
-                _ => 0f
-            };
+            PlanetClimateProfile climateProfile = generationProfile != null
+                ? generationProfile.ClimateProfile
+                : null;
             CelestialInsolationSample insolation = CelestialInsolationSample.None;
             bool hasInsolation = primaryRadiationSource != null &&
-                thermalProfile != null &&
+                climateProfile != null &&
+                climateProfile.ThermalProfile != null &&
                 primaryRadiationSource.TrySampleInsolation(
                     sourceBody,
-                    worldSurfacePoint,
-                    worldNormal,
-                    thermalProfile.BondAlbedo,
+                    sourceBody.Position,
+                    sourceBody.transform.TransformDirection(localDirection),
+                    climateProfile.ThermalProfile.BondAlbedo,
                     out insolation);
 
-            float temperature = hasInsolation
-                ? thermalProfile.EvaluateSurfaceTemperature(
+            if (climateProfile != null)
+            {
+                return climateProfile.Evaluate(
                     context,
-                    insolation,
-                    climateBias,
-                    polarFactor,
+                    generationProfile != null ? generationProfile.HydrosphereProfile : null,
+                    hasInsolation ? insolation : CelestialInsolationSample.None,
+                    localDirection,
                     altitude,
-                    temperatureNoise,
-                    polarTemperatureDrop,
-                    altitudeCoolingPerUnit,
-                    temperatureNoiseAmplitude)
-                : context.MeanTemperatureCelsius +
-                    climateBias -
-                    polarTemperatureDrop * polarFactor -
-                    Mathf.Max(0f, altitude) * altitudeCoolingPerUnit +
-                    temperatureNoise * temperatureNoiseAmplitude;
+                    slopeDegrees);
+            }
 
-            float liquidMoisture = context.HasStableLiquidSurface ? context.LiquidCoverage : 0f;
-            float atmosphereMoisture = context.HasAtmosphere ? context.AtmosphereDensity * atmosphereMoistureRetention : 0f;
-            float moisture = Mathf.Clamp01(liquidMoisture + atmosphereMoisture + moistureNoise * 0.45f - Mathf.Max(0f, altitude) * 0.005f);
-            float radiation = hasInsolation
-                ? thermalProfile.EvaluateSurfaceRadiation(context, insolation, altitude)
-                : Mathf.Clamp01(context.RadiationLevel + Mathf.Max(0f, altitude) * 0.002f + (context.HasAtmosphere ? 0f : 0.12f));
-
+            float latitudeDegrees = Mathf.Asin(Mathf.Clamp(localDirection.y, -1f, 1f)) * Mathf.Rad2Deg;
             return new PlanetClimateSample(
                 context,
                 localDirection,
                 latitudeDegrees,
                 altitude,
                 slopeDegrees,
-                temperature,
-                moisture,
-                radiation);
+                12f,
+                0.3f,
+                0.3f,
+                0.7f,
+                context.BackgroundRadiation);
         }
 
         float EvaluateSurfaceRadius(float bodyRadius, Vector3 localDirection, CelestialShapeProfile shape)
@@ -319,19 +328,6 @@ namespace Farion.Simulation.Planetary
             }
 
             return body;
-        }
-
-        static float SampleDirectionalNoise(Vector3 direction, float scale, int seed)
-        {
-            float u = Mathf.Atan2(direction.z, direction.x) / (Mathf.PI * 2f) + 0.5f;
-            float v = Mathf.Asin(Mathf.Clamp(direction.y, -1f, 1f)) / Mathf.PI + 0.5f;
-            float seedOffset = (seed & 2047) * 0.00731f;
-            return Mathf.PerlinNoise(u * Mathf.Max(0.01f, scale) + seedOffset, v * Mathf.Max(0.01f, scale) + seedOffset * 1.731f);
-        }
-
-        static float SampleSignedDirectionalNoise(Vector3 direction, float scale, int seed)
-        {
-            return SampleDirectionalNoise(direction, scale, seed) * 2f - 1f;
         }
     }
 }

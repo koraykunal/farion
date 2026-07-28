@@ -38,10 +38,10 @@ namespace Farion.Simulation.Planetary
             temperatureRangeCelsius.y = Mathf.Max(temperatureRangeCelsius.x, temperatureRangeCelsius.y);
         }
 
-        public float EvaluateSurfaceTemperature(
+        public float EvaluateLongTermSurfaceTemperature(
             PlanetGenerationContext context,
             CelestialInsolationSample insolation,
-            float climateBiasCelsius,
+            PlanetClimateMode climateMode,
             float polarFactor,
             float altitude,
             float temperatureNoise,
@@ -51,14 +51,16 @@ namespace Farion.Simulation.Planetary
         {
             float atmosphericDensity = context.HasAtmosphere ? Mathf.Clamp01(context.AtmosphereDensity) : 0f;
             float heatRedistribution = Mathf.Clamp01(baselineHeatRedistribution + atmosphericDensity * atmosphereHeatRedistribution);
-            float exposureDeviation = insolation.DirectExposure - 0.25f;
+            float climateExposure = climateMode == PlanetClimateMode.TidallyLocked
+                ? insolation.DirectExposure
+                : 0.25f;
+            float exposureDeviation = climateExposure - 0.25f;
             float localInsolationOffset = exposureDeviation * localInsolationSwingCelsius * (1f - heatRedistribution);
             float greenhouse = context.HasAtmosphere ? greenhouseWarmingCelsius * atmosphericDensity : 0f;
 
             float temperature = insolation.EquilibriumTemperatureCelsius +
                 greenhouse +
                 designTemperatureBiasCelsius +
-                climateBiasCelsius +
                 localInsolationOffset -
                 polarTemperatureDrop * polarFactor -
                 Mathf.Max(0f, altitude) * altitudeCoolingPerUnit +
@@ -67,21 +69,26 @@ namespace Farion.Simulation.Planetary
             return Mathf.Clamp(temperature, temperatureRangeCelsius.x, temperatureRangeCelsius.y);
         }
 
-        public float EvaluateSurfaceRadiation(
+        public float EvaluateLongTermSurfaceRadiation(
             PlanetGenerationContext context,
             CelestialInsolationSample insolation,
+            float polarFactor,
             float altitude)
         {
             float atmosphericDensity = context.HasAtmosphere ? Mathf.Clamp01(context.AtmosphereDensity) : 0f;
             float atmosphereShield = context.HasAtmosphere ? atmosphereRadiationShielding * atmosphericDensity : 0f;
             float transmittedFraction = Mathf.Clamp01(1f - atmosphereShield);
             float stellarRadiation = insolation.NormalizedIrradiance *
-                Mathf.Lerp(0.35f, 1f, insolation.DirectExposure) *
+                Mathf.Lerp(1f, 0.45f, Mathf.Clamp01(polarFactor)) *
                 stellarRadiationContribution *
                 transmittedFraction;
             float noAtmosphereBonus = context.HasAtmosphere ? 0f : unshieldedSurfaceRadiationBonus;
 
-            return Mathf.Clamp01(context.RadiationLevel + stellarRadiation + noAtmosphereBonus + Mathf.Max(0f, altitude) * 0.002f);
+            return Mathf.Clamp01(
+                context.BackgroundRadiation
+                + stellarRadiation
+                + noAtmosphereBonus
+                + Mathf.Max(0f, altitude) * 0.002f);
         }
     }
 }

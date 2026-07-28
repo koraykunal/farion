@@ -6,6 +6,7 @@ using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Resources;
+using Farion.Gameplay.Session;
 using Farion.Simulation.World;
 using UnityEngine;
 
@@ -40,8 +41,17 @@ namespace Farion.Gameplay.Persistence
 
         SaveGameOperationResult lastSaveResult;
         SaveGameOperationResult lastLoadResult;
+        GameplayRuntimeBindings runtimeBindings;
 
         public string SlotName => SaveGameSlotCatalog.ResolveSlotName(slotName);
+        public GameplayRuntimeBindings RuntimeBindings =>
+            runtimeBindings ??= new GameplayRuntimeBindings(
+                definitions,
+                gravitySimulation,
+                originRebaser,
+                playerInventory,
+                possessionController,
+                resourceStreamers);
         public SaveGameOperationResult LastSaveResult => lastSaveResult;
         public SaveGameOperationResult LastLoadResult => lastLoadResult;
 
@@ -68,22 +78,35 @@ namespace Farion.Gameplay.Persistence
             slotName = SaveGameSlotCatalog.ResolveSlotName(slotName);
             resourceStreamers ??= new List<ResourceDepositRuntimeSpawner>();
             resourceStreamers.RemoveAll(streamer => streamer == null);
+            runtimeBindings = null;
         }
 
         [ContextMenu("Save Game")]
         public SaveGameOperationResult Save()
         {
+            return Save(SlotName);
+        }
+
+        public SaveGameOperationResult Save(string requestedSlotName)
+        {
+            string resolvedSlotName =
+                SaveGameSlotCatalog.ResolveSlotName(requestedSlotName);
             if (!CanCaptureSaveData())
             {
                 lastSaveResult = SaveGameOperationResult.Failure(
                     SaveGameOperationStatus.MissingRuntimeReference,
-                    SaveGameSlotCatalog.GetSlotPath(SlotName));
+                    SaveGameSlotCatalog.GetSlotPath(resolvedSlotName));
                 return lastSaveResult;
             }
 
             GameplaySaveData saveData = CaptureSaveData();
             string json = JsonUtility.ToJson(saveData, prettyPrint: true);
-            lastSaveResult = SaveGameFileService.WriteText(SlotName, json);
+            lastSaveResult = SaveGameFileService.WriteText(resolvedSlotName, json);
+            if (lastSaveResult.Succeeded)
+            {
+                slotName = resolvedSlotName;
+            }
+
             return lastSaveResult;
         }
 
@@ -138,6 +161,7 @@ namespace Farion.Gameplay.Persistence
             }
 
             lastLoadResult = SaveGameOperationResult.Success(readResult.Path);
+            slotName = resolvedSlotName;
             return lastLoadResult;
         }
 
@@ -245,13 +269,7 @@ namespace Farion.Gameplay.Persistence
 
         GameplaySaveContext CreateContext()
         {
-            return new GameplaySaveContext(
-                definitions,
-                gravitySimulation,
-                originRebaser,
-                playerInventory,
-                possessionController,
-                resourceStreamers);
+            return new GameplaySaveContext(RuntimeBindings);
         }
 
     }

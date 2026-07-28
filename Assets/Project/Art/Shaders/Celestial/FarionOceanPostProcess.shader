@@ -49,6 +49,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
             float4 _FarionOceanExposureParams[FARION_MAX_OCEAN_EFFECTS];
 
             float4 _FarionStarPositionWS;
+            float4 _FarionStarDirectionWS;
             half4 _FarionStarColor;
             float _FarionStarIntensity;
             half4 _FarionAmbientColor;
@@ -256,7 +257,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 float extinctionMultiplier = cameraInsideOcean ? underwaterDensity : alphaMultiplier;
                 half depth01 = saturate(1.0h - exp(-segmentLength / bodyRadius * depthMultiplier));
 
-                half3 starDirection = normalize(_FarionStarPositionWS.xyz - hitPosition);
+                half3 starDirection = normalize(_FarionStarDirectionWS.xyz);
                 half3 viewDirection = -rayDirection;
                 half diffuseLighting = saturate(dot(sphereNormal, starDirection));
                 half waveDiffuseLighting = saturate(dot(waveNormal, starDirection));

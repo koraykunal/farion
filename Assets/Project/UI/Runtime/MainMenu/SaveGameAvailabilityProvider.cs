@@ -7,5 +7,6 @@ namespace Farion.UI.MainMenu
     {
         public virtual string SlotName => SaveGameSlotCatalog.DefaultSlotName;
         public abstract bool HasSaveGame { get; }
+        public virtual bool HasAnySaveData => HasSaveGame;
     }
 }

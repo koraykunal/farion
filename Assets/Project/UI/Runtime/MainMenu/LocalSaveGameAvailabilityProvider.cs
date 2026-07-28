@@ -6,26 +6,53 @@ namespace Farion.UI.MainMenu
     [DisallowMultipleComponent]
     public sealed class LocalSaveGameAvailabilityProvider : SaveGameAvailabilityProvider
     {
-        [SerializeField] string slotName = SaveGameSlotCatalog.DefaultSlotName;
+        string mostRecentSlotName = SaveGameSlotCatalog.DefaultSlotName;
 
-        public override string SlotName => SaveGameSlotCatalog.ResolveSlotName(slotName);
-        public override bool HasSaveGame => HasSupportedSaveGame();
-
-        void OnValidate()
+        public override string SlotName
         {
-            slotName = SaveGameSlotCatalog.ResolveSlotName(slotName);
+            get
+            {
+                Refresh();
+                return mostRecentSlotName;
+            }
         }
 
-        bool HasSupportedSaveGame()
+        public override bool HasSaveGame
         {
-            if (SaveGameFileService.ReadText(slotName, out string payload).Succeeded &&
-                SaveGameSchema.PayloadLooksSupported(payload))
+            get
             {
-                return true;
+                return Refresh();
+            }
+        }
+
+        public override bool HasAnySaveData
+        {
+            get
+            {
+                var summaries = SaveGameSlotService.GetPlayerSlotSummaries();
+                for (int i = 0; i < summaries.Count; i++)
+                {
+                    if (summaries[i].HasData)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        bool Refresh()
+        {
+            if (!SaveGameSlotService.TryGetMostRecentLoadable(
+                    out SaveGameSlotSummary summary))
+            {
+                mostRecentSlotName = SaveGameSlotCatalog.DefaultSlotName;
+                return false;
             }
 
-            return SaveGameFileService.ReadBackupText(slotName, out payload).Succeeded &&
-                   SaveGameSchema.PayloadLooksSupported(payload);
+            mostRecentSlotName = summary.SlotName;
+            return true;
         }
     }
 }

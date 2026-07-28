@@ -6,6 +6,17 @@ namespace Farion.Gameplay.Flight
     [CreateAssetMenu(menuName = "Farion/Gameplay/Spacecraft Landing Profile", fileName = "SO_SpacecraftLandingProfile")]
     public sealed class SpacecraftLandingProfile : ScriptableObject
     {
+        const float DefaultMinimumSurfaceFrameAltitude = 100f;
+        const float DefaultMaximumSurfaceFrameBodyRadii = 0.5f;
+
+        [Header("Surface Frame")]
+        [Min(0f)]
+        [SerializeField] float minimumSurfaceFrameAltitude =
+            DefaultMinimumSurfaceFrameAltitude;
+        [Min(0f)]
+        [SerializeField] float maximumSurfaceFrameBodyRadii =
+            DefaultMaximumSurfaceFrameBodyRadii;
+
         [Header("Altitude Bands")]
         [Min(0f)]
         [SerializeField] float highDescentAltitude = 25f;
@@ -35,6 +46,14 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float safeTouchdownSlopeAngle = 14f;
 
         public float HighDescentAltitude => highDescentAltitude;
+        public float MinimumSurfaceFrameAltitude =>
+            minimumSurfaceFrameAltitude > 0f
+                ? minimumSurfaceFrameAltitude
+                : DefaultMinimumSurfaceFrameAltitude;
+        public float MaximumSurfaceFrameBodyRadii =>
+            maximumSurfaceFrameBodyRadii > 0f
+                ? maximumSurfaceFrameBodyRadii
+                : DefaultMaximumSurfaceFrameBodyRadii;
         public float LowApproachAltitude => lowApproachAltitude;
         public float TouchdownAltitude => touchdownAltitude;
         public float OrbitTangentialSpeed => orbitTangentialSpeed;
@@ -48,6 +67,14 @@ namespace Farion.Gameplay.Flight
         void OnValidate()
         {
             highDescentAltitude = Mathf.Max(0f, highDescentAltitude);
+            minimumSurfaceFrameAltitude = minimumSurfaceFrameAltitude > 0f
+                ? Mathf.Max(highDescentAltitude, minimumSurfaceFrameAltitude)
+                : Mathf.Max(
+                    highDescentAltitude,
+                    DefaultMinimumSurfaceFrameAltitude);
+            maximumSurfaceFrameBodyRadii = maximumSurfaceFrameBodyRadii > 0f
+                ? maximumSurfaceFrameBodyRadii
+                : DefaultMaximumSurfaceFrameBodyRadii;
             lowApproachAltitude = Mathf.Clamp(lowApproachAltitude, 0f, highDescentAltitude);
             touchdownAltitude = Mathf.Clamp(touchdownAltitude, 0f, lowApproachAltitude);
             orbitTangentialSpeed = Mathf.Max(0f, orbitTangentialSpeed);
@@ -61,7 +88,7 @@ namespace Farion.Gameplay.Flight
 
         public SpacecraftLandingAssessment Evaluate(CelestialFrameSample frame)
         {
-            if (!frame.HasBody)
+            if (!IsSurfaceFrameRelevant(frame))
             {
                 return SpacecraftLandingAssessment.Empty(frame);
             }
@@ -125,6 +152,19 @@ namespace Farion.Gameplay.Flight
                 tangentialLimit,
                 safeTouchdownSlopeAngle,
                 stress);
+        }
+
+        public bool IsSurfaceFrameRelevant(CelestialFrameSample frame)
+        {
+            if (!frame.HasBody)
+            {
+                return false;
+            }
+
+            float maximumAltitude = Mathf.Max(
+                MinimumSurfaceFrameAltitude,
+                frame.BodyRadius * MaximumSurfaceFrameBodyRadii);
+            return frame.SurfaceAltitude <= maximumAltitude;
         }
 
         SpacecraftApproachPhase EvaluatePhase(CelestialFrameSample frame, SpacecraftLandingRiskFlags risks)

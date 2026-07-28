@@ -35,7 +35,7 @@ namespace Farion.Rendering.Celestial
         [Min(0f)]
         [SerializeField] float intensity = 1f;
         [Min(0.001f)]
-        [SerializeField] float referenceLightIntensity = 6f;
+        [SerializeField] float referenceLightIntensity = 1.1f;
         [Min(0f)]
         [SerializeField] float ditherStrength = 1f;
         [Min(0.001f)]

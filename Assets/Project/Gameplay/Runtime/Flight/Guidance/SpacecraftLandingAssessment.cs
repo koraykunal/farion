@@ -30,7 +30,9 @@ namespace Farion.Gameplay.Flight
         public float TangentialSpeedLimit { get; }
         public float SurfaceSlopeLimit { get; }
         public float NormalizedStress { get; }
-        public bool HasFrame => Frame.HasBody;
+        public bool HasFrame =>
+            Frame.HasBody &&
+            Phase != SpacecraftApproachPhase.NoFrame;
         public bool IsSafeTouchdownWindow => Phase == SpacecraftApproachPhase.TouchdownWindow;
         public bool HasImpactRisk => (Risks & SpacecraftLandingRiskFlags.ImpactRisk) != 0;
 

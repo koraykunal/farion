@@ -3,6 +3,7 @@
     "rootNamespace": "Farion.App",
     "references": [
         "Farion.Core.Runtime",
+        "Farion.Gameplay.Domain",
         "Farion.Gameplay.Runtime"
     ],
     "includePlatforms": [],

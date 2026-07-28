@@ -1,5 +1,8 @@
 using Farion.UI.Common;
+using Farion.UI.Localization;
 using UnityEngine;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
 
 namespace Farion.UI.MainMenu
 {
@@ -32,6 +35,12 @@ namespace Farion.UI.MainMenu
                 view.Clicked -= InvokeAction;
                 view.Clicked += InvokeAction;
             }
+
+            if (Application.isPlaying)
+            {
+                LocalizationSettings.SelectedLocaleChanged += HandleLocaleChanged;
+                RefreshLocalizedTitle();
+            }
         }
 
         void OnDisable()
@@ -40,6 +49,8 @@ namespace Farion.UI.MainMenu
             {
                 view.Clicked -= InvokeAction;
             }
+
+            LocalizationSettings.SelectedLocaleChanged -= HandleLocaleChanged;
         }
 
         public void SetAvailable(bool available)
@@ -77,6 +88,34 @@ namespace Farion.UI.MainMenu
         void InvokeAction()
         {
             controller?.Handle(action);
+        }
+
+        void HandleLocaleChanged(Locale _)
+        {
+            RefreshLocalizedTitle();
+        }
+
+        void RefreshLocalizedTitle()
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            (string key, string fallback) = action switch
+            {
+                MainMenuAction.Continue => ("main_menu.continue", "Continue"),
+                MainMenuAction.NewGame => ("main_menu.new_game", "New game"),
+                MainMenuAction.LoadGame => ("main_menu.load_game", "Load game"),
+                MainMenuAction.Settings => ("main_menu.settings", "Settings"),
+                MainMenuAction.Credits => ("main_menu.credits", "Credits"),
+                MainMenuAction.Exit => ("main_menu.exit", "Exit"),
+                MainMenuAction.Back => ("common.back", "Back"),
+                MainMenuAction.ConfirmExit => ("common.quit", "Quit"),
+                MainMenuAction.CancelExit => ("common.cancel", "Cancel"),
+                _ => (string.Empty, action.ToString())
+            };
+            view.SetTitle(UiLocalization.Get(key, fallback));
         }
     }
 }

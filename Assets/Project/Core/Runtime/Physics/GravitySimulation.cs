@@ -11,8 +11,18 @@ namespace Farion.Core.Physics
         public const float DefaultGravitationalConstant = 0.0001f;
 
         [SerializeField] GravitySettings settings;
+
+        [Header("Physics Reference Frame")]
+        [Tooltip("Optional translating frame used by local Unity physics. The selected body's orbital state remains inertial while its local collider stays stationary.")]
+        [SerializeField] CelestialBody physicsReferenceBody;
+
+        [Header("Bodies")]
         [SerializeField] bool autoDiscoverBodies;
         [SerializeField] List<CelestialBody> registeredBodies = new();
+
+        [Header("Runtime Reference Frame")]
+        [SerializeField] Vector3 referenceFrameVelocity;
+        [SerializeField] Vector3 referenceFrameAcceleration;
 
         static GravitySimulation active;
         readonly List<CelestialBody> simulationBodies = new();
@@ -23,6 +33,10 @@ namespace Farion.Core.Physics
         public float GravitationalConstant => settings != null ? settings.GravitationalConstant : DefaultGravitationalConstant;
         public float MinimumInteractionDistance => settings != null && settings.UseMinimumInteractionDistance ? settings.MinimumInteractionDistance : 0f;
         public float MaxAcceleration => settings != null && settings.ClampAcceleration ? settings.MaxAcceleration : 0f;
+        public CelestialBody PhysicsReferenceBody => physicsReferenceBody;
+        public bool HasPhysicsReferenceFrame => ResolvedPhysicsReferenceBody != null;
+        public Vector3 ReferenceFrameVelocity => referenceFrameVelocity;
+        public Vector3 ReferenceFrameAcceleration => referenceFrameAcceleration;
 
         void Awake()
         {
@@ -63,7 +77,9 @@ namespace Farion.Core.Physics
 
             for (int step = 0; step < substeps; step++)
             {
+                UpdateReferenceFrameAcceleration();
                 IntegrateVelocities(substepDelta);
+                UpdateReferenceFrameVelocity();
                 IntegratePositions(substepDelta);
             }
         }
@@ -89,19 +105,15 @@ namespace Farion.Core.Physics
 
         public Vector3 CalculateAcceleration(Vector3 point, CelestialBody ignoredBody = null)
         {
-            Vector3 acceleration = Vector3.zero;
+            return ClampAcceleration(CalculateUnclampedAcceleration(point, ignoredBody));
+        }
 
-            foreach (CelestialBody body in simulationBodies)
-            {
-                if (body == null || body == ignoredBody || !body.ParticipatesInNBody)
-                {
-                    continue;
-                }
-
-                acceleration += CalculateAccelerationFromBody(point, body);
-            }
-
-            return MaxAcceleration > 0f ? Vector3.ClampMagnitude(acceleration, MaxAcceleration) : acceleration;
+        public Vector3 CalculateReferenceFrameAcceleration(
+            Vector3 point,
+            CelestialBody ignoredBody = null)
+        {
+            return CalculateAcceleration(point, ignoredBody) -
+                referenceFrameAcceleration;
         }
 
         public Vector3 CalculateAccelerationFromBody(Vector3 point, CelestialBody body)
@@ -239,6 +251,8 @@ namespace Farion.Core.Physics
                 }
             }
 
+            UpdateReferenceFrameAcceleration();
+            UpdateReferenceFrameVelocity();
             UnityEngine.Physics.SyncTransforms();
             return true;
         }
@@ -276,6 +290,10 @@ namespace Farion.Core.Physics
                 body.ConfigureRigidbody();
                 body.ResetSimulationState();
             }
+
+            UpdateReferenceFrameAcceleration();
+            UpdateReferenceFrameVelocity();
+            ApplyReferenceFrameVelocityToBodies();
         }
 
         CelestialBody FindBody(CelestialBodySnapshot snapshot)
@@ -311,13 +329,75 @@ namespace Farion.Core.Physics
         {
             foreach (CelestialBody body in simulationBodies)
             {
-                if (body == null || !body.ParticipatesInNBody)
+                if (body == null)
                 {
                     continue;
                 }
 
-                body.IntegratePosition(deltaTime);
+                body.IntegratePosition(deltaTime, referenceFrameVelocity);
             }
+        }
+
+        void UpdateReferenceFrameAcceleration()
+        {
+            CelestialBody referenceBody = ResolvedPhysicsReferenceBody;
+            referenceFrameAcceleration = referenceBody != null
+                ? CalculateAcceleration(referenceBody.Position, referenceBody)
+                : Vector3.zero;
+        }
+
+        void UpdateReferenceFrameVelocity()
+        {
+            CelestialBody referenceBody = ResolvedPhysicsReferenceBody;
+            referenceFrameVelocity = referenceBody != null
+                ? referenceBody.InertialVelocity
+                : Vector3.zero;
+            ApplyReferenceFrameVelocityToBodies();
+        }
+
+        void ApplyReferenceFrameVelocityToBodies()
+        {
+            for (int i = 0; i < simulationBodies.Count; i++)
+            {
+                CelestialBody body = simulationBodies[i];
+                if (body != null)
+                {
+                    body.SetPhysicsReferenceFrameVelocity(referenceFrameVelocity);
+                }
+            }
+        }
+
+        CelestialBody ResolvedPhysicsReferenceBody =>
+            physicsReferenceBody != null && simulationBodies.Contains(physicsReferenceBody)
+                ? physicsReferenceBody
+                : null;
+
+        Vector3 CalculateUnclampedAcceleration(
+            Vector3 point,
+            CelestialBody ignoredBody = null)
+        {
+            Vector3 acceleration = Vector3.zero;
+            for (int i = 0; i < simulationBodies.Count; i++)
+            {
+                CelestialBody body = simulationBodies[i];
+                if (body == null ||
+                    body == ignoredBody ||
+                    !body.ParticipatesInNBody)
+                {
+                    continue;
+                }
+
+                acceleration += CalculateAccelerationFromBody(point, body);
+            }
+
+            return acceleration;
+        }
+
+        Vector3 ClampAcceleration(Vector3 acceleration)
+        {
+            return MaxAcceleration > 0f
+                ? Vector3.ClampMagnitude(acceleration, MaxAcceleration)
+                : acceleration;
         }
     }
 }

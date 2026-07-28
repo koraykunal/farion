@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MAT_Celestial_Star
+  m_Shader: {fileID: 4800000, guid: bd67e07073bb48c2a0bb178ddbdce3a9, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 2
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _CellScale: 8
+    - _CellSpeed: 0.035
+    - _CellStrength: 0.12
+    - _GranulationScale: 46
+    - _GranulationSpeed: 0.018
+    - _GranulationStrength: 0.22
+    - _Intensity: 5.5
+    - _LimbDarkening: 0.72
+    - _PulseAmplitude: 0.012
+    - _PulseSpeed: 0.65
+    - _SunspotScale: 5.5
+    - _SunspotStrength: 0.42
+    - _SunspotThreshold: 0.7
+    - _SurfaceRotationSpeed: 0.35
+    m_Colors:
+    - _LimbColor: {r: 1, g: 0.18, b: 0.015, a: 1}
+    - _PhotosphereColor: {r: 1, g: 0.58, b: 0.16, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

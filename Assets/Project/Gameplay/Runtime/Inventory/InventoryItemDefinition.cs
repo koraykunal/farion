@@ -1,3 +1,4 @@
+using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Research;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace Farion.Gameplay.Inventory
     {
         [SerializeField] string itemId = "item.resource";
         [SerializeField] string displayName = "Resource Item";
+        [SerializeField] InventoryStorageMode storageMode = InventoryStorageMode.Stackable;
         [Min(1)]
         [SerializeField] int maxStackSize = 20;
         [SerializeField] InventoryItemCategory category = InventoryItemCategory.Structural;
@@ -17,8 +19,12 @@ namespace Farion.Gameplay.Inventory
         [SerializeField] string unidentifiedDisplayName = "Unknown Material";
 
         public string ItemId => string.IsNullOrWhiteSpace(itemId) ? name : itemId.Trim();
+        public DefinitionId DomainId => new(ItemId);
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? ItemId : displayName.Trim();
-        public int MaxStackSize => Mathf.Max(1, maxStackSize);
+        public InventoryStorageMode StorageMode => storageMode;
+        public int MaxStackSize => storageMode == InventoryStorageMode.UniqueInstance
+            ? 1
+            : Mathf.Max(1, maxStackSize);
         public InventoryItemCategory Category => category;
         public InventoryItemForm Form => form;
         public TechnologyDomain PrimaryTechDomain => primaryTechDomain;
@@ -39,7 +45,9 @@ namespace Farion.Gameplay.Inventory
                 displayName = itemId;
             }
 
-            maxStackSize = Mathf.Max(1, maxStackSize);
+            maxStackSize = storageMode == InventoryStorageMode.UniqueInstance
+                ? 1
+                : Mathf.Max(1, maxStackSize);
             if (string.IsNullOrWhiteSpace(unidentifiedDisplayName))
             {
                 unidentifiedDisplayName = "Unknown Material";

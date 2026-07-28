@@ -1,4 +1,5 @@
 using System;
+using Farion.Gameplay.Commands;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Resources;
 using Farion.Simulation.World.Identity;
@@ -26,6 +27,7 @@ namespace Farion.Gameplay.Interaction
         ResourceDepositDeltaStore deltaStore;
         GeneratedEntityId depositId = GeneratedEntityId.None;
         int initialQuantity;
+        long revision;
 
         public event Action<ResourceNodeInteractable, int> Harvested;
         public event Action<ResourceNodeInteractable> Depleted;
@@ -37,6 +39,7 @@ namespace Farion.Gameplay.Interaction
         public int RemainingQuantity => remainingQuantity;
         public bool IsDepleted => depleted;
         public bool HasRuntimeDeposit => depositId.IsValid && deltaStore != null;
+        public long Revision => revision;
 
         void Awake()
         {
@@ -71,51 +74,21 @@ namespace Farion.Gameplay.Interaction
             int extractedAmount = deltaStore != null ? deltaStore.GetExtractedAmount(depositId) : 0;
             remainingQuantity = Mathf.Max(0, this.initialQuantity - extractedAmount);
             depleted = remainingQuantity <= 0;
+            revision = 0L;
         }
 
         public bool CanInteract(InteractionContext context)
         {
-            InventoryItemDefinition yieldedItem = ResolveYieldedItem();
-            int harvestAmount = ResolveHarvestAmount();
-            if (depleted || yieldedItem == null || harvestAmount <= 0)
-            {
-                return false;
-            }
-
-            PlayerInventory inventory = ResolveInventory(context);
-            return inventory != null && inventory.CanAdd(yieldedItem, harvestAmount);
+            IInventoryContainer inventory = ResolveInventory(context);
+            return context.Commands != null &&
+                   context.Commands.CanHarvest(this, inventory) ==
+                   ResourceHarvestResult.Succeeded;
         }
 
         public void Interact(InteractionContext context)
         {
-            InventoryItemDefinition yieldedItem = ResolveYieldedItem();
-            int harvestAmount = ResolveHarvestAmount();
-            if (depleted || yieldedItem == null || harvestAmount <= 0)
-            {
-                return;
-            }
-
-            PlayerInventory inventory = ResolveInventory(context);
-            if (inventory == null)
-            {
-                return;
-            }
-
-            if (!inventory.CanAdd(yieldedItem, harvestAmount))
-            {
-                return;
-            }
-
-            int added = inventory.TryAdd(yieldedItem, harvestAmount);
-            if (added <= 0)
-            {
-                return;
-            }
-
-            remainingQuantity = Mathf.Max(0, remainingQuantity - added);
-            deltaStore?.RecordExtraction(DepositId, added, initialQuantity);
-            Harvested?.Invoke(this, added);
-            SetDepleted(remainingQuantity <= 0);
+            IInventoryContainer inventory = ResolveInventory(context);
+            context.Commands?.TryHarvest(this, inventory);
         }
 
         public void RefreshRuntimeState()
@@ -125,8 +98,43 @@ namespace Farion.Gameplay.Interaction
                 return;
             }
 
-            remainingQuantity = Mathf.Max(0, initialQuantity - deltaStore.GetExtractedAmount(depositId));
+            int nextQuantity = Mathf.Max(
+                0,
+                initialQuantity - deltaStore.GetExtractedAmount(depositId));
+            if (nextQuantity != remainingQuantity)
+            {
+                remainingQuantity = nextQuantity;
+                IncrementRevision();
+            }
+
             SetDepleted(remainingQuantity <= 0);
+        }
+
+        internal bool TryGetHarvestOffer(
+            out InventoryItemDefinition item,
+            out int amount)
+        {
+            item = ResolveYieldedItem();
+            amount = ResolveHarvestAmount();
+            return !depleted && item != null && amount > 0;
+        }
+
+        internal bool TryCommitHarvest(int amount, long expectedRevision)
+        {
+            if (expectedRevision != revision ||
+                amount <= 0 ||
+                !TryGetHarvestOffer(out _, out int offeredAmount) ||
+                amount > offeredAmount)
+            {
+                return false;
+            }
+
+            remainingQuantity = Mathf.Max(0, remainingQuantity - amount);
+            IncrementRevision();
+            deltaStore?.RecordExtraction(DepositId, amount, initialQuantity);
+            Harvested?.Invoke(this, amount);
+            SetDepleted(remainingQuantity <= 0);
+            return true;
         }
 
         void SetDepleted(bool value)
@@ -162,6 +170,18 @@ namespace Farion.Gameplay.Interaction
                 : 0;
             remainingQuantity = initialQuantity;
             depleted = remainingQuantity <= 0;
+            revision = 0L;
+        }
+
+        void IncrementRevision()
+        {
+            if (revision == long.MaxValue)
+            {
+                throw new InvalidOperationException(
+                    "Resource node revision capacity was exhausted.");
+            }
+
+            revision++;
         }
 
         InventoryItemDefinition ResolveYieldedItem()
@@ -196,26 +216,28 @@ namespace Farion.Gameplay.Interaction
                 : string.Empty;
         }
 
-        static PlayerInventory ResolveInventory(InteractionContext context)
+        static IInventoryContainer ResolveInventory(InteractionContext context)
         {
             if (context.Actor == null)
             {
                 return null;
             }
 
-            PlayerInventory inventory = context.Actor.GetComponent<PlayerInventory>();
+            InventoryContainerComponent inventory =
+                context.Actor.GetComponent<InventoryContainerComponent>();
             if (inventory != null)
             {
                 return inventory;
             }
 
-            inventory = context.Actor.GetComponentInParent<PlayerInventory>();
+            inventory =
+                context.Actor.GetComponentInParent<InventoryContainerComponent>();
             if (inventory != null)
             {
                 return inventory;
             }
 
-            return context.Actor.GetComponentInChildren<PlayerInventory>();
+            return context.Actor.GetComponentInChildren<InventoryContainerComponent>();
         }
     }
 }

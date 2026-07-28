@@ -1,0 +1,395 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Farion UI_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 72af187e65cb61841aeacb6ac01ea56d, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 1222115328
+    m_Localized: SETTINGS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1259864064
+    m_Localized: ACCESSIBILITY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058368
+    m_Localized: INTERFACE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058371
+    m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058372
+    m_Localized: Choose the language used by menus and system messages.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058373
+    m_Localized: Interface scale
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058374
+    m_Localized: Increase the size of menus and operational readouts.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058375
+    m_Localized: Reduced motion
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058376
+    m_Localized: Replace most interface transitions with immediate state changes.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058377
+    m_Localized: Subtitles
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058378
+    m_Localized: Display spoken dialogue and important radio communication.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058379
+    m_Localized: Subtitle size
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058380
+    m_Localized: Set the reading size used by dialogue captions.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058381
+    m_Localized: English
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058382
+    m_Localized: "T\xFCrk\xE7e"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058383
+    m_Localized: On
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058384
+    m_Localized: Off
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058385
+    m_Localized: Standard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058386
+    m_Localized: Large
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058387
+    m_Localized: BACK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058388
+    m_Localized: CANCEL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058389
+    m_Localized: QUIT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058390
+    m_Localized: Continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058391
+    m_Localized: New game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058392
+    m_Localized: Load game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058393
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058394
+    m_Localized: Credits
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058395
+    m_Localized: Exit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058396
+    m_Localized: Resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058397
+    m_Localized: Inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058398
+    m_Localized: Blueprints
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058399
+    m_Localized: Journal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058400
+    m_Localized: Ship
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058401
+    m_Localized: Map
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058402
+    m_Localized: Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058403
+    m_Localized: Save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058404
+    m_Localized: Exit to main menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058405
+    m_Localized: Quit game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058406
+    m_Localized: PAUSE MENU
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058407
+    m_Localized: INVENTORY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058408
+    m_Localized: SLOTS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058409
+    m_Localized: ITEM DETAIL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058410
+    m_Localized: EMPTY SLOT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058411
+    m_Localized: Available for collected materials and components.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058412
+    m_Localized: STACK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058413
+    m_Localized: RESEARCH DOMAIN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058414
+    m_Localized: SYSTEM TRANSIT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058415
+    m_Localized: PREPARING EXPEDITION
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058416
+    m_Localized: Loading mission environment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058417
+    m_Localized: RETURNING TO MAIN MENU
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058418
+    m_Localized: Restoring command interface
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058419
+    m_Localized: Delete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058420
+    m_Localized: Save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058421
+    m_Localized: Load
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058422
+    m_Localized: EXPEDITION RECORD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058423
+    m_Localized: RETURN TO EXPEDITION
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058424
+    m_Localized: SAVE GAME
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058425
+    m_Localized: LOAD GAME
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058426
+    m_Localized: Choose a slot for the current expedition state.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058427
+    m_Localized: Choose a compatible record to continue your expedition.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058428
+    m_Localized: SAVED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058429
+    m_Localized: SAVE VERSION
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058430
+    m_Localized: NOT AVAILABLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058431
+    m_Localized: This save cannot be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058432
+    m_Localized: Saving is not available.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058433
+    m_Localized: PRIMARY SLOT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058434
+    m_Localized: MANUAL SLOT {0:00}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058435
+    m_Localized: NO SAVE DATA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058436
+    m_Localized: READY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058437
+    m_Localized: BACKUP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058438
+    m_Localized: UNSUPPORTED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058439
+    m_Localized: DAMAGED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058440
+    m_Localized: EMPTY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058441
+    m_Localized: READY TO LOAD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058442
+    m_Localized: RECOVERY BACKUP AVAILABLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058443
+    m_Localized: SAVE VERSION NOT SUPPORTED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058444
+    m_Localized: SAVE DATA COULD NOT BE READ
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058445
+    m_Localized: AVAILABLE FOR A NEW SAVE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058446
+    m_Localized: This record is compatible with the current game version.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058447
+    m_Localized: The primary record is unavailable. A compatible recovery copy will be used.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058448
+    m_Localized: This record was created by an incompatible game version.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058449
+    m_Localized: The record exists but its contents are not valid.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058450
+    m_Localized: No expedition record has been written to this slot.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058451
+    m_Localized: OVERWRITE SAVE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058452
+    m_Localized: The existing record in this slot will be replaced.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058453
+    m_Localized: OVERWRITE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058454
+    m_Localized: DELETE SAVE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058455
+    m_Localized: This record and its recovery backup will be permanently deleted.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058456
+    m_Localized: "Save failed: {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058457
+    m_Localized: Game saved.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058458
+    m_Localized: "Delete failed: {0}."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058459
+    m_Localized: Save deleted.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058460
+    m_Localized: Confirmation is not available.
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

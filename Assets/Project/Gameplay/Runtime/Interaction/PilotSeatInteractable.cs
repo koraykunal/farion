@@ -23,7 +23,9 @@ namespace Farion.Gameplay.Interaction
 
         public bool CanInteract(InteractionContext context)
         {
-            return possessionController != null && possessionController.CanEnterSpacecraft;
+            return possessionController != null &&
+                   possessionController.IsInShipInterior &&
+                   possessionController.CanEnterSpacecraft;
         }
 
         public void Interact(InteractionContext context)
