@@ -77,8 +77,12 @@ namespace Farion.UI.Gameplay
 
             if (iconImage != null)
             {
-                iconImage.sprite = null;
-                iconImage.enabled = false;
+                iconImage.sprite = item != null ? item.Icon : null;
+                iconImage.enabled = item != null && item.HasIcon;
+                iconImage.color = item != null
+                    ? item.AccentColor
+                    : Color.white;
+                iconImage.raycastTarget = false;
             }
 
             RefreshVisual();

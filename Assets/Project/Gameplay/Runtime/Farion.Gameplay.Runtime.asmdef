@@ -5,7 +5,8 @@
         "Farion.Gameplay.Domain",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.VisualEffectGraph.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

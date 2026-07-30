@@ -119,8 +119,9 @@ do not invalidate unrelated member commands.
   navigation data; it is not a physical inventory stack.
 
 `InventoryItemDefinition.StorageMode` selects stackable or unique-instance
-storage. Schema `4` can only serialize stackable player inventory. Unique
-equipment becomes saveable with the equipment repository and schema `5`.
+storage. Schema `5` serializes stackable player and personal-ship cargo
+containers. Unique equipment becomes saveable only with its repository and a
+later schema revision.
 
 ## Machine Boundary
 
@@ -150,13 +151,14 @@ The future save root is:
 Ships -> Equipment Instances -> Containers -> Stations -> Planet Deltas ->
 Structures`
 
-Schema `4` remains the current stable format. Do not add optional fleet fields
-to it incrementally. Schema `5` requires:
+Schema `5` is the current stable format. It persists the active player,
+personal-ship cargo, and fleet-knowledge vertical slice and explicitly migrates
+schemas `3` and `4`. A future equipment/fleet schema requires:
 
-1. immutable snapshot DTOs for every persisted aggregate;
-2. schema-4 to schema-5 migration defaults;
+1. immutable snapshot DTOs for each newly active aggregate;
+2. explicit migration defaults from schema `5`;
 3. cross-reference validation for all persistent ids;
-4. atomic load validation before live state replacement;
+4. atomic validation before live state replacement;
 5. equipment ownership validation;
 6. explicit new-game and load-game fleet composition.
 
@@ -187,7 +189,8 @@ Implemented:
 - personal ship, capital ship, fleet, and fleet knowledge aggregates;
 - reusable `InventoryContainerComponent` Unity adapter;
 - generic inventory consumption in resource interaction and gameplay UI;
-- schema-4 `PlayerInventory` compatibility adapter;
+- legacy `PlayerInventory` compatibility adapter and schema-5 reusable cargo
+  snapshot;
 - distinct local-player, explorer, personal-ship, and carried-inventory session
   identity;
 - shared immutable runtime bindings for session and save composition;
@@ -210,6 +213,6 @@ Intentionally not implemented:
   composition;
 - immediate authored processing terminal and ship-upgrade loop;
 - concrete equipment content assets, models, and icons;
-- fleet snapshot DTOs or schema `5`;
+- unique-equipment and fleet composition snapshot DTOs in a later schema;
 - networking transport or replication;
 - authored room sockets, capital-ship prefabs, or new-game fleet bootstrap.

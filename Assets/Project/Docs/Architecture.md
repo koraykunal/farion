@@ -45,7 +45,8 @@ high-end celestial rendering.
 - `Assets/Project/Gameplay/Runtime/Inventory`
   - Item definitions, item taxonomy, serialized inventory views, and Unity
     adapters. `InventoryContainerComponent` owns reusable Unity projection and
-    transaction wiring; `PlayerInventory` adds schema-4 compatibility only.
+    transaction wiring; `PlayerInventory` retains the legacy player-inventory
+    adapter while schema `5` persists reusable container snapshots.
 - `Assets/Project/Gameplay/Runtime/Equipment`
   - Unique-equipment and slot authoring definitions plus the registry-backed
     installation-policy adapter. It translates ScriptableObject metadata into
@@ -162,7 +163,8 @@ high-end celestial rendering.
   the pure `PersonalShipState`; it does not own flight physics or mutate
   `SpacecraftFlightProfile`. Its current name, hull, and fuel fields are
   bootstrap authoring defaults and will later be hydrated from a ship
-  definition or schema-5 snapshot without removing the binding boundary.
+  definition or a future personal-ship snapshot without removing the binding
+  boundary.
 - Fleet and capital-ship aggregates still have no scene bootstrap. Do not
   create hidden runtime fleet objects, auto-generated capital-ship rooms, or
   temporary singleton ownership to make these contracts appear active.
@@ -215,12 +217,17 @@ high-end celestial rendering.
 
 ## Persistence Identity
 
-- New saves use schema `4`; schema `3` remains readable.
-- Schema `4` continues to persist the current player inventory/possession
-  vertical slice. It does not persist fleet aggregates or unique equipment
-  instances. Schema `5` must be introduced only with an explicit migration and
-  a real fleet-session runtime owner; do not write partial fleet data into
-  schema `4`.
+- New saves use schema `5`; schemas `3` and `4` remain readable through
+  `GameplaySaveMigration`.
+- Schema `5` adds personal-ship cargo and fleet knowledge to the existing
+  celestial, origin, player inventory, possession, and resource-delta
+  snapshots. Cargo and knowledge are required fields in a schema-5 payload.
+- Schema-3/4 migration supplies an empty authored personal-ship cargo snapshot
+  and empty fleet knowledge while preserving the source version needed by
+  legacy world-origin and resource-id adapters.
+- Unique equipment repositories and fleet/capital-ship composition are not
+  represented by schema `5`; they require a later schema revision after their
+  runtime owners exist.
 - Celestial snapshots use `PersistentObjectId` as their primary identity and
   retain body-name fallback only for schema `3`.
 - Resource deposit ids derive from the persistent planet identity, generation

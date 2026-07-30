@@ -5,6 +5,7 @@ using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
+using Farion.Gameplay.Research;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Ships;
 using Farion.Simulation.World;
@@ -21,6 +22,7 @@ namespace Farion.Gameplay.Session
             WorldOriginRebaser originRebaser,
             PlayerInventory localPlayerInventory,
             PlayerPossessionController possession,
+            FleetProgressionRuntime fleetProgression,
             IReadOnlyList<ResourceDepositRuntimeSpawner> resourceStreamers)
         {
             Definitions = definitions;
@@ -28,6 +30,7 @@ namespace Farion.Gameplay.Session
             OriginRebaser = originRebaser;
             LocalPlayerInventory = localPlayerInventory;
             Possession = possession;
+            FleetProgression = fleetProgression;
             PersonalShip = ResolvePersonalShip(possession);
             this.resourceStreamers = new List<ResourceDepositRuntimeSpawner>(
                 resourceStreamers ?? System.Array.Empty<ResourceDepositRuntimeSpawner>())
@@ -39,6 +42,7 @@ namespace Farion.Gameplay.Session
         public WorldOriginRebaser OriginRebaser { get; }
         public PlayerInventory LocalPlayerInventory { get; }
         public PlayerPossessionController Possession { get; }
+        public FleetProgressionRuntime FleetProgression { get; }
         public PersonalShipRuntimeBinding PersonalShip { get; }
         public IReadOnlyList<ResourceDepositRuntimeSpawner> ResourceStreamers =>
             resourceStreamers;
@@ -48,6 +52,7 @@ namespace Farion.Gameplay.Session
             OriginRebaser != null &&
             LocalPlayerInventory != null &&
             Possession != null &&
+            FleetProgression != null &&
             PersonalShip != null &&
             PersonalShip.HasValidAuthoring &&
             HasNoMissingResourceStreamers();
@@ -60,6 +65,7 @@ namespace Farion.Gameplay.Session
                 !ReferenceEquals(OriginRebaser, other.OriginRebaser) ||
                 !ReferenceEquals(LocalPlayerInventory, other.LocalPlayerInventory) ||
                 !ReferenceEquals(Possession, other.Possession) ||
+                !ReferenceEquals(FleetProgression, other.FleetProgression) ||
                 !ReferenceEquals(PersonalShip, other.PersonalShip) ||
                 resourceStreamers.Count != other.resourceStreamers.Count)
             {

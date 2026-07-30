@@ -75,8 +75,15 @@ namespace Farion.Tests.PlayMode
             yield return null;
 
             int remainingFrames = 600;
-            while (patchSystem.PatchTransitionPending && remainingFrames-- > 0)
+            while (!patchSystem.SurfaceModeActive && remainingFrames-- > 0)
             {
+                KeepObserverAtAltitude(
+                    patchSystem,
+                    bodyVisual,
+                    camera,
+                    collisionObserver,
+                    surfaceDirection,
+                    outerRadius + bodyVisual.Body.Radius * 0.5f);
                 yield return null;
             }
 
@@ -107,8 +114,18 @@ namespace Farion.Tests.PlayMode
             }
 
             remainingFrames = 600;
-            while (patchSystem.PatchTransitionPending && remainingFrames-- > 0)
+            while ((!patchSystem.SurfaceModeActive ||
+                    patchSystem.PatchTransitionPending ||
+                    !patchSystem.LocalCollisionCoverageReady) &&
+                   remainingFrames-- > 0)
             {
+                KeepObserverAtAltitude(
+                    patchSystem,
+                    bodyVisual,
+                    camera,
+                    collisionObserver,
+                    surfaceDirection,
+                    outerRadius + 10f);
                 yield return null;
             }
 
@@ -194,8 +211,29 @@ namespace Farion.Tests.PlayMode
             MonoBehaviour[] behaviours = camera.GetComponents<MonoBehaviour>();
             for (int i = 0; i < behaviours.Length; i++)
             {
-                behaviours[i].enabled = false;
+                MonoBehaviour behaviour = behaviours[i];
+                if (behaviour.GetType().FullName != "FMODUnity.StudioListener")
+                {
+                    behaviour.enabled = false;
+                }
             }
+        }
+
+        static void KeepObserverAtAltitude(
+            CelestialSurfacePatchSystem patchSystem,
+            CelestialBodyVisual bodyVisual,
+            Camera camera,
+            Rigidbody collisionObserver,
+            Vector3 surfaceDirection,
+            float centerDistance)
+        {
+            Vector3 position =
+                patchSystem.transform.position +
+                surfaceDirection * centerDistance;
+            camera.transform.position = position;
+            collisionObserver.position = position;
+            collisionObserver.linearVelocity =
+                bodyVisual.Body.GetVelocityAtPoint(position);
         }
     }
 }

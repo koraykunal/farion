@@ -393,6 +393,206 @@ MonoBehaviour:
     m_Localized: "Onay ekran\u0131 kullan\u0131lam\u0131yor."
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058461
+    m_Localized: HAZIR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058462
+    m_Localized: EYLEM KULLANILAMIYOR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058463
+    m_Localized: TAMAMLANDI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058464
+    m_Localized: YOK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058465
+    m_Localized: "AKTARIM Y\xD6N\xDC DE\u011E\u0130\u015ET\u0130R\u0130LD\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058466
+    m_Localized: "E\u015EYA SE\xC7\u0130LMED\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058467
+    m_Localized: "{0} {1} AKTARILDI"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058468
+    m_Localized: "AKTARIM BA\u015EARISIZ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058469
+    m_Localized: "Aktar\u0131m tamamlanamad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058470
+    m_Localized: KARGO AKTARIMI
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058471
+    m_Localized: "B\u0130R E\u015EYA SE\xC7 VE AKTAR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058472
+    m_Localized: "TAR\u0130F SE\xC7\u0130LMED\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058473
+    m_Localized: "\u0130STASYON HAZIR DE\u011E\u0130L"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058474
+    m_Localized: "{0} \xDCRET\u0130LD\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058475
+    m_Localized: "\xDCRET\u0130M BA\u015EARISIZ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058476
+    m_Localized: "Tarif \xFCretilemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058477
+    m_Localized: "{0} TERM\u0130NAL\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058478
+    m_Localized: "\xDCRET\u0130M TERM\u0130NAL\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058479
+    m_Localized: "TAR\u0130F YOK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058480
+    m_Localized: "Bu istasyonda kullan\u0131labilir tarif yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058481
+    m_Localized: "KULLANILAB\u0130L\u0130R TAR\u0130F YOK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058482
+    m_Localized: "G\u0130RD\u0130LER"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058483
+    m_Localized: "\xC7IKTILAR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058484
+    m_Localized: "ARA\u015ETIRMA SE\xC7\u0130LMED\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058485
+    m_Localized: "{0} TAMAMLANDI"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058486
+    m_Localized: "ARA\u015ETIRMA BA\u015EARISIZ"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058487
+    m_Localized: "Ara\u015Ft\u0131rma tamamlanamad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058488
+    m_Localized: "ARA\u015ETIRMA TERM\u0130NAL\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058489
+    m_Localized: "ARA\u015ETIRMA YOK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058490
+    m_Localized: "Bu terminalde kullan\u0131labilir ara\u015Ft\u0131rma yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058491
+    m_Localized: "KULLANILAB\u0130L\u0130R ARA\u015ETIRMA YOK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058492
+    m_Localized: "{0}  /  SEV\u0130YE {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058493
+    m_Localized: "GEREKL\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058494
+    m_Localized: "\u015EEMALAR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058495
+    m_Localized: YETENEKLER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058496
+    m_Localized: "\xDCretim Terminalini A\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058497
+    m_Localized: "Ara\u015Ft\u0131rma Terminalini A\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058498
+    m_Localized: "Kargo Aktar\u0131m\u0131n\u0131 A\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058499
+    m_Localized: "GER\u0130"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058500
+    m_Localized: "Terminali kapat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058501
+    m_Localized: "\xDCRET"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058502
+    m_Localized: "Se\xE7ili malzemeleri kullan"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058503
+    m_Localized: TAMAMLA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058504
+    m_Localized: "Gereksinimleri harca ve kilidi a\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058505
+    m_Localized: "B\u0130R ADET AKTAR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058506
+    m_Localized: "Bir birim ta\u015F\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058507
+    m_Localized: "YI\u011EINI AKTAR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058508
+    m_Localized: "Se\xE7ili y\u0131\u011F\u0131n\u0131 ta\u015F\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058509
+    m_Localized: "Y\xD6N\xDC DE\u011E\u0130\u015ET\u0130R"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058510
+    m_Localized: "Aktar\u0131m y\xF6n\xFCn\xFC tersine \xE7evir"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

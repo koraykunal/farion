@@ -387,6 +387,206 @@ MonoBehaviour:
     m_Key: save_load.feedback.confirmation_unavailable
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058461
+    m_Key: terminal.common.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058462
+    m_Key: terminal.common.unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058463
+    m_Key: terminal.common.completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058464
+    m_Key: terminal.common.none
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058465
+    m_Key: terminal.cargo.direction_swapped
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058466
+    m_Key: terminal.cargo.no_selection
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058467
+    m_Key: terminal.cargo.transferred
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058468
+    m_Key: terminal.cargo.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058469
+    m_Key: terminal.cargo.failed_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058470
+    m_Key: terminal.cargo.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058471
+    m_Key: terminal.cargo.instruction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058472
+    m_Key: terminal.crafting.no_selection
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058473
+    m_Key: terminal.crafting.not_ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058474
+    m_Key: terminal.crafting.crafted
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058475
+    m_Key: terminal.crafting.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058476
+    m_Key: terminal.crafting.failed_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058477
+    m_Key: terminal.crafting.station_title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058478
+    m_Key: terminal.crafting.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058479
+    m_Key: terminal.crafting.no_recipe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058480
+    m_Key: terminal.crafting.unconfigured
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058481
+    m_Key: terminal.crafting.no_available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058482
+    m_Key: terminal.crafting.inputs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058483
+    m_Key: terminal.crafting.outputs
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058484
+    m_Key: terminal.research.no_selection
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058485
+    m_Key: terminal.research.completed_named
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058486
+    m_Key: terminal.research.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058487
+    m_Key: terminal.research.failed_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058488
+    m_Key: terminal.research.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058489
+    m_Key: terminal.research.no_research
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058490
+    m_Key: terminal.research.unconfigured
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058491
+    m_Key: terminal.research.no_available
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058492
+    m_Key: terminal.research.subtitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058493
+    m_Key: terminal.research.required
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058494
+    m_Key: terminal.research.blueprints
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058495
+    m_Key: terminal.research.capabilities
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058496
+    m_Key: terminal.interaction.open_crafting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058497
+    m_Key: terminal.interaction.open_research
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058498
+    m_Key: terminal.interaction.open_cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058499
+    m_Key: terminal.common.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058500
+    m_Key: terminal.common.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058501
+    m_Key: terminal.crafting.action
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058502
+    m_Key: terminal.crafting.action_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058503
+    m_Key: terminal.research.action
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058504
+    m_Key: terminal.research.action_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058505
+    m_Key: terminal.cargo.action_one
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058506
+    m_Key: terminal.cargo.action_one_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058507
+    m_Key: terminal.cargo.action_stack
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058508
+    m_Key: terminal.cargo.action_stack_detail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058509
+    m_Key: terminal.cargo.action_swap
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058510
+    m_Key: terminal.cargo.action_swap_detail
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

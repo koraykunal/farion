@@ -233,6 +233,40 @@ namespace Farion.Gameplay.Inventory
             return snapshotStacks;
         }
 
+        public InventoryContainerSnapshot CaptureContainerSnapshot()
+        {
+            EnsureState();
+            return new InventoryContainerSnapshot(
+                ContainerId.Value,
+                SlotCapacity,
+                CaptureStackSnapshot());
+        }
+
+        public bool CanApplyContainerSnapshot(
+            InventoryContainerSnapshot snapshot,
+            GameplayDefinitionRegistry definitions)
+        {
+            return snapshot != null &&
+                   SnapshotTargetsThisContainer(snapshot) &&
+                   CanApplyStackSnapshot(
+                       snapshot.SlotCapacity,
+                       snapshot.Stacks,
+                       definitions);
+        }
+
+        public bool ApplyContainerSnapshot(
+            InventoryContainerSnapshot snapshot,
+            GameplayDefinitionRegistry definitions,
+            bool notify = true)
+        {
+            return CanApplyContainerSnapshot(snapshot, definitions) &&
+                   TryApplyStackSnapshot(
+                       snapshot.SlotCapacity,
+                       snapshot.Stacks,
+                       definitions,
+                       notify);
+        }
+
         protected bool TryApplyStackSnapshot(
             int snapshotSlotCapacity,
             IReadOnlyList<InventoryStackSnapshot> snapshotStacks,
@@ -569,6 +603,16 @@ namespace Farion.Gameplay.Inventory
             return PersistentEntityId.TryCreate(value, out PersistentEntityId id)
                 ? id.Value
                 : DefaultContainerId;
+        }
+
+        bool SnapshotTargetsThisContainer(InventoryContainerSnapshot snapshot)
+        {
+            return snapshot.HasValidContainerId &&
+                   (!snapshot.HasContainerId ||
+                    string.Equals(
+                        snapshot.ContainerId,
+                        ContainerId.Value,
+                        StringComparison.Ordinal));
         }
     }
 }

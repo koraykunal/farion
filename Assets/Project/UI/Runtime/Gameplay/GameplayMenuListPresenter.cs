@@ -70,6 +70,7 @@ namespace Farion.UI.Gameplay
             built = false;
             ClearGeneratedButtons();
             Build();
+            screenView?.SetFirstSelection(FirstAvailableButton?.Button);
         }
 
         void Build()
@@ -113,6 +114,11 @@ namespace Farion.UI.Gameplay
 
         void ClearGeneratedButtons()
         {
+            if (screenView != null)
+            {
+                screenView.SetFirstSelection(null);
+            }
+
             for (int i = generatedButtons.Count - 1; i >= 0; i--)
             {
                 MenuButtonView button = generatedButtons[i];
@@ -123,6 +129,7 @@ namespace Farion.UI.Gameplay
 
                 if (Application.isPlaying)
                 {
+                    button.gameObject.SetActive(false);
                     Destroy(button.gameObject);
                 }
                 else

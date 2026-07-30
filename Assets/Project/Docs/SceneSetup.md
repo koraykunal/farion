@@ -712,7 +712,7 @@ Starter shuttle scene contract:
   only.
 - Use simple compound child colliders under the ship root: `COL_Hull_Main`,
   `COL_Hull_Nose`, `COL_Hull_EngineBlock`, `COL_Wing_Left`, `COL_Wing_Right`,
-  and `COL_Landing_Footprint`.
+  `COL_Landing_Front`, `COL_Landing_Left`, and `COL_Landing_Right`.
 - Keep `BoardingPoint` at the side hatch/door trigger. Assign its
   `VehicleBoardingPoint > Exit Point` to `ExteriorExitPoint`.
 - Add `PilotSeatPoint`, `InteriorSpawnPoint`, and `ExteriorExitPoint` under the
@@ -781,12 +781,13 @@ LandingCameraTarget
 3. Keep the imported model under `VisualRoot`; do not rotate or offset the
    Rigidbody root.
 4. Reimport the FBX, then replace the shared `Engine Nozzle` entry in
-   `SpacecraftEngineMotionAnimator` with the two named gimbal pivots.
-5. Create emitter payloads at the named thrust/RCS markers and assign them to
-   the existing `SpacecraftThrusterEffects` roles. The code already supports
-   forward, reverse, strafe, vertical, pitch, yaw, and roll roles.
-6. Replace `COL_Landing_Footprint` with three small compound gear-contact
-   colliders only after their model markers are final. Assign all three to
+   the two authored `SpacecraftThrusterNozzleVfx` steering roots.
+5. Create the production rear-thruster VFX under `THR_MainRear_L/R` using
+   `SpacecraftThrusterVfxController` and `SpacecraftThrusterNozzleVfx`.
+   Follow `Assets/Project/Docs/ThrusterVfxGraphSetup.md` for the VFX Graph
+   properties, explicit nozzle lights, smoke, and validation checklist.
+6. Align the three small authored landing-contact colliders with the final
+   `GearContact_*` model markers. Keep all three assigned to
    `SpacecraftLandingGearAnimator > Landing Gear Colliders`.
 7. Assign `LandingCameraTarget` only when a third landing-camera mode is
    intentionally designed; the current production toggle is exterior/cockpit.

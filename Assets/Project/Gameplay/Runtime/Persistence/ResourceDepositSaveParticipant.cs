@@ -20,19 +20,19 @@ namespace Farion.Gameplay.Persistence
             return saveData.ResourceDepositDeltas.Count == 0 || HasAtLeastOneStreamer(context.ResourceStreamers);
         }
 
-        public void Capture(GameplaySaveDataBuilder builder, GameplaySaveContext context)
+        public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
         {
             IReadOnlyList<ResourceDepositRuntimeSpawner> streamers = context.ResourceStreamers;
             for (int i = 0; i < streamers.Count; i++)
             {
-                streamers[i]?.CaptureDeltaSnapshot(builder.ResourceDepositDeltas);
+                streamers[i]?.CaptureDeltaSnapshot(capture.ResourceDepositDeltas);
             }
         }
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)
         {
             IReadOnlyList<ResourceDepositRuntimeSpawner> streamers = context.ResourceStreamers;
-            bool useLegacyIds = saveData.SchemaVersion < 4;
+            bool useLegacyIds = saveData.SourceSchemaVersion < 4;
             for (int i = 0; i < streamers.Count; i++)
             {
                 streamers[i]?.ApplyDeltaSnapshot(saveData.ResourceDepositDeltas, useLegacyIds);

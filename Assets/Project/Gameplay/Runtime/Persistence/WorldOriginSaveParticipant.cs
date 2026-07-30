@@ -14,14 +14,14 @@ namespace Farion.Gameplay.Persistence
                    (saveData.SchemaVersion < 4 || saveData.WorldOrigin.IsSupported);
         }
 
-        public void Capture(GameplaySaveDataBuilder builder, GameplaySaveContext context)
+        public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
         {
-            builder.SetWorldOrigin(context.OriginRebaser.CaptureSnapshot());
+            capture.SetWorldOrigin(context.OriginRebaser.CaptureSnapshot());
         }
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)
         {
-            if (saveData.SchemaVersion < 4)
+            if (saveData.SourceSchemaVersion < 4)
             {
                 context.OriginRebaser.ResetRuntimeState();
                 return true;

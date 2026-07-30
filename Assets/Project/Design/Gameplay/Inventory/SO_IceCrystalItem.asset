@@ -14,9 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   itemId: item.ice_crystal
   displayName: Ice Crystal
+  storageMode: 0
   maxStackSize: 20
   category: 3
   form: 0
   primaryTechDomain: 3
   requiresIdentification: 0
   unidentifiedDisplayName: Unknown Crystal
+  icon: {fileID: 21300000, guid: 8c083deb7c4464f46aa649d1c038bd47, type: 3}
+  worldPrefab: {fileID: 0}
+  accentColor: {r: 1, g: 1, b: 1, a: 1}

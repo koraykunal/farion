@@ -36,6 +36,8 @@ namespace Farion.Editor.Validation
             "Assets/Project/Prefabs/UI/Common/UI_SaveSlot.prefab";
         public const string SaveLoadPrefabPath =
             "Assets/Project/Prefabs/UI/Screens/UI_SaveLoadScreen.prefab";
+        public const string TerminalScreensPrefabPath =
+            "Assets/Project/Prefabs/UI/Screens/UI_TerminalScreens.prefab";
 
         static readonly Vector2 RequiredReferenceResolution = new(1920f, 1080f);
 
@@ -79,6 +81,8 @@ namespace Farion.Editor.Validation
                 LoadRequiredPrefab(SaveSlotPrefabPath, report);
             GameObject saveLoadPrefab =
                 LoadRequiredPrefab(SaveLoadPrefabPath, report);
+            GameObject terminalScreensPrefab =
+                LoadRequiredPrefab(TerminalScreensPrefabPath, report);
 
             ValidateSystemRootPrefab(systemRootPrefab, report);
             ValidateConfirmationPrefab(confirmationPrefab, report);
@@ -86,6 +90,58 @@ namespace Farion.Editor.Validation
             ValidateFeedbackPrefab(feedbackPrefab, report);
             ValidateSettingsPrefab(settingsPrefab, report);
             ValidateSaveLoadPrefabs(saveSlotPrefab, saveLoadPrefab, report);
+            ValidateTerminalScreensPrefab(terminalScreensPrefab, report);
+        }
+
+        static void ValidateTerminalScreensPrefab(
+            GameObject prefab,
+            FarionValidationReport report)
+        {
+            if (prefab == null)
+            {
+                return;
+            }
+
+            UiScreenView[] screens =
+                prefab.GetComponentsInChildren<UiScreenView>(true);
+            ValidateTerminalScreen<CraftingStationPanelPresenter>(
+                screens,
+                UiScreenId.CraftingTerminal,
+                report);
+            ValidateTerminalScreen<ResearchTerminalPanelPresenter>(
+                screens,
+                UiScreenId.ResearchTerminal,
+                report);
+            ValidateTerminalScreen<CargoTransferPanelPresenter>(
+                screens,
+                UiScreenId.CargoTransfer,
+                report);
+        }
+
+        static void ValidateTerminalScreen<TPresenter>(
+            UiScreenView[] screens,
+            UiScreenId screenId,
+            FarionValidationReport report)
+            where TPresenter : Component
+        {
+            UiScreenView screen = FindScreen(screens, screenId);
+            if (screen == null)
+            {
+                report.AddError(
+                    $"{TerminalScreensPrefabPath}: missing {screenId} screen.");
+                return;
+            }
+
+            if (screen.GetComponent<TPresenter>() == null)
+            {
+                report.AddError(
+                    $"{TerminalScreensPrefabPath}: {screenId} requires {typeof(TPresenter).Name}.");
+            }
+
+            ValidateInitialSelection(
+                screen,
+                TerminalScreensPrefabPath,
+                report);
         }
 
         static GameObject LoadRequiredPrefab(
@@ -579,7 +635,59 @@ namespace Farion.Editor.Validation
                     report);
             }
 
+            GameplayUiController gameplayUi =
+                UiCompositionScope.FindFirstInScope<GameplayUiController>(
+                    systemRoot);
+            if (gameplayUi != null)
+            {
+                ValidateTerminalScreenSibling(
+                    screens,
+                    UiScreenId.CraftingTerminal,
+                    systemRoot,
+                    canvas,
+                    scope,
+                    report);
+                ValidateTerminalScreenSibling(
+                    screens,
+                    UiScreenId.ResearchTerminal,
+                    systemRoot,
+                    canvas,
+                    scope,
+                    report);
+                ValidateTerminalScreenSibling(
+                    screens,
+                    UiScreenId.CargoTransfer,
+                    systemRoot,
+                    canvas,
+                    scope,
+                    report);
+            }
+
             ValidateScreenRegistry(screens, scope, report);
+        }
+
+        static void ValidateTerminalScreenSibling(
+            UiScreenView[] screens,
+            UiScreenId screenId,
+            UiSystemRoot systemRoot,
+            Canvas canvas,
+            string scope,
+            FarionValidationReport report)
+        {
+            UiScreenView screen = FindScreen(screens, screenId);
+            if (screen == null)
+            {
+                report.AddError($"{scope}: missing {screenId} screen.");
+                return;
+            }
+
+            ValidateSibling(
+                screen,
+                systemRoot,
+                canvas,
+                TerminalScreensPrefabPath,
+                scope,
+                report);
         }
 
         static void ValidateCanvasScaler(

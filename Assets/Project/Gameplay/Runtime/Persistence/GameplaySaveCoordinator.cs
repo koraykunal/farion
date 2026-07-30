@@ -5,6 +5,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Research;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Session;
 using Farion.Simulation.World;
@@ -28,6 +29,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] WorldOriginRebaser originRebaser;
         [SerializeField] PlayerInventory playerInventory;
         [SerializeField] PlayerPossessionController possessionController;
+        [SerializeField] FleetProgressionRuntime fleetProgression;
         [SerializeField] List<ResourceDepositRuntimeSpawner> resourceStreamers = new();
 
         readonly IGameplaySaveParticipant[] saveParticipants =
@@ -36,6 +38,8 @@ namespace Farion.Gameplay.Persistence
             new WorldOriginSaveParticipant(),
             new PlayerPossessionSaveParticipant(),
             new PlayerInventorySaveParticipant(),
+            new PersonalShipCargoSaveParticipant(),
+            new FleetProgressionSaveParticipant(),
             new ResourceDepositSaveParticipant()
         };
 
@@ -51,6 +55,7 @@ namespace Farion.Gameplay.Persistence
                 originRebaser,
                 playerInventory,
                 possessionController,
+                ResolveFleetProgression(),
                 resourceStreamers);
         public SaveGameOperationResult LastSaveResult => lastSaveResult;
         public SaveGameOperationResult LastLoadResult => lastLoadResult;
@@ -76,6 +81,7 @@ namespace Farion.Gameplay.Persistence
         void OnValidate()
         {
             slotName = SaveGameSlotCatalog.ResolveSlotName(slotName);
+            fleetProgression ??= GetComponent<FleetProgressionRuntime>();
             resourceStreamers ??= new List<ResourceDepositRuntimeSpawner>();
             resourceStreamers.RemoveAll(streamer => streamer == null);
             runtimeBindings = null;
@@ -168,13 +174,13 @@ namespace Farion.Gameplay.Persistence
         GameplaySaveData CaptureSaveData()
         {
             GameplaySaveContext context = CreateContext();
-            GameplaySaveDataBuilder builder = new(DateTime.UtcNow.ToString("O"));
+            GameplaySaveCapture capture = new(DateTime.UtcNow.ToString("O"));
             for (int i = 0; i < saveParticipants.Length; i++)
             {
-                saveParticipants[i].Capture(builder, context);
+                saveParticipants[i].Capture(capture, context);
             }
 
-            return builder.Build();
+            return capture.CreateSnapshot();
         }
 
         bool CanCaptureSaveData()
@@ -191,7 +197,7 @@ namespace Farion.Gameplay.Persistence
             return true;
         }
 
-        static bool TryReadSaveData(
+        bool TryReadSaveData(
             string slotName,
             bool useBackup,
             out GameplaySaveData saveData,
@@ -228,6 +234,17 @@ namespace Farion.Gameplay.Persistence
             if (!saveData.IsSupported)
             {
                 result = SaveGameOperationResult.Failure(SaveGameOperationStatus.UnsupportedVersion, result.Path);
+                return false;
+            }
+
+            if (!GameplaySaveMigration.TryMigrateToCurrent(
+                    saveData,
+                    CreateContext(),
+                    out saveData))
+            {
+                result = SaveGameOperationResult.Failure(
+                    SaveGameOperationStatus.InvalidPayload,
+                    result.Path);
                 return false;
             }
 
@@ -270,6 +287,12 @@ namespace Farion.Gameplay.Persistence
         GameplaySaveContext CreateContext()
         {
             return new GameplaySaveContext(RuntimeBindings);
+        }
+
+        FleetProgressionRuntime ResolveFleetProgression()
+        {
+            fleetProgression ??= GetComponent<FleetProgressionRuntime>();
+            return fleetProgression;
         }
 
     }

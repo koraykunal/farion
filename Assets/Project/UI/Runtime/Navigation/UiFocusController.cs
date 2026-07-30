@@ -66,9 +66,9 @@ namespace Farion.UI.Navigation
             pendingFocus = null;
         }
 
-        static void ApplyFocus(GameObject target)
+        void ApplyFocus(GameObject target)
         {
-            EventSystem eventSystem = EventSystem.current;
+            EventSystem eventSystem = ResolveEventSystem();
             if (eventSystem == null)
             {
                 return;
@@ -79,6 +79,19 @@ namespace Farion.UI.Navigation
             {
                 eventSystem.SetSelectedGameObject(target);
             }
+        }
+
+        EventSystem ResolveEventSystem()
+        {
+            if (EventSystem.current != null)
+            {
+                return EventSystem.current;
+            }
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            return canvas != null
+                ? canvas.GetComponentInChildren<EventSystem>(true)
+                : null;
         }
 
         static bool IsValidSelection(GameObject target)

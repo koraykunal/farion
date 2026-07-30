@@ -41,9 +41,9 @@ namespace Farion.Tests.PlayMode
             Assert.That(landingGear, Is.Not.Null);
             Assert.That(landingGear.IsDeployed, Is.True);
 
-            Collider landingFootprint = FindCollider(motor, "COL_Landing_Footprint");
-            Assert.That(landingFootprint, Is.Not.Null);
-            Assert.That(landingFootprint.enabled, Is.True);
+            AssertLandingContact(motor, "COL_Landing_Front");
+            AssertLandingContact(motor, "COL_Landing_Left");
+            AssertLandingContact(motor, "COL_Landing_Right");
 
             SpacecraftCameraRig cameraRig = Object.FindAnyObjectByType<SpacecraftCameraRig>();
             Assert.That(cameraRig, Is.Not.Null);
@@ -80,6 +80,15 @@ namespace Farion.Tests.PlayMode
             }
 
             return null;
+        }
+
+        static void AssertLandingContact(
+            SpacecraftMotor motor,
+            string colliderName)
+        {
+            Collider contact = FindCollider(motor, colliderName);
+            Assert.That(contact, Is.Not.Null, $"{colliderName} is missing.");
+            Assert.That(contact.enabled, Is.True, $"{colliderName} is disabled.");
         }
     }
 }

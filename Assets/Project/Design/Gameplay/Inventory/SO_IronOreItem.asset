@@ -14,9 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   itemId: item.iron_ore
   displayName: Iron Ore
+  storageMode: 0
   maxStackSize: 30
   category: 0
   form: 0
   primaryTechDomain: 0
   requiresIdentification: 0
   unidentifiedDisplayName: Unknown Ore
+  icon: {fileID: 21300000, guid: 82101a68df27c884698c8c70139210c4, type: 3}
+  worldPrefab: {fileID: 0}
+  accentColor: {r: 1, g: 1, b: 1, a: 1}

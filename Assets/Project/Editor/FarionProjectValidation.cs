@@ -288,6 +288,7 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, coordinator, "originRebaser", report);
             ValidateRequiredReference(scenePath, coordinator, "playerInventory", report);
             ValidateRequiredReference(scenePath, coordinator, "possessionController", report);
+            ValidateRequiredReference(scenePath, coordinator, "fleetProgression", report);
         }
 
         static void ValidateGameplaySession(
@@ -417,27 +418,15 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, rig, "chaseCameraTarget", report);
             ValidateRequiredReference(scenePath, rig, "cockpitCameraTarget", report);
 
-            SpacecraftEngineMotionAnimator engineMotion =
-                motor.GetComponent<SpacecraftEngineMotionAnimator>();
-            SerializedProperty motionParts = engineMotion != null
-                ? new SerializedObject(engineMotion).FindProperty("engineMotionParts")
-                : null;
-            if (motionParts == null || !motionParts.isArray || motionParts.arraySize < 2)
+            SpacecraftThrusterVfxController vfxController =
+                motor.GetComponentInChildren<SpacecraftThrusterVfxController>(true);
+            if (vfxController != null)
             {
-                report.AddWarning(
-                    $"{scenePath}: {motor.name} does not yet expose independent left/right engine gimbals.");
+                ValidateThrusterVfxController(scenePath, motor, vfxController, report);
+                return;
             }
 
-            SpacecraftThrusterEffects effects =
-                motor.GetComponentInChildren<SpacecraftThrusterEffects>(true);
-            if (effects == null)
-            {
-                report.AddWarning($"{scenePath}: {motor.name} has no spacecraft thruster effects.");
-            }
-            else
-            {
-                ValidateThrusterEffectCoverage(scenePath, motor, effects, report);
-            }
+            report.AddWarning($"{scenePath}: {motor.name} has no spacecraft VFX Graph thruster controller.");
         }
 
         static void ValidatePersonalShipBinding(
@@ -579,50 +568,163 @@ namespace Farion.Editor.Validation
             return false;
         }
 
-        static void ValidateThrusterEffectCoverage(
+        static void ValidateThrusterVfxController(
             string scenePath,
             SpacecraftMotor motor,
-            SpacecraftThrusterEffects effects,
+            SpacecraftThrusterVfxController controller,
             FarionValidationReport report)
         {
-            SerializedProperty emitters = new SerializedObject(effects).FindProperty("emitters");
-            if (emitters == null || !emitters.isArray || emitters.arraySize == 0)
+            SpacecraftThrusterNozzleVfx[] nozzles =
+                controller.GetComponentsInChildren<SpacecraftThrusterNozzleVfx>(true);
+            if (nozzles == null || nozzles.Length == 0)
             {
-                report.AddWarning($"{scenePath}: {motor.name} has no authored thruster emitters.");
+                report.AddWarning($"{scenePath}: {motor.name} has no authored thruster VFX nozzles.");
                 return;
             }
 
-            HashSet<int> roles = new();
-            for (int i = 0; i < emitters.arraySize; i++)
+            bool hasLeft = false;
+            bool hasRight = false;
+            SerializedObject serializedController = new(controller);
+            SerializedProperty authoredNozzles =
+                serializedController.FindProperty("nozzles");
+            if (authoredNozzles == null ||
+                !authoredNozzles.isArray ||
+                authoredNozzles.arraySize != nozzles.Length)
             {
-                SerializedProperty role = emitters.GetArrayElementAtIndex(i).FindPropertyRelative("role");
-                if (role != null)
+                report.AddError(
+                    $"{scenePath}: {motor.name} thruster controller must explicitly reference every authored nozzle.");
+            }
+
+            for (int i = 0; i < nozzles.Length; i++)
+            {
+                SpacecraftThrusterNozzleVfx nozzle = nozzles[i];
+                if (nozzle == null)
                 {
-                    roles.Add(role.enumValueIndex);
+                    continue;
+                }
+
+                SerializedObject serializedNozzle = new(nozzle);
+                SerializedProperty sideSign = serializedNozzle.FindProperty("sideSign");
+                if (sideSign != null)
+                {
+                    hasLeft |= sideSign.floatValue < -0.01f;
+                    hasRight |= sideSign.floatValue > 0.01f;
+                }
+
+                RequireObjectReference(
+                    serializedNozzle,
+                    "steeringRoot",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "coreGlow",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "innerPlasma",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "outerPlasma",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "shockDiamonds",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "distortion",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "sparksGraph",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "smokeGraph",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+                RequireObjectReference(
+                    serializedNozzle,
+                    "thrusterLight",
+                    scenePath,
+                    motor,
+                    nozzle,
+                    report);
+
+                SpacecraftThrusterMeshLayer[] meshLayers =
+                    nozzle.GetComponentsInChildren<SpacecraftThrusterMeshLayer>(true);
+                HashSet<SpacecraftThrusterMeshLayerKind> layerKinds = new();
+                for (int layerIndex = 0; layerIndex < meshLayers.Length; layerIndex++)
+                {
+                    SpacecraftThrusterMeshLayer layer = meshLayers[layerIndex];
+                    if (layer == null)
+                    {
+                        continue;
+                    }
+
+                    layerKinds.Add(layer.LayerKind);
+                    if (!layer.HasValidAuthoring)
+                    {
+                        report.AddError(
+                            $"{scenePath}: {motor.name}/{nozzle.name}/{layer.name} has incomplete " +
+                            "thruster mesh authoring (mesh components or material missing).");
+                    }
+                }
+
+                if (layerKinds.Count != 5)
+                {
+                    report.AddError(
+                        $"{scenePath}: {motor.name}/{nozzle.name} requires exactly one authored " +
+                        $"core, inner plasma, outer plasma, shock diamond, and distortion layer.");
                 }
             }
 
-            bool hasMain = roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.MainForward);
-            bool hasReverse = roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.Reverse);
-            bool hasTranslationRcs =
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.StrafeLeft) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.StrafeRight) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.Ascend) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.Descend);
-            bool hasAngularRcs =
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.PitchUp) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.PitchDown) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.YawLeft) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.YawRight) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.RollLeft) &&
-                roles.Contains((int)SpacecraftThrusterEffects.ThrusterRole.RollRight);
-
-            if (!hasMain || !hasReverse || !hasTranslationRcs || !hasAngularRcs)
+            if (!hasLeft || !hasRight)
             {
-                report.AddWarning(
-                    $"{scenePath}: {motor.name} thruster VFX coverage is incomplete " +
-                    $"(main={hasMain}, reverse={hasReverse}, translationRcs={hasTranslationRcs}, " +
-                    $"angularRcs={hasAngularRcs}).");
+                report.AddError(
+                    $"{scenePath}: {motor.name} thruster VFX requires one left and one right main nozzle " +
+                    $"(left={hasLeft}, right={hasRight}).");
+            }
+        }
+
+        static void RequireObjectReference(
+            SerializedObject serializedNozzle,
+            string propertyName,
+            string scenePath,
+            SpacecraftMotor motor,
+            SpacecraftThrusterNozzleVfx nozzle,
+            FarionValidationReport report)
+        {
+            SerializedProperty property =
+                serializedNozzle.FindProperty(propertyName);
+            if (property == null || property.objectReferenceValue == null)
+            {
+                report.AddError(
+                    $"{scenePath}: {motor.name}/{nozzle.name} is missing required thruster VFX reference '{propertyName}'.");
             }
         }
 

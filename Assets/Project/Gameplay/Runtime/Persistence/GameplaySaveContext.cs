@@ -3,8 +3,10 @@ using Farion.Core.Physics;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
+using Farion.Gameplay.Research;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Session;
+using Farion.Gameplay.Ships;
 using Farion.Simulation.World;
 
 namespace Farion.Gameplay.Persistence
@@ -22,6 +24,12 @@ namespace Farion.Gameplay.Persistence
         public WorldOriginRebaser OriginRebaser => Bindings?.OriginRebaser;
         public PlayerInventory PlayerInventory => Bindings?.LocalPlayerInventory;
         public PlayerPossessionController PossessionController => Bindings?.Possession;
+        public FleetProgressionRuntime FleetProgression => Bindings?.FleetProgression;
+        public PersonalShipRuntimeBinding PersonalShip => Bindings?.PersonalShip;
+        public PersonalShipCargoInventory PersonalShipCargo =>
+            Bindings?.PersonalShip != null
+                ? Bindings.PersonalShip.Cargo
+                : null;
         public IReadOnlyList<ResourceDepositRuntimeSpawner> ResourceStreamers =>
             Bindings?.ResourceStreamers;
     }

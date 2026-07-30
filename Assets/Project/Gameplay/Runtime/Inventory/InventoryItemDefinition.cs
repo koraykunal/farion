@@ -18,6 +18,11 @@ namespace Farion.Gameplay.Inventory
         [SerializeField] bool requiresIdentification;
         [SerializeField] string unidentifiedDisplayName = "Unknown Material";
 
+        [Header("Presentation")]
+        [SerializeField] Sprite icon;
+        [SerializeField] GameObject worldPrefab;
+        [SerializeField] Color accentColor = Color.white;
+
         public string ItemId => string.IsNullOrWhiteSpace(itemId) ? name : itemId.Trim();
         public DefinitionId DomainId => new(ItemId);
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? ItemId : displayName.Trim();
@@ -32,6 +37,11 @@ namespace Farion.Gameplay.Inventory
         public string UnidentifiedDisplayName => string.IsNullOrWhiteSpace(unidentifiedDisplayName)
             ? "Unknown Material"
             : unidentifiedDisplayName.Trim();
+        public Sprite Icon => icon;
+        public GameObject WorldPrefab => worldPrefab;
+        public Color AccentColor => accentColor;
+        public bool HasIcon => icon != null;
+        public bool HasWorldPrefab => worldPrefab != null;
 
         void OnValidate()
         {
@@ -52,6 +62,8 @@ namespace Farion.Gameplay.Inventory
             {
                 unidentifiedDisplayName = "Unknown Material";
             }
+
+            accentColor.a = Mathf.Clamp01(accentColor.a);
         }
     }
 }

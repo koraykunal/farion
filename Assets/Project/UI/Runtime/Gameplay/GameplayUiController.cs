@@ -15,7 +15,6 @@ using UnityEngine;
 namespace Farion.UI.Gameplay
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(GameplaySessionController))]
     public sealed class GameplayUiController : MonoBehaviour
     {
         [Header("State")]
@@ -47,6 +46,7 @@ namespace Farion.UI.Gameplay
         public event Action<UiScreenId> ScreenChanged;
         public UiScreenId CurrentScreen => currentScreen;
         public bool IsUiFocused => screenRouter != null && screenRouter.HasOpenScreen;
+        public GameplaySessionController SessionController => sessionController;
 
         void Awake()
         {
@@ -290,11 +290,6 @@ namespace Farion.UI.Gameplay
             if (inventoryPanel == null)
             {
                 inventoryPanel = GetComponentInChildren<InventoryPanelPresenter>(true);
-            }
-
-            if (sessionController == null)
-            {
-                sessionController = GetComponent<GameplaySessionController>();
             }
 
             uiSystemRoot ??= UiCompositionScope.FindSystemRoot(this);

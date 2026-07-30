@@ -105,7 +105,8 @@ resource streaming and pooling, revisioned inventory/equipment/fleet domain
 aggregates, reusable inventory Unity projection, authoritative equipment
 location ledger and loadout transactions, equipment/slot authoring contracts,
 registry installation policy, inventory and definition registries, gameplay UI
-focus, possession/boarding composition, schema-4 save/load, centralized input
+focus, possession/boarding composition, schema-5 save/load with schema-3/4
+migration, centralized input
 actions, application flow, audio assembly isolation, compiler-enforced pure
 domain assembly, explicit local-session identity, shared runtime/save
 composition bindings, build validation, session-owned harvesting/crafting
@@ -120,11 +121,12 @@ commands, and the authored starter-shuttle `PersonalShipState`/cargo binding.
    owner exists.
 4. Apply one produced component through a real personal-ship upgrade and prove
    that its runtime effect has a single authority.
-5. Design schema `5` snapshots and schema-4 migration for the now-active
-   session, personal ship, containers, and equipment repository. Validate all
-   cross-references before replacing live state.
-6. Connect research completion to `FleetKnowledgeState` capability/blueprint
-   unlocks instead of direct stat bonuses.
+5. Add the unique-equipment repository and design its next-schema snapshot
+   only after its runtime owner exists. Validate every ownership
+   cross-reference before replacing live state.
+6. Extend the active research terminal content through
+   `FleetKnowledgeState` capability/blueprint unlocks instead of direct stat
+   bonuses.
 7. Prove the local planet, collection, processing, upgrade, and save/load loop
    before capital-ship production work.
 8. Define the machine aggregate, including queue, power, heat, condition,

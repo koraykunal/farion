@@ -38,7 +38,10 @@ namespace Farion.UI.Gameplay
         InventorySlotView focusedSlot;
         bool subscribed;
 
+        public event Action<InventoryPanelPresenter, InventoryStack> FocusedStackChanged;
         public InventoryContainerComponent Inventory => inventory;
+        public InventoryStack FocusedStack =>
+            focusedSlot != null ? focusedSlot.Stack : null;
 
         void Reset()
         {
@@ -193,6 +196,7 @@ namespace Farion.UI.Gameplay
 
             focusedSlot = slot;
             RefreshDetail(slot.Stack);
+            FocusedStackChanged?.Invoke(this, slot.Stack);
         }
 
         void RefreshHeader(int usedSlots, int totalSlots)

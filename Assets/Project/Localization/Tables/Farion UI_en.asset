@@ -390,6 +390,206 @@ MonoBehaviour:
     m_Localized: Confirmation is not available.
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058461
+    m_Localized: READY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058462
+    m_Localized: ACTION UNAVAILABLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058463
+    m_Localized: COMPLETED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058464
+    m_Localized: NONE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058465
+    m_Localized: TRANSFER DIRECTION SWAPPED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058466
+    m_Localized: NO ITEM SELECTED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058467
+    m_Localized: TRANSFERRED {0} {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058468
+    m_Localized: TRANSFER FAILED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058469
+    m_Localized: The transfer could not be completed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058470
+    m_Localized: CARGO TRANSFER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058471
+    m_Localized: SELECT AN ITEM AND TRANSFER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058472
+    m_Localized: NO RECIPE SELECTED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058473
+    m_Localized: STATION IS NOT READY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058474
+    m_Localized: CRAFTED {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058475
+    m_Localized: CRAFT FAILED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058476
+    m_Localized: The recipe could not be produced.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058477
+    m_Localized: "{0} TERMINAL"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058478
+    m_Localized: CRAFTING TERMINAL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058479
+    m_Localized: NO RECIPE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058480
+    m_Localized: This station has no available recipes.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058481
+    m_Localized: NO RECIPE AVAILABLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058482
+    m_Localized: INPUTS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058483
+    m_Localized: OUTPUTS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058484
+    m_Localized: NO RESEARCH SELECTED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058485
+    m_Localized: COMPLETED {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058486
+    m_Localized: RESEARCH FAILED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058487
+    m_Localized: The research could not be completed.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058488
+    m_Localized: RESEARCH TERMINAL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058489
+    m_Localized: NO RESEARCH
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058490
+    m_Localized: This terminal has no available research.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058491
+    m_Localized: NO RESEARCH AVAILABLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058492
+    m_Localized: "{0}  /  TIER {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058493
+    m_Localized: REQUIRED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058494
+    m_Localized: BLUEPRINTS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058495
+    m_Localized: CAPABILITIES
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058496
+    m_Localized: Open Crafting Terminal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058497
+    m_Localized: Open Research Terminal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058498
+    m_Localized: Open Cargo Transfer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058499
+    m_Localized: BACK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058500
+    m_Localized: Close terminal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058501
+    m_Localized: FABRICATE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058502
+    m_Localized: Consume selected materials
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058503
+    m_Localized: COMPLETE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058504
+    m_Localized: Spend requirements and unlock
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058505
+    m_Localized: TRANSFER ONE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058506
+    m_Localized: Move one unit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058507
+    m_Localized: TRANSFER STACK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058508
+    m_Localized: Move selected stack
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058509
+    m_Localized: SWAP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058510
+    m_Localized: Reverse direction
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

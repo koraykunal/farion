@@ -96,7 +96,7 @@ namespace Farion.UI.Navigation
 
         public Selectable ResolveFirstSelection()
         {
-            if (IsSelectable(firstSelection))
+            if (IsConfiguredSelectable(firstSelection))
             {
                 return firstSelection;
             }
@@ -125,6 +125,13 @@ namespace Farion.UI.Navigation
                    candidate.gameObject.activeInHierarchy &&
                    candidate.IsActive() &&
                    candidate.IsInteractable();
+        }
+
+        static bool IsConfiguredSelectable(Selectable candidate)
+        {
+            return candidate != null &&
+                   candidate.enabled &&
+                   candidate.interactable;
         }
     }
 }

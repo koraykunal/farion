@@ -206,8 +206,10 @@ namespace Farion.Tests.EditMode
         public void ClosingModalRestoresActualEventSystemSelection()
         {
             root = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
-            new GameObject("EventSystem", typeof(EventSystem))
-                .transform.SetParent(root.transform);
+            EventSystem eventSystem =
+                new GameObject("EventSystem", typeof(EventSystem))
+                    .GetComponent<EventSystem>();
+            eventSystem.transform.SetParent(root.transform);
 
             GameObject systemObject = new("UI_SystemRoot");
             systemObject.transform.SetParent(root.transform);
@@ -227,18 +229,18 @@ namespace Farion.Tests.EditMode
             GameObject pauseSelection =
                 pause.ResolveFirstSelection().gameObject;
             Assert.That(
-                EventSystem.current.currentSelectedGameObject,
+                eventSystem.currentSelectedGameObject,
                 Is.EqualTo(pauseSelection));
 
             router.Open(UiScreenId.Confirmation, animated: false);
             Assert.That(
-                EventSystem.current.currentSelectedGameObject,
+                eventSystem.currentSelectedGameObject,
                 Is.EqualTo(confirmation.ResolveFirstSelection().gameObject));
 
             router.CloseTop();
 
             Assert.That(
-                EventSystem.current.currentSelectedGameObject,
+                eventSystem.currentSelectedGameObject,
                 Is.EqualTo(pauseSelection));
         }
 

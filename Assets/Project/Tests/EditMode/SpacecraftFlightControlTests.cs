@@ -131,16 +131,76 @@ namespace Farion.Tests.EditMode
 
             Assert.That(input.Translation, Is.EqualTo(Vector3.one));
 
-            SpacecraftThrusterState effectsState = new(
-                Vector3.one,
-                Vector3.one,
-                SpacecraftThrusterCommand.None,
-                normalizedThrust: 1f,
-                engineActivity: 1f,
-                boostActive: false,
-                boostBlend: 0f);
-            Assert.That(effectsState.LocalTranslationInput, Is.EqualTo(Vector3.one));
-            Assert.That(effectsState.LocalRotationInput, Is.EqualTo(Vector3.one));
+            SpacecraftThrusterVfxFrame vfxFrame = new(
+                throttle: 1f,
+                boost: 0f,
+                heat: 0f,
+                damage: 0f,
+                atmosphereDensity: 0f,
+                relativeSpeed: 0f,
+                localTranslation: Vector3.one,
+                localRotation: Vector3.one,
+                localLinearAcceleration: Vector3.zero,
+                localAngularAcceleration: Vector3.zero,
+                thrusters: SpacecraftThrusterCommand.None);
+            Assert.That(vfxFrame.LocalTranslation, Is.EqualTo(Vector3.one));
+            Assert.That(vfxFrame.LocalRotation, Is.EqualTo(Vector3.one));
+        }
+
+        [Test]
+        public void RearMainVfxIgnoresTranslationThatDoesNotProduceForwardExhaust()
+        {
+            SpacecraftThrusterCommand reverse = new(
+                0f, 1f, 0f, 0f, 0f, 0f,
+                0f, 0f, 0f, 0f, 0f, 0f);
+            SpacecraftThrusterCommand strafe = new(
+                0f, 0f, 1f, 0f, 0f, 0f,
+                0f, 0f, 0f, 0f, 0f, 0f);
+            SpacecraftThrusterCommand vertical = new(
+                0f, 0f, 0f, 0f, 1f, 0f,
+                0f, 0f, 0f, 0f, 0f, 0f);
+
+            Assert.That(SpacecraftThrusterVfxController.CalculateMainThrustDemand(reverse), Is.Zero);
+            Assert.That(SpacecraftThrusterVfxController.CalculateMainThrustDemand(strafe), Is.Zero);
+            Assert.That(SpacecraftThrusterVfxController.CalculateMainThrustDemand(vertical), Is.Zero);
+        }
+
+        [Test]
+        public void RearMainVfxUsesForwardThrustAndRestrainedAngularStabilization()
+        {
+            SpacecraftThrusterCommand forward = new(
+                1f, 0f, 0f, 0f, 0f, 0f,
+                0f, 0f, 0f, 0f, 0f, 0f);
+            SpacecraftThrusterCommand yaw = new(
+                0f, 0f, 0f, 0f, 0f, 0f,
+                0f, 0f, 1f, 0f, 0f, 0f);
+
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateMainThrustDemand(forward),
+                Is.EqualTo(1f));
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateMainThrustDemand(yaw),
+                Is.EqualTo(0.18f).Within(0.0001f));
+        }
+
+        [Test]
+        public void RearMainVfxAccelerationLoadUsesOnlyPositiveForwardAxis()
+        {
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateForwardAccelerationLoad(
+                    new Vector3(30f, 30f, 0f),
+                    20f),
+                Is.Zero);
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateForwardAccelerationLoad(
+                    new Vector3(0f, 0f, -30f),
+                    20f),
+                Is.Zero);
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateForwardAccelerationLoad(
+                    new Vector3(0f, 0f, 10f),
+                    20f),
+                Is.EqualTo(0.5f).Within(0.0001f));
         }
 
         [Test]
@@ -244,6 +304,8 @@ namespace Farion.Tests.EditMode
             {
                 CelestialFrameProvider provider =
                     providerObject.AddComponent<CelestialFrameProvider>();
+                provider.enabled = false;
+                provider.enabled = true;
                 CelestialActorProbe probe = actorObject.AddComponent<CelestialActorProbe>();
 
                 Assert.That(probe.FrameProvider, Is.SameAs(provider));

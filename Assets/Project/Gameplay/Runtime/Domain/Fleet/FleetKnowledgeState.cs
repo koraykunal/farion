@@ -51,6 +51,44 @@ namespace Farion.Gameplay.Domain.Fleet
             return TryUnlock(discoveries, discoveryId, expectedRevision);
         }
 
+        public FleetOperationResult TryCompleteResearch(
+            DefinitionId researchId,
+            IReadOnlyList<DefinitionId> blueprintIds,
+            IReadOnlyList<DefinitionId> capabilityIds,
+            long expectedRevision = -1L)
+        {
+            if (expectedRevision >= 0L && expectedRevision != Revision)
+            {
+                return FleetOperationResult.StaleRevision;
+            }
+
+            if (!researchId.IsValid ||
+                !AllIdsAreValid(blueprintIds) ||
+                !AllIdsAreValid(capabilityIds))
+            {
+                return FleetOperationResult.InvalidIdentifier;
+            }
+
+            if (discoveries.Contains(researchId))
+            {
+                return FleetOperationResult.AlreadyExists;
+            }
+
+            int mutationCount = 1 +
+                                CountMissing(blueprints, blueprintIds) +
+                                CountMissing(capabilities, capabilityIds);
+            if (Revision > long.MaxValue - mutationCount)
+            {
+                return FleetOperationResult.CapacityExceeded;
+            }
+
+            discoveries.Add(researchId);
+            AddRange(blueprints, blueprintIds);
+            AddRange(capabilities, capabilityIds);
+            Revision += mutationCount;
+            return FleetOperationResult.Succeeded;
+        }
+
         FleetOperationResult TryUnlock(
             HashSet<DefinitionId> target,
             DefinitionId definitionId,
@@ -86,6 +124,60 @@ namespace Farion.Gameplay.Domain.Fleet
             foreach (DefinitionId definitionId in source)
             {
                 yield return definitionId;
+            }
+        }
+
+        static bool AllIdsAreValid(IReadOnlyList<DefinitionId> ids)
+        {
+            if (ids == null)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < ids.Count; i++)
+            {
+                if (!ids[i].IsValid)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        static int CountMissing(
+            HashSet<DefinitionId> target,
+            IReadOnlyList<DefinitionId> ids)
+        {
+            if (ids == null)
+            {
+                return 0;
+            }
+
+            HashSet<DefinitionId> unique = new();
+            for (int i = 0; i < ids.Count; i++)
+            {
+                if (!target.Contains(ids[i]))
+                {
+                    unique.Add(ids[i]);
+                }
+            }
+
+            return unique.Count;
+        }
+
+        static void AddRange(
+            HashSet<DefinitionId> target,
+            IReadOnlyList<DefinitionId> ids)
+        {
+            if (ids == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < ids.Count; i++)
+            {
+                target.Add(ids[i]);
             }
         }
     }

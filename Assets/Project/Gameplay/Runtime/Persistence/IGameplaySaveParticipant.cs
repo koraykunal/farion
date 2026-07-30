@@ -4,7 +4,7 @@ namespace Farion.Gameplay.Persistence
     {
         bool CanCapture(GameplaySaveContext context);
         bool CanApply(GameplaySaveData saveData, GameplaySaveContext context);
-        void Capture(GameplaySaveDataBuilder builder, GameplaySaveContext context);
+        void Capture(GameplaySaveCapture capture, GameplaySaveContext context);
         bool Apply(GameplaySaveData saveData, GameplaySaveContext context);
     }
 }

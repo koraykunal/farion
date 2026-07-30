@@ -9,6 +9,8 @@ namespace Farion.Gameplay.Crafting
         MissingResearch = 4,
         MissingIngredients = 5,
         NoOutputCapacity = 6,
-        UnauthorizedInventory = 7
+        UnauthorizedInventory = 7,
+        WrongStationType = 8,
+        RecipeNotOffered = 9
     }
 }

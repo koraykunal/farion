@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Farion.Gameplay.Actors;
 using UnityEngine;
 
@@ -119,15 +120,26 @@ namespace Farion.Gameplay.Flight
 
             if (landingGearColliders == null || landingGearColliders.Length == 0)
             {
-                Transform footprint = SpacecraftRigTransformResolver.FindChild(
-                    transform,
-                    "COL_Landing_Footprint");
-                Collider footprintCollider = footprint != null
-                    ? footprint.GetComponent<Collider>()
-                    : null;
-                landingGearColliders = footprintCollider != null
-                    ? new[] { footprintCollider }
-                    : Array.Empty<Collider>();
+                string[] contactNames =
+                {
+                    "COL_Landing_Front",
+                    "COL_Landing_Left",
+                    "COL_Landing_Right"
+                };
+                List<Collider> contacts = new(contactNames.Length);
+                for (int i = 0; i < contactNames.Length; i++)
+                {
+                    Transform contact = SpacecraftRigTransformResolver.FindChild(
+                        transform,
+                        contactNames[i]);
+                    if (contact != null &&
+                        contact.TryGetComponent(out Collider collider))
+                    {
+                        contacts.Add(collider);
+                    }
+                }
+
+                landingGearColliders = contacts.ToArray();
             }
         }
 

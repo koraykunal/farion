@@ -1,5 +1,7 @@
 using Farion.Core.Persistence;
 using Farion.Gameplay.Domain.Identity;
+using Farion.Gameplay.Inventory;
+using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Session;
 using Farion.Simulation.World;
@@ -14,6 +16,7 @@ namespace Farion.Tests.EditMode
     {
         [TestCase(3)]
         [TestCase(4)]
+        [TestCase(5)]
         public void SupportedSaveVersionsAreAccepted(int version)
         {
             Assert.That(SaveGameSchema.IsSupportedVersion(version), Is.True);
@@ -21,10 +24,55 @@ namespace Farion.Tests.EditMode
 
         [TestCase(0)]
         [TestCase(2)]
-        [TestCase(5)]
+        [TestCase(6)]
         public void UnsupportedSaveVersionsAreRejected(int version)
         {
             Assert.That(SaveGameSchema.IsSupportedVersion(version), Is.False);
+        }
+
+        [Test]
+        public void SchemaFourSaveMigratesWithExplicitCargoAndKnowledgeDefaults()
+        {
+            GameplaySaveData legacy =
+                JsonUtility.FromJson<GameplaySaveData>(
+                    "{\"schemaVersion\":4,\"savedAtUtc\":\"2026-07-30T00:00:00Z\"}");
+            InventoryContainerSnapshot cargoDefault = new(
+                "inventory.ship.starter.cargo",
+                12,
+                System.Array.Empty<InventoryStackSnapshot>());
+
+            bool migrated = GameplaySaveMigration.TryMigrateToCurrent(
+                legacy,
+                cargoDefault,
+                out GameplaySaveData current);
+
+            Assert.That(migrated, Is.True);
+            Assert.That(current.SchemaVersion, Is.EqualTo(5));
+            Assert.That(current.SourceSchemaVersion, Is.EqualTo(4));
+            Assert.That(current.PersonalShipCargo.ContainerId,
+                Is.EqualTo("inventory.ship.starter.cargo"));
+            Assert.That(current.PersonalShipCargo.Stacks, Is.Empty);
+            Assert.That(current.FleetKnowledge, Is.Not.Null);
+            Assert.That(current.FleetKnowledge.Capabilities, Is.Empty);
+        }
+
+        [Test]
+        public void SchemaFiveSaveRejectsMissingRequiredAggregates()
+        {
+            GameplaySaveData incomplete =
+                JsonUtility.FromJson<GameplaySaveData>(
+                    "{\"schemaVersion\":5,\"savedAtUtc\":\"2026-07-30T00:00:00Z\"}");
+            InventoryContainerSnapshot cargoDefault = new(
+                "inventory.ship.starter.cargo",
+                12,
+                System.Array.Empty<InventoryStackSnapshot>());
+
+            bool migrated = GameplaySaveMigration.TryMigrateToCurrent(
+                incomplete,
+                cargoDefault,
+                out _);
+
+            Assert.That(migrated, Is.False);
         }
 
         [Test]

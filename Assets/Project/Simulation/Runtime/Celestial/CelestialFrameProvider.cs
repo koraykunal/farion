@@ -19,7 +19,27 @@ namespace Farion.Simulation.Celestial
         static readonly List<CelestialFrameProvider> EnabledProviders = new();
         static CelestialFrameProvider active;
 
-        public static CelestialFrameProvider Active => active;
+        public static CelestialFrameProvider Active
+        {
+            get
+            {
+                if (active != null)
+                {
+                    return active;
+                }
+
+                EnabledProviders.RemoveAll(provider => provider == null);
+                if (EnabledProviders.Count > 0)
+                {
+                    active = EnabledProviders[^1];
+                    return active;
+                }
+
+                active = FindAnyObjectByType<CelestialFrameProvider>(
+                    FindObjectsInactive.Exclude);
+                return active;
+            }
+        }
         public GravitySimulation Simulation => simulation != null ? simulation : GravitySimulation.Active;
 
         void OnEnable()

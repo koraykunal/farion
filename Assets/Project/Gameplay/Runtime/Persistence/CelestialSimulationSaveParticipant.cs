@@ -14,9 +14,9 @@ namespace Farion.Gameplay.Persistence
                    context.GravitySimulation.CanApplySnapshots(saveData.CelestialBodies);
         }
 
-        public void Capture(GameplaySaveDataBuilder builder, GameplaySaveContext context)
+        public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
         {
-            context.GravitySimulation.CaptureSnapshots(builder.CelestialBodies);
+            context.GravitySimulation.CaptureSnapshots(capture.CelestialBodies);
         }
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)

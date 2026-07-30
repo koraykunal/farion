@@ -16,9 +16,9 @@ namespace Farion.Gameplay.Persistence
                    context.PossessionController.CanApplySnapshot(saveData.PlayerPossession);
         }
 
-        public void Capture(GameplaySaveDataBuilder builder, GameplaySaveContext context)
+        public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
         {
-            builder.SetPlayerPossession(context.PossessionController.CaptureSnapshot());
+            capture.SetPlayerPossession(context.PossessionController.CaptureSnapshot());
         }
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)

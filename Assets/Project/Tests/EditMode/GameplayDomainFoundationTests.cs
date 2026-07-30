@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Reflection;
+using Farion.Gameplay.Commands;
+using Farion.Gameplay.Crafting;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Economy;
@@ -7,6 +9,8 @@ using Farion.Gameplay.Domain.Fleet;
 using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Equipment;
 using Farion.Gameplay.Inventory;
+using Farion.Gameplay.Research;
+using Farion.Gameplay.Ships;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -301,6 +305,276 @@ namespace Farion.Tests.EditMode
             finally
             {
                 Object.DestroyImmediate(item);
+                Object.DestroyImmediate(owner);
+            }
+        }
+
+        [Test]
+        public void RuntimeInventoryTransferMovesStackAtomically()
+        {
+            GameObject sourceOwner = new("InventoryTransferSource");
+            GameObject destinationOwner = new("InventoryTransferDestination");
+            InventoryItemDefinition item =
+                ScriptableObject.CreateInstance<InventoryItemDefinition>();
+            try
+            {
+                sourceOwner.AddComponent<PersistentObjectId>().SetId("transfer.source");
+                destinationOwner.AddComponent<PersistentObjectId>().SetId("transfer.destination");
+                PlayerInventory source = sourceOwner.AddComponent<PlayerInventory>();
+                PlayerInventory destination = destinationOwner.AddComponent<PlayerInventory>();
+                SetPrivateField(item, "itemId", "item.transfer_test");
+
+                Assert.That(source.TryAdd(item, 5), Is.EqualTo(5));
+                InventoryTransferResult result =
+                    InventoryTransferTransaction.TryExecute(
+                        source,
+                        destination,
+                        item,
+                        3);
+
+                Assert.That(result, Is.EqualTo(InventoryTransferResult.Succeeded));
+                Assert.That(source.Count(item), Is.EqualTo(2));
+                Assert.That(destination.Count(item), Is.EqualTo(3));
+            }
+            finally
+            {
+                Object.DestroyImmediate(item);
+                Object.DestroyImmediate(destinationOwner);
+                Object.DestroyImmediate(sourceOwner);
+            }
+        }
+
+        [Test]
+        public void ResearchUnlockConsumesInputsAndPublishesFleetKnowledge()
+        {
+            GameObject owner = new("ResearchUnlockInventory");
+            InventoryItemDefinition sample =
+                ScriptableObject.CreateInstance<InventoryItemDefinition>();
+            InventoryItemDefinition plate =
+                ScriptableObject.CreateInstance<InventoryItemDefinition>();
+            ResearchDefinition research =
+                ScriptableObject.CreateInstance<ResearchDefinition>();
+            RecipeDefinition recipe =
+                ScriptableObject.CreateInstance<RecipeDefinition>();
+            try
+            {
+                owner.AddComponent<PersistentObjectId>().SetId("research.inventory");
+                PlayerInventory inventory = owner.AddComponent<PlayerInventory>();
+                SetPrivateField(sample, "itemId", "item.thermal_sample");
+                SetPrivateField(plate, "itemId", "item.nickel_plate_test");
+                SetPrivateField(recipe, "recipeId", "recipe.thermal_regulator_test");
+                SetPrivateField(research, "researchId", "research.thermal_test");
+                SetPrivateField(
+                    research,
+                    "requiredItems",
+                    new List<ItemStackDefinition>
+                    {
+                        CreateStack(sample, 4),
+                        CreateStack(plate, 1)
+                    });
+                SetPrivateField(
+                    research,
+                    "unlockedRecipes",
+                    new List<RecipeDefinition> { recipe });
+                SetPrivateField(
+                    research,
+                    "unlockedCapabilityIds",
+                    new List<string> { "capability.environment.thermal_test" });
+                FleetKnowledgeState knowledge = new();
+                inventory.TryAdd(sample, 4);
+                inventory.TryAdd(plate, 1);
+
+                ResearchUnlockResult result =
+                    ResearchUnlockTransaction.TryExecute(
+                        research,
+                        inventory,
+                        knowledge);
+
+                Assert.That(result, Is.EqualTo(ResearchUnlockResult.Succeeded));
+                Assert.That(inventory.Count(sample), Is.Zero);
+                Assert.That(inventory.Count(plate), Is.Zero);
+                Assert.That(
+                    knowledge.HasDiscovery(new DefinitionId("research.thermal_test")),
+                    Is.True);
+                Assert.That(
+                    knowledge.HasBlueprint(new DefinitionId("recipe.thermal_regulator_test")),
+                    Is.True);
+                Assert.That(
+                    knowledge.HasCapability(
+                        new DefinitionId("capability.environment.thermal_test")),
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(recipe);
+                Object.DestroyImmediate(research);
+                Object.DestroyImmediate(plate);
+                Object.DestroyImmediate(sample);
+                Object.DestroyImmediate(owner);
+            }
+        }
+
+        [Test]
+        public void FleetKnowledgeResearchCompletionRejectsInvalidSetAtomically()
+        {
+            FleetKnowledgeState knowledge = new();
+            DefinitionId researchId = new("research.atomic");
+            DefinitionId blueprintId = new("recipe.atomic");
+
+            FleetOperationResult result = knowledge.TryCompleteResearch(
+                researchId,
+                new[] { blueprintId },
+                new[] { default(DefinitionId) });
+
+            Assert.That(
+                result,
+                Is.EqualTo(FleetOperationResult.InvalidIdentifier));
+            Assert.That(knowledge.Revision, Is.Zero);
+            Assert.That(knowledge.HasDiscovery(researchId), Is.False);
+            Assert.That(knowledge.HasBlueprint(blueprintId), Is.False);
+        }
+
+        [Test]
+        public void StationAndTerminalRejectDefinitionsTheyDoNotOffer()
+        {
+            GameObject owner = new("TerminalOfferBoundary");
+            RecipeDefinition recipe =
+                ScriptableObject.CreateInstance<RecipeDefinition>();
+            ResearchDefinition research =
+                ScriptableObject.CreateInstance<ResearchDefinition>();
+            InventoryItemDefinition output =
+                ScriptableObject.CreateInstance<InventoryItemDefinition>();
+            try
+            {
+                SetPrivateField(recipe, "recipeId", "recipe.offer_boundary");
+                SetPrivateField(
+                    recipe,
+                    "stationType",
+                    CraftingStationType.Refinery);
+                SetPrivateField(output, "itemId", "item.offer_boundary");
+                SetPrivateField(
+                    recipe,
+                    "outputs",
+                    new List<ItemStackDefinition> { CreateStack(output, 1) });
+                SetPrivateField(
+                    research,
+                    "researchId",
+                    "research.offer_boundary");
+
+                CraftingStationRuntime station =
+                    owner.AddComponent<CraftingStationRuntime>();
+                ResearchTerminalRuntime terminal =
+                    owner.AddComponent<ResearchTerminalRuntime>();
+
+                Assert.That(station.CanOffer(recipe), Is.False);
+                Assert.That(terminal.CanOffer(research), Is.False);
+
+                SetPrivateField(
+                    station,
+                    "availableRecipes",
+                    new List<RecipeDefinition> { recipe });
+                SetPrivateField(
+                    terminal,
+                    "availableResearch",
+                    new List<ResearchDefinition> { research });
+
+                Assert.That(station.CanOffer(recipe), Is.True);
+                Assert.That(terminal.CanOffer(research), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(owner);
+                Object.DestroyImmediate(recipe);
+                Object.DestroyImmediate(research);
+                Object.DestroyImmediate(output);
+            }
+        }
+
+        [Test]
+        public void PersonalShipCargoSnapshotRestoresStackState()
+        {
+            GameObject owner = new("PersonalShipCargoSnapshot");
+            InventoryItemDefinition item =
+                ScriptableObject.CreateInstance<InventoryItemDefinition>();
+            GameplayDefinitionRegistry registry =
+                ScriptableObject.CreateInstance<GameplayDefinitionRegistry>();
+            try
+            {
+                owner.AddComponent<PersistentObjectId>().SetId("ship.snapshot");
+                PersonalShipCargoInventory cargo =
+                    owner.AddComponent<PersonalShipCargoInventory>();
+                SetPrivateField(item, "itemId", "item.cargo_snapshot");
+                SetPrivateField(
+                    registry,
+                    "inventoryItems",
+                    new List<InventoryItemDefinition> { item });
+
+                Assert.That(cargo.TryAdd(item, 6), Is.EqualTo(6));
+                InventoryContainerSnapshot snapshot =
+                    cargo.CaptureContainerSnapshot();
+                Assert.That(cargo.TryRemove(item, 6), Is.EqualTo(6));
+                Assert.That(cargo.Count(item), Is.Zero);
+
+                Assert.That(
+                    cargo.ApplyContainerSnapshot(snapshot, registry),
+                    Is.True);
+                Assert.That(cargo.Count(item), Is.EqualTo(6));
+                Assert.That(snapshot.ContainerId, Is.EqualTo(cargo.ContainerId.Value));
+            }
+            finally
+            {
+                Object.DestroyImmediate(registry);
+                Object.DestroyImmediate(item);
+                Object.DestroyImmediate(owner);
+            }
+        }
+
+        [Test]
+        public void CraftingExecutorRejectsRecipeAtWrongStationType()
+        {
+            GameObject owner = new("WrongStationCrafting");
+            InventoryItemDefinition input =
+                ScriptableObject.CreateInstance<InventoryItemDefinition>();
+            InventoryItemDefinition output =
+                ScriptableObject.CreateInstance<InventoryItemDefinition>();
+            RecipeDefinition recipe =
+                ScriptableObject.CreateInstance<RecipeDefinition>();
+            try
+            {
+                owner.AddComponent<PersistentObjectId>().SetId("crafting.station");
+                PlayerInventory inventory = owner.AddComponent<PlayerInventory>();
+                SetPrivateField(input, "itemId", "item.station_input");
+                SetPrivateField(output, "itemId", "item.station_output");
+                SetPrivateField(recipe, "recipeId", "recipe.station_test");
+                SetPrivateField(
+                    recipe,
+                    "stationType",
+                    CraftingStationType.Fabricator);
+                SetPrivateField(
+                    recipe,
+                    "inputs",
+                    new List<ItemStackDefinition> { CreateStack(input, 1) });
+                SetPrivateField(
+                    recipe,
+                    "outputs",
+                    new List<ItemStackDefinition> { CreateStack(output, 1) });
+                inventory.TryAdd(input, 1);
+
+                CraftingRecipeResult result = CraftingRecipeExecutor.CanCraft(
+                    recipe,
+                    CraftingStationType.Refinery,
+                    inventory,
+                    hasRequiredResearch: true);
+
+                Assert.That(result, Is.EqualTo(CraftingRecipeResult.WrongStationType));
+                Assert.That(inventory.Count(input), Is.EqualTo(1));
+                Assert.That(inventory.Count(output), Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(recipe);
+                Object.DestroyImmediate(output);
+                Object.DestroyImmediate(input);
                 Object.DestroyImmediate(owner);
             }
         }
@@ -708,6 +982,16 @@ namespace Farion.Tests.EditMode
             SetPrivateField(slot, "slotId", slotId);
             SetPrivateField(slot, "slotTypeId", slotTypeId);
             SetPrivateField(slot, "maximumSize", maximumSize);
+        }
+
+        static ItemStackDefinition CreateStack(
+            InventoryItemDefinition item,
+            int amount)
+        {
+            ItemStackDefinition stack = new();
+            SetPrivateField(stack, "item", item);
+            SetPrivateField(stack, "amount", amount);
+            return stack;
         }
 
         static void SetPrivateField<T>(object target, string fieldName, T value)

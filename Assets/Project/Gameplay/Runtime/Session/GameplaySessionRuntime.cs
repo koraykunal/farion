@@ -2,6 +2,7 @@ using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Domain.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
+using Farion.Gameplay.Research;
 using Farion.Gameplay.Ships;
 
 namespace Farion.Gameplay.Session
@@ -21,6 +22,7 @@ namespace Farion.Gameplay.Session
         public InventoryContainerComponent LocalInventory =>
             Bindings.LocalPlayerInventory;
         public PlayerPossessionController Possession => Bindings.Possession;
+        public FleetProgressionRuntime FleetProgression => Bindings.FleetProgression;
         public PersonalShipRuntimeBinding PersonalShipBinding =>
             Bindings.PersonalShip;
         public PersonalShipState PersonalShip =>

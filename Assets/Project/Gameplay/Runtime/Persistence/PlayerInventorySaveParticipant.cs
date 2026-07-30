@@ -16,9 +16,9 @@ namespace Farion.Gameplay.Persistence
                    context.PlayerInventory.CanApplySnapshot(saveData.PlayerInventory, context.Definitions);
         }
 
-        public void Capture(GameplaySaveDataBuilder builder, GameplaySaveContext context)
+        public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
         {
-            builder.SetPlayerInventory(context.PlayerInventory.CaptureSnapshot());
+            capture.SetPlayerInventory(context.PlayerInventory.CaptureSnapshot());
         }
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)
