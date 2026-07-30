@@ -3,16 +3,14 @@ using System.Collections.Generic;
 using Farion.App.Flow;
 using Farion.Core.Persistence;
 using Farion.Core.Physics;
-using Farion.Gameplay.Crafting;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Identity;
-using Farion.Gameplay.Equipment;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Persistence;
-using Farion.Gameplay.Research;
 using Farion.Gameplay.Resources;
+using Farion.Gameplay.Session;
 using Farion.Gameplay.Ships;
 using UnityEditor;
 using UnityEditor.Build;
@@ -179,13 +177,18 @@ namespace Farion.Editor.Validation
                 if (gameObject.TryGetComponent(out GameplaySessionController sessionController))
                 {
                     ValidateRequiredReference(scenePath, sessionController, "flowSettings", report);
-                    ValidateRequiredReference(scenePath, sessionController, "saveCoordinator", report);
+                    ValidateRequiredReference(scenePath, sessionController, "runtimeRoot", report);
                     ValidateGameplaySession(scenePath, sessionController, report);
                 }
 
                 if (gameObject.TryGetComponent(out GameplaySaveCoordinator saveCoordinator))
                 {
                     ValidateSaveCoordinator(scenePath, saveCoordinator, report);
+                }
+
+                if (gameObject.TryGetComponent(out GameplayRuntimeRoot runtimeRoot))
+                {
+                    ValidateGameplayRuntimeRoot(scenePath, runtimeRoot, report);
                 }
             }
         }
@@ -283,12 +286,27 @@ namespace Farion.Editor.Validation
             GameplaySaveCoordinator coordinator,
             FarionValidationReport report)
         {
-            ValidateRequiredReference(scenePath, coordinator, "definitions", report);
-            ValidateRequiredReference(scenePath, coordinator, "gravitySimulation", report);
-            ValidateRequiredReference(scenePath, coordinator, "originRebaser", report);
-            ValidateRequiredReference(scenePath, coordinator, "playerInventory", report);
-            ValidateRequiredReference(scenePath, coordinator, "possessionController", report);
-            ValidateRequiredReference(scenePath, coordinator, "fleetProgression", report);
+            ValidateRequiredReference(scenePath, coordinator, "runtimeRoot", report);
+        }
+
+        static void ValidateGameplayRuntimeRoot(
+            string scenePath,
+            GameplayRuntimeRoot runtimeRoot,
+            FarionValidationReport report)
+        {
+            ValidateRequiredReference(scenePath, runtimeRoot, "definitions", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "gravitySimulation", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "originRebaser", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "localPlayerInventory", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "possession", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "assignedShuttle", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "fleetKnowledge", report);
+
+            if (!runtimeRoot.HasValidAuthoring)
+            {
+                report.AddError(
+                    $"{scenePath}: {runtimeRoot.name} cannot compose valid gameplay runtime bindings.");
+            }
         }
 
         static void ValidateGameplaySession(
@@ -324,7 +342,7 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, motor, "flightProfile", report);
             ValidateRequiredReference(scenePath, motor, "celestialProbe", report);
             ValidateRequiredReference(scenePath, motor, "surfaceContactProbe", report);
-            ValidatePersonalShipBinding(scenePath, motor, report);
+            ValidateShuttleBinding(scenePath, motor, report);
 
             SpacecraftFlightProfile profile = motor.FlightProfile;
             if (profile != null)
@@ -429,37 +447,37 @@ namespace Farion.Editor.Validation
             report.AddWarning($"{scenePath}: {motor.name} has no spacecraft VFX Graph thruster controller.");
         }
 
-        static void ValidatePersonalShipBinding(
+        static void ValidateShuttleBinding(
             string scenePath,
             SpacecraftMotor motor,
             FarionValidationReport report)
         {
-            PersonalShipRuntimeBinding binding =
-                motor.GetComponent<PersonalShipRuntimeBinding>();
+            ShuttleRuntimeBinding binding =
+                motor.GetComponent<ShuttleRuntimeBinding>();
             if (binding == null)
             {
                 report.AddError(
-                    $"{scenePath}: {motor.name} has no PersonalShipRuntimeBinding.");
+                    $"{scenePath}: {motor.name} has no ShuttleRuntimeBinding.");
                 return;
             }
 
             if (!binding.HasValidAuthoring)
             {
                 report.AddError(
-                    $"{scenePath}: {motor.name} has invalid personal-ship authoring.");
+                    $"{scenePath}: {motor.name} has invalid shuttle authoring.");
             }
 
             if (binding.Motor != motor)
             {
                 report.AddError(
-                    $"{scenePath}: {motor.name} personal-ship binding targets another motor.");
+                    $"{scenePath}: {motor.name} shuttle binding targets another motor.");
             }
 
-            PersonalShipCargoInventory cargo = binding.Cargo;
+            ShuttleCargoInventory cargo = binding.Cargo;
             if (cargo == null || cargo.gameObject != motor.gameObject)
             {
                 report.AddError(
-                    $"{scenePath}: {motor.name} requires one root-owned PersonalShipCargoInventory.");
+                    $"{scenePath}: {motor.name} requires one root-owned ShuttleCargoInventory.");
                 return;
             }
 
@@ -701,6 +719,7 @@ namespace Farion.Editor.Validation
                         $"{scenePath}: {motor.name}/{nozzle.name} requires exactly one authored " +
                         $"core, inner plasma, outer plasma, shock diamond, and distortion layer.");
                 }
+
             }
 
             if (!hasLeft || !hasRight)
@@ -774,30 +793,10 @@ namespace Farion.Editor.Validation
                 SerializedObject serialized = new(registry);
                 SerializedProperty inventoryItems =
                     serialized.FindProperty("inventoryItems");
-                SerializedProperty equipment =
-                    serialized.FindProperty("equipment");
-                SerializedProperty equipmentSlots =
-                    serialized.FindProperty("equipmentSlots");
                 ValidateDefinitionList<InventoryItemDefinition>(
                     inventoryItems, item => item.ItemId, path, report);
                 ValidateDefinitionList<ResourceNodeDefinition>(
                     serialized.FindProperty("resourceNodes"), item => item.NodeId, path, report);
-                ValidateDefinitionList<RecipeDefinition>(
-                    serialized.FindProperty("recipes"), item => item.RecipeId, path, report);
-                ValidateDefinitionList<ResearchDefinition>(
-                    serialized.FindProperty("research"), item => item.ResearchId, path, report);
-                ValidateDefinitionList<EquipmentDefinition>(
-                    equipment, item => item.EquipmentId, path, report);
-                ValidateDefinitionList<EquipmentSlotDefinition>(
-                    equipmentSlots, item => item.SlotId, path, report);
-                ValidateResearchCapabilities(
-                    serialized.FindProperty("research"), path, report);
-                ValidateEquipmentDefinitions(
-                    inventoryItems,
-                    equipment,
-                    equipmentSlots,
-                    path,
-                    report);
             }
         }
 
@@ -827,144 +826,6 @@ namespace Farion.Editor.Validation
                 else if (!ids.Add(id))
                 {
                     report.AddError($"{registryPath}: duplicate {typeof(T).Name} id '{id}'.");
-                }
-            }
-        }
-
-        static void ValidateResearchCapabilities(
-            SerializedProperty researchList,
-            string registryPath,
-            FarionValidationReport report)
-        {
-            if (researchList == null || !researchList.isArray)
-            {
-                return;
-            }
-
-            for (int i = 0; i < researchList.arraySize; i++)
-            {
-                ResearchDefinition definition =
-                    researchList.GetArrayElementAtIndex(i).objectReferenceValue
-                    as ResearchDefinition;
-                if (definition == null)
-                {
-                    continue;
-                }
-
-                HashSet<DefinitionId> capabilityIds = new();
-                IReadOnlyList<string> unlockedIds = definition.UnlockedCapabilityIds;
-                for (int capabilityIndex = 0;
-                     capabilityIndex < unlockedIds.Count;
-                     capabilityIndex++)
-                {
-                    string rawId = unlockedIds[capabilityIndex];
-                    if (!DefinitionId.TryCreate(rawId, out DefinitionId capabilityId))
-                    {
-                        report.AddError(
-                            $"{registryPath}: {definition.name} has an invalid capability id at index {capabilityIndex}.");
-                    }
-                    else if (!capabilityIds.Add(capabilityId))
-                    {
-                        report.AddError(
-                            $"{registryPath}: {definition.name} has duplicate capability id '{capabilityId}'.");
-                    }
-                }
-            }
-        }
-
-        static void ValidateEquipmentDefinitions(
-            SerializedProperty inventoryItems,
-            SerializedProperty equipment,
-            SerializedProperty equipmentSlots,
-            string registryPath,
-            FarionValidationReport report)
-        {
-            if (inventoryItems == null ||
-                equipment == null ||
-                equipmentSlots == null ||
-                !inventoryItems.isArray ||
-                !equipment.isArray ||
-                !equipmentSlots.isArray)
-            {
-                return;
-            }
-
-            HashSet<InventoryItemDefinition> registeredItems = new();
-            for (int i = 0; i < inventoryItems.arraySize; i++)
-            {
-                InventoryItemDefinition item =
-                    inventoryItems.GetArrayElementAtIndex(i).objectReferenceValue
-                    as InventoryItemDefinition;
-                if (item != null)
-                {
-                    registeredItems.Add(item);
-                }
-            }
-
-            HashSet<DefinitionId> registeredSlotTypes = new();
-            for (int i = 0; i < equipmentSlots.arraySize; i++)
-            {
-                EquipmentSlotDefinition slot =
-                    equipmentSlots.GetArrayElementAtIndex(i).objectReferenceValue
-                    as EquipmentSlotDefinition;
-                if (slot == null || !slot.IsValid)
-                {
-                    if (slot != null)
-                    {
-                        report.AddError(
-                            $"{registryPath}: equipment slot '{slot.name}' is invalid.");
-                    }
-
-                    continue;
-                }
-
-                DefinitionId.TryCreate(slot.SlotTypeId, out DefinitionId slotTypeId);
-                registeredSlotTypes.Add(slotTypeId);
-            }
-
-            for (int i = 0; i < equipment.arraySize; i++)
-            {
-                EquipmentDefinition definition =
-                    equipment.GetArrayElementAtIndex(i).objectReferenceValue
-                    as EquipmentDefinition;
-                if (definition == null)
-                {
-                    continue;
-                }
-
-                if (!definition.IsValid)
-                {
-                    report.AddError(
-                        $"{registryPath}: equipment definition '{definition.name}' is invalid.");
-                    continue;
-                }
-
-                if (!registeredItems.Contains(definition.Item))
-                {
-                    report.AddError(
-                        $"{registryPath}: equipment '{definition.name}' references an item that is not registered.");
-                }
-
-                IReadOnlyList<string> compatibleTypes =
-                    definition.CompatibleSlotTypeIds;
-                HashSet<DefinitionId> uniqueTypes = new();
-                for (int typeIndex = 0;
-                     typeIndex < compatibleTypes.Count;
-                     typeIndex++)
-                {
-                    if (!DefinitionId.TryCreate(
-                            compatibleTypes[typeIndex],
-                            out DefinitionId slotTypeId) ||
-                        !uniqueTypes.Add(slotTypeId))
-                    {
-                        report.AddError(
-                            $"{registryPath}: equipment '{definition.name}' has an invalid or duplicate slot type at index {typeIndex}.");
-                    }
-                    else if (!registeredSlotTypes.Contains(slotTypeId))
-                    {
-                        report.AddError(
-                            $"{registryPath}: equipment '{definition.name}' references unregistered slot type '{slotTypeId}'.");
-                    }
                 }
             }
         }

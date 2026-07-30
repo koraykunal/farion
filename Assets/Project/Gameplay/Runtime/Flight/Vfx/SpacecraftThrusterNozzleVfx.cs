@@ -269,7 +269,7 @@ namespace Farion.Gameplay.Flight
         void ApplyGraphs(SpacecraftThrusterVfxFrame frame, float deltaTime)
         {
             float boostSparks = Mathf.InverseLerp(sparksBoostThreshold, 1f, frame.Boost);
-            float sparksLoad = Mathf.Clamp01(Mathf.Max(frame.Damage, boostSparks));
+            float sparksLoad = Mathf.Clamp01(boostSparks);
             ApplyGraph(
                 sparksGraph,
                 sparksGraphTuning,
@@ -312,7 +312,6 @@ namespace Farion.Gameplay.Flight
             SetFloat(graph, VfxIds.SideLoad, sideLoad);
             SetFloat(graph, VfxIds.Boost, frame.Boost);
             SetFloat(graph, VfxIds.Heat, frame.Heat);
-            SetFloat(graph, VfxIds.Damage, frame.Damage);
             SetFloat(graph, VfxIds.AtmosphereDensity, frame.AtmosphereDensity);
             SetFloat(graph, VfxIds.RelativeSpeed, frame.RelativeSpeed);
             SetVector3(graph, VfxIds.LocalTranslation, frame.LocalTranslation);
@@ -515,7 +514,6 @@ namespace Farion.Gameplay.Flight
             public static readonly int SideLoad = Shader.PropertyToID("SideLoad");
             public static readonly int Boost = Shader.PropertyToID("Boost");
             public static readonly int Heat = Shader.PropertyToID("Heat");
-            public static readonly int Damage = Shader.PropertyToID("Damage");
             public static readonly int AtmosphereDensity = Shader.PropertyToID("AtmosphereDensity");
             public static readonly int RelativeSpeed = Shader.PropertyToID("RelativeSpeed");
             public static readonly int LocalTranslation = Shader.PropertyToID("LocalTranslation");

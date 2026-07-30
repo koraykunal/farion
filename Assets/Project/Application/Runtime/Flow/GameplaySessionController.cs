@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Farion.App.Flow
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(GameplaySaveCoordinator))]
+    [RequireComponent(typeof(GameplayRuntimeRoot))]
     public sealed class GameplaySessionController : MonoBehaviour
     {
         const string DefaultLocalPlayerId = "player.local";
@@ -18,6 +18,9 @@ namespace Farion.App.Flow
 
         [Header("Flow")]
         [SerializeField] GameFlowSettings flowSettings;
+
+        [Header("Runtime")]
+        [SerializeField] GameplayRuntimeRoot runtimeRoot;
         [SerializeField] GameplaySaveCoordinator saveCoordinator;
 
         GameplaySessionRuntime runtime;
@@ -94,7 +97,7 @@ namespace Farion.App.Flow
         public bool TryGetRuntime(out GameplaySessionRuntime currentRuntime)
         {
             ResolveReferences();
-            if (saveCoordinator == null)
+            if (runtimeRoot == null)
             {
                 currentRuntime = null;
                 return false;
@@ -103,11 +106,11 @@ namespace Farion.App.Flow
             if (runtime == null ||
                 !runtime.Matches(
                     localPlayerId,
-                    saveCoordinator.RuntimeBindings))
+                    runtimeRoot.Bindings))
             {
                 GameplaySessionRuntime.TryCreate(
                     localPlayerId,
-                    saveCoordinator.RuntimeBindings,
+                    runtimeRoot.Bindings,
                     out runtime);
             }
 
@@ -142,6 +145,7 @@ namespace Farion.App.Flow
 
         void ResolveReferences()
         {
+            runtimeRoot ??= GetComponent<GameplayRuntimeRoot>();
             saveCoordinator ??= GetComponent<GameplaySaveCoordinator>();
         }
     }

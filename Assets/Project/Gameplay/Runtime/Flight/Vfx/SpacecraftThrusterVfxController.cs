@@ -1,6 +1,5 @@
 using System;
 using Farion.Gameplay.Actors;
-using Farion.Gameplay.Ships;
 using Farion.Simulation.Celestial;
 using UnityEngine;
 
@@ -14,7 +13,6 @@ namespace Farion.Gameplay.Flight
         [SerializeField] SpacecraftMotor motor;
         [SerializeField] CelestialActorProbe celestialProbe;
         [SerializeField] SpacecraftOceanInteractor oceanInteractor;
-        [SerializeField] PersonalShipRuntimeBinding shipBinding;
 
         [Header("Response")]
         [Min(0.01f)]
@@ -113,7 +111,6 @@ namespace Farion.Gameplay.Flight
                 throttle,
                 boost,
                 heat,
-                target.Damage,
                 atmosphereDensity,
                 target.RelativeSpeed,
                 target.LocalTranslation,
@@ -131,7 +128,6 @@ namespace Farion.Gameplay.Flight
             motor ??= GetComponentInParent<SpacecraftMotor>();
             celestialProbe ??= GetComponentInParent<CelestialActorProbe>();
             oceanInteractor ??= GetComponentInParent<SpacecraftOceanInteractor>();
-            shipBinding ??= GetComponentInParent<PersonalShipRuntimeBinding>();
         }
 
         void AutoAssignNozzles()
@@ -183,13 +179,10 @@ namespace Farion.Gameplay.Flight
                 targetBoost * boostHeatContribution +
                 targetAtmosphereDensity * atmosphereHeatContribution +
                 speedHeat);
-            float targetDamage = SampleDamage();
-
             return new SpacecraftThrusterVfxFrame(
                 targetThrottle,
                 targetBoost,
                 targetHeat,
-                targetDamage,
                 targetAtmosphereDensity,
                 movement.RelativeSpeed,
                 movement.Command.Translation,
@@ -251,18 +244,6 @@ namespace Farion.Gameplay.Flight
         {
             float forwardAcceleration = Mathf.Max(0f, localLinearAcceleration.z);
             return Mathf.Clamp01(forwardAcceleration / Mathf.Max(0.01f, referenceAcceleration));
-        }
-
-        float SampleDamage()
-        {
-            if (shipBinding == null ||
-                !shipBinding.IsInitialized ||
-                shipBinding.State == null)
-            {
-                return 0f;
-            }
-
-            return Mathf.Clamp01(1f - (float)shipBinding.State.HullNormalized);
         }
 
         static float Smooth(float current, float target, float response, float deltaTime)

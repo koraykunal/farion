@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   itemId: item.ice_crystal
   displayName: Ice Crystal
-  storageMode: 0
   maxStackSize: 20
   category: 3
   form: 0

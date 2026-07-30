@@ -7,29 +7,29 @@ namespace Farion.Gameplay.Session
         GameplaySessionIdentity(
             PersistentEntityId localPlayerId,
             PersistentEntityId explorerActorId,
-            PersistentEntityId personalShipId,
+            PersistentEntityId assignedShuttleId,
             PersistentEntityId carriedInventoryId)
         {
             LocalPlayerId = localPlayerId;
             ExplorerActorId = explorerActorId;
-            PersonalShipId = personalShipId;
+            AssignedShuttleId = assignedShuttleId;
             CarriedInventoryId = carriedInventoryId;
         }
 
         public PersistentEntityId LocalPlayerId { get; }
         public PersistentEntityId ExplorerActorId { get; }
-        public PersistentEntityId PersonalShipId { get; }
+        public PersistentEntityId AssignedShuttleId { get; }
         public PersistentEntityId CarriedInventoryId { get; }
         public bool IsValid =>
             LocalPlayerId.IsValid &&
             ExplorerActorId.IsValid &&
-            PersonalShipId.IsValid &&
+            AssignedShuttleId.IsValid &&
             CarriedInventoryId.IsValid;
 
         public static bool TryCreate(
             string localPlayerId,
             string explorerActorId,
-            string personalShipId,
+            string assignedShuttleId,
             PersistentEntityId carriedInventoryId,
             out GameplaySessionIdentity identity)
         {
@@ -41,7 +41,7 @@ namespace Farion.Gameplay.Session
                     explorerActorId,
                     out PersistentEntityId resolvedExplorerId) ||
                 !PersistentEntityId.TryCreate(
-                    personalShipId,
+                    assignedShuttleId,
                     out PersistentEntityId resolvedShipId) ||
                 !carriedInventoryId.IsValid)
             {

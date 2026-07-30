@@ -1,36 +1,21 @@
 using System;
-using System.Collections.Generic;
-using Farion.Core.Physics;
 using Farion.Core.Persistence;
-using Farion.Gameplay.Definitions;
-using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Interaction;
-using Farion.Gameplay.Research;
-using Farion.Gameplay.Resources;
 using Farion.Gameplay.Session;
-using Farion.Simulation.World;
 using UnityEngine;
 
 namespace Farion.Gameplay.Persistence
 {
     [DefaultExecutionOrder(500)]
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(GameplayRuntimeRoot))]
     public sealed class GameplaySaveCoordinator : MonoBehaviour
     {
         [Header("Slot")]
         [SerializeField] string slotName = SaveGameSlotCatalog.DefaultSlotName;
         [SerializeField] bool consumeStartupRequestOnStart = true;
 
-        [Header("Definitions")]
-        [SerializeField] GameplayDefinitionRegistry definitions;
-
-        [Header("Runtime Sources")]
-        [SerializeField] GravitySimulation gravitySimulation;
-        [SerializeField] WorldOriginRebaser originRebaser;
-        [SerializeField] PlayerInventory playerInventory;
-        [SerializeField] PlayerPossessionController possessionController;
-        [SerializeField] FleetProgressionRuntime fleetProgression;
-        [SerializeField] List<ResourceDepositRuntimeSpawner> resourceStreamers = new();
+        [Header("Runtime")]
+        [SerializeField] GameplayRuntimeRoot runtimeRoot;
 
         readonly IGameplaySaveParticipant[] saveParticipants =
         {
@@ -38,25 +23,17 @@ namespace Farion.Gameplay.Persistence
             new WorldOriginSaveParticipant(),
             new PlayerPossessionSaveParticipant(),
             new PlayerInventorySaveParticipant(),
-            new PersonalShipCargoSaveParticipant(),
-            new FleetProgressionSaveParticipant(),
+            new ShuttleCargoSaveParticipant(),
+            new FleetKnowledgeSaveParticipant(),
             new ResourceDepositSaveParticipant()
         };
 
         SaveGameOperationResult lastSaveResult;
         SaveGameOperationResult lastLoadResult;
-        GameplayRuntimeBindings runtimeBindings;
 
         public string SlotName => SaveGameSlotCatalog.ResolveSlotName(slotName);
         public GameplayRuntimeBindings RuntimeBindings =>
-            runtimeBindings ??= new GameplayRuntimeBindings(
-                definitions,
-                gravitySimulation,
-                originRebaser,
-                playerInventory,
-                possessionController,
-                ResolveFleetProgression(),
-                resourceStreamers);
+            ResolveRuntimeRoot()?.Bindings;
         public SaveGameOperationResult LastSaveResult => lastSaveResult;
         public SaveGameOperationResult LastLoadResult => lastLoadResult;
 
@@ -81,10 +58,7 @@ namespace Farion.Gameplay.Persistence
         void OnValidate()
         {
             slotName = SaveGameSlotCatalog.ResolveSlotName(slotName);
-            fleetProgression ??= GetComponent<FleetProgressionRuntime>();
-            resourceStreamers ??= new List<ResourceDepositRuntimeSpawner>();
-            resourceStreamers.RemoveAll(streamer => streamer == null);
-            runtimeBindings = null;
+            ResolveRuntimeRoot();
         }
 
         [ContextMenu("Save Game")]
@@ -289,11 +263,10 @@ namespace Farion.Gameplay.Persistence
             return new GameplaySaveContext(RuntimeBindings);
         }
 
-        FleetProgressionRuntime ResolveFleetProgression()
+        GameplayRuntimeRoot ResolveRuntimeRoot()
         {
-            fleetProgression ??= GetComponent<FleetProgressionRuntime>();
-            return fleetProgression;
+            runtimeRoot ??= GetComponent<GameplayRuntimeRoot>();
+            return runtimeRoot;
         }
-
     }
 }

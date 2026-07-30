@@ -12,13 +12,6 @@ namespace Farion.UI.Foundation
         GameplayHud = 100,
         PauseMenu = 110,
         Inventory = 120,
-        Blueprints = 130,
-        Journal = 140,
-        Ship = 150,
-        Map = 160,
-        CraftingTerminal = 170,
-        ResearchTerminal = 180,
-        CargoTransfer = 190,
 
         Confirmation = 900,
         Loading = 910,

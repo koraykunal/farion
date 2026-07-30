@@ -11,174 +11,56 @@ namespace Farion.Gameplay.Domain.Fleet
         readonly HashSet<DefinitionId> discoveries = new();
 
         public long Revision { get; private set; }
-        public IEnumerable<DefinitionId> Capabilities => Enumerate(capabilities);
-        public IEnumerable<DefinitionId> Blueprints => Enumerate(blueprints);
-        public IEnumerable<DefinitionId> Discoveries => Enumerate(discoveries);
+        public IEnumerable<DefinitionId> Capabilities => capabilities;
+        public IEnumerable<DefinitionId> Blueprints => blueprints;
+        public IEnumerable<DefinitionId> Discoveries => discoveries;
 
-        public bool HasCapability(DefinitionId capabilityId)
+        public bool HasCapability(DefinitionId id)
         {
-            return capabilityId.IsValid && capabilities.Contains(capabilityId);
+            return id.IsValid && capabilities.Contains(id);
         }
 
-        public bool HasBlueprint(DefinitionId blueprintId)
+        public bool HasBlueprint(DefinitionId id)
         {
-            return blueprintId.IsValid && blueprints.Contains(blueprintId);
+            return id.IsValid && blueprints.Contains(id);
         }
 
-        public bool HasDiscovery(DefinitionId discoveryId)
+        public bool HasDiscovery(DefinitionId id)
         {
-            return discoveryId.IsValid && discoveries.Contains(discoveryId);
+            return id.IsValid && discoveries.Contains(id);
         }
 
-        public FleetOperationResult TryUnlockCapability(
-            DefinitionId capabilityId,
-            long expectedRevision = -1L)
+        public bool TryUnlockCapability(DefinitionId id)
         {
-            return TryUnlock(capabilities, capabilityId, expectedRevision);
+            return TryAdd(capabilities, id);
         }
 
-        public FleetOperationResult TryUnlockBlueprint(
-            DefinitionId blueprintId,
-            long expectedRevision = -1L)
+        public bool TryUnlockBlueprint(DefinitionId id)
         {
-            return TryUnlock(blueprints, blueprintId, expectedRevision);
+            return TryAdd(blueprints, id);
         }
 
-        public FleetOperationResult TryRecordDiscovery(
-            DefinitionId discoveryId,
-            long expectedRevision = -1L)
+        public bool TryRecordDiscovery(DefinitionId id)
         {
-            return TryUnlock(discoveries, discoveryId, expectedRevision);
+            return TryAdd(discoveries, id);
         }
 
-        public FleetOperationResult TryCompleteResearch(
-            DefinitionId researchId,
-            IReadOnlyList<DefinitionId> blueprintIds,
-            IReadOnlyList<DefinitionId> capabilityIds,
-            long expectedRevision = -1L)
+        bool TryAdd(HashSet<DefinitionId> target, DefinitionId id)
         {
-            if (expectedRevision >= 0L && expectedRevision != Revision)
+            if (!id.IsValid || target.Contains(id))
             {
-                return FleetOperationResult.StaleRevision;
-            }
-
-            if (!researchId.IsValid ||
-                !AllIdsAreValid(blueprintIds) ||
-                !AllIdsAreValid(capabilityIds))
-            {
-                return FleetOperationResult.InvalidIdentifier;
-            }
-
-            if (discoveries.Contains(researchId))
-            {
-                return FleetOperationResult.AlreadyExists;
-            }
-
-            int mutationCount = 1 +
-                                CountMissing(blueprints, blueprintIds) +
-                                CountMissing(capabilities, capabilityIds);
-            if (Revision > long.MaxValue - mutationCount)
-            {
-                return FleetOperationResult.CapacityExceeded;
-            }
-
-            discoveries.Add(researchId);
-            AddRange(blueprints, blueprintIds);
-            AddRange(capabilities, capabilityIds);
-            Revision += mutationCount;
-            return FleetOperationResult.Succeeded;
-        }
-
-        FleetOperationResult TryUnlock(
-            HashSet<DefinitionId> target,
-            DefinitionId definitionId,
-            long expectedRevision)
-        {
-            if (expectedRevision >= 0L && expectedRevision != Revision)
-            {
-                return FleetOperationResult.StaleRevision;
-            }
-
-            if (!definitionId.IsValid)
-            {
-                return FleetOperationResult.InvalidIdentifier;
-            }
-
-            if (target.Contains(definitionId))
-            {
-                return FleetOperationResult.AlreadyExists;
+                return false;
             }
 
             if (Revision == long.MaxValue)
             {
-                throw new InvalidOperationException("Fleet knowledge revision capacity was exhausted.");
+                throw new InvalidOperationException(
+                    "Fleet knowledge revision capacity was exhausted.");
             }
 
+            target.Add(id);
             Revision++;
-            target.Add(definitionId);
-            return FleetOperationResult.Succeeded;
-        }
-
-        static IEnumerable<DefinitionId> Enumerate(HashSet<DefinitionId> source)
-        {
-            foreach (DefinitionId definitionId in source)
-            {
-                yield return definitionId;
-            }
-        }
-
-        static bool AllIdsAreValid(IReadOnlyList<DefinitionId> ids)
-        {
-            if (ids == null)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < ids.Count; i++)
-            {
-                if (!ids[i].IsValid)
-                {
-                    return false;
-                }
-            }
-
             return true;
-        }
-
-        static int CountMissing(
-            HashSet<DefinitionId> target,
-            IReadOnlyList<DefinitionId> ids)
-        {
-            if (ids == null)
-            {
-                return 0;
-            }
-
-            HashSet<DefinitionId> unique = new();
-            for (int i = 0; i < ids.Count; i++)
-            {
-                if (!target.Contains(ids[i]))
-                {
-                    unique.Add(ids[i]);
-                }
-            }
-
-            return unique.Count;
-        }
-
-        static void AddRange(
-            HashSet<DefinitionId> target,
-            IReadOnlyList<DefinitionId> ids)
-        {
-            if (ids == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < ids.Count; i++)
-            {
-                target.Add(ids[i]);
-            }
         }
     }
 }

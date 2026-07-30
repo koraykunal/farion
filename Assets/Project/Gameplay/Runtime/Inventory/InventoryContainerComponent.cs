@@ -128,14 +128,14 @@ namespace Farion.Gameplay.Inventory
         public bool CanRemove(InventoryItemDefinition item, int amount)
         {
             return amount > 0 &&
-                   TryGetStackableDefinitionId(item, out DefinitionId definitionId) &&
+                   TryGetDefinitionId(item, out DefinitionId definitionId) &&
                    GetState().Count(definitionId) >= amount;
         }
 
         public int TryRemove(InventoryItemDefinition item, int amount)
         {
             if (amount <= 0 ||
-                !TryGetStackableDefinitionId(item, out DefinitionId definitionId))
+                !TryGetDefinitionId(item, out DefinitionId definitionId))
             {
                 return 0;
             }
@@ -198,7 +198,7 @@ namespace Farion.Gameplay.Inventory
         public int Count(InventoryItemDefinition item)
         {
             InventoryContainerState inventoryState = GetState();
-            return TryGetStackableDefinitionId(item, out DefinitionId definitionId)
+            return TryGetDefinitionId(item, out DefinitionId definitionId)
                 ? inventoryState.Count(definitionId)
                 : 0;
         }
@@ -206,7 +206,7 @@ namespace Farion.Gameplay.Inventory
         public int GetAvailableCapacity(InventoryItemDefinition item)
         {
             InventoryContainerState inventoryState = GetState();
-            return TryGetStackableDefinitionId(item, out DefinitionId definitionId)
+            return TryGetDefinitionId(item, out DefinitionId definitionId)
                 ? inventoryState.GetAvailableStackCapacity(definitionId, item.MaxStackSize)
                 : 0;
         }
@@ -555,7 +555,7 @@ namespace Farion.Gameplay.Inventory
             out DefinitionId definitionId)
         {
             definitionId = default;
-            if (!TryGetStackableDefinitionId(item, out definitionId))
+            if (!TryGetDefinitionId(item, out definitionId))
             {
                 return false;
             }
@@ -572,13 +572,12 @@ namespace Farion.Gameplay.Inventory
             return true;
         }
 
-        static bool TryGetStackableDefinitionId(
+        static bool TryGetDefinitionId(
             InventoryItemDefinition item,
             out DefinitionId definitionId)
         {
             definitionId = default;
             return item != null &&
-                   item.StorageMode == InventoryStorageMode.Stackable &&
                    DefinitionId.TryCreate(item.ItemId, out definitionId);
         }
 

@@ -1027,6 +1027,8 @@
 	<object class="MixerBusEffectChain" id="{4dc3c31f-4dda-41f3-b45d-beafb5cab99d}">
 		<relationship name="effects">
 			<destination>{d39bd75d-ea2d-4291-90a2-5ef2c4a3e0e5}</destination>
+			<destination>{f8519792-19f3-47e6-8464-b49e44b7c571}</destination>
+			<destination>{c5d80a28-301c-44b2-891a-7611e6d23582}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{9f4b0a26-50d4-4b28-beee-3ca42032b5b6}" />
@@ -1352,8 +1354,6 @@
 		<relationship name="effects">
 			<destination>{3e6f418e-7904-4108-b529-50bd3f7d9b66}</destination>
 			<destination>{4ffe6727-c4d9-4b3f-b3fa-60610e9c6f04}</destination>
-			<destination>{c81c4277-80ab-4fc1-b58d-dbc989c860d9}</destination>
-			<destination>{c583f615-c6f1-4d3c-81dd-aa7acc216804}</destination>
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{d43d102e-f95c-4ae8-a48f-ffe77f39cf7f}" />
@@ -1833,6 +1833,25 @@
 		</relationship>
 	</object>
 	<object class="MixerBusFader" id="{d39bd75d-ea2d-4291-90a2-5ef2c4a3e0e5}" />
+	<object class="PitchShifterEffect" id="{f8519792-19f3-47e6-8464-b49e44b7c571}">
+		<property name="pitch">
+			<value>1.89999998</value>
+		</property>
+		<property name="fftSize">
+			<value>840</value>
+		</property>
+		<property name="overlap">
+			<value>3.4000001</value>
+		</property>
+	</object>
+	<object class="CompressorEffect" id="{c5d80a28-301c-44b2-891a-7611e6d23582}">
+		<property name="ratio">
+			<value>9.40000057</value>
+		</property>
+		<property name="attackTime">
+			<value>8</value>
+		</property>
+	</object>
 	<object class="AutomationPoint" id="{eb793b8a-e093-420f-8df4-bc4d35251f1e}">
 		<property name="position">
 			<value>5</value>
@@ -2402,7 +2421,7 @@
 	</object>
 	<object class="CompressorEffect" id="{3e6f418e-7904-4108-b529-50bd3f7d9b66}">
 		<property name="threshold">
-			<value>-15</value>
+			<value>-38</value>
 		</property>
 		<property name="ratio">
 			<value>1</value>
@@ -2418,28 +2437,6 @@
 		</property>
 	</object>
 	<object class="MixerBusFader" id="{4ffe6727-c4d9-4b3f-b3fa-60610e9c6f04}" />
-	<object class="PitchShifterEffect" id="{c81c4277-80ab-4fc1-b58d-dbc989c860d9}">
-		<property name="pitch">
-			<value>1.24000001</value>
-		</property>
-		<property name="fftSize">
-			<value>1560</value>
-		</property>
-		<property name="overlap">
-			<value>1</value>
-		</property>
-	</object>
-	<object class="FlangerEffect" id="{c583f615-c6f1-4d3c-81dd-aa7acc216804}">
-		<property name="rate">
-			<value>1.20000005</value>
-		</property>
-		<property name="delay">
-			<value>0.209999993</value>
-		</property>
-		<property name="mix">
-			<value>100</value>
-		</property>
-	</object>
 	<object class="AutomationPoint" id="{2c33dc46-4e07-4d38-8362-e87cd96f9ef1}">
 		<property name="position">
 			<value>76</value>
@@ -2904,13 +2901,16 @@
 		<property name="value">
 			<value>-5</value>
 		</property>
+		<property name="curveShape">
+			<value>-1</value>
+		</property>
 	</object>
 	<object class="AutomationPoint" id="{e2f434d9-fa04-4de8-a1d5-eaa570e974ef}">
 		<property name="position">
-			<value>100</value>
+			<value>98</value>
 		</property>
 		<property name="value">
-			<value>-9</value>
+			<value>-19</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{c864e7fb-004b-4317-950d-7b7cc4333fcd}">

@@ -49,9 +49,9 @@ namespace Farion.Tests.EditMode
             Assert.That(migrated, Is.True);
             Assert.That(current.SchemaVersion, Is.EqualTo(5));
             Assert.That(current.SourceSchemaVersion, Is.EqualTo(4));
-            Assert.That(current.PersonalShipCargo.ContainerId,
+            Assert.That(current.ShuttleCargo.ContainerId,
                 Is.EqualTo("inventory.ship.starter.cargo"));
-            Assert.That(current.PersonalShipCargo.Stacks, Is.Empty);
+            Assert.That(current.ShuttleCargo.Stacks, Is.Empty);
             Assert.That(current.FleetKnowledge, Is.Not.Null);
             Assert.That(current.FleetKnowledge.Capabilities, Is.Empty);
         }
@@ -138,7 +138,7 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void GameplaySessionIdentityKeepsPlayerActorShipAndInventoryDistinct()
+        public void GameplaySessionIdentityKeepsPlayerActorShuttleAndInventoryDistinct()
         {
             PersistentEntityId inventoryId =
                 new("inventory.player.explorer");
@@ -154,7 +154,9 @@ namespace Farion.Tests.EditMode
             Assert.That(identity.IsValid, Is.True);
             Assert.That(identity.LocalPlayerId.Value, Is.EqualTo("player.local"));
             Assert.That(identity.ExplorerActorId.Value, Is.EqualTo("player.explorer"));
-            Assert.That(identity.PersonalShipId.Value, Is.EqualTo("ship.starter"));
+            Assert.That(
+                identity.AssignedShuttleId.Value,
+                Is.EqualTo("ship.starter"));
             Assert.That(identity.CarriedInventoryId, Is.EqualTo(inventoryId));
         }
 

@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   itemId: item.iron_ore
   displayName: Iron Ore
-  storageMode: 0
   maxStackSize: 30
   category: 0
   form: 0

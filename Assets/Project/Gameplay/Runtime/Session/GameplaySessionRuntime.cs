@@ -1,8 +1,7 @@
 using Farion.Gameplay.Domain.Identity;
-using Farion.Gameplay.Domain.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Research;
+using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Ships;
 
 namespace Farion.Gameplay.Session
@@ -22,14 +21,9 @@ namespace Farion.Gameplay.Session
         public InventoryContainerComponent LocalInventory =>
             Bindings.LocalPlayerInventory;
         public PlayerPossessionController Possession => Bindings.Possession;
-        public FleetProgressionRuntime FleetProgression => Bindings.FleetProgression;
-        public PersonalShipRuntimeBinding PersonalShipBinding =>
-            Bindings.PersonalShip;
-        public PersonalShipState PersonalShip =>
-            PersonalShipBinding != null
-                ? PersonalShipBinding.State
-                : null;
-
+        public FleetKnowledgeRuntime FleetKnowledge => Bindings.FleetKnowledge;
+        public ShuttleRuntimeBinding ShuttleBinding =>
+            Bindings.AssignedShuttle;
         public static bool TryCreate(
             string localPlayerId,
             GameplayRuntimeBindings bindings,
@@ -41,17 +35,9 @@ namespace Farion.Gameplay.Session
                 !GameplaySessionIdentity.TryCreate(
                     localPlayerId,
                     bindings.Possession.ExplorerPersistentId,
-                    bindings.Possession.SpacecraftPersistentId,
+                    bindings.AssignedShuttle.ShipId.Value,
                     bindings.LocalPlayerInventory.ContainerId,
                     out GameplaySessionIdentity identity))
-            {
-                return false;
-            }
-
-            if (!bindings.PersonalShip.TryInitialize(identity.LocalPlayerId) ||
-                bindings.PersonalShip.State == null ||
-                bindings.PersonalShip.State.ShipId !=
-                identity.PersonalShipId)
             {
                 return false;
             }
@@ -79,10 +65,8 @@ namespace Farion.Gameplay.Session
                        bindings.Possession.ExplorerPersistentId,
                        out PersistentEntityId explorerId) &&
                    Identity.ExplorerActorId == explorerId &&
-                   PersistentEntityId.TryCreate(
-                       bindings.Possession.SpacecraftPersistentId,
-                       out PersistentEntityId shipId) &&
-                   Identity.PersonalShipId == shipId;
+                   Identity.AssignedShuttleId ==
+                   bindings.AssignedShuttle.ShipId;
         }
     }
 }

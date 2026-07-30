@@ -70,7 +70,6 @@ namespace Farion.Gameplay.Flight
         float cachedTargetBoundsRadius;
         bool targetBoundsDirty = true;
         Camera cachedFovCamera;
-
         public SpacecraftPilotCameraView View => view;
 
         void OnEnable()
@@ -161,7 +160,6 @@ namespace Farion.Gameplay.Flight
 
             ResolveCameraTransform();
             ResetCameraPayloadPose();
-
             ResolveMotor();
             ApplyCameraFov();
 

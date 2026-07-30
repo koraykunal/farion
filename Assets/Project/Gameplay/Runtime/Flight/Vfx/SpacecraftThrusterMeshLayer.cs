@@ -140,8 +140,7 @@ namespace Farion.Gameplay.Flight
             ApplyPresentation(
                 currentVisibility,
                 frame.Boost,
-                frame.Heat,
-                frame.Damage);
+                frame.Heat);
         }
 
         public void ClearRuntimeState()
@@ -181,10 +180,10 @@ namespace Farion.Gameplay.Flight
         void ApplyPreview()
         {
             currentVisibility = Mathf.Max(idleVisibility, previewLoad);
-            ApplyPresentation(currentVisibility, previewBoost, heat: 0.15f, damage: 0f);
+            ApplyPresentation(currentVisibility, previewBoost, heat: 0.15f);
         }
 
-        void ApplyPresentation(float visibility, float boost, float heat, float damage)
+        void ApplyPresentation(float visibility, float boost, float heat)
         {
             if (meshRenderer == null)
             {
@@ -215,7 +214,6 @@ namespace Farion.Gameplay.Flight
             properties.SetFloat(ShaderIds.Throttle, shapedLoad);
             properties.SetFloat(ShaderIds.Boost, Mathf.Clamp01(boost));
             properties.SetFloat(ShaderIds.Heat, Mathf.Clamp01(heat));
-            properties.SetFloat(ShaderIds.Damage, Mathf.Clamp01(damage));
             properties.SetFloat(ShaderIds.Opacity, opacity * shapedLoad);
             properties.SetFloat(ShaderIds.LayerSeed, layerSeed);
             meshRenderer.SetPropertyBlock(properties);
@@ -401,7 +399,6 @@ namespace Farion.Gameplay.Flight
             public static readonly int Throttle = Shader.PropertyToID("_Throttle");
             public static readonly int Boost = Shader.PropertyToID("_Boost");
             public static readonly int Heat = Shader.PropertyToID("_Heat");
-            public static readonly int Damage = Shader.PropertyToID("_Damage");
             public static readonly int Opacity = Shader.PropertyToID("_Opacity");
             public static readonly int LayerSeed = Shader.PropertyToID("_LayerSeed");
         }

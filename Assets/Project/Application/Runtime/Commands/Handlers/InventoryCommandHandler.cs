@@ -30,45 +30,5 @@ namespace Farion.App.Commands.Handlers
                 ? ResourceHarvestTransaction.TryExecute(source, destination)
                 : ResourceHarvestResult.UnauthorizedDestination;
         }
-
-        public InventoryTransferResult CanTransfer(
-            IInventoryContainer source,
-            IInventoryContainer destination,
-            InventoryItemDefinition item,
-            int amount)
-        {
-            if (!access.Owns(source))
-            {
-                return InventoryTransferResult.UnauthorizedSource;
-            }
-
-            return access.Owns(destination)
-                ? InventoryTransferTransaction.CanExecute(
-                    source,
-                    destination,
-                    item,
-                    amount)
-                : InventoryTransferResult.UnauthorizedDestination;
-        }
-
-        public InventoryTransferResult TryTransfer(
-            IInventoryContainer source,
-            IInventoryContainer destination,
-            InventoryItemDefinition item,
-            int amount)
-        {
-            if (!access.Owns(source))
-            {
-                return InventoryTransferResult.UnauthorizedSource;
-            }
-
-            return access.Owns(destination)
-                ? InventoryTransferTransaction.TryExecute(
-                    source,
-                    destination,
-                    item,
-                    amount)
-                : InventoryTransferResult.UnauthorizedDestination;
-        }
     }
 }

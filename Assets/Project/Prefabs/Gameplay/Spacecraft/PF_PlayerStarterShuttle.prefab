@@ -1239,7 +1239,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a5a6f51bb664a28baea92c06f36054f, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.PersonalShipCargoInventory
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.ShuttleCargoInventory
   containerId: inventory.local
   slotCapacity: 24
   stacks: []
@@ -1254,12 +1254,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee3ff7f66b694542bf9062bbb6cba7cd, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.PersonalShipRuntimeBinding
-  defaultDisplayName: Farion
-  maximumHull: 100
-  initialHull: 100
-  maximumFuel: 100
-  initialFuel: 100
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.ShuttleRuntimeBinding
   persistentId: {fileID: 8451750196482294104}
   motor: {fileID: 3359784979145954321}
   cargo: {fileID: 6649556196873618115}

@@ -1,6 +1,6 @@
 using System;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Research;
+using Farion.Gameplay.Fleet;
 
 namespace Farion.Gameplay.Persistence
 {
@@ -20,7 +20,7 @@ namespace Farion.Gameplay.Persistence
             if (source.SchemaVersion == GameplaySaveData.CurrentSchemaVersion)
             {
                 if (source.PayloadRevision != GameplaySaveData.CurrentPayloadRevision ||
-                    source.PersonalShipCargo == null ||
+                    source.ShuttleCargo == null ||
                     source.FleetKnowledge == null)
                 {
                     return false;
@@ -35,7 +35,7 @@ namespace Farion.Gameplay.Persistence
                 return false;
             }
 
-            InventoryContainerComponent cargo = context.PersonalShipCargo;
+            InventoryContainerComponent cargo = context.ShuttleCargo;
             if (cargo == null || !cargo.ContainerId.IsValid)
             {
                 return false;
@@ -65,7 +65,7 @@ namespace Farion.Gameplay.Persistence
             if (source.SchemaVersion == GameplaySaveData.CurrentSchemaVersion)
             {
                 if (source.PayloadRevision != GameplaySaveData.CurrentPayloadRevision ||
-                    source.PersonalShipCargo == null ||
+                    source.ShuttleCargo == null ||
                     source.FleetKnowledge == null)
                 {
                     return false;

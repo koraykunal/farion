@@ -3561,6 +3561,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
   m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
+--- !u!114 &1678406330 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 291845060493645677, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee3ff7f66b694542bf9062bbb6cba7cd, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.ShuttleRuntimeBinding
 --- !u!54 &1678406309 stripped
 Rigidbody:
   m_CorrespondingSourceObject: {fileID: 7057908404667551272, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
@@ -3664,7 +3675,6 @@ RectTransform:
   - {fileID: 901000021}
   - {fileID: 901000011}
   - {fileID: 901000001}
-  - {fileID: 930000001}
   m_Father: {fileID: 2069590343}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3789,14 +3799,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Persistence.GameplaySaveCoordinator
   slotName: autosave
   consumeStartupRequestOnStart: 1
-  definitions: {fileID: 11400000, guid: e1f437824dc54f30a15891d3a77e3217, type: 2}
-  gravitySimulation: {fileID: 476981471}
-  originRebaser: {fileID: 476981473}
-  playerInventory: {fileID: 990561846}
-  possessionController: {fileID: 1917591035}
-  fleetProgression: {fileID: 920000003}
-  resourceStreamers:
-  - {fileID: 922402158}
+  runtimeRoot: {fileID: 920000004}
 --- !u!114 &1891705761
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3811,6 +3814,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Application.Runtime::Farion.App.Flow.GameplaySessionController
   localPlayerId: player.local
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
+  runtimeRoot: {fileID: 920000004}
   saveCoordinator: {fileID: 1891705760}
 --- !u!1 &920000000
 GameObject:
@@ -3824,6 +3828,7 @@ GameObject:
   - component: {fileID: 1891705760}
   - component: {fileID: 920000003}
   - component: {fileID: 1891705761}
+  - component: {fileID: 920000004}
   m_Layer: 0
   m_Name: GameplayRuntime
   m_TagString: Untagged
@@ -3857,61 +3862,28 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501e0ea991a147569d712701c20e56e0, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Research.FleetProgressionRuntime
---- !u!1001 &930000000
-PrefabInstance:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetKnowledgeRuntime
+--- !u!114 &920000004
+MonoBehaviour:
   m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1891705753}
-    m_Modifications:
-    - target: {fileID: 3922111145789653823, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_Name
-      value: UI_TerminalScreens
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
---- !u!224 &930000001 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 6656035185650155130, guid: b02214d4f53fadf409a4c18ac2cebc03, type: 3}
-  m_PrefabInstance: {fileID: 930000000}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 920000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c34405800644338b4dcd45a09e2e686, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Session.GameplayRuntimeRoot
+  definitions: {fileID: 11400000, guid: e1f437824dc54f30a15891d3a77e3217, type: 2}
+  gravitySimulation: {fileID: 476981471}
+  originRebaser: {fileID: 476981473}
+  resourceStreamers:
+  - {fileID: 922402158}
+  localPlayerInventory: {fileID: 990561846}
+  possession: {fileID: 1917591035}
+  assignedShuttle: {fileID: 1678406330}
+  fleetKnowledge: {fileID: 920000003}
 --- !u!1 &1917591032
 GameObject:
   m_ObjectHideFlags: 0

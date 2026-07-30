@@ -9,7 +9,6 @@ namespace Farion.Gameplay.Domain.Economy
         public const long AnyRevision = -1L;
 
         readonly Dictionary<DefinitionId, InventoryStackState> stacks = new();
-        readonly HashSet<PersistentEntityId> itemInstanceIds = new();
 
         public InventoryContainerState(PersistentEntityId containerId, int slotCapacity)
         {
@@ -27,20 +26,6 @@ namespace Farion.Gameplay.Domain.Economy
             SlotCapacity = slotCapacity;
         }
 
-        InventoryContainerState(
-            PersistentEntityId containerId,
-            int slotCapacity,
-            long revision,
-            Dictionary<DefinitionId, InventoryStackState> stacks,
-            HashSet<PersistentEntityId> itemInstanceIds)
-        {
-            ContainerId = containerId;
-            SlotCapacity = slotCapacity;
-            Revision = revision;
-            this.stacks = stacks;
-            this.itemInstanceIds = itemInstanceIds;
-        }
-
         public PersistentEntityId ContainerId { get; }
         public int SlotCapacity { get; private set; }
         public long Revision { get; private set; }
@@ -55,21 +40,11 @@ namespace Farion.Gameplay.Domain.Economy
             }
         }
 
-        public IEnumerable<PersistentEntityId> ItemInstanceIds
-        {
-            get
-            {
-                foreach (PersistentEntityId itemInstanceId in itemInstanceIds)
-                {
-                    yield return itemInstanceId;
-                }
-            }
-        }
         public int UsedSlots
         {
             get
             {
-                long usedSlots = CountUsedStackSlots(stacks) + itemInstanceIds.Count;
+                long usedSlots = CountUsedStackSlots(stacks);
                 return usedSlots >= int.MaxValue ? int.MaxValue : (int)usedSlots;
             }
         }
@@ -87,11 +62,6 @@ namespace Farion.Gameplay.Domain.Economy
             return definitionId.IsValid && stacks.TryGetValue(definitionId, out InventoryStackState stack)
                 ? stack.Quantity
                 : 0;
-        }
-
-        public bool ContainsItemInstance(PersistentEntityId instanceId)
-        {
-            return instanceId.IsValid && itemInstanceIds.Contains(instanceId);
         }
 
         public int GetAvailableStackCapacity(DefinitionId definitionId, int stackLimit)
@@ -171,59 +141,6 @@ namespace Farion.Gameplay.Domain.Economy
                 expectedRevision);
         }
 
-        internal InventoryOperationResult TryAddItemInstance(
-            PersistentEntityId instanceId,
-            long expectedRevision = AnyRevision)
-        {
-            if (!MatchesRevision(expectedRevision))
-            {
-                return InventoryOperationResult.StaleRevision;
-            }
-
-            if (!instanceId.IsValid)
-            {
-                return InventoryOperationResult.InvalidItemInstance;
-            }
-
-            if (itemInstanceIds.Contains(instanceId))
-            {
-                return InventoryOperationResult.DuplicateItemInstance;
-            }
-
-            if (UsedSlots >= SlotCapacity)
-            {
-                return InventoryOperationResult.InsufficientCapacity;
-            }
-
-            IncrementRevision();
-            itemInstanceIds.Add(instanceId);
-            return InventoryOperationResult.Succeeded;
-        }
-
-        internal InventoryOperationResult TryRemoveItemInstance(
-            PersistentEntityId instanceId,
-            long expectedRevision = AnyRevision)
-        {
-            if (!MatchesRevision(expectedRevision))
-            {
-                return InventoryOperationResult.StaleRevision;
-            }
-
-            if (!instanceId.IsValid)
-            {
-                return InventoryOperationResult.InvalidItemInstance;
-            }
-
-            if (!itemInstanceIds.Contains(instanceId))
-            {
-                return InventoryOperationResult.MissingItemInstance;
-            }
-
-            IncrementRevision();
-            itemInstanceIds.Remove(instanceId);
-            return InventoryOperationResult.Succeeded;
-        }
-
         public InventoryOperationResult TrySetSlotCapacity(
             int slotCapacity,
             long expectedRevision = AnyRevision)
@@ -246,41 +163,6 @@ namespace Farion.Gameplay.Domain.Economy
             IncrementRevision();
             SlotCapacity = slotCapacity;
             return InventoryOperationResult.Succeeded;
-        }
-
-        internal InventoryContainerState Clone()
-        {
-            Dictionary<DefinitionId, InventoryStackState> clonedStacks = new(stacks.Count);
-            foreach (KeyValuePair<DefinitionId, InventoryStackState> pair in stacks)
-            {
-                clonedStacks.Add(pair.Key, pair.Value);
-            }
-
-            return new InventoryContainerState(
-                ContainerId,
-                SlotCapacity,
-                Revision,
-                clonedStacks,
-                new HashSet<PersistentEntityId>(itemInstanceIds));
-        }
-
-        internal void ReplaceWith(InventoryContainerState replacement)
-        {
-            if (replacement == null || replacement.ContainerId != ContainerId)
-            {
-                throw new InvalidOperationException("Inventory state replacement must target the same container.");
-            }
-
-            stacks.Clear();
-            foreach (KeyValuePair<DefinitionId, InventoryStackState> pair in replacement.stacks)
-            {
-                stacks.Add(pair.Key, pair.Value);
-            }
-
-            itemInstanceIds.Clear();
-            itemInstanceIds.UnionWith(replacement.itemInstanceIds);
-            SlotCapacity = replacement.SlotCapacity;
-            Revision = replacement.Revision;
         }
 
         InventoryOperationResult EvaluateStackChanges(
@@ -400,7 +282,7 @@ namespace Farion.Gameplay.Domain.Economy
                 }
             }
 
-            if (CountUsedStackSlots(candidate) + itemInstanceIds.Count > SlotCapacity)
+            if (CountUsedStackSlots(candidate) > SlotCapacity)
             {
                 return InventoryOperationResult.InsufficientCapacity;
             }

@@ -26,11 +26,10 @@ namespace Farion.App.Commands.Handlers
                 return true;
             }
 
-            PersonalShipRuntimeBinding ship = session.PersonalShipBinding;
+            ShuttleRuntimeBinding ship = session.ShuttleBinding;
             return ship != null &&
-                   ship.State != null &&
                    ReferenceEquals(ship.Cargo, inventory) &&
-                   inventory.ContainerId == ship.State.CargoContainerId;
+                   inventory.ContainerId == ship.Cargo.ContainerId;
         }
     }
 }

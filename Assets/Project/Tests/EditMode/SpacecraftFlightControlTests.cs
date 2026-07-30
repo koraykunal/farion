@@ -135,7 +135,6 @@ namespace Farion.Tests.EditMode
                 throttle: 1f,
                 boost: 0f,
                 heat: 0f,
-                damage: 0f,
                 atmosphereDensity: 0f,
                 relativeSpeed: 0f,
                 localTranslation: Vector3.one,

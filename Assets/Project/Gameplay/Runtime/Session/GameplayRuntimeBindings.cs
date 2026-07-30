@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Farion.Core.Physics;
 using Farion.Gameplay.Definitions;
-using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Research;
+using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Ships;
 using Farion.Simulation.World;
@@ -22,7 +21,8 @@ namespace Farion.Gameplay.Session
             WorldOriginRebaser originRebaser,
             PlayerInventory localPlayerInventory,
             PlayerPossessionController possession,
-            FleetProgressionRuntime fleetProgression,
+            FleetKnowledgeRuntime fleetKnowledge,
+            ShuttleRuntimeBinding assignedShuttle,
             IReadOnlyList<ResourceDepositRuntimeSpawner> resourceStreamers)
         {
             Definitions = definitions;
@@ -30,8 +30,8 @@ namespace Farion.Gameplay.Session
             OriginRebaser = originRebaser;
             LocalPlayerInventory = localPlayerInventory;
             Possession = possession;
-            FleetProgression = fleetProgression;
-            PersonalShip = ResolvePersonalShip(possession);
+            FleetKnowledge = fleetKnowledge;
+            AssignedShuttle = assignedShuttle;
             this.resourceStreamers = new List<ResourceDepositRuntimeSpawner>(
                 resourceStreamers ?? System.Array.Empty<ResourceDepositRuntimeSpawner>())
                 .AsReadOnly();
@@ -42,8 +42,8 @@ namespace Farion.Gameplay.Session
         public WorldOriginRebaser OriginRebaser { get; }
         public PlayerInventory LocalPlayerInventory { get; }
         public PlayerPossessionController Possession { get; }
-        public FleetProgressionRuntime FleetProgression { get; }
-        public PersonalShipRuntimeBinding PersonalShip { get; }
+        public FleetKnowledgeRuntime FleetKnowledge { get; }
+        public ShuttleRuntimeBinding AssignedShuttle { get; }
         public IReadOnlyList<ResourceDepositRuntimeSpawner> ResourceStreamers =>
             resourceStreamers;
         public bool IsValid =>
@@ -52,9 +52,9 @@ namespace Farion.Gameplay.Session
             OriginRebaser != null &&
             LocalPlayerInventory != null &&
             Possession != null &&
-            FleetProgression != null &&
-            PersonalShip != null &&
-            PersonalShip.HasValidAuthoring &&
+            FleetKnowledge != null &&
+            AssignedShuttle != null &&
+            AssignedShuttle.HasValidAuthoring &&
             HasNoMissingResourceStreamers();
 
         public bool Matches(GameplayRuntimeBindings other)
@@ -65,8 +65,8 @@ namespace Farion.Gameplay.Session
                 !ReferenceEquals(OriginRebaser, other.OriginRebaser) ||
                 !ReferenceEquals(LocalPlayerInventory, other.LocalPlayerInventory) ||
                 !ReferenceEquals(Possession, other.Possession) ||
-                !ReferenceEquals(FleetProgression, other.FleetProgression) ||
-                !ReferenceEquals(PersonalShip, other.PersonalShip) ||
+                !ReferenceEquals(FleetKnowledge, other.FleetKnowledge) ||
+                !ReferenceEquals(AssignedShuttle, other.AssignedShuttle) ||
                 resourceStreamers.Count != other.resourceStreamers.Count)
             {
                 return false;
@@ -96,17 +96,6 @@ namespace Farion.Gameplay.Session
             }
 
             return true;
-        }
-
-        static PersonalShipRuntimeBinding ResolvePersonalShip(
-            PlayerPossessionController possession)
-        {
-            SpacecraftMotor motor = possession != null
-                ? possession.SpacecraftMotor
-                : null;
-            return motor != null
-                ? motor.GetComponent<PersonalShipRuntimeBinding>()
-                : null;
         }
     }
 }

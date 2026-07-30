@@ -144,7 +144,6 @@ namespace Farion.Editor.Vfx
                 idleVisibility: 0f,
                 opacity: 0.34f,
                 response: 10f);
-
             ConfigureGraph(smokeRoot, seedOffset + 29u);
             ConfigureGraph(sparksRoot, seedOffset + 47u);
 

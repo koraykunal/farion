@@ -8,7 +8,6 @@ namespace Farion.Gameplay.Flight
             float throttle,
             float boost,
             float heat,
-            float damage,
             float atmosphereDensity,
             float relativeSpeed,
             Vector3 localTranslation,
@@ -20,7 +19,6 @@ namespace Farion.Gameplay.Flight
             Throttle = Mathf.Clamp01(throttle);
             Boost = Mathf.Clamp01(boost);
             Heat = Mathf.Clamp01(heat);
-            Damage = Mathf.Clamp01(damage);
             AtmosphereDensity = Mathf.Clamp01(atmosphereDensity);
             RelativeSpeed = Mathf.Max(0f, relativeSpeed);
             LocalTranslation = ClampAxes(localTranslation);
@@ -33,7 +31,6 @@ namespace Farion.Gameplay.Flight
         public float Throttle { get; }
         public float Boost { get; }
         public float Heat { get; }
-        public float Damage { get; }
         public float AtmosphereDensity { get; }
         public float RelativeSpeed { get; }
         public Vector3 LocalTranslation { get; }
@@ -45,7 +42,6 @@ namespace Farion.Gameplay.Flight
         public bool InAtmosphere => AtmosphereDensity > 0.001f;
 
         public static SpacecraftThrusterVfxFrame Idle => new(
-            0f,
             0f,
             0f,
             0f,

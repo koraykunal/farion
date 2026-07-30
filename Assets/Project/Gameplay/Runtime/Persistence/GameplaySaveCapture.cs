@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Farion.Core.Physics;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Research;
+using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Resources;
 using Farion.Simulation.World;
 
@@ -13,7 +13,7 @@ namespace Farion.Gameplay.Persistence
         readonly List<CelestialBodySnapshot> celestialBodies = new();
         readonly List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
         PlayerInventorySnapshot playerInventory;
-        InventoryContainerSnapshot personalShipCargo;
+        InventoryContainerSnapshot shuttleCargo;
         PlayerPossessionSnapshot playerPossession;
         FleetKnowledgeSnapshot fleetKnowledge;
         WorldOriginSnapshot worldOrigin;
@@ -32,9 +32,9 @@ namespace Farion.Gameplay.Persistence
             playerInventory = snapshot;
         }
 
-        public void SetPersonalShipCargo(InventoryContainerSnapshot snapshot)
+        public void SetShuttleCargo(InventoryContainerSnapshot snapshot)
         {
-            personalShipCargo = snapshot;
+            shuttleCargo = snapshot;
         }
 
         public void SetPlayerPossession(PlayerPossessionSnapshot snapshot)
@@ -59,7 +59,7 @@ namespace Farion.Gameplay.Persistence
                 celestialBodies,
                 worldOrigin,
                 playerInventory,
-                personalShipCargo,
+                shuttleCargo,
                 playerPossession,
                 fleetKnowledge,
                 resourceDepositDeltas);
