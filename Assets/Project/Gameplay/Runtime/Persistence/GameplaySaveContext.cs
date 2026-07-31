@@ -24,6 +24,8 @@ namespace Farion.Gameplay.Persistence
         public WorldOriginRebaser OriginRebaser => Bindings?.OriginRebaser;
         public PlayerInventory PlayerInventory => Bindings?.LocalPlayerInventory;
         public PlayerPossessionController PossessionController => Bindings?.Possession;
+        public FleetRuntime Fleet => Bindings?.Fleet;
+        public FleetStorageInventory FleetStorage => Bindings?.FleetStorage;
         public FleetKnowledgeRuntime FleetKnowledge => Bindings?.FleetKnowledge;
         public ShuttleRuntimeBinding Shuttle => Bindings?.AssignedShuttle;
         public ShuttleCargoInventory ShuttleCargo =>

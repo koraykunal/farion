@@ -89,26 +89,43 @@ PF_PlayerStarterShuttle
 `-- ShipAudioController
 ```
 
-The controller event must be:
+The spacecraft engine event is:
 
 ```text
 event:/Ships/StarterShuttle/Engine
 ```
 
-Required FMOD parameters:
+Keep the event name `Engine`; speed is a parameter of the engine event, not
+part of its event name.
+
+Required parameters on the continuous engine event:
 
 ```text
-Rpm          0..100
-Load         0..1
-Boost        0..1
-Roll        -1..1
-EngineState  0=Off, 1=Startup, 2=Running, 3=Shutdown
-Perspective  0=Exterior, 1=Cockpit/ShipInterior
+Speed  0..100, initial 0
+Roll   -1..1,  initial 0
+Boost  0..1,   initial 0
 ```
 
-Optional telemetry parameters can be added to the same event later:
+`Speed` is body-relative ship speed normalized by the Unity audio profile.
+`Roll` is signed pilot roll demand. `Boost` is the produced boost blend and
+should drive a continuous layer, filter, or intensity change.
+
+Boost start and stop transients are separate 3D one-shot events:
 
 ```text
+event:/Ships/StarterShuttle/BoostIgnition
+event:/Ships/StarterShuttle/BoostShutdown
+```
+
+This keeps one-shot triggering deterministic. No `BoostState` parameter is
+required: Unity detects the actual boost-active rising and falling edges and
+plays each event once.
+
+Optional parameters can be added to the continuous engine event later:
+
+```text
+Load             0..1
+Perspective      0=Exterior, 1=Cockpit/ShipInterior
 HullStress       0..1
 Impact           0..1
 Atmosphere       0..1
@@ -121,31 +138,60 @@ on `ShipAudioController`; empty names are skipped without warnings.
 
 Unity drives these values from produced motion and telemetry, not raw input:
 
-- `Rpm`: slow-spooled blend of body-relative speed, main thruster activity,
-  engine load, and boost. It is not a raw throttle key value.
+- `Speed`: body-relative speed normalized to `0..100`.
 - `Load`: smoothed `ShipAudioTelemetry.EngineLoad`; use it for pressure,
   strain, filtering, and layer weight, not for muting the whole event.
 - `Boost`: smoothed `ShipAudioTelemetry.Boost`; use it for a separate boost
   layer/envelope.
 - `Roll`: `SpacecraftMotor.LastLocalRotationInput.z`, smoothed.
-- `EngineState`: startup for the configured startup time, then running;
-  shutdown when the controller stops.
 - `Perspective`: `0` for exterior/on-foot exterior listening and `1` for
   cockpit or ship-interior listening. Use it for filtering and mechanical
-  transmission, not as a second engine-state control.
+  transmission.
+
+## Boost Authoring Setup
+
+1. Open `Engine`.
+2. Keep the existing `Speed` and `Roll` authoring.
+3. Set the `Roll` parameter initial value to `0`, not `-1`.
+4. Add a continuous `Boost` parameter with minimum `0`, maximum `1`, and
+   initial value `0`.
+5. Use `Boost` to automate a restrained engine change:
+   - `0`: normal engine.
+   - `0.2`: boost layer begins to become audible.
+   - `1`: full boost layer/intensity.
+6. Do not place the ignition or shutdown WAV files on the continuous `Boost`
+   parameter sheet.
+7. Create a new event named `BoostIgnition`.
+8. Drop `BoostIgnition.wav` on its timeline at `0:00`; leave the instrument as
+   a one-shot and do not add a loop region.
+9. Create a new event named `BoostShutdown`.
+10. Drop `Shutdown.wav` on its timeline at `0:00`; leave it as a one-shot and
+    do not add a loop region.
+11. Make `Engine`, `BoostIgnition`, and `BoostShutdown` 3D events. Start
+    with a minimum distance around `5 m` and maximum distance around `200 m`,
+    then tune in Play Mode.
+12. Assign all three events to `Master` and build the Desktop banks.
+13. Return to Unity and allow the FMOD bank refresh.
+14. On `PF_PlayerStarterShuttle > ShipAudioController`, assign:
+    - `Engine Event`: `event:/Ships/StarterShuttle/Engine`
+    - `Boost Ignition Event`: `event:/Ships/StarterShuttle/BoostIgnition`
+    - `Boost Shutdown Event`: `event:/Ships/StarterShuttle/BoostShutdown`
+15. Keep the parameter fields exactly:
+    - `Speed Parameter`: `Speed`
+    - `Boost Parameter`: `Boost`
+    - `Roll Parameter`: `Roll`
+    - optional fields empty until those parameters exist.
 
 ## FMOD Authoring Rules
 
 The engine event should be authored as a continuous engine system:
 
-- Startup transient plays when `EngineState == 1`.
-- Running bed/loops continue while `EngineState == 2`.
-- Shutdown transient plays when `EngineState == 3`.
-- `Rpm` and `Load` must audibly change pitch, filter, volume, or layer blend.
+- Running beds/loops remain continuous for the event lifetime.
+- `Speed` must audibly change pitch, filter, volume, or layer blend.
 - `Boost` should add a separate layer or transition, not just raise volume.
 - `Roll` can add lateral thruster texture, width, pan, or mechanical strain.
-- Keep a quiet idle/running bed audible while `EngineState == 2`. Do not let
-  `Rpm`, `Load`, `Boost`, or `Roll` automation pull the whole event to silence.
+- Keep a quiet idle/running bed audible at `Speed == 0`. Do not let `Load`,
+  `Boost`, or `Roll` automation pull the whole event to silence.
 - `Z` is the flight-assist toggle on the current keyboard input. It must not
   trigger shutdown or stop the running loop in FMOD.
 

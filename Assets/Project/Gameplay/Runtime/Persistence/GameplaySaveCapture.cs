@@ -14,6 +14,7 @@ namespace Farion.Gameplay.Persistence
         readonly List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
         PlayerInventorySnapshot playerInventory;
         InventoryContainerSnapshot shuttleCargo;
+        InventoryContainerSnapshot fleetStorage;
         PlayerPossessionSnapshot playerPossession;
         FleetKnowledgeSnapshot fleetKnowledge;
         WorldOriginSnapshot worldOrigin;
@@ -35,6 +36,11 @@ namespace Farion.Gameplay.Persistence
         public void SetShuttleCargo(InventoryContainerSnapshot snapshot)
         {
             shuttleCargo = snapshot;
+        }
+
+        public void SetFleetStorage(InventoryContainerSnapshot snapshot)
+        {
+            fleetStorage = snapshot;
         }
 
         public void SetPlayerPossession(PlayerPossessionSnapshot snapshot)
@@ -60,6 +66,7 @@ namespace Farion.Gameplay.Persistence
                 worldOrigin,
                 playerInventory,
                 shuttleCargo,
+                fleetStorage,
                 playerPossession,
                 fleetKnowledge,
                 resourceDepositDeltas);

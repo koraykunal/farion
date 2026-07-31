@@ -165,6 +165,38 @@ namespace Farion.Gameplay.Domain.Economy
             return InventoryOperationResult.Succeeded;
         }
 
+        internal InventoryContainerState Clone()
+        {
+            InventoryContainerState clone = new(ContainerId, SlotCapacity)
+            {
+                Revision = Revision
+            };
+            foreach (KeyValuePair<DefinitionId, InventoryStackState> pair in stacks)
+            {
+                clone.stacks.Add(pair.Key, pair.Value);
+            }
+
+            return clone;
+        }
+
+        internal void ReplaceWith(InventoryContainerState source)
+        {
+            if (source == null || source.ContainerId != ContainerId)
+            {
+                throw new ArgumentException(
+                    "Inventory replacement requires the same container identity.",
+                    nameof(source));
+            }
+
+            SlotCapacity = source.SlotCapacity;
+            Revision = source.Revision;
+            stacks.Clear();
+            foreach (KeyValuePair<DefinitionId, InventoryStackState> pair in source.stacks)
+            {
+                stacks.Add(pair.Key, pair.Value);
+            }
+        }
+
         InventoryOperationResult EvaluateStackChanges(
             IReadOnlyList<InventoryStackChange> changes,
             bool apply)

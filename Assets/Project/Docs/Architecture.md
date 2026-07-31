@@ -15,6 +15,24 @@ This document describes the implemented architecture. Future features belong in
 7. Single-player commands are designed so a later host can become the authority
    without moving rules into UI or networking code.
 
+## Project Folder Ownership
+
+- `Application`, `Audio`, `Core`, `Gameplay`, `Rendering`, `Simulation`, and
+  `UI` contain C# runtime code. Their existing assembly folders are architecture
+  boundaries and are not reorganized for visual convenience.
+- `Art` contains Unity-ready models, materials, textures, shaders, VFX, and
+  audio media. Editable source art lives in repository-level `ArtSource`.
+- `Design` contains immutable ScriptableObject definitions.
+- `Prefabs` contains authored reusable GameObject composition; `Scenes`
+  contains authored scene composition.
+- `Editor` contains validation and authoring support that never owns runtime
+  state.
+- `Localization`, `Tests`, and `Docs` contain their named support assets.
+
+`Assets/Project/Audio` is runtime audio code; `Assets/Project/Art/Audio` is
+imported audio media. `Fleet` is a gameplay ownership term; the physical home
+ship is organized as a `CapitalShip` asset.
+
 ## Assembly Direction
 
 ```text
@@ -44,11 +62,12 @@ Farion.Audio.Runtime     --> Core + Simulation + Gameplay + FMOD
   Fleet Knowledge state.
 - `Farion.Gameplay.Runtime` adapts domain and simulation contracts to Unity. It
   owns character, flight, possession, resources, inventory adapters, the
-  assigned shuttle binding, Fleet Knowledge runtime state, and save
-  participants.
+  assigned shuttle binding, Fleet identity, Fleet Storage, Fleet Knowledge, and
+  save participants.
 - `Farion.Application.Runtime` owns game flow, local-session composition, save
-  requests, and the command facade. Its current gameplay command surface is
-  resource harvesting only.
+  requests, and the command facade. Its current gameplay command surface
+  authorizes resource harvesting, assigned-shuttle cargo loading/unloading,
+  and the first Fleet processing exchange.
 - `Farion.UI.Runtime` presents menus, HUD, settings, save/load, inventory, and
   feedback. It requests application operations and never mutates domain state
   directly.
@@ -71,16 +90,17 @@ scene. It explicitly references:
 - the local `PlayerInventory`;
 - `PlayerPossessionController`;
 - the assigned `ShuttleRuntimeBinding`;
-- `FleetKnowledgeRuntime`.
+- `FleetRuntime`, which owns the Fleet identity and references Fleet Storage
+  and Fleet Knowledge.
 
 `GameplayRuntimeBindings` is the immutable view of those references.
 `GameplaySessionRuntime`, `GameplaySessionController`, command handlers, and
 save participants consume that same view. They do not perform independent scene
 searches or create parallel state.
 
-`GameplaySessionIdentity` keeps local player, explorer actor, assigned shuttle,
-and carried inventory ids distinct. Possession describes who is currently
-controlled; it does not decide which shuttle belongs to the session.
+`GameplaySessionIdentity` keeps Fleet, local player, explorer actor, assigned
+shuttle, and carried inventory ids distinct. Possession describes who is
+currently controlled; it does not decide which shuttle belongs to the session.
 
 ## Implemented Gameplay State
 
@@ -88,8 +108,11 @@ controlled; it does not decide which shuttle belongs to the session.
 
 `InventoryContainerState` is the stack quantity, capacity, and revision
 authority. `InventoryContainerComponent` is its reusable Unity adapter.
-`PlayerInventory` and `ShuttleCargoInventory` specialize that adapter without
-duplicating stack mutation.
+`PlayerInventory`, `ShuttleCargoInventory`, and `FleetStorageInventory`
+specialize that adapter without duplicating stack mutation.
+
+`InventoryTransferService` performs copy-on-write, revision-checked transfers
+between domain containers. A failed transfer leaves both containers unchanged.
 
 The current inventory model is stack-only. Unique equipment instances, loadout
 slots, equipment repositories, and installation transactions are intentionally
@@ -105,14 +128,29 @@ Hull, fuel, repair, module slots, and upgrade stats are not modeled by a
 placeholder shuttle aggregate. Each will receive an explicit owner only when
 its first playable use case is implemented.
 
-### Fleet Knowledge
+### Fleet
 
-`FleetKnowledgeState` stores fleet-owned capabilities, blueprints, and
-discoveries as independent id sets with one monotonic revision.
-`FleetKnowledgeRuntime` is the Unity owner and snapshot adapter.
+`FleetRuntime` is the authored shared-progression owner. Its persistent Fleet
+id determines the Fleet Storage identity, and it references the co-located
+`FleetStorageInventory` and `FleetKnowledgeRuntime`.
+
+`FleetKnowledgeState` stores Fleet-owned capabilities, blueprints, and
+discoveries as independent id sets with one monotonic revision. Fleet Storage
+owns shared material stacks.
 
 Fleet Knowledge does not imply that a research terminal, research tree, or
 crafting system currently exists.
+
+Production spacecraft prefabs use the same authored composition roots:
+`VisualRoot`, `CollisionRoot`, `RuntimeRoot`, and `Anchors`. Physical colliders
+use `COL_*` names under `CollisionRoot`; `Exterior`, `Interior`, and `Landing`
+subgroups are added only when that category exists. Runtime components remain
+on the owning spacecraft root, while authored interaction objects and volumes
+live under `RuntimeRoot`.
+
+`PF_CapitalShip_Fleet` is the physical home-ship presentation and interaction
+boundary. The legacy greybox prefab is comparison only. The production prefab
+does not duplicate `FleetRuntime` or introduce mutable capital-ship state.
 
 ### Resources and Commands
 
@@ -122,31 +160,42 @@ deltas. `ResourceNodeInteractable` submits harvest intent through
 `InventoryCommandHandler` validate the active session and execute the harvest
 transaction.
 
-There are no inactive crafting, research, equipment, repair, or cargo-terminal
-commands in the application facade.
+`FleetCargoCommandHandler` resolves only the session-assigned shuttle cargo and
+the local carried inventory or active Fleet Storage.
+`CargoTransferTransaction` validates definition compatibility and commits the
+complete transfer atomically.
+
+`ShuttleCargoHatchInteractable` loads the assigned shuttle.
+`FleetCargoUnloadInteractable` exposes unload only through the authored docking
+boundary. `FleetProcessingInteractable` submits a typed processing recipe
+through the same session command facade; the handler commits one atomic
+Fleet-Storage exchange. There are no inactive crafting, research, equipment,
+repair, queue, power, or maintenance commands in the application facade.
 
 ## Persistence
 
-Schema `5` persists:
+Schema `6` persists:
 
 - celestial body snapshots;
 - world-origin metadata;
 - player inventory;
 - assigned shuttle cargo;
+- Fleet Storage;
 - player possession;
 - Fleet Knowledge;
 - resource extraction deltas.
 
-Schemas `3` and `4` migrate to schema `5` with explicit empty shuttle-cargo and
-Fleet-Knowledge defaults. The serialized JSON field for shuttle cargo remains
-`personalShipCargo` for schema compatibility; runtime code exposes it as
-`ShuttleCargo`.
+Schemas `3` and `4` migrate to schema `6` with explicit empty shuttle-cargo,
+Fleet-Storage, and Fleet-Knowledge defaults. Schema `5` preserves its shuttle
+cargo and Fleet Knowledge while adding the authored Fleet Storage as empty.
+The serialized JSON field for shuttle cargo remains `personalShipCargo` for
+schema compatibility; runtime code exposes it as `ShuttleCargo`.
 
 The save system uses participants composed from `GameplayRuntimeRoot`, validates
 before applying, and restores a pre-load snapshot if application fails.
 
-Fleet Storage, capital-ship state, shuttle upgrades, and equipment are not in
-schema `5`. A new schema is allowed only after those runtime owners exist.
+Capital-ship state, shuttle upgrades, and equipment are not in schema `6`. A
+new schema is allowed only after those runtime owners exist.
 
 ## Simulation and Presentation
 
@@ -178,15 +227,14 @@ schema `5`. A new schema is allowed only after those runtime owners exist.
 
 The following systems are product direction, not current implementation:
 
-- Fleet runtime identity and shared Fleet Storage;
-- authored capital ship and docking;
-- shuttle unload workflow;
-- refinery, fabricator, recipes, queues, power, or maintenance;
+- mutable capital-ship state, owned rooms, or production-machine state;
+- refinery/fabricator queues, timers, power, heat, or maintenance;
 - shuttle and capital-ship upgrades;
 - equipment instances and loadouts;
 - research terminals or technology voting;
 - multiplayer transport and replication.
 
-The next safe architectural increment is Fleet runtime identity plus shared
-Fleet Storage, followed by one explicit shuttle-to-storage unload transaction.
-See `FleetArchitecture.md` and `BetaRoadmap.md`.
+The next safe architectural increment is to finish the imported Capital Ship
+Fleet visual alignment, present processing results, and prove the local
+unload/processing state through save/load. See `FleetArchitecture.md` and
+`BetaRoadmap.md`.

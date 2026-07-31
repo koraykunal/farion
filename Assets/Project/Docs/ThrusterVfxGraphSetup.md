@@ -87,10 +87,10 @@ receives `Stop`, allowing existing particles to decay without popping.
 
 ## Authoring
 
-Run `Farion > VFX > Rebuild Starter Shuttle Thrusters` only after replacing the
-starter-shuttle model, changing nozzle hierarchy, or recreating authored VFX
-materials. The command is idempotent and edits
-`PF_PlayerStarterShuttle.prefab`; it is not a runtime builder.
+The nozzle hierarchy, materials, graph references, and local lights are authored
+directly in `PF_PlayerStarterShuttle.prefab`. If the shuttle model or nozzle
+hierarchy changes, update that prefab in Prefab Mode; no runtime or Editor
+builder owns the effect.
 
 `FarionProjectValidation` checks both nozzle signs, all five mesh layers, their
 renderers and materials, the sparks and smoke graphs, local lights, and explicit

@@ -17,6 +17,7 @@ namespace Farion.Tests.EditMode
         [TestCase(3)]
         [TestCase(4)]
         [TestCase(5)]
+        [TestCase(6)]
         public void SupportedSaveVersionsAreAccepted(int version)
         {
             Assert.That(SaveGameSchema.IsSupportedVersion(version), Is.True);
@@ -24,7 +25,7 @@ namespace Farion.Tests.EditMode
 
         [TestCase(0)]
         [TestCase(2)]
-        [TestCase(6)]
+        [TestCase(7)]
         public void UnsupportedSaveVersionsAreRejected(int version)
         {
             Assert.That(SaveGameSchema.IsSupportedVersion(version), Is.False);
@@ -40,20 +41,28 @@ namespace Farion.Tests.EditMode
                 "inventory.ship.starter.cargo",
                 12,
                 System.Array.Empty<InventoryStackSnapshot>());
+            InventoryContainerSnapshot fleetStorageDefault = new(
+                "fleet_storage.fleet.local",
+                48,
+                System.Array.Empty<InventoryStackSnapshot>());
 
             bool migrated = GameplaySaveMigration.TryMigrateToCurrent(
                 legacy,
                 cargoDefault,
+                fleetStorageDefault,
                 out GameplaySaveData current);
 
             Assert.That(migrated, Is.True);
-            Assert.That(current.SchemaVersion, Is.EqualTo(5));
+            Assert.That(current.SchemaVersion, Is.EqualTo(6));
             Assert.That(current.SourceSchemaVersion, Is.EqualTo(4));
             Assert.That(current.ShuttleCargo.ContainerId,
                 Is.EqualTo("inventory.ship.starter.cargo"));
             Assert.That(current.ShuttleCargo.Stacks, Is.Empty);
             Assert.That(current.FleetKnowledge, Is.Not.Null);
             Assert.That(current.FleetKnowledge.Capabilities, Is.Empty);
+            Assert.That(
+                current.FleetStorage.ContainerId,
+                Is.EqualTo("fleet_storage.fleet.local"));
         }
 
         [Test]
@@ -66,10 +75,15 @@ namespace Farion.Tests.EditMode
                 "inventory.ship.starter.cargo",
                 12,
                 System.Array.Empty<InventoryStackSnapshot>());
+            InventoryContainerSnapshot fleetStorageDefault = new(
+                "fleet_storage.fleet.local",
+                48,
+                System.Array.Empty<InventoryStackSnapshot>());
 
             bool migrated = GameplaySaveMigration.TryMigrateToCurrent(
                 incomplete,
                 cargoDefault,
+                fleetStorageDefault,
                 out _);
 
             Assert.That(migrated, Is.False);
@@ -146,6 +160,7 @@ namespace Farion.Tests.EditMode
             bool created = GameplaySessionIdentity.TryCreate(
                 "player.local",
                 "player.explorer",
+                "fleet.local",
                 "ship.starter",
                 inventoryId,
                 out GameplaySessionIdentity identity);
@@ -154,6 +169,7 @@ namespace Farion.Tests.EditMode
             Assert.That(identity.IsValid, Is.True);
             Assert.That(identity.LocalPlayerId.Value, Is.EqualTo("player.local"));
             Assert.That(identity.ExplorerActorId.Value, Is.EqualTo("player.explorer"));
+            Assert.That(identity.FleetId.Value, Is.EqualTo("fleet.local"));
             Assert.That(
                 identity.AssignedShuttleId.Value,
                 Is.EqualTo("ship.starter"));
@@ -166,6 +182,7 @@ namespace Farion.Tests.EditMode
             bool created = GameplaySessionIdentity.TryCreate(
                 "player.local",
                 "player explorer",
+                "fleet.local",
                 "ship.starter",
                 new PersistentEntityId("inventory.player.explorer"),
                 out _);

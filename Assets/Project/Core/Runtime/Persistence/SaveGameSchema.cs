@@ -7,7 +7,7 @@ namespace Farion.Core.Persistence
     public static class SaveGameSchema
     {
         public const int MinimumSupportedVersion = 3;
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public static bool IsSupportedVersion(int version)
         {

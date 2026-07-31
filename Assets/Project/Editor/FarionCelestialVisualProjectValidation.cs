@@ -144,9 +144,11 @@ namespace Farion.Editor.Validation
                 report);
 
             int oceanEvent =
-                (int)RenderPassEvent.BeforeRenderingPostProcessing;
-            int atmosphereEvent = oceanEvent + 1;
-            int underwaterEvent = oceanEvent + 2;
+                (int)RenderPassEvent.BeforeRenderingTransparents;
+            int atmosphereEvent =
+                (int)RenderPassEvent.BeforeRenderingPostProcessing + 1;
+            int underwaterEvent =
+                (int)RenderPassEvent.BeforeRenderingPostProcessing + 2;
             ValidateIntegerProperty(
                 serializedOcean,
                 "renderPassEvent",

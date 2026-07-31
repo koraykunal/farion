@@ -9,6 +9,8 @@ namespace Farion.Gameplay.Domain.Economy
         DefinitionPolicyMismatch = 4,
         InsufficientQuantity = 5,
         InsufficientCapacity = 6,
-        StaleRevision = 7
+        StaleRevision = 7,
+        InvalidContainer = 8,
+        EmptyContainer = 9
     }
 }

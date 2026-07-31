@@ -3,6 +3,7 @@ using Farion.Gameplay.Flight;
 using FMOD.Studio;
 using FMODUnity;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Audio.Spacecraft
 {
@@ -10,18 +11,14 @@ namespace Farion.Audio.Spacecraft
     [DisallowMultipleComponent]
     public sealed class ShipAudioController : MonoBehaviour
     {
-        const string DefaultRpmParameter = "Rpm";
-        const string DefaultLoadParameter = "Load";
+        const string DefaultSpeedParameter = "Speed";
         const string DefaultBoostParameter = "Boost";
         const string DefaultRollParameter = "Roll";
-        const string DefaultEngineStateParameter = "EngineState";
-        const string DefaultPerspectiveParameter = "Perspective";
-        const float StartupState = 1f;
-        const float RunningState = 2f;
-        const float ShutdownState = 3f;
 
         [Header("FMOD")]
         [SerializeField] EventReference engineEvent;
+        [SerializeField] EventReference boostIgnitionEvent;
+        [SerializeField] EventReference boostShutdownEvent;
         [SerializeField] bool playOnEnable = true;
         [SerializeField] bool attachToRigidbody = true;
         [SerializeField] bool allowFadeoutOnStop = true;
@@ -31,12 +28,14 @@ namespace Farion.Audio.Spacecraft
         [SerializeField] SpacecraftMotor motor;
 
         [Header("FMOD Parameters")]
-        [SerializeField] string rpmParameter = DefaultRpmParameter;
-        [SerializeField] string loadParameter = DefaultLoadParameter;
+        [FormerlySerializedAs("rpmParameter")]
+        [SerializeField] string speedParameter = DefaultSpeedParameter;
         [SerializeField] string boostParameter = DefaultBoostParameter;
         [SerializeField] string rollParameter = DefaultRollParameter;
-        [SerializeField] string engineStateParameter = DefaultEngineStateParameter;
-        [SerializeField] string perspectiveParameter = DefaultPerspectiveParameter;
+        [Tooltip("Optional. Use for thrust/load texture that must remain independent from ship speed.")]
+        [SerializeField] string loadParameter;
+        [Tooltip("Optional. Use 0 for exterior and 1 for cockpit/interior.")]
+        [SerializeField] string perspectiveParameter;
         [Tooltip("Optional. Leave empty until this parameter exists on the FMOD event.")]
         [SerializeField] string hullStressParameter;
         [Tooltip("Optional. Leave empty until this parameter exists on the FMOD event.")]
@@ -46,29 +45,7 @@ namespace Farion.Audio.Spacecraft
         [Tooltip("Optional. Leave empty until this parameter exists on the FMOD event.")]
         [SerializeField] string waterSubmersionParameter;
 
-        [Header("Engine State")]
-        [Min(0f)]
-        [SerializeField] float startupSeconds = 0.75f;
-
-        [Header("RPM Model")]
-        [Range(0f, 100f)]
-        [SerializeField] float idleRpm = 18f;
-        [Range(0f, 100f)]
-        [SerializeField] float maximumRpm = 100f;
-        [Range(0f, 1f)]
-        [SerializeField] float speedRpmWeight = 0.42f;
-        [Range(0f, 1f)]
-        [SerializeField] float thrustRpmWeight = 0.24f;
-        [Range(0f, 1f)]
-        [SerializeField] float loadRpmWeight = 0.14f;
-        [Range(0f, 1f)]
-        [SerializeField] float boostRpmWeight = 0.2f;
-
         [Header("Response")]
-        [Min(0f)]
-        [SerializeField] float rpmSpoolUpSeconds = 0.9f;
-        [Min(0f)]
-        [SerializeField] float rpmSpoolDownSeconds = 1.8f;
         [Min(0f)]
         [SerializeField] float loadAttackSeconds = 0.18f;
         [Min(0f)]
@@ -81,11 +58,10 @@ namespace Farion.Audio.Spacecraft
         [SerializeField] float rollResponse = 7f;
 
         [Header("Runtime Debug")]
-        [SerializeField, Range(0f, 100f)] float debugRpm;
+        [SerializeField, Range(0f, 100f)] float debugSpeed;
         [SerializeField, Range(0f, 1f)] float debugLoad;
         [SerializeField, Range(0f, 1f)] float debugBoost;
         [SerializeField, Range(-1f, 1f)] float debugRoll;
-        [SerializeField] float debugEngineState;
         [SerializeField, Range(0f, 1f)] float debugPerspective;
         [SerializeField, Range(0f, 1f)] float debugHullStress;
         [SerializeField, Range(0f, 1f)] float debugImpact;
@@ -94,9 +70,7 @@ namespace Farion.Audio.Spacecraft
 
         EventInstance engineInstance;
         bool engineStarted;
-        float engineAge;
-        float smoothedRpm01;
-        float rpmVelocity;
+        bool boostWasActive;
         float smoothedLoad;
         float loadVelocity;
         float smoothedBoost;
@@ -122,15 +96,6 @@ namespace Farion.Audio.Spacecraft
 
         void OnValidate()
         {
-            startupSeconds = Mathf.Max(0f, startupSeconds);
-            idleRpm = Mathf.Clamp(idleRpm, 0f, 100f);
-            maximumRpm = Mathf.Clamp(maximumRpm, idleRpm, 100f);
-            speedRpmWeight = Mathf.Clamp01(speedRpmWeight);
-            thrustRpmWeight = Mathf.Clamp01(thrustRpmWeight);
-            loadRpmWeight = Mathf.Clamp01(loadRpmWeight);
-            boostRpmWeight = Mathf.Clamp01(boostRpmWeight);
-            rpmSpoolUpSeconds = Mathf.Max(0f, rpmSpoolUpSeconds);
-            rpmSpoolDownSeconds = Mathf.Max(0f, rpmSpoolDownSeconds);
             loadAttackSeconds = Mathf.Max(0f, loadAttackSeconds);
             loadReleaseSeconds = Mathf.Max(0f, loadReleaseSeconds);
             boostAttackSeconds = Mathf.Max(0f, boostAttackSeconds);
@@ -155,21 +120,18 @@ namespace Farion.Audio.Spacecraft
 
             telemetryProvider.RefreshTelemetry();
             ShipAudioTelemetry telemetry = telemetryProvider.Telemetry;
-            engineAge += Time.deltaTime;
 
-            float thrustActivity = CalculateMainThrusterActivity(telemetry);
-            float targetRpm01 = Mathf.Clamp01(
-                telemetry.NormalizedSpeed * speedRpmWeight +
-                thrustActivity * thrustRpmWeight +
-                telemetry.EngineLoad * loadRpmWeight +
-                telemetry.Boost * boostRpmWeight);
-
-            smoothedRpm01 = SmoothTowards(
-                smoothedRpm01,
-                targetRpm01,
-                ref rpmVelocity,
-                targetRpm01 > smoothedRpm01 ? rpmSpoolUpSeconds : rpmSpoolDownSeconds,
-                Time.deltaTime);
+            BoostTransition boostTransition =
+                EvaluateBoostTransition(boostWasActive, telemetry.BoostActive);
+            boostWasActive = telemetry.BoostActive;
+            if (boostTransition == BoostTransition.Ignition)
+            {
+                PlayAttachedOneShot(boostIgnitionEvent);
+            }
+            else if (boostTransition == BoostTransition.Shutdown)
+            {
+                PlayAttachedOneShot(boostShutdownEvent);
+            }
 
             smoothedLoad = SmoothTowards(
                 smoothedLoad,
@@ -188,22 +150,20 @@ namespace Farion.Audio.Spacecraft
             float targetRoll = motor != null ? Mathf.Clamp(motor.LastLocalRotationInput.z, -1f, 1f) : 0f;
             smoothedRoll = Mathf.MoveTowards(smoothedRoll, targetRoll, rollResponse * Time.deltaTime);
 
-            debugRpm = Mathf.Lerp(idleRpm, maximumRpm, smoothedRpm01);
+            debugSpeed = telemetry.NormalizedSpeed * 100f;
             debugLoad = smoothedLoad;
             debugBoost = smoothedBoost;
             debugRoll = smoothedRoll;
-            debugEngineState = engineAge < startupSeconds ? StartupState : RunningState;
             debugPerspective = IsInteriorPerspective(telemetry.Perspective) ? 1f : 0f;
             debugHullStress = telemetry.HullStress;
             debugImpact = telemetry.Impact;
             debugAtmosphere = telemetry.Atmosphere;
             debugWaterSubmersion = telemetry.WaterSubmersion;
 
-            SetParameter(rpmParameter, debugRpm);
-            SetParameter(loadParameter, debugLoad);
+            SetParameter(speedParameter, debugSpeed);
             SetParameter(boostParameter, debugBoost);
             SetParameter(rollParameter, debugRoll);
-            SetParameter(engineStateParameter, debugEngineState);
+            SetParameter(loadParameter, debugLoad);
             SetParameter(perspectiveParameter, debugPerspective);
             SetParameter(hullStressParameter, debugHullStress);
             SetParameter(impactParameter, debugImpact);
@@ -258,9 +218,7 @@ namespace Farion.Audio.Spacecraft
                 RuntimeManager.AttachInstanceToGameObject(engineInstance, gameObject);
             }
 
-            engineAge = 0f;
-            smoothedRpm01 = 0f;
-            rpmVelocity = 0f;
+            boostWasActive = false;
             smoothedLoad = 0f;
             loadVelocity = 0f;
             smoothedBoost = 0f;
@@ -269,8 +227,9 @@ namespace Farion.Audio.Spacecraft
             warnedUnexpectedStop = false;
             warnedParameterNames.Clear();
             engineStarted = true;
-            SetParameter(engineStateParameter, StartupState);
-            SetParameter(rpmParameter, idleRpm);
+            SetParameter(speedParameter, 0f);
+            SetParameter(boostParameter, 0f);
+            SetParameter(rollParameter, 0f);
             engineInstance.start();
         }
 
@@ -281,7 +240,6 @@ namespace Farion.Audio.Spacecraft
                 return;
             }
 
-            SetParameter(engineStateParameter, ShutdownState);
             engineInstance.stop(allowFadeoutOnStop ? STOP_MODE.ALLOWFADEOUT : STOP_MODE.IMMEDIATE);
             StopReleasedInstance();
         }
@@ -313,6 +271,14 @@ namespace Farion.Audio.Spacecraft
                 this);
         }
 
+        void PlayAttachedOneShot(EventReference eventReference)
+        {
+            if (!eventReference.IsNull)
+            {
+                RuntimeManager.PlayOneShotAttached(eventReference, gameObject);
+            }
+        }
+
         bool HasStoppedUnexpectedly()
         {
             FMOD.RESULT result = engineInstance.getPlaybackState(out PLAYBACK_STATE playbackState);
@@ -342,15 +308,21 @@ namespace Farion.Audio.Spacecraft
             }
 
             engineStarted = false;
+            boostWasActive = false;
         }
 
-        static float CalculateMainThrusterActivity(ShipAudioTelemetry telemetry)
+        internal static BoostTransition EvaluateBoostTransition(
+            bool wasActive,
+            bool isActive)
         {
-            return Mathf.Clamp01(Mathf.Max(
-                telemetry.ForwardThrust,
-                telemetry.ReverseThrust * 0.6f,
-                telemetry.LateralThrust * 0.45f,
-                telemetry.VerticalThrust * 0.4f));
+            if (wasActive == isActive)
+            {
+                return BoostTransition.None;
+            }
+
+            return isActive
+                ? BoostTransition.Ignition
+                : BoostTransition.Shutdown;
         }
 
         static bool IsInteriorPerspective(SpacecraftAudioPerspective perspective)
@@ -367,6 +339,13 @@ namespace Farion.Audio.Spacecraft
             }
 
             return Mathf.Clamp01(Mathf.SmoothDamp(current, target, ref velocity, smoothTime, Mathf.Infinity, deltaTime));
+        }
+
+        internal enum BoostTransition
+        {
+            None,
+            Ignition,
+            Shutdown
         }
     }
 }

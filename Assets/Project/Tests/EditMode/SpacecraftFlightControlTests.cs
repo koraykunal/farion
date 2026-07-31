@@ -1,3 +1,4 @@
+using Farion.Audio.Spacecraft;
 using Farion.Core.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
@@ -200,6 +201,122 @@ namespace Farion.Tests.EditMode
                     new Vector3(0f, 0f, 10f),
                     20f),
                 Is.EqualTo(0.5f).Within(0.0001f));
+        }
+
+        [Test]
+        public void AtmosphereInteractionProducesMonotonicLoadsAndSuppressesSubmergedDrag()
+        {
+            GameObject bodyObject = new("Atmosphere Test Body");
+            CelestialBody body = bodyObject.AddComponent<CelestialBody>();
+            SpacecraftAtmosphereInteractionProfile profile =
+                ScriptableObject.CreateInstance<SpacecraftAtmosphereInteractionProfile>();
+
+            try
+            {
+                CelestialFrameSample upperFrame = AtmosphereFrame(
+                    body,
+                    centerDistance: 55f,
+                    speed: 200f,
+                    oceanRadius: 0f);
+                CelestialFrameSample surfaceFrame = AtmosphereFrame(
+                    body,
+                    centerDistance: 50f,
+                    speed: 200f,
+                    oceanRadius: 0f);
+                CelestialFrameSample submergedFrame = AtmosphereFrame(
+                    body,
+                    centerDistance: 50f,
+                    speed: 200f,
+                    oceanRadius: 51f);
+
+                SpacecraftAtmosphereInteractionSample upper = profile.Evaluate(upperFrame);
+                SpacecraftAtmosphereInteractionSample surface = profile.Evaluate(surfaceFrame);
+                SpacecraftAtmosphereInteractionSample submerged = profile.Evaluate(submergedFrame);
+
+                Assert.That(surface.AtmosphereDensity, Is.GreaterThan(upper.AtmosphereDensity));
+                Assert.That(surface.DynamicPressure, Is.GreaterThan(upper.DynamicPressure));
+                Assert.That(surface.HeatingRate, Is.GreaterThan(upper.HeatingRate));
+                Assert.That(
+                    Vector3.Dot(
+                        surface.DragAcceleration,
+                        surfaceFrame.SurfaceRelativeVelocity),
+                    Is.LessThan(0f));
+                Assert.That(surface.DragAcceleration.magnitude, Is.LessThanOrEqualTo(60f));
+                Assert.That(submerged.IsInsideAtmosphere, Is.False);
+                Assert.That(submerged.DragAcceleration.sqrMagnitude, Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+                Object.DestroyImmediate(bodyObject);
+            }
+        }
+
+        [Test]
+        public void ReentryVfxActivatesFromHeatAndKeepsPressureSecondary()
+        {
+            float belowThreshold = SpacecraftReentryVfxController.CalculateTargetIntensity(
+                heatLoad: 0.03f,
+                dynamicPressureLoad: 0.07f,
+                heatThreshold: 0.04f,
+                dynamicPressureThreshold: 0.08f,
+                pressureContribution: 0.45f);
+            float heatDriven = SpacecraftReentryVfxController.CalculateTargetIntensity(
+                heatLoad: 0.52f,
+                dynamicPressureLoad: 0.54f,
+                heatThreshold: 0.04f,
+                dynamicPressureThreshold: 0.08f,
+                pressureContribution: 0.45f);
+            float maximumHeat = SpacecraftReentryVfxController.CalculateTargetIntensity(
+                heatLoad: 1f,
+                dynamicPressureLoad: 0f,
+                heatThreshold: 0.04f,
+                dynamicPressureThreshold: 0.08f,
+                pressureContribution: 0.45f);
+
+            Assert.That(belowThreshold, Is.Zero);
+            Assert.That(heatDriven, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(maximumHeat, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void ReentryVfxUsesTheLeadingHullFaceForEveryTravelDirection()
+        {
+            Vector3 hullHalfExtents = new(6.8f, 3.2f, 10.5f);
+
+            float forward = SpacecraftReentryVfxController.CalculateLeadingDistance(
+                Vector3.forward,
+                hullHalfExtents,
+                standoff: 0.75f);
+            float sideways = SpacecraftReentryVfxController.CalculateLeadingDistance(
+                Vector3.right,
+                hullHalfExtents,
+                standoff: 0.75f);
+            float backward = SpacecraftReentryVfxController.CalculateLeadingDistance(
+                Vector3.back,
+                hullHalfExtents,
+                standoff: 0.75f);
+
+            Assert.That(forward, Is.EqualTo(11.25f).Within(0.0001f));
+            Assert.That(sideways, Is.EqualTo(7.55f).Within(0.0001f));
+            Assert.That(backward, Is.EqualTo(forward).Within(0.0001f));
+        }
+
+        [Test]
+        public void BoostAudioTransitionFiresOnlyOnStateEdges()
+        {
+            Assert.That(
+                ShipAudioController.EvaluateBoostTransition(false, false),
+                Is.EqualTo(ShipAudioController.BoostTransition.None));
+            Assert.That(
+                ShipAudioController.EvaluateBoostTransition(false, true),
+                Is.EqualTo(ShipAudioController.BoostTransition.Ignition));
+            Assert.That(
+                ShipAudioController.EvaluateBoostTransition(true, true),
+                Is.EqualTo(ShipAudioController.BoostTransition.None));
+            Assert.That(
+                ShipAudioController.EvaluateBoostTransition(true, false),
+                Is.EqualTo(ShipAudioController.BoostTransition.Shutdown));
         }
 
         [Test]
@@ -434,6 +551,35 @@ namespace Farion.Tests.EditMode
                 localGravity,
                 assisted,
                 boostAuthority: 0f);
+        }
+
+        static CelestialFrameSample AtmosphereFrame(
+            CelestialBody body,
+            float centerDistance,
+            float speed,
+            float oceanRadius)
+        {
+            Vector3 position = Vector3.up * centerDistance;
+            CelestialEnvironmentSample environment = new(
+                body,
+                oceanRadius > 0f,
+                oceanRadius,
+                hasAtmosphere: true,
+                atmosphereRadius: 60f);
+            return new CelestialFrameSample(
+                body,
+                position,
+                Vector3.right * speed,
+                Vector3.zero,
+                Vector3.zero,
+                Vector3.zero,
+                Vector3.up * body.Radius,
+                Vector3.up,
+                Vector3.down * body.SurfaceGravity,
+                centerDistance,
+                centerDistance - body.Radius,
+                0f,
+                environment);
         }
 
         static SpacecraftFlightControlSettings Settings()

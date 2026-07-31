@@ -14,7 +14,9 @@ namespace Farion.Rendering.PostProcessing
         const int MaxOceanBodies = 8;
 
         [SerializeField] Shader oceanShader;
-        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
+        // Resolve the exterior ocean before transparent VFX so the full-screen
+        // composite cannot overwrite particles, trails, or reentry plasma.
+        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
         [SerializeField] RenderPassEvent underwaterRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing + 2;
         [Range(1, MaxOceanBodies)]
         [SerializeField] int maxRenderedBodies = MaxOceanBodies;

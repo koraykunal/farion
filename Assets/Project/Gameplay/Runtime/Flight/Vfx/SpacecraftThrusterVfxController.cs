@@ -13,6 +13,7 @@ namespace Farion.Gameplay.Flight
         [SerializeField] SpacecraftMotor motor;
         [SerializeField] CelestialActorProbe celestialProbe;
         [SerializeField] SpacecraftOceanInteractor oceanInteractor;
+        [SerializeField] SpacecraftAtmosphereInteractor atmosphereInteractor;
 
         [Header("Response")]
         [Min(0.01f)]
@@ -39,6 +40,8 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float atmosphereHeatContribution = 0.18f;
         [Range(0f, 1f)]
         [SerializeField] float speedHeatContribution = 0.08f;
+        [Range(0f, 1f)]
+        [SerializeField] float aerodynamicHeatContribution = 1f;
         [Min(1f)]
         [SerializeField] float heatReferenceSpeed = 260f;
         [SerializeField] bool suppressAtmosphereVfxUnderwater = true;
@@ -90,6 +93,7 @@ namespace Farion.Gameplay.Flight
             boostHeatContribution = Mathf.Clamp01(boostHeatContribution);
             atmosphereHeatContribution = Mathf.Clamp01(atmosphereHeatContribution);
             speedHeatContribution = Mathf.Clamp01(speedHeatContribution);
+            aerodynamicHeatContribution = Mathf.Clamp01(aerodynamicHeatContribution);
             heatReferenceSpeed = Mathf.Max(1f, heatReferenceSpeed);
             AutoAssignReferences();
             InitializeNozzles();
@@ -128,6 +132,7 @@ namespace Farion.Gameplay.Flight
             motor ??= GetComponentInParent<SpacecraftMotor>();
             celestialProbe ??= GetComponentInParent<CelestialActorProbe>();
             oceanInteractor ??= GetComponentInParent<SpacecraftOceanInteractor>();
+            atmosphereInteractor ??= GetComponentInParent<SpacecraftAtmosphereInteractor>();
         }
 
         void AutoAssignNozzles()
@@ -173,12 +178,13 @@ namespace Farion.Gameplay.Flight
             }
 
             float targetAtmosphereDensity = SampleAtmosphereDensity();
-            float speedHeat = Mathf.Clamp01(movement.RelativeSpeed / heatReferenceSpeed) * speedHeatContribution;
-            float targetHeat = Mathf.Clamp01(
+            float propulsionHeat =
                 targetThrottle * 0.25f +
-                targetBoost * boostHeatContribution +
-                targetAtmosphereDensity * atmosphereHeatContribution +
-                speedHeat);
+                targetBoost * boostHeatContribution;
+            float aerodynamicHeat = SampleAerodynamicHeat(
+                movement.RelativeSpeed,
+                targetAtmosphereDensity);
+            float targetHeat = Mathf.Clamp01(Mathf.Max(propulsionHeat, aerodynamicHeat));
             return new SpacecraftThrusterVfxFrame(
                 targetThrottle,
                 targetBoost,
@@ -228,8 +234,28 @@ namespace Farion.Gameplay.Flight
                 return 0f;
             }
 
+            if (atmosphereInteractor != null)
+            {
+                return atmosphereInteractor.CurrentInteraction.AtmosphereDensity;
+            }
+
             CelestialFrameSample sample = celestialProbe.CurrentSample;
             return sample.IsInsideAtmosphere ? sample.AtmosphereNormalizedDepth : 0f;
+        }
+
+        float SampleAerodynamicHeat(float relativeSpeed, float normalizedDensity)
+        {
+            if (atmosphereInteractor != null)
+            {
+                return atmosphereInteractor.CurrentInteraction.HeatLoad *
+                    aerodynamicHeatContribution;
+            }
+
+            float speedHeat = Mathf.Clamp01(relativeSpeed / heatReferenceSpeed) *
+                speedHeatContribution;
+            return Mathf.Clamp01(
+                normalizedDensity * atmosphereHeatContribution +
+                speedHeat);
         }
 
         internal static float CalculateMainThrustDemand(SpacecraftThrusterCommand thrusters)

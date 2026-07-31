@@ -29,7 +29,7 @@ namespace Farion.Gameplay.Session
         [SerializeField] ShuttleRuntimeBinding assignedShuttle;
 
         [Header("Fleet")]
-        [SerializeField] FleetKnowledgeRuntime fleetKnowledge;
+        [SerializeField] FleetRuntime fleet;
 
         GameplayRuntimeBindings bindings;
 
@@ -40,7 +40,7 @@ namespace Farion.Gameplay.Session
                 originRebaser,
                 localPlayerInventory,
                 possession,
-                fleetKnowledge,
+                fleet,
                 assignedShuttle,
                 resourceStreamers);
 
@@ -48,7 +48,7 @@ namespace Farion.Gameplay.Session
 
         void OnValidate()
         {
-            fleetKnowledge ??= GetComponent<FleetKnowledgeRuntime>();
+            fleet ??= GetComponent<FleetRuntime>();
             resourceStreamers ??= new List<ResourceDepositRuntimeSpawner>();
             resourceStreamers.RemoveAll(streamer => streamer == null);
             bindings = null;

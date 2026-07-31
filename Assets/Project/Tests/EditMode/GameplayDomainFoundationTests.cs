@@ -72,6 +72,34 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void InventoryTransferIsAtomicAcrossCapacityFailureAndSuccess()
+        {
+            DefinitionId oreId = new("item.ore");
+            DefinitionId ingotId = new("item.ingot");
+            InventoryContainerState source = CreateContainer("container.player", 1);
+            InventoryContainerState fullCargo = CreateContainer("container.full_cargo", 1);
+            InventoryContainerState emptyCargo = CreateContainer("container.empty_cargo", 1);
+            source.TryAddStack(oreId, 10, 10);
+            fullCargo.TryAddStack(ingotId, 10, 10);
+            long sourceRevision = source.Revision;
+            long fullCargoRevision = fullCargo.Revision;
+
+            Assert.That(
+                InventoryTransferService.TryTransferAllStacks(source, fullCargo),
+                Is.EqualTo(InventoryOperationResult.InsufficientCapacity));
+            Assert.That(source.Count(oreId), Is.EqualTo(10));
+            Assert.That(fullCargo.Count(oreId), Is.Zero);
+            Assert.That(source.Revision, Is.EqualTo(sourceRevision));
+            Assert.That(fullCargo.Revision, Is.EqualTo(fullCargoRevision));
+
+            Assert.That(
+                InventoryTransferService.TryTransferAllStacks(source, emptyCargo),
+                Is.EqualTo(InventoryOperationResult.Succeeded));
+            Assert.That(source.Count(oreId), Is.Zero);
+            Assert.That(emptyCargo.Count(oreId), Is.EqualTo(10));
+        }
+
+        [Test]
         public void CancelledInventoryTransactionDoesNotAdvanceRevision()
         {
             DefinitionId oreId = new("item.ore");

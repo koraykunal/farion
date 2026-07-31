@@ -21,7 +21,7 @@ namespace Farion.Gameplay.Session
             WorldOriginRebaser originRebaser,
             PlayerInventory localPlayerInventory,
             PlayerPossessionController possession,
-            FleetKnowledgeRuntime fleetKnowledge,
+            FleetRuntime fleet,
             ShuttleRuntimeBinding assignedShuttle,
             IReadOnlyList<ResourceDepositRuntimeSpawner> resourceStreamers)
         {
@@ -30,7 +30,7 @@ namespace Farion.Gameplay.Session
             OriginRebaser = originRebaser;
             LocalPlayerInventory = localPlayerInventory;
             Possession = possession;
-            FleetKnowledge = fleetKnowledge;
+            Fleet = fleet;
             AssignedShuttle = assignedShuttle;
             this.resourceStreamers = new List<ResourceDepositRuntimeSpawner>(
                 resourceStreamers ?? System.Array.Empty<ResourceDepositRuntimeSpawner>())
@@ -42,7 +42,9 @@ namespace Farion.Gameplay.Session
         public WorldOriginRebaser OriginRebaser { get; }
         public PlayerInventory LocalPlayerInventory { get; }
         public PlayerPossessionController Possession { get; }
-        public FleetKnowledgeRuntime FleetKnowledge { get; }
+        public FleetRuntime Fleet { get; }
+        public FleetKnowledgeRuntime FleetKnowledge => Fleet?.Knowledge;
+        public FleetStorageInventory FleetStorage => Fleet?.Storage;
         public ShuttleRuntimeBinding AssignedShuttle { get; }
         public IReadOnlyList<ResourceDepositRuntimeSpawner> ResourceStreamers =>
             resourceStreamers;
@@ -52,7 +54,8 @@ namespace Farion.Gameplay.Session
             OriginRebaser != null &&
             LocalPlayerInventory != null &&
             Possession != null &&
-            FleetKnowledge != null &&
+            Fleet != null &&
+            Fleet.HasValidAuthoring &&
             AssignedShuttle != null &&
             AssignedShuttle.HasValidAuthoring &&
             HasNoMissingResourceStreamers();
@@ -65,7 +68,7 @@ namespace Farion.Gameplay.Session
                 !ReferenceEquals(OriginRebaser, other.OriginRebaser) ||
                 !ReferenceEquals(LocalPlayerInventory, other.LocalPlayerInventory) ||
                 !ReferenceEquals(Possession, other.Possession) ||
-                !ReferenceEquals(FleetKnowledge, other.FleetKnowledge) ||
+                !ReferenceEquals(Fleet, other.Fleet) ||
                 !ReferenceEquals(AssignedShuttle, other.AssignedShuttle) ||
                 resourceStreamers.Count != other.resourceStreamers.Count)
             {

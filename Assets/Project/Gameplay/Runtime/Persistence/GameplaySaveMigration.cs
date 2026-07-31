@@ -1,6 +1,6 @@
 using System;
-using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Fleet;
+using Farion.Gameplay.Inventory;
 
 namespace Farion.Gameplay.Persistence
 {
@@ -17,43 +17,42 @@ namespace Farion.Gameplay.Persistence
                 return false;
             }
 
-            if (source.SchemaVersion == GameplaySaveData.CurrentSchemaVersion)
+            if (IsValidCurrentPayload(source))
             {
-                if (source.PayloadRevision != GameplaySaveData.CurrentPayloadRevision ||
-                    source.ShuttleCargo == null ||
-                    source.FleetKnowledge == null)
-                {
-                    return false;
-                }
-
                 migrated = source;
                 return true;
             }
 
-            if (source.SchemaVersion != 3 && source.SchemaVersion != 4)
+            if (source.SchemaVersion == GameplaySaveData.CurrentSchemaVersion)
             {
                 return false;
             }
 
-            InventoryContainerComponent cargo = context.ShuttleCargo;
-            if (cargo == null || !cargo.ContainerId.IsValid)
+            InventoryContainerComponent shuttleCargo = context.ShuttleCargo;
+            FleetStorageInventory fleetStorage = context.FleetStorage;
+            if (shuttleCargo == null ||
+                fleetStorage == null ||
+                !shuttleCargo.ContainerId.IsValid ||
+                !fleetStorage.ContainerId.IsValid)
             {
                 return false;
             }
 
-            InventoryContainerSnapshot legacyCargoDefault = new(
-                cargo.ContainerId.Value,
-                cargo.SlotCapacity,
-                Array.Empty<InventoryStackSnapshot>());
+            InventoryContainerSnapshot cargoDefault = EmptySnapshot(
+                shuttleCargo);
+            InventoryContainerSnapshot fleetStorageDefault = EmptySnapshot(
+                fleetStorage);
             return TryMigrateToCurrent(
                 source,
-                legacyCargoDefault,
+                cargoDefault,
+                fleetStorageDefault,
                 out migrated);
         }
 
         public static bool TryMigrateToCurrent(
             GameplaySaveData source,
             InventoryContainerSnapshot legacyCargoDefault,
+            InventoryContainerSnapshot fleetStorageDefault,
             out GameplaySaveData migrated)
         {
             migrated = null;
@@ -62,38 +61,79 @@ namespace Farion.Gameplay.Persistence
                 return false;
             }
 
-            if (source.SchemaVersion == GameplaySaveData.CurrentSchemaVersion)
+            if (IsValidCurrentPayload(source))
             {
-                if (source.PayloadRevision != GameplaySaveData.CurrentPayloadRevision ||
-                    source.ShuttleCargo == null ||
-                    source.FleetKnowledge == null)
-                {
-                    return false;
-                }
-
                 migrated = source;
                 return true;
             }
 
-            if ((source.SchemaVersion != 3 &&
-                 source.SchemaVersion != 4) ||
+            if (source.SchemaVersion == GameplaySaveData.CurrentSchemaVersion ||
                 legacyCargoDefault == null ||
+                fleetStorageDefault == null ||
                 !legacyCargoDefault.HasValidContainerId ||
-                !legacyCargoDefault.HasContainerId)
+                !legacyCargoDefault.HasContainerId ||
+                !fleetStorageDefault.HasValidContainerId ||
+                !fleetStorageDefault.HasContainerId)
             {
                 return false;
             }
 
-            FleetKnowledgeSnapshot emptyKnowledge = new(
-                Array.Empty<string>(),
-                Array.Empty<string>(),
-                Array.Empty<string>());
+            InventoryContainerSnapshot shuttleCargo;
+            FleetKnowledgeSnapshot fleetKnowledge;
+            if (source.SchemaVersion == 3 ||
+                source.SchemaVersion == 4)
+            {
+                shuttleCargo = legacyCargoDefault;
+                fleetKnowledge = EmptyKnowledge();
+            }
+            else if (source.SchemaVersion == 5 &&
+                     source.PayloadRevision ==
+                     GameplaySaveData.CurrentPayloadRevision &&
+                     source.ShuttleCargo != null &&
+                     source.FleetKnowledge != null)
+            {
+                shuttleCargo = source.ShuttleCargo;
+                fleetKnowledge = source.FleetKnowledge;
+            }
+            else
+            {
+                return false;
+            }
 
             migrated = GameplaySaveData.CreateMigrated(
                 source,
-                legacyCargoDefault,
-                emptyKnowledge);
+                shuttleCargo,
+                fleetStorageDefault,
+                fleetKnowledge);
             return true;
+        }
+
+        static bool IsValidCurrentPayload(GameplaySaveData source)
+        {
+            return source.SchemaVersion ==
+                   GameplaySaveData.CurrentSchemaVersion &&
+                   source.PayloadRevision ==
+                   GameplaySaveData.CurrentPayloadRevision &&
+                   source.ShuttleCargo != null &&
+                   source.FleetStorage != null &&
+                   source.FleetKnowledge != null;
+        }
+
+        static InventoryContainerSnapshot EmptySnapshot(
+            InventoryContainerComponent container)
+        {
+            return new InventoryContainerSnapshot(
+                container.ContainerId.Value,
+                container.SlotCapacity,
+                Array.Empty<InventoryStackSnapshot>());
+        }
+
+        static FleetKnowledgeSnapshot EmptyKnowledge()
+        {
+            return new FleetKnowledgeSnapshot(
+                Array.Empty<string>(),
+                Array.Empty<string>(),
+                Array.Empty<string>());
         }
     }
 }

@@ -52,6 +52,7 @@ namespace Farion.Gameplay.Character
         float pendingYawDegrees;
         Vector3 smoothedGroundNormal = Vector3.up;
         bool hasSmoothedGroundNormal;
+        ArtificialGravityVolume artificialGravitySource;
 
         public Rigidbody Rigidbody => cachedRigidbody != null ? cachedRigidbody : cachedRigidbody = GetComponent<Rigidbody>();
         public CapsuleCollider Capsule => cachedCapsule != null ? cachedCapsule : cachedCapsule = GetComponent<CapsuleCollider>();
@@ -98,17 +99,29 @@ namespace Farion.Gameplay.Character
 
         void FixedUpdate()
         {
-            CelestialFrameSample frame = ActorProbe.CurrentSample;
-            localUp = frame.HasBody ? frame.LocalUp : transform.up;
-            RefreshWaterState(frame);
+            CelestialFrameSample celestialFrame = ActorProbe.CurrentSample;
+            bool hasArtificialGravity = artificialGravitySource != null;
+            Vector3 gravityAcceleration = hasArtificialGravity
+                ? artificialGravitySource.GravityAcceleration
+                : celestialFrame.GravityAcceleration;
+            Vector3 referenceVelocity = hasArtificialGravity
+                ? artificialGravitySource.ReferenceVelocityAt(Rigidbody.position)
+                : (celestialFrame.HasBody ? celestialFrame.BodyPointVelocity : Vector3.zero);
+            localUp = hasArtificialGravity
+                ? artificialGravitySource.Up
+                : (celestialFrame.HasBody ? celestialFrame.LocalUp : transform.up);
+            CelestialFrameSample environmentFrame = hasArtificialGravity
+                ? CelestialFrameSample.Empty(Rigidbody.position, Rigidbody.linearVelocity)
+                : celestialFrame;
+            RefreshWaterState(environmentFrame);
 
             RefreshGrounding(localUp);
-            ApplyGravity(frame);
-            StabilizeGroundContact(frame, localUp);
-            ApplyMovement(frame, localUp);
-            ApplySteepSlopeSlide(frame);
-            ApplyWaterForces(frame, localUp);
-            ApplyJump(frame, localUp);
+            ApplyGravity(gravityAcceleration, hasArtificialGravity || (applyCelestialGravity && celestialFrame.HasBody));
+            StabilizeGroundContact(gravityAcceleration, referenceVelocity, localUp);
+            ApplyMovement(referenceVelocity, localUp);
+            ApplySteepSlopeSlide(gravityAcceleration);
+            ApplyWaterForces(environmentFrame, localUp);
+            ApplyJump(gravityAcceleration, referenceVelocity, celestialFrame, hasArtificialGravity, localUp);
             ApplyOrientation(localUp);
         }
 
@@ -116,6 +129,19 @@ namespace Farion.Gameplay.Character
         {
             resolvedInput = source;
             inputSource = source as MonoBehaviour;
+        }
+
+        public void SetArtificialGravitySource(ArtificialGravityVolume source)
+        {
+            artificialGravitySource = source;
+        }
+
+        public void ClearArtificialGravitySource(ArtificialGravityVolume source)
+        {
+            if (artificialGravitySource == source)
+            {
+                artificialGravitySource = null;
+            }
         }
 
         public void ResetMotorState()
@@ -228,9 +254,9 @@ namespace Farion.Gameplay.Character
             }
         }
 
-        void ApplyGravity(CelestialFrameSample frame)
+        void ApplyGravity(Vector3 gravityAcceleration, bool shouldApply)
         {
-            if (!applyCelestialGravity || !frame.HasBody)
+            if (!shouldApply)
             {
                 return;
             }
@@ -238,10 +264,10 @@ namespace Farion.Gameplay.Character
             float gravityScale = profile != null
                 ? Mathf.Lerp(1f, profile.UnderwaterGravityScale, Smooth01(waterSubmergedFraction))
                 : 1f;
-            Rigidbody.AddForce(frame.GravityAcceleration * gravityScale, ForceMode.Acceleration);
+            Rigidbody.AddForce(gravityAcceleration * gravityScale, ForceMode.Acceleration);
         }
 
-        void ApplyMovement(CelestialFrameSample frame, Vector3 up)
+        void ApplyMovement(Vector3 referenceVelocity, Vector3 up)
         {
             if (profile == null)
             {
@@ -254,8 +280,7 @@ namespace Farion.Gameplay.Character
             float drySpeed = currentInput.Sprint ? profile.SprintSpeed : profile.WalkSpeed;
             float speed = Mathf.Lerp(drySpeed, profile.UnderwaterMoveSpeed, waterControl);
             Vector3 desiredSurfaceVelocity = desiredDirection * speed;
-            Vector3 bodyVelocity = frame.HasBody ? frame.BodyPointVelocity : Vector3.zero;
-            Vector3 relativeVelocity = Rigidbody.linearVelocity - bodyVelocity;
+            Vector3 relativeVelocity = Rigidbody.linearVelocity - referenceVelocity;
             Vector3 currentSurfaceVelocity = Vector3.ProjectOnPlane(relativeVelocity, movementPlaneNormal);
             verticalSpeed = Vector3.Dot(relativeVelocity, up);
             surfaceSpeed = currentSurfaceVelocity.magnitude;
@@ -278,7 +303,7 @@ namespace Farion.Gameplay.Character
             Rigidbody.AddForce(accelerationVector, ForceMode.Acceleration);
         }
 
-        void ApplySteepSlopeSlide(CelestialFrameSample frame)
+        void ApplySteepSlopeSlide(Vector3 gravityAcceleration)
         {
             if (profile == null || !grounded || walkableGround || waterSubmergedFraction >= 0.5f)
             {
@@ -290,8 +315,8 @@ namespace Farion.Gameplay.Character
                 return;
             }
 
-            Vector3 gravity = frame.GravityAcceleration.sqrMagnitude > 0.0001f
-                ? frame.GravityAcceleration
+            Vector3 gravity = gravityAcceleration.sqrMagnitude > 0.0001f
+                ? gravityAcceleration
                 : -localUp * profile.SteepSlopeSlideAcceleration;
             Vector3 slideDirection = Vector3.ProjectOnPlane(gravity, groundNormal);
             if (slideDirection.sqrMagnitude <= 0.0001f)
@@ -304,15 +329,17 @@ namespace Farion.Gameplay.Character
                 ForceMode.Acceleration);
         }
 
-        void StabilizeGroundContact(CelestialFrameSample frame, Vector3 up)
+        void StabilizeGroundContact(
+            Vector3 gravityAcceleration,
+            Vector3 referenceVelocity,
+            Vector3 up)
         {
             if (profile == null || !grounded || !walkableGround || waterSubmergedFraction >= 0.5f)
             {
                 return;
             }
 
-            Vector3 bodyVelocity = frame.HasBody ? frame.BodyPointVelocity : Vector3.zero;
-            Vector3 relativeVelocity = Rigidbody.linearVelocity - bodyVelocity;
+            Vector3 relativeVelocity = Rigidbody.linearVelocity - referenceVelocity;
             float currentVerticalSpeed = Vector3.Dot(relativeVelocity, up);
             verticalSpeed = currentVerticalSpeed;
 
@@ -322,14 +349,14 @@ namespace Farion.Gameplay.Character
                 Rigidbody.AddForce(-up * (currentVerticalSpeed * damping), ForceMode.VelocityChange);
             }
 
-            float stickAcceleration = CalculateGroundStickAcceleration(frame);
+            float stickAcceleration = CalculateGroundStickAcceleration(gravityAcceleration);
             if (!jumpQueued && stickAcceleration > 0f)
             {
                 Rigidbody.AddForce(-up * stickAcceleration, ForceMode.Acceleration);
             }
         }
 
-        float CalculateGroundStickAcceleration(CelestialFrameSample frame)
+        float CalculateGroundStickAcceleration(Vector3 gravityAcceleration)
         {
             float acceleration = profile != null ? profile.GroundStickAcceleration : 0f;
             if (acceleration <= 0f || profile == null || profile.GroundStickGravityMultiplier <= 0f)
@@ -337,7 +364,7 @@ namespace Farion.Gameplay.Character
                 return acceleration;
             }
 
-            float gravityMagnitude = frame.GravityAcceleration.magnitude;
+            float gravityMagnitude = gravityAcceleration.magnitude;
             if (gravityMagnitude <= 0.0001f)
             {
                 return acceleration;
@@ -346,7 +373,12 @@ namespace Farion.Gameplay.Character
             return Mathf.Min(acceleration, gravityMagnitude * profile.GroundStickGravityMultiplier);
         }
 
-        void ApplyJump(CelestialFrameSample frame, Vector3 up)
+        void ApplyJump(
+            Vector3 gravityAcceleration,
+            Vector3 referenceVelocity,
+            CelestialFrameSample celestialFrame,
+            bool hasArtificialGravity,
+            Vector3 up)
         {
             if (profile == null)
             {
@@ -371,12 +403,14 @@ namespace Farion.Gameplay.Character
 
             if (canJump)
             {
-                Vector3 bodyVelocity = frame.HasBody ? frame.BodyPointVelocity : Vector3.zero;
-                Vector3 relativeVelocity = Rigidbody.linearVelocity - bodyVelocity;
+                Vector3 relativeVelocity = Rigidbody.linearVelocity - referenceVelocity;
                 Vector3 tangentialVelocity = Vector3.ProjectOnPlane(relativeVelocity, up);
-                float jumpSpeed = CalculateJumpSpeed(frame);
+                float jumpSpeed = CalculateJumpSpeed(
+                    gravityAcceleration,
+                    celestialFrame,
+                    hasArtificialGravity);
                 float upwardSpeed = Mathf.Max(Vector3.Dot(relativeVelocity, up), jumpSpeed);
-                Rigidbody.linearVelocity = bodyVelocity + tangentialVelocity + up * upwardSpeed;
+                Rigidbody.linearVelocity = referenceVelocity + tangentialVelocity + up * upwardSpeed;
                 lastJumpTime = Time.time;
                 grounded = false;
                 walkableGround = false;
@@ -386,9 +420,12 @@ namespace Farion.Gameplay.Character
             jumpQueued = false;
         }
 
-        float CalculateJumpSpeed(CelestialFrameSample frame)
+        float CalculateJumpSpeed(
+            Vector3 gravityAcceleration,
+            CelestialFrameSample celestialFrame,
+            bool hasArtificialGravity)
         {
-            float gravityMagnitude = frame.GravityAcceleration.magnitude;
+            float gravityMagnitude = gravityAcceleration.magnitude;
             float speed = profile.MaximumJumpSpeed;
 
             if (gravityMagnitude > 0.0001f && profile.JumpHeight > 0f)
@@ -399,11 +436,14 @@ namespace Farion.Gameplay.Character
             speed = Mathf.Max(speed, profile.MinimumJumpSpeed);
             speed = Mathf.Min(speed, profile.MaximumJumpSpeed);
 
-            if (frame.HasBody &&
+            if (!hasArtificialGravity &&
+                celestialFrame.HasBody &&
                 profile.MaxJumpEscapeSpeedRatio > 0f &&
                 gravityMagnitude > 0.0001f)
             {
-                float orbitalRadius = Mathf.Max(frame.CenterDistance, frame.BodyRadius);
+                float orbitalRadius = Mathf.Max(
+                    celestialFrame.CenterDistance,
+                    celestialFrame.BodyRadius);
                 if (orbitalRadius > 0.0001f)
                 {
                     float escapeSpeed = Mathf.Sqrt(2f * gravityMagnitude * orbitalRadius);

@@ -18,7 +18,7 @@ MonoBehaviour:
   maxStrafeSpeed: 45
   maxVerticalSpeed: 40
   forwardAcceleration: 20
-  boostForwardAcceleration: 34
+  boostForwardAcceleration: 48
   reverseAcceleration: 18
   strafeAcceleration: 12
   verticalAcceleration: 16
@@ -36,7 +36,7 @@ MonoBehaviour:
   manualEnvelopeStart: 0.85
   translationSpoolRate: 7
   rotationSpoolRate: 8
-  boostSpoolRate: 3.5
+  boostSpoolRate: 5
   inputDeadZone: 0.04
   boostDrainPerSecond: 0.28
   boostRechargePerSecond: 0.16

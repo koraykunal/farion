@@ -1,8 +1,10 @@
 using Farion.App.Commands;
 using Farion.Core.Persistence;
+using Farion.Gameplay.Commands;
 using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Session;
+using Farion.Gameplay.Ships;
 using UnityEngine;
 
 namespace Farion.App.Flow
@@ -147,6 +149,34 @@ namespace Farion.App.Flow
         {
             runtimeRoot ??= GetComponent<GameplayRuntimeRoot>();
             saveCoordinator ??= GetComponent<GameplaySaveCoordinator>();
+        }
+
+        public CargoTransferResult CanLoadAssignedShuttleCargo(
+            ShuttleCargoInventory destination)
+        {
+            return Commands?.CanLoadAssignedShuttleCargo(destination) ??
+                   CargoTransferResult.MissingSource;
+        }
+
+        public CargoTransferResult TryLoadAssignedShuttleCargo(
+            ShuttleCargoInventory destination)
+        {
+            return Commands?.TryLoadAssignedShuttleCargo(destination) ??
+                   CargoTransferResult.MissingSource;
+        }
+
+        public CargoTransferResult CanUnloadAssignedShuttleCargo(
+            ShuttleCargoInventory source)
+        {
+            return Commands?.CanUnloadAssignedShuttleCargo(source) ??
+                   CargoTransferResult.MissingSource;
+        }
+
+        public CargoTransferResult TryUnloadAssignedShuttleCargo(
+            ShuttleCargoInventory source)
+        {
+            return Commands?.TryUnloadAssignedShuttleCargo(source) ??
+                   CargoTransferResult.MissingSource;
         }
     }
 }

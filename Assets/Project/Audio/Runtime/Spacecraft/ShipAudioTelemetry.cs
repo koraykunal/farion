@@ -12,6 +12,7 @@ namespace Farion.Audio.Spacecraft
             float verticalThrust,
             float angularThrust,
             float boost,
+            bool boostActive,
             float normalizedSpeed,
             float hullStress,
             float impact,
@@ -26,6 +27,7 @@ namespace Farion.Audio.Spacecraft
             VerticalThrust = Mathf.Clamp01(verticalThrust);
             AngularThrust = Mathf.Clamp01(angularThrust);
             Boost = Mathf.Clamp01(boost);
+            BoostActive = boostActive;
             NormalizedSpeed = Mathf.Clamp01(normalizedSpeed);
             HullStress = Mathf.Clamp01(hullStress);
             Impact = Mathf.Clamp01(impact);
@@ -41,6 +43,7 @@ namespace Farion.Audio.Spacecraft
         public float VerticalThrust { get; }
         public float AngularThrust { get; }
         public float Boost { get; }
+        public bool BoostActive { get; }
         public float NormalizedSpeed { get; }
         public float HullStress { get; }
         public float Impact { get; }
@@ -56,6 +59,7 @@ namespace Farion.Audio.Spacecraft
             0f,
             0f,
             0f,
+            false,
             0f,
             0f,
             0f,

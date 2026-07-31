@@ -31,28 +31,44 @@ The project currently provides:
   resource deposit streaming;
 - shuttle flight, boost, guidance, landing support, boarding, and explorer exit;
 - player inventory and shuttle cargo;
+- authored Fleet identity and shared Fleet Storage;
+- authored Capital Ship Fleet blockout, navigation target, docking boundary,
+  unload surface, and artificial-gravity volume;
 - resource harvesting;
+- session-authorized atomic shuttle-cargo unload command;
 - local session identity and explicit scene composition;
-- schema-5 save/load for the active vertical-slice state;
+- schema-6 save/load for the active vertical-slice state;
 - Fleet Knowledge snapshot state;
+- one typed iron-processing recipe and atomic Fleet-Storage exchange;
 - gameplay HUD, inventory, pause, settings, and save/load presentation;
 - FMOD spacecraft presentation and authored thruster VFX.
 
-There is no capital ship, shared Fleet Storage, unload workflow, processing,
-upgrade application, or multiplayer loop yet.
+The production capital-ship model, processing result presentation, upgrade
+application, and multiplayer loop are not complete yet.
 
-## Phase 1: Shared Fleet Storage
+## Phase 1: Complete the Unload Workflow
 
 Goal: prove that an expedition result becomes shared Fleet value.
 
-1. Add an authored Fleet runtime id and shared storage container.
-2. Bind both through `GameplayRuntimeRoot`.
-3. Add one session-authorized, atomic unload transaction from the assigned
-   shuttle cargo to Fleet Storage.
-4. Add a minimal authored interaction/presentation surface for unloading.
-5. Prove harvest -> shuttle cargo -> Fleet Storage in Play Mode.
-6. Keep schema `5` unchanged until the live ownership and unload semantics are
-   stable.
+Implemented code foundation:
+
+1. Authored Fleet runtime id and shared storage container.
+2. Explicit `GameplayRuntimeRoot` and session binding.
+3. Session-authorized, atomic unload from assigned shuttle cargo to Fleet
+   Storage.
+4. Schema-6 persistence and schema 3-5 migration defaults.
+
+Implemented playable work:
+
+1. Authored the first capital-ship return/docking boundary.
+2. Exposed unload only while the assigned shuttle is inside that boundary.
+3. Added a physical unload interaction and Fleet navigation target.
+
+Remaining playable work:
+
+1. Present shuttle cargo, Fleet Storage, and the command result through an
+   authored interaction surface.
+2. Prove harvest -> shuttle cargo -> dock -> unload -> save/load in Play Mode.
 
 No repair, equipment, crafting, research terminal, capital-ship room, or
 networking work belongs in this phase.
@@ -61,11 +77,17 @@ networking work belongs in this phase.
 
 Goal: prove that shared resources can become a useful intermediate material.
 
-1. Choose one input and one output.
-2. Add one typed processing definition only after the action shape is known.
-3. Execute one atomic Fleet-Storage exchange.
-4. Present success, insufficient input, and insufficient capacity.
-5. Persist the result through the Fleet-owned save model selected after Phase 1.
+Implemented:
+
+1. Selected Iron Ore as input and Iron Ingot as output.
+2. Added one typed `ProcessingRecipeDefinition`.
+3. Executed one atomic Fleet-Storage exchange through the session command
+   boundary.
+
+Remaining:
+
+1. Present success, insufficient input, and insufficient capacity.
+2. Prove the result persists through the existing Fleet-owned schema-6 model.
 
 Do not add queues, timers, workers, power, heat, efficiency, maintenance, or a
 general machine aggregate yet.
@@ -83,15 +105,13 @@ Goal: make processed Fleet value change the next expedition.
 
 Avoid generic stat bags and placeholder module repositories.
 
-## Phase 4: Expedition Closure
+## Phase 4: Progression Closure
 
 Goal: complete the local loop before broad content work.
 
-1. Add an authored capital-ship return/docking boundary.
-2. Make unload available only through that boundary.
-3. Use Fleet Knowledge or the applied upgrade to reveal one new destination or
+1. Use Fleet Knowledge or the applied upgrade to reveal one new destination or
    activity.
-4. Verify start -> expedition -> return -> unload -> progression -> next
+2. Verify start -> expedition -> return -> unload -> progression -> next
    expedition locally.
 
 ## Phase 5: Scale Deliberately

@@ -5,6 +5,7 @@ using Farion.Core.Persistence;
 using Farion.Core.Physics;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Identity;
+using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
@@ -190,6 +191,11 @@ namespace Farion.Editor.Validation
                 {
                     ValidateGameplayRuntimeRoot(scenePath, runtimeRoot, report);
                 }
+
+                if (gameObject.TryGetComponent(out FleetRuntime fleet))
+                {
+                    ValidateFleetRuntime(scenePath, fleet, report);
+                }
             }
         }
 
@@ -300,7 +306,7 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, runtimeRoot, "localPlayerInventory", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "possession", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "assignedShuttle", report);
-            ValidateRequiredReference(scenePath, runtimeRoot, "fleetKnowledge", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "fleet", report);
 
             if (!runtimeRoot.HasValidAuthoring)
             {
@@ -384,6 +390,32 @@ namespace Farion.Editor.Validation
             RequireSpacecraftComponent<SpacecraftSurfaceContactStabilizer>(scenePath, motor, report);
             RequireSpacecraftComponent<SpacecraftLandingComputer>(scenePath, motor, report);
             RequireSpacecraftComponent<SpacecraftLandingGuidanceComputer>(scenePath, motor, report);
+            SpacecraftOceanInteractor oceanInteractor =
+                RequireSpacecraftComponent<SpacecraftOceanInteractor>(scenePath, motor, report);
+            if (oceanInteractor != null)
+            {
+                ValidateRequiredReference(scenePath, oceanInteractor, "profile", report);
+                ValidateRequiredReference(scenePath, oceanInteractor, "celestialProbe", report);
+            }
+
+            SpacecraftAtmosphereInteractor atmosphereInteractor =
+                RequireSpacecraftComponent<SpacecraftAtmosphereInteractor>(scenePath, motor, report);
+            if (atmosphereInteractor != null)
+            {
+                ValidateRequiredReference(scenePath, atmosphereInteractor, "profile", report);
+                ValidateRequiredReference(scenePath, atmosphereInteractor, "celestialProbe", report);
+            }
+
+            SpacecraftReentryVfxController reentryVfx =
+                RequireSpacecraftComponent<SpacecraftReentryVfxController>(
+                    scenePath,
+                    motor,
+                    report);
+            if (reentryVfx != null)
+            {
+                ValidateRequiredReference(scenePath, reentryVfx, "atmosphereInteractor", report);
+                ValidateRequiredReference(scenePath, reentryVfx, "material", report);
+            }
 
             SpacecraftLandingGearAnimator landingGear =
                 RequireSpacecraftComponent<SpacecraftLandingGearAnimator>(scenePath, motor, report);
@@ -727,6 +759,21 @@ namespace Farion.Editor.Validation
                 report.AddError(
                     $"{scenePath}: {motor.name} thruster VFX requires one left and one right main nozzle " +
                     $"(left={hasLeft}, right={hasRight}).");
+            }
+        }
+
+        static void ValidateFleetRuntime(
+            string scenePath,
+            FleetRuntime fleet,
+            FarionValidationReport report)
+        {
+            ValidateRequiredReference(scenePath, fleet, "persistentId", report);
+            ValidateRequiredReference(scenePath, fleet, "knowledge", report);
+            ValidateRequiredReference(scenePath, fleet, "storage", report);
+            if (!fleet.HasValidAuthoring)
+            {
+                report.AddError(
+                    $"{scenePath}: {fleet.name} has invalid Fleet runtime authoring.");
             }
         }
 

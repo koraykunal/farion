@@ -18,6 +18,7 @@ namespace Farion.Audio.Spacecraft
         [SerializeField] CelestialActorProbe celestialProbe;
         [SerializeField] SpacecraftSurfaceContactProbe surfaceContactProbe;
         [SerializeField] SpacecraftOceanInteractor oceanInteractor;
+        [SerializeField] SpacecraftAtmosphereInteractor atmosphereInteractor;
         [SerializeField] PlayerPossessionController possessionController;
 
         [Header("Runtime Debug")]
@@ -25,6 +26,7 @@ namespace Farion.Audio.Spacecraft
         [SerializeField, Range(0f, 1f)] float debugMainThrustDemand;
         [SerializeField, Range(0f, 1f)] float debugWeightedAccelerationLoad;
         [SerializeField, Range(0f, 1f)] float debugBoost;
+        [SerializeField, Range(0f, 1f)] float debugAerodynamicStress;
         [SerializeField] Vector3 debugLocalLinearAcceleration;
 
         ShipAudioTelemetry telemetry = ShipAudioTelemetry.Silent;
@@ -88,7 +90,14 @@ namespace Farion.Audio.Spacecraft
             float atmosphere = SampleAtmosphere();
             float water = oceanInteractor != null ? oceanInteractor.CurrentInteraction.SubmergedFraction : 0f;
             float pressureStress = oceanInteractor != null ? oceanInteractor.CurrentInteraction.PressureStress : 0f;
-            float hullStress = Mathf.Max(normalizedLinearAcceleration, normalizedAngularAcceleration, pressureStress, impact);
+            float aerodynamicStress = atmosphereInteractor != null
+                ? atmosphereInteractor.CurrentInteraction.AerodynamicStress
+                : 0f;
+            debugAerodynamicStress = aerodynamicStress;
+            float hullStress = Mathf.Max(normalizedLinearAcceleration, normalizedAngularAcceleration);
+            hullStress = Mathf.Max(hullStress, pressureStress);
+            hullStress = Mathf.Max(hullStress, aerodynamicStress);
+            hullStress = Mathf.Max(hullStress, impact);
 
             telemetry = new ShipAudioTelemetry(
                 engineLoad,
@@ -98,6 +107,7 @@ namespace Farion.Audio.Spacecraft
                 Mathf.Max(thrusters.Ascend, thrusters.Descend),
                 thrusters.AngularActivity,
                 boost,
+                movement.BoostActive,
                 normalizedSpeed,
                 hullStress,
                 impact,
@@ -112,6 +122,7 @@ namespace Farion.Audio.Spacecraft
             celestialProbe ??= GetComponentInParent<CelestialActorProbe>();
             surfaceContactProbe ??= GetComponentInParent<SpacecraftSurfaceContactProbe>();
             oceanInteractor ??= GetComponentInParent<SpacecraftOceanInteractor>();
+            atmosphereInteractor ??= GetComponentInParent<SpacecraftAtmosphereInteractor>();
             possessionController ??= GetComponentInParent<PlayerPossessionController>();
         }
 
@@ -155,6 +166,11 @@ namespace Farion.Audio.Spacecraft
 
         float SampleAtmosphere()
         {
+            if (atmosphereInteractor != null)
+            {
+                return atmosphereInteractor.CurrentInteraction.AtmosphereDensity;
+            }
+
             if (celestialProbe == null || !celestialProbe.HasSample)
             {
                 return 0f;

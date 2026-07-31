@@ -24,6 +24,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] WorldOriginSnapshot worldOrigin;
         [SerializeField] PlayerInventorySnapshot playerInventory;
         [SerializeField] InventoryContainerSnapshot personalShipCargo;
+        [SerializeField] InventoryContainerSnapshot fleetStorage;
         [SerializeField] PlayerPossessionSnapshot playerPossession;
         [SerializeField] FleetKnowledgeSnapshot fleetKnowledge;
         [SerializeField] List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
@@ -35,6 +36,7 @@ namespace Farion.Gameplay.Persistence
             WorldOriginSnapshot worldOrigin,
             PlayerInventorySnapshot playerInventory,
             InventoryContainerSnapshot shuttleCargo,
+            InventoryContainerSnapshot fleetStorage,
             PlayerPossessionSnapshot playerPossession,
             FleetKnowledgeSnapshot fleetKnowledge,
             IReadOnlyList<ResourceDepositDeltaSnapshot> resourceDepositDeltas)
@@ -45,6 +47,7 @@ namespace Farion.Gameplay.Persistence
                 worldOrigin,
                 playerInventory,
                 shuttleCargo,
+                fleetStorage,
                 playerPossession,
                 fleetKnowledge,
                 resourceDepositDeltas)
@@ -58,6 +61,7 @@ namespace Farion.Gameplay.Persistence
             WorldOriginSnapshot worldOrigin,
             PlayerInventorySnapshot playerInventory,
             InventoryContainerSnapshot shuttleCargo,
+            InventoryContainerSnapshot fleetStorage,
             PlayerPossessionSnapshot playerPossession,
             FleetKnowledgeSnapshot fleetKnowledge,
             IReadOnlyList<ResourceDepositDeltaSnapshot> resourceDepositDeltas)
@@ -72,6 +76,7 @@ namespace Farion.Gameplay.Persistence
             this.worldOrigin = worldOrigin;
             this.playerInventory = playerInventory;
             personalShipCargo = shuttleCargo;
+            this.fleetStorage = fleetStorage;
             this.playerPossession = playerPossession;
             this.fleetKnowledge = fleetKnowledge;
             this.resourceDepositDeltas = resourceDepositDeltas != null
@@ -88,6 +93,7 @@ namespace Farion.Gameplay.Persistence
         public WorldOriginSnapshot WorldOrigin => worldOrigin;
         public PlayerInventorySnapshot PlayerInventory => playerInventory;
         public InventoryContainerSnapshot ShuttleCargo => personalShipCargo;
+        public InventoryContainerSnapshot FleetStorage => fleetStorage;
         public PlayerPossessionSnapshot PlayerPossession => playerPossession;
         public FleetKnowledgeSnapshot FleetKnowledge => fleetKnowledge;
         public IReadOnlyList<ResourceDepositDeltaSnapshot> ResourceDepositDeltas => resourceDepositDeltas;
@@ -96,6 +102,7 @@ namespace Farion.Gameplay.Persistence
         internal static GameplaySaveData CreateMigrated(
             GameplaySaveData source,
             InventoryContainerSnapshot shuttleCargo,
+            InventoryContainerSnapshot fleetStorage,
             FleetKnowledgeSnapshot fleetKnowledge)
         {
             return new GameplaySaveData(
@@ -105,6 +112,7 @@ namespace Farion.Gameplay.Persistence
                 source.WorldOrigin,
                 source.PlayerInventory,
                 shuttleCargo,
+                fleetStorage,
                 source.PlayerPossession,
                 fleetKnowledge,
                 source.ResourceDepositDeltas);

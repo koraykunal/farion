@@ -71,7 +71,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   oceanShader: {fileID: 4800000, guid: 86cfac2266f04b0d82407a33f6497378, type: 3}
-  renderPassEvent: 550
+  renderPassEvent: 450
   underwaterRenderPassEvent: 552
   maxRenderedBodies: 8
 --- !u!114 &7269641300817094431

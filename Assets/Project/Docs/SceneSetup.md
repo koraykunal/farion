@@ -338,7 +338,7 @@ biome variation do not appear after changing shape settings, run
 
 The active moon maps live under
 `Assets/Project/Art/Textures/Celestial/Moon`. Older Solar-System comparison
-maps are retained under `Assets/Project/Art/Source/Celestial/Legacy`; do not
+maps are retained under `ArtSource/Celestial/Legacy`; do not
 assign those legacy copies to runtime profiles without an explicit art pass.
 
 ### Terrestrial Planet Setup
@@ -1130,10 +1130,9 @@ disables itself and `Player Explorer > PlayerInventory > Stacks` gains one
 
 ## First Economy Contracts
 
-The first economy pass is data-only. It does not add UI, station interaction,
-save data, or upgrade application yet. Its purpose is to keep item purpose,
-crafting recipes, and research unlocks authored cleanly before runtime systems
-consume them.
+The current economy foundation contains typed item definitions and one proven
+Fleet Storage processing exchange. It does not yet contain production queues,
+research, or upgrade application.
 
 Item definitions live under `Assets/Project/Design/Gameplay/Inventory` and now
 carry:
@@ -1154,25 +1153,15 @@ Current starter item chain:
 - Components: `SO_ReinforcedHullPanelItem.asset`,
   `SO_ThermalRegulatorItem.asset`.
 
-Recipe definitions live under `Assets/Project/Design/Gameplay/Crafting`:
+Processing definitions live under
+`Assets/Project/Design/Gameplay/Processing`:
 
-- `SO_Recipe_IronIngot.asset`: Iron Ore to Iron Ingot.
-- `SO_Recipe_NickelPlate.asset`: Nickel Fragment to Nickel Plate.
-- `SO_Recipe_Coolant.asset`: Ice Crystal to Coolant.
-- `SO_Recipe_ReinforcedHullPanel.asset`: refined structural materials to a hull
-  component.
-- `SO_Recipe_ThermalRegulator.asset`: coolant and nickel plate to a thermal
-  component, locked behind research.
+- `SO_Process_IronOre.asset`: the first typed Iron Ore processing exchange.
 
-Research definitions live under `Assets/Project/Design/Gameplay/Research`:
-
-- `SO_Research_ThermalRegulation.asset`: consumes early frozen/structural
-  materials, unlocks `SO_Recipe_ThermalRegulator.asset`, and declares the future
-  capability id `capability.environment.thermal_regulation`.
-
-Do not wire multiplayer, station queues, or upgrade application directly into
-these ScriptableObjects. The next runtime layer should consume recipe/research
-definitions through a gameplay service that can later become server-authority.
+Do not create Crafting or Research folders until those systems have a real
+runtime consumer. Do not wire multiplayer, station queues, or upgrade
+application directly into definition assets; runtime services own mutations
+and authority.
 
 ## Gameplay UI Focus
 

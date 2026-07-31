@@ -1,6 +1,7 @@
-<Solution>
+﻿<Solution>
   <Project Path="Farion.Simulation.Runtime.csproj" />
   <Project Path="Farion.Gameplay.Runtime.csproj" />
+  <Project Path="Farion.Audio.Runtime.csproj" />
   <Project Path="Farion.Core.Runtime.csproj" />
   <Project Path="Farion.UI.Runtime.csproj" />
   <Project Path="Farion.Rendering.Runtime.csproj" />
@@ -15,5 +16,4 @@
   <Project Path="Farion.Gameplay.Domain.csproj" />
   <Project Path="Farion.Application.Runtime.csproj" />
   <Project Path="Farion.Tests.EditMode.csproj" />
-  <Project Path="Farion.Audio.Runtime.csproj" />
 </Solution>

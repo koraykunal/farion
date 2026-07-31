@@ -5,8 +5,8 @@ progression. It distinguishes implemented foundations from planned systems.
 
 ## Terminology
 
-- **Fleet**: the shared progression identity that will own the capital ship,
-  assigned shuttles, shared storage, and shared knowledge.
+- **Fleet**: the shared progression identity that owns shared storage and
+  knowledge, and will own the capital ship and its assigned shuttles.
 - **Capital ship**: the crew's persistent physical home ship.
 - **Crew**: the players operating one Fleet.
 - **Shuttle**: an expedition craft assigned to a crew member.
@@ -15,7 +15,12 @@ progression. It distinguishes implemented foundations from planned systems.
   navigation knowledge.
 
 Use `Shuttle` in code and documentation. The legacy serialized save field
-`personalShipCargo` is retained only for schema-5 compatibility.
+`personalShipCargo` is retained for compatibility with existing saves.
+
+`Fleet` names the shared progression identity. Physical home ships use
+`CapitalShip` in code and asset names. The first capital ship's display name is
+`Fleet`, so its assets use names such as `SM_CapitalShip_Fleet_A` and
+`PF_CapitalShip_Fleet` without changing the meaning of `FleetRuntime`.
 
 ## Product Ownership
 
@@ -50,19 +55,25 @@ Implemented now:
 
 - persistent local player, explorer, assigned shuttle, and inventory ids;
 - revisioned stack inventory domain;
-- `PlayerInventory` and `ShuttleCargoInventory` Unity adapters;
+- `PlayerInventory`, `ShuttleCargoInventory`, and `FleetStorageInventory`
+  Unity adapters;
 - explicit `ShuttleRuntimeBinding` for shuttle identity, motor, and cargo;
-- `FleetKnowledgeState`, `FleetKnowledgeRuntime`, and schema-5 snapshot;
+- authored `FleetRuntime` identity with Fleet Storage and Fleet Knowledge;
+- `FleetKnowledgeState` and `FleetKnowledgeRuntime`;
 - resource harvesting through the session command gateway;
-- schema-5 save/load for local inventory, shuttle cargo, and Fleet Knowledge.
+- session-authorized, atomic assigned-shuttle cargo unload;
+- an authored Capital Ship Fleet prefab with the imported model, box collision,
+  navigation, docking, unload, artificial-gravity, and interaction boundaries;
+- one typed processing recipe and atomic Fleet-Storage exchange;
+- schema-6 save/load for local inventory, shuttle cargo, Fleet Storage, and
+  Fleet Knowledge;
+- migration defaults for schema 3, 4, and 5 saves.
 
 Not implemented now:
 
-- Fleet runtime id or Fleet aggregate;
-- Fleet Storage;
-- capital-ship state, rooms, machines, or hangars;
-- shuttle-to-Fleet unload;
-- crafting, refinery, fabricator, research terminal, or queues;
+- capital-ship mutable state, room ownership, or production-machine state;
+- refinery/fabricator queues, timers, power, heat, or maintenance;
+- crafting, research terminals, or technology voting;
 - shuttle hull, fuel, repair, module, or upgrade state;
 - unique equipment instances or installation slots;
 - multiplayer authority.
@@ -89,22 +100,36 @@ aggregate.
 monotonic and idempotent. It does not spend resources or select a technology
 branch by itself.
 
-## First Fleet Increment
+### Fleet Runtime
 
-The first Fleet feature should contain only:
+`FleetRuntime` owns the authored Fleet identity and composes the shared storage
+and knowledge owners. `GameplayRuntimeRoot` passes that exact reference into the
+session; command handlers do not discover or construct alternate Fleet state.
+
+## Implemented Fleet Increment
+
+The first Fleet code foundation contains:
 
 1. An authored Fleet runtime identity.
 2. One shared `FleetStorageInventory` based on the existing inventory adapter.
 3. Explicit references from `GameplayRuntimeRoot`.
 4. One atomic shuttle-cargo to Fleet-Storage unload transaction.
-5. One minimal presentation surface showing both containers and the unload
-   result.
+5. Schema-6 persistence so a successful unload cannot be lost on save.
 
-Do not add capital-ship rooms, production machines, equipment, repair, power,
-heat, or networking in this increment.
+The unload command is exposed only through the authored docking boundary and
+cargo interaction surface. The Capital Ship Fleet prefab uses the same
+`VisualRoot`, `CollisionRoot`, `RuntimeRoot`, and `Anchors` composition as the
+starter shuttle so later Blender revisions can replace presentation without
+taking ownership of gameplay state.
 
-After the workflow is Play Mode-proven, decide whether Fleet Storage belongs in
-a schema-6 Fleet snapshot. Until then, schema `5` remains unchanged.
+Reusable console prefabs live under
+`Assets/Project/Prefabs/Gameplay/Interactables`. Each console owns its
+presentation placeholder, physical collider, interaction trigger, and
+interaction component. `PF_CapitalShip_Fleet` owns their placement and assigns
+the cargo console to its authored docking boundary.
+
+Do not add production queues, equipment, repair, power, heat, or networking
+before the single local processing and upgrade loop is proven.
 
 ## Later Ownership Rules
 
@@ -125,8 +150,8 @@ real scanner upgrade may own range and power requirements; a general
 
 ## Persistence Direction
 
-Schema `5` is the current baseline and must remain readable. Future Fleet save
-work requires:
+Schema `6` is the current baseline; schemas `3`, `4`, and `5` remain readable.
+Future Fleet save work requires:
 
 1. a live authored runtime owner;
 2. immutable snapshot DTOs;

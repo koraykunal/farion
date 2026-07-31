@@ -1,7 +1,10 @@
 using System.Linq;
+using Farion.Gameplay.Character;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools.Utils;
 
 namespace Farion.Tests.EditMode
 {
@@ -57,6 +60,28 @@ namespace Farion.Tests.EditMode
                     PlayerPossessionMode.OnFoot,
                     PlayerPossessionTransitionRequest.EnterShipInterior),
                 Is.False);
+        }
+
+        [Test]
+        public void ArtificialGravityFollowsVolumeUpAndForcesTriggerCollider()
+        {
+            GameObject owner = new("ArtificialGravityVolumeTest");
+            try
+            {
+                owner.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+                ArtificialGravityVolume volume = owner.AddComponent<ArtificialGravityVolume>();
+
+                Assert.That(owner.GetComponent<BoxCollider>().isTrigger, Is.True);
+                Assert.That(volume.Up, Is.EqualTo(owner.transform.up).Using(Vector3ComparerWithEqualsOperator.Instance));
+                Assert.That(
+                    volume.GravityAcceleration,
+                    Is.EqualTo(-owner.transform.up * 9.81f)
+                        .Using(Vector3ComparerWithEqualsOperator.Instance));
+            }
+            finally
+            {
+                Object.DestroyImmediate(owner);
+            }
         }
 
         [Test]

@@ -322,6 +322,50 @@ namespace Farion.Gameplay.Inventory
             Changed?.Invoke();
         }
 
+        internal InventoryContainerState DomainState => GetState();
+
+        internal bool CanReferenceDefinitions(
+            IReadOnlyList<InventoryItemDefinition> items)
+        {
+            EnsureState();
+            if (items == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                InventoryItemDefinition item = items[i];
+                if (!TryGetDefinitionId(item, out DefinitionId definitionId) ||
+                    (definitionsById.TryGetValue(
+                         definitionId,
+                         out InventoryItemDefinition existing) &&
+                     existing != item))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal void CompleteDomainTransfer(
+            IReadOnlyList<InventoryItemDefinition> transferredDefinitions)
+        {
+            if (transferredDefinitions != null)
+            {
+                for (int i = 0; i < transferredDefinitions.Count; i++)
+                {
+                    TryRegisterStackableDefinition(
+                        transferredDefinitions[i],
+                        out _);
+                }
+            }
+
+            SynchronizeSerializedStacks();
+            NotifyChanged();
+        }
+
         bool TryApplyChanges(
             IReadOnlyList<ItemStackDefinition> inputs,
             IReadOnlyList<ItemStackDefinition> outputs)

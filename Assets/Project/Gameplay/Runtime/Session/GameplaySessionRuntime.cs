@@ -21,7 +21,9 @@ namespace Farion.Gameplay.Session
         public InventoryContainerComponent LocalInventory =>
             Bindings.LocalPlayerInventory;
         public PlayerPossessionController Possession => Bindings.Possession;
+        public FleetRuntime Fleet => Bindings.Fleet;
         public FleetKnowledgeRuntime FleetKnowledge => Bindings.FleetKnowledge;
+        public FleetStorageInventory FleetStorage => Bindings.FleetStorage;
         public ShuttleRuntimeBinding ShuttleBinding =>
             Bindings.AssignedShuttle;
         public static bool TryCreate(
@@ -35,6 +37,7 @@ namespace Farion.Gameplay.Session
                 !GameplaySessionIdentity.TryCreate(
                     localPlayerId,
                     bindings.Possession.ExplorerPersistentId,
+                    bindings.Fleet.FleetId.Value,
                     bindings.AssignedShuttle.ShipId.Value,
                     bindings.LocalPlayerInventory.ContainerId,
                     out GameplaySessionIdentity identity))
@@ -65,6 +68,7 @@ namespace Farion.Gameplay.Session
                        bindings.Possession.ExplorerPersistentId,
                        out PersistentEntityId explorerId) &&
                    Identity.ExplorerActorId == explorerId &&
+                   Identity.FleetId == bindings.Fleet.FleetId &&
                    Identity.AssignedShuttleId ==
                    bindings.AssignedShuttle.ShipId;
         }
