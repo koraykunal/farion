@@ -11,6 +11,7 @@ namespace Farion.Rendering.Celestial
     {
         [Header("Profile")]
         [SerializeField] CelestialStarVisualProfile profile;
+        [SerializeField] CelestialScaledSpaceProfile scaledSpaceProfile;
 
         [Header("Source")]
         [SerializeField] CelestialLightSource lightSource;
@@ -125,8 +126,7 @@ namespace Farion.Rendering.Celestial
 
         void UpdateVisualPlacement()
         {
-            if (profile == null
-                || lightSource == null
+            if (lightSource == null
                 || starVisualTransform == null
                 || observerCamera == null)
             {
@@ -152,12 +152,11 @@ namespace Farion.Rendering.Celestial
             Vector3 observerPosition = observerCamera.transform.position;
             Vector3 observerToStar = physicalPosition - observerPosition;
             float physicalDistance = observerToStar.magnitude;
-            float physicalRenderDistance = profile.ResolvePhysicalRenderDistance(observerCamera);
 
             bool shouldUseScaledSpace =
-                profile.UseScaledSpace
-                && physicalDistance > physicalRenderDistance
-                && physicalDistance > 0.001f;
+                scaledSpaceProfile != null
+                && physicalDistance > 0.001f
+                && scaledSpaceProfile.ShouldUseScaledSpace(physicalDistance, IsUsingScaledSpace);
 
             if (!shouldUseScaledSpace)
             {
@@ -168,7 +167,7 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            float displayDistance = profile.ResolveScaledSpaceDistance(observerCamera);
+            float displayDistance = scaledSpaceProfile.ResolveDisplayDistance(observerCamera, physicalDistance);
             float scaleRatio = displayDistance / physicalDistance;
             Vector3 displayPosition = observerPosition + observerToStar / physicalDistance * displayDistance;
 

@@ -68,22 +68,9 @@ namespace Farion.Rendering.Celestial
         [Min(0f)]
         [SerializeField] float pulseSpeed = 0.65f;
 
-        [Header("Scaled Space")]
-        [SerializeField] bool useScaledSpace = true;
-        [Min(1f)]
-        [SerializeField] float physicalRenderDistance = 4000f;
-        [Min(1f)]
-        [SerializeField] float scaledSpaceDistance = 3000f;
-        [Range(0.5f, 0.95f)]
-        [SerializeField] float farClipFraction = 0.8f;
-
         public event Action Changed;
 
         public Material Material => material;
-        public bool UseScaledSpace => useScaledSpace;
-        public float PhysicalRenderDistance => physicalRenderDistance;
-        public float ScaledSpaceDistance => scaledSpaceDistance;
-        public float FarClipFraction => farClipFraction;
 
         public void ApplyMaterialProperties(MaterialPropertyBlock propertyBlock)
         {
@@ -110,28 +97,6 @@ namespace Farion.Rendering.Celestial
             propertyBlock.SetFloat(PulseSpeedId, pulseSpeed);
         }
 
-        public float ResolveScaledSpaceDistance(Camera observer)
-        {
-            if (observer == null)
-            {
-                return scaledSpaceDistance;
-            }
-
-            float farSafeDistance = observer.farClipPlane * farClipFraction;
-            float nearSafeDistance = observer.nearClipPlane * 4f;
-            return Mathf.Max(nearSafeDistance, Mathf.Min(scaledSpaceDistance, farSafeDistance));
-        }
-
-        public float ResolvePhysicalRenderDistance(Camera observer)
-        {
-            if (observer == null)
-            {
-                return physicalRenderDistance;
-            }
-
-            return Mathf.Min(physicalRenderDistance, observer.farClipPlane * farClipFraction);
-        }
-
         void OnValidate()
         {
             intensity = Mathf.Max(0f, intensity);
@@ -148,9 +113,6 @@ namespace Farion.Rendering.Celestial
             sunspotThreshold = Mathf.Clamp01(sunspotThreshold);
             pulseAmplitude = Mathf.Clamp(pulseAmplitude, 0f, 0.2f);
             pulseSpeed = Mathf.Max(0f, pulseSpeed);
-            physicalRenderDistance = Mathf.Max(1f, physicalRenderDistance);
-            scaledSpaceDistance = Mathf.Max(1f, scaledSpaceDistance);
-            farClipFraction = Mathf.Clamp(farClipFraction, 0.5f, 0.95f);
             Changed?.Invoke();
         }
     }

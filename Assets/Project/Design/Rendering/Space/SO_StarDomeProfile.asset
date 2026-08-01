@@ -23,8 +23,3 @@ MonoBehaviour:
   starBrightness: 1.8
   starScale: 260
   starSize: 0.045
-  nebulaColor: {r: 0.22, g: 0.3, b: 0.42, a: 1}
-  nebulaStrength: 1
-  nebulaScale: 15
-  nebulaSharpness: 5.57
-  nebulaAxis: {x: 0.41, y: 0.85, z: 0.25}

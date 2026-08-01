@@ -36,5 +36,5 @@ MonoBehaviour:
   cameraClearFlags: 1
   cameraBackground: {r: 0, g: 0, b: 0, a: 1}
   nearClipPlane: 0.1
-  farClipPlane: 5000
+  farClipPlane: 50000
   allowHdr: 1

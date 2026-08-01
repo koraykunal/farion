@@ -26,9 +26,6 @@ Material:
     m_Ints: []
     m_Floats:
     - _Exposure: 1
-    - _NebulaScale: 15
-    - _NebulaSharpness: 5.57
-    - _NebulaStrength: 1
     - _Seed: 19
     - _StarBrightness: 1.8
     - _StarDensity: 0.10547505
@@ -36,8 +33,6 @@ Material:
     - _StarSize: 0.045
     m_Colors:
     - _BaseColor: {r: 0.0015, g: 0.0018, b: 0.0024, a: 1}
-    - _NebulaAxis: {r: 0.41996646, g: 0.8706622, b: 0.2560771, a: 0}
-    - _NebulaColor: {r: 0.22, g: 0.3, b: 0.42, a: 1}
     - _StarColorA: {r: 0.9, g: 0.94, b: 1, a: 1}
     - _StarColorB: {r: 1, g: 0.78, b: 0.55, a: 1}
     - _ZenithColor: {r: 0.004, g: 0.005, b: 0.007, a: 1}

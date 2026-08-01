@@ -54,6 +54,8 @@ namespace Farion.Rendering.Celestial
         MeshFilter terrainMeshFilter;
         MeshRenderer terrainMeshRenderer;
         int activeLodIndex = -1;
+        bool primaryTerrainRenderRequested = true;
+        bool scaledSpaceRenderSuppressed;
         [Header("Runtime Collision")]
         [SerializeField] bool meshColliderSkippedBecauseBodyIsDynamic;
 #if UNITY_EDITOR
@@ -225,6 +227,7 @@ namespace Farion.Rendering.Celestial
             }
 
             ApplyMaterialProperties(terrainMeshRenderer);
+            ApplyPrimaryTerrainVisibility();
             if (previewOnly)
             {
                 DisablePreviewMeshCollider(meshObject);
@@ -304,12 +307,45 @@ namespace Farion.Rendering.Celestial
         {
             GameObject meshObject = GetOrCreateMeshObject();
             terrainMeshRenderer = meshObject.GetComponent<MeshRenderer>();
-            terrainMeshRenderer.enabled = renderEnabled;
+            primaryTerrainRenderRequested = renderEnabled;
+            ApplyPrimaryTerrainVisibility();
 
             MeshCollider meshCollider = meshObject.GetComponent<MeshCollider>();
             if (meshCollider != null)
             {
                 meshCollider.enabled = collisionEnabled && meshCollider.sharedMesh != null;
+            }
+        }
+
+        internal void SetScaledSpaceRenderSuppressed(bool suppressed)
+        {
+            scaledSpaceRenderSuppressed = suppressed;
+            ApplyPrimaryTerrainVisibility();
+        }
+
+        internal Mesh GetLowestDetailRenderMesh()
+        {
+            if (renderMeshes == null)
+            {
+                return null;
+            }
+
+            for (int i = renderMeshes.Length - 1; i >= 0; i--)
+            {
+                if (renderMeshes[i] != null)
+                {
+                    return renderMeshes[i];
+                }
+            }
+
+            return null;
+        }
+
+        void ApplyPrimaryTerrainVisibility()
+        {
+            if (terrainMeshRenderer != null)
+            {
+                terrainMeshRenderer.enabled = primaryTerrainRenderRequested && !scaledSpaceRenderSuppressed;
             }
         }
 

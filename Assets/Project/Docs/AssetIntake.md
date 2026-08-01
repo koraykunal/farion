@@ -55,8 +55,7 @@ Naming:
 
 The first ship's display name is `Fleet`, while `FleetRuntime` continues to
 mean the shared progression identity. Its working assets therefore use
-`SM_CapitalShip_Fleet_A` and `PF_CapitalShip_Fleet`. The
-`PF_CapitalShip_Fleet_Greybox` prefab is only a fallback comparison asset.
+`SM_CapitalShip_Fleet_A` and `PF_CapitalShip_Fleet`.
 
 Keep Blender mesh nodes presentation-only and use explicit names such as
 `SM_CapitalShip_Fleet_Exterior`, `SM_CapitalShip_Fleet_HangarFloor`, and
@@ -84,8 +83,8 @@ Preferred source format:
 
 Folders:
 
-- Gameplay item icons: `Assets/Project/Art/UI/Icons/Gameplay/Items`
-- Gameplay menu/action icons: `Assets/Project/Art/UI/Icons/Gameplay`
+- Gameplay item icons: `Assets/Project/Art/UI/Icons/Items`
+- Menu and navigation icons: `Assets/Project/Art/UI/Icons/Menu`
 - Ship and suit system icons reserved for later HUD/system panels:
   `Assets/Project/Art/UI/Icons/Systems`
 - Temporary or review-only source exports: `ArtSource/UI`
@@ -114,10 +113,12 @@ Preferred runtime format:
 
 Folders:
 
-- Shared UI textures: `Assets/Project/Art/UI/Textures`
+- Shared frames, masks, panels, and controls:
+  `Assets/Project/Art/UI/Textures/Common`
 - HUD-specific textures: `Assets/Project/Art/UI/Textures/HUD`
-- Screen/panel textures: `Assets/Project/Art/UI/Textures/Panels`
-- Brand marks and logos: `Assets/Project/Art/UI/Textures`
+- Brand marks and logos: `Assets/Project/Art/UI/Textures/Branding`
+- Feature-specific screen art: `Assets/Project/Art/UI/Textures/Screens/<Feature>`;
+  create the feature folder only when a runtime asset exists.
 
 Naming:
 
@@ -130,12 +131,25 @@ Naming:
 Reusable authored prefabs live under:
 
 - Shared widgets: `Assets/Project/Prefabs/UI/Common`
-- Gameplay HUD and widgets: `Assets/Project/Prefabs/UI/Gameplay`
+- Flight and gameplay HUDs: `Assets/Project/Prefabs/UI/Gameplay/HUD`
+- Interaction prompts: `Assets/Project/Prefabs/UI/Gameplay/Interaction`
+- Inventory widgets and tooltips: `Assets/Project/Prefabs/UI/Gameplay/Inventory`
 - Full screens and modal panels: `Assets/Project/Prefabs/UI/Screens`
 
 Do not create a new screen prefab when a shared widget prefab plus a scene-level
 binding is enough. Put reusable visuals in Common, gameplay-only presenters in
 Gameplay, and full-screen compositions in Screens.
+
+## UI Fonts And Authored Settings
+
+- Editable font files and licenses: `Assets/Project/Art/UI/Fonts/Source` and
+  `Assets/Project/Art/UI/Fonts/OFL.txt`.
+- Generated TextMesh Pro font assets: `Assets/Project/Art/UI/Fonts/Generated`.
+- Theme assets: `Assets/Project/Design/UI/Themes`.
+- Game-flow UI settings: `Assets/Project/Design/UI/Flow`.
+
+`Assets/Project/UI` contains runtime code only. Do not place sprites, fonts,
+prefabs, screenshots, or ScriptableObject assets beside runtime assemblies.
 
 ## Resource Node Visuals
 

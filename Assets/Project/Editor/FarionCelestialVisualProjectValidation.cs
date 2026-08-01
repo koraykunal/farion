@@ -390,13 +390,6 @@ namespace Farion.Editor.Validation
                 StarShaderName,
                 StarVisualProfilePath,
                 report);
-            if (star.UseScaledSpace &&
-                star.ScaledSpaceDistance >= star.PhysicalRenderDistance)
-            {
-                report.AddWarning(
-                    $"{StarVisualProfilePath}: scaled-space distance should normally be " +
-                    "lower than physical render distance.");
-            }
         }
 
         static void ValidateSurfaceProfile(

@@ -32,7 +32,7 @@ The project currently provides:
 - shuttle flight, boost, guidance, landing support, boarding, and explorer exit;
 - player inventory and shuttle cargo;
 - authored Fleet identity and shared Fleet Storage;
-- authored Capital Ship Fleet blockout, navigation target, docking boundary,
+- authored Capital Ship Fleet production prefab, navigation target, docking boundary,
   unload surface, and artificial-gravity volume;
 - resource harvesting;
 - session-authorized atomic shuttle-cargo unload command;
@@ -43,8 +43,8 @@ The project currently provides:
 - gameplay HUD, inventory, pause, settings, and save/load presentation;
 - FMOD spacecraft presentation and authored thruster VFX.
 
-The production capital-ship model, processing result presentation, upgrade
-application, and multiplayer loop are not complete yet.
+The production capital-ship visual alignment, processing result presentation,
+upgrade application, and multiplayer loop are not complete yet.
 
 ## Phase 1: Complete the Unload Workflow
 

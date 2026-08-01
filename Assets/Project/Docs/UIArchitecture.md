@@ -73,11 +73,16 @@ Assets/Project/Prefabs/UI/
   Common/
   Foundation/   System root, confirmation, loading, and feedback prefabs
   Gameplay/
+    HUD/
+    Interaction/
+    Inventory/
   Screens/
 ```
 
-Theme assets live under `Assets/Project/Design/UI/`. English and Turkish string
-tables live under `Assets/Project/Localization/`, outside runtime scripts.
+Theme assets live under `Assets/Project/Design/UI/Themes/`; flow settings live
+under `Assets/Project/Design/UI/Flow/`. Runtime-ready UI art and fonts live under
+`Assets/Project/Art/UI/` according to `AssetIntake.md`. English and Turkish
+string tables live under `Assets/Project/Localization/`, outside runtime scripts.
 
 ## Naming
 

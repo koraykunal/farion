@@ -16,29 +16,35 @@ colors:
   critical-red: "#FF4233"
 typography:
   headline:
-    fontFamily: "Liberation Sans, Arial, sans-serif"
+    fontFamily: "IBM Plex Sans, Arial, sans-serif"
     fontSize: "22px"
     fontWeight: 400
     lineHeight: 1.2
     letterSpacing: "0.04em"
   title:
-    fontFamily: "Liberation Sans, Arial, sans-serif"
+    fontFamily: "IBM Plex Sans, Arial, sans-serif"
     fontSize: "19px"
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: "0.03em"
   body:
-    fontFamily: "Liberation Sans, Arial, sans-serif"
+    fontFamily: "IBM Plex Sans, Arial, sans-serif"
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.45
     letterSpacing: "normal"
   label:
-    fontFamily: "Liberation Sans, Arial, sans-serif"
+    fontFamily: "IBM Plex Sans, Arial, sans-serif"
     fontSize: "13px"
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: "0.05em"
+  instrument:
+    fontFamily: "IBM Plex Mono, monospace"
+    fontSize: "13px"
+    fontWeight: 500
+    lineHeight: 1.25
+    letterSpacing: "0.02em"
 rounded:
   subtle: "4px"
   panel: "6px"
@@ -135,15 +141,15 @@ icon, shape, sound, or motion. Color alone is forbidden.
 
 ## Typography
 
-**Display Font:** Liberation Sans with Arial fallback  
-**Body Font:** Liberation Sans with Arial fallback  
-**Label/Mono Font:** Liberation Sans until a licensed telemetry family is
-selected
+**Interface Font:** IBM Plex Sans Regular and Medium
+**Instrument Font:** IBM Plex Mono Medium
+**Migration Fallback:** Existing prefabs remain on Liberation Sans until their
+authored composition is deliberately migrated
 
-**Character:** The current system uses a neutral sans foundation. Hierarchy
-comes from scale, weight, spacing, and placement rather than decorative display
-type. Replacing the family later must not change the role scale or component
-geometry.
+**Character:** Plex Sans keeps navigation and prose quiet and readable. Plex
+Mono is reserved for changing values, measurements, target markers, and console
+readouts. It is not a decorative science-fiction display face. Hierarchy comes
+from role, scale, weight, spacing, and placement rather than novelty lettering.
 
 ### Hierarchy
 

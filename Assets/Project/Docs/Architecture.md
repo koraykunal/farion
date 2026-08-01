@@ -149,8 +149,8 @@ on the owning spacecraft root, while authored interaction objects and volumes
 live under `RuntimeRoot`.
 
 `PF_CapitalShip_Fleet` is the physical home-ship presentation and interaction
-boundary. The legacy greybox prefab is comparison only. The production prefab
-does not duplicate `FleetRuntime` or introduce mutable capital-ship state.
+boundary. The production prefab does not duplicate `FleetRuntime` or introduce
+mutable capital-ship state.
 
 ### Resources and Commands
 

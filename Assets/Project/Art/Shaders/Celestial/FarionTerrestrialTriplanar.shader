@@ -89,32 +89,20 @@
             TEXTURE2D(_NoiseTex);
             SAMPLER(sampler_NoiseTex);
             TEXTURE2D(_RockNormal);
-            SAMPLER(sampler_RockNormal);
             TEXTURE2D_ARRAY(_SurfaceBaseColorArray);
-            SAMPLER(sampler_SurfaceBaseColorArray);
             TEXTURE2D_ARRAY(_SurfaceNormalArray);
-            SAMPLER(sampler_SurfaceNormalArray);
             TEXTURE2D_ARRAY(_SurfaceRoughnessArray);
-            SAMPLER(sampler_SurfaceRoughnessArray);
             TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray);
-            SAMPLER(sampler_SurfaceAmbientOcclusionArray);
             TEXTURE2D_ARRAY(_SurfaceHeightArray);
-            SAMPLER(sampler_SurfaceHeightArray);
             TEXTURE2D_ARRAY(_SurfaceEmissionArray);
-            SAMPLER(sampler_SurfaceEmissionArray);
             TEXTURECUBE(_SurfaceWeightsA);
-            SAMPLER(sampler_SurfaceWeightsA);
             TEXTURECUBE(_SurfaceWeightsB);
-            SAMPLER(sampler_SurfaceWeightsB);
             TEXTURECUBE(_SurfaceStateMap);
-            SAMPLER(sampler_SurfaceStateMap);
             TEXTURE2D(_LavaBaseColor);
-            SAMPLER(sampler_LavaBaseColor);
             TEXTURE2D(_LavaNormal);
             TEXTURE2D(_LavaRoughness);
             TEXTURE2D(_LavaEmission);
             TEXTURE2D(_SnowBaseColor);
-            SAMPLER(sampler_SnowBaseColor);
             TEXTURE2D(_SnowNormal);
             TEXTURE2D(_SnowRoughness);
 
@@ -314,9 +302,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half4 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer);
-                half4 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer);
-                half4 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer);
+                half4 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_NoiseTex, samplePosition.zy, layer);
+                half4 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_NoiseTex, samplePosition.xz, layer);
+                half4 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_NoiseTex, samplePosition.xy, layer);
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -324,9 +312,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceRoughnessArray, samplePosition.zy, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceRoughnessArray, samplePosition.xz, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceRoughnessArray, samplePosition.xy, layer).r;
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_NoiseTex, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_NoiseTex, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_NoiseTex, samplePosition.xy, layer).r;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -334,9 +322,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceAmbientOcclusionArray, samplePosition.zy, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceAmbientOcclusionArray, samplePosition.xz, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceAmbientOcclusionArray, samplePosition.xy, layer).r;
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_NoiseTex, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_NoiseTex, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_NoiseTex, samplePosition.xy, layer).r;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -344,9 +332,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceHeightArray, samplePosition.zy, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceHeightArray, samplePosition.xz, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceHeightArray, samplePosition.xy, layer).r;
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_NoiseTex, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_NoiseTex, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_NoiseTex, samplePosition.xy, layer).r;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -354,9 +342,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half3 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceEmissionArray, samplePosition.zy, layer).rgb;
-                half3 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceEmissionArray, samplePosition.xz, layer).rgb;
-                half3 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceEmissionArray, samplePosition.xy, layer).rgb;
+                half3 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_NoiseTex, samplePosition.zy, layer).rgb;
+                half3 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_NoiseTex, samplePosition.xz, layer).rgb;
+                half3 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_NoiseTex, samplePosition.xy, layer).rgb;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -399,13 +387,13 @@
                 float3 axisSign = sign(normalOS);
 
                 half3 normalX = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceNormalArray, samplePosition.zy, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_NoiseTex, samplePosition.zy, layer),
                     strength);
                 half3 normalY = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceNormalArray, samplePosition.xz, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_NoiseTex, samplePosition.xz, layer),
                     strength);
                 half3 normalZ = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceNormalArray, samplePosition.xy, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_NoiseTex, samplePosition.xy, layer),
                     strength);
 
                 normalX = half3(normalX.z * axisSign.x, normalX.y, normalX.x);
@@ -459,15 +447,15 @@
                 {
                     surfaceWeightsA = saturate(SAMPLE_TEXTURECUBE(
                         _SurfaceWeightsA,
-                        sampler_SurfaceWeightsA,
+                        sampler_NoiseTex,
                         radialOS));
                     surfaceWeightsB = saturate(SAMPLE_TEXTURECUBE(
                         _SurfaceWeightsB,
-                        sampler_SurfaceWeightsB,
+                        sampler_NoiseTex,
                         radialOS));
                     surfaceState = saturate(SAMPLE_TEXTURECUBE(
                         _SurfaceStateMap,
-                        sampler_SurfaceStateMap,
+                        sampler_NoiseTex,
                         radialOS).rgb);
                 }
 
@@ -666,12 +654,12 @@
                 if (lavaMask > 0.0001h)
                 {
                     half3 lavaColor = FarionSampleOverlay(
-                        TEXTURE2D_ARGS(_LavaBaseColor, sampler_LavaBaseColor),
+                        TEXTURE2D_ARGS(_LavaBaseColor, sampler_NoiseTex),
                         input.positionOS,
                         normalOS,
                         _LavaWorldTileSize).rgb;
                     lavaRoughness = FarionSampleOverlay(
-                        TEXTURE2D_ARGS(_LavaRoughness, sampler_LavaBaseColor),
+                        TEXTURE2D_ARGS(_LavaRoughness, sampler_NoiseTex),
                         input.positionOS,
                         normalOS,
                         _LavaWorldTileSize).r;
@@ -681,12 +669,12 @@
                 if (snowMask > 0.0001h)
                 {
                     half3 snowColor = FarionSampleOverlay(
-                        TEXTURE2D_ARGS(_SnowBaseColor, sampler_SnowBaseColor),
+                        TEXTURE2D_ARGS(_SnowBaseColor, sampler_NoiseTex),
                         input.positionOS,
                         normalOS,
                         _SnowWorldTileSize).rgb;
                     snowRoughness = FarionSampleOverlay(
-                        TEXTURE2D_ARGS(_SnowRoughness, sampler_SnowBaseColor),
+                        TEXTURE2D_ARGS(_SnowRoughness, sampler_NoiseTex),
                         input.positionOS,
                         normalOS,
                         _SnowWorldTileSize).r;
@@ -695,7 +683,7 @@
 
                 albedo *= lerp(1.0h, 0.68h, wetnessMask * 0.55h);
 
-                half3 rockNormalOS = FarionUnpackTriplanarNormalOS(TEXTURE2D_ARGS(_RockNormal, sampler_RockNormal), input.positionOS, normalOS, _RockNormalScale);
+                half3 rockNormalOS = FarionUnpackTriplanarNormalOS(TEXTURE2D_ARGS(_RockNormal, sampler_NoiseTex), input.positionOS, normalOS, _RockNormalScale);
                 if (surfaceTextureMask > 0.0h)
                 {
                     half3 surfaceNormalOS = half3(0.0h, 0.0h, 0.0h);
@@ -725,7 +713,7 @@
                 if (lavaMask > 0.0001h)
                 {
                     half3 lavaNormalOS = FarionUnpackOverlayNormalOS(
-                        TEXTURE2D_ARGS(_LavaNormal, sampler_LavaBaseColor),
+                        TEXTURE2D_ARGS(_LavaNormal, sampler_NoiseTex),
                         input.positionOS,
                         normalOS,
                         _LavaWorldTileSize,
@@ -735,7 +723,7 @@
                 if (snowMask > 0.0001h)
                 {
                     half3 snowNormalOS = FarionUnpackOverlayNormalOS(
-                        TEXTURE2D_ARGS(_SnowNormal, sampler_SnowBaseColor),
+                        TEXTURE2D_ARGS(_SnowNormal, sampler_NoiseTex),
                         input.positionOS,
                         normalOS,
                         _SnowWorldTileSize,
@@ -864,7 +852,7 @@
                 if (lavaMask > 0.0001h && _LavaEmissionStrength > 0.0h)
                 {
                     half3 lavaEmission = FarionSampleOverlay(
-                        TEXTURE2D_ARGS(_LavaEmission, sampler_LavaBaseColor),
+                        TEXTURE2D_ARGS(_LavaEmission, sampler_NoiseTex),
                         input.positionOS,
                         normalOS,
                         _LavaWorldTileSize).rgb;

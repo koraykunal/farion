@@ -501,6 +501,7 @@ Use this ownership hierarchy:
 3. Add `CelestialStarVisual` to `Test Star`.
 4. Assign:
    - `Profile`: `SO_TestStarVisualProfile`
+   - `Scaled Space Profile`: `SO_CelestialScaledSpaceProfile`
    - `Light Source`: the root `CelestialLightSource`
    - `Star Renderer`: `Star Visual > MeshRenderer`
    - `Star Visual Transform`: the `Star Visual` child
@@ -520,11 +521,15 @@ photosphere shader uses seamless object-space granulation, larger convection
 cells, sunspots, limb darkening, subtle rotation, and HDR emission. Scene bloom
 provides the corona response.
 
-`SO_TestStarVisualProfile` keeps the physical star at its simulation position
-while rendering the visual proxy at `3000` units when it is outside the safe
-camera range. The proxy scale is reduced by the same distance ratio, so the
-star's screen-space direction and angular size remain unchanged. This avoids
-raising the camera far clip to the full star distance.
+`SO_CelestialScaledSpaceProfile` is shared by stars, planets, and moons. Beyond
+its transition distance it logarithmically compresses render distance while
+reducing visual scale by the same ratio. Direction, angular size, and depth
+ordering remain stable; physical bodies, colliders, gravity, and orbits stay at
+their simulation positions. Add `CelestialScaledSpaceVisual` to planet and moon
+roots and assign their existing `CelestialBodyVisual`, the shared profile, and
+the gameplay camera. The proxy reuses the lowest existing LOD mesh and material;
+it does not create a second surface or physics system. Ocean and atmosphere
+passes follow the same projected center and scale.
 
 Use `CelestialVisualValidation.md` as the shared automated and Game View quality
 gate after changing any celestial material, profile, texture, or renderer
@@ -605,9 +610,23 @@ Setup:
    weather or time-based sky changes.
 6. Use the component context menu `Apply Star Dome Now`.
 
-Tune star density, brightness, size, and the galactic band on
-`SO_StarDomeProfile`, not on scene objects. If the background looks too busy,
-lower `Star Density` first before lowering exposure.
+Tune star density, brightness, and size on `SO_StarDomeProfile`, not on scene
+objects. If the background looks too busy, lower `Star Density` first before
+lowering exposure. The star dome does not own nebula rendering.
+
+### Volumetric Nebula
+
+`Bodies/NebulaVolume` owns the single world-space nebula in
+`SC_PhysicsSandbox`. `FarionNebulaRendererFeature` raymarches only inside that
+sphere, stops at scene depth, and is wired through `PC_Renderer.asset`.
+
+The density model uses the supplied Shadertoy spiral-wave volume. `Structure
+Scale` changes turbulent feature size. `Max Step Count` is only the GPU budget;
+do not use it as a detail control. `Extinction` controls background visibility.
+
+The authored camera far clip is `50000`, enough for physical nearby planets
+without expanding shadow distance. Celestial bodies needed beyond that range
+should use a scaled-space visual rather than a still larger physical far clip.
 
 ### Post Processing
 

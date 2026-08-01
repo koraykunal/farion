@@ -15,11 +15,6 @@ namespace Farion.Rendering.Space
         static readonly int StarBrightnessId = Shader.PropertyToID("_StarBrightness");
         static readonly int StarScaleId = Shader.PropertyToID("_StarScale");
         static readonly int StarSizeId = Shader.PropertyToID("_StarSize");
-        static readonly int NebulaColorId = Shader.PropertyToID("_NebulaColor");
-        static readonly int NebulaStrengthId = Shader.PropertyToID("_NebulaStrength");
-        static readonly int NebulaScaleId = Shader.PropertyToID("_NebulaScale");
-        static readonly int NebulaSharpnessId = Shader.PropertyToID("_NebulaSharpness");
-        static readonly int NebulaAxisId = Shader.PropertyToID("_NebulaAxis");
 
         [Header("Material")]
         [SerializeField] Material skyboxMaterial;
@@ -44,16 +39,6 @@ namespace Farion.Rendering.Space
         [Range(0.001f, 0.2f)]
         [SerializeField] float starSize = 0.045f;
 
-        [Header("Galactic Band")]
-        [SerializeField] Color nebulaColor = new(0.22f, 0.3f, 0.42f, 1f);
-        [Range(0f, 1f)]
-        [SerializeField] float nebulaStrength = 0.12f;
-        [Min(1f)]
-        [SerializeField] float nebulaScale = 18f;
-        [Min(0.1f)]
-        [SerializeField] float nebulaSharpness = 5f;
-        [SerializeField] Vector3 nebulaAxis = new(0.35f, 0.85f, 0.25f);
-
         public event System.Action Changed;
         public Material SkyboxMaterial => skyboxMaterial;
 
@@ -74,16 +59,6 @@ namespace Farion.Rendering.Space
             material.SetFloat(StarBrightnessId, starBrightness);
             material.SetFloat(StarScaleId, starScale);
             material.SetFloat(StarSizeId, starSize);
-            material.SetColor(NebulaColorId, nebulaColor);
-            material.SetFloat(NebulaStrengthId, nebulaStrength);
-            material.SetFloat(NebulaScaleId, nebulaScale);
-            material.SetFloat(NebulaSharpnessId, nebulaSharpness);
-            material.SetVector(NebulaAxisId, ResolveNebulaAxis());
-        }
-
-        Vector3 ResolveNebulaAxis()
-        {
-            return nebulaAxis.sqrMagnitude > 0.0001f ? nebulaAxis.normalized : Vector3.up;
         }
 
         void OnValidate()
@@ -92,8 +67,6 @@ namespace Farion.Rendering.Space
             seed = Mathf.Max(0f, seed);
             starBrightness = Mathf.Max(0f, starBrightness);
             starScale = Mathf.Max(1f, starScale);
-            nebulaScale = Mathf.Max(1f, nebulaScale);
-            nebulaSharpness = Mathf.Max(0.1f, nebulaSharpness);
             Changed?.Invoke();
         }
     }

@@ -29,7 +29,3 @@ MonoBehaviour:
   sunspotThreshold: 0.7
   pulseAmplitude: 0.012
   pulseSpeed: 0.65
-  useScaledSpace: 1
-  physicalRenderDistance: 4000
-  scaledSpaceDistance: 3000
-  farClipFraction: 0.8

@@ -4,7 +4,7 @@ namespace Farion.Editor
 {
     public sealed class ItemIconImportPostprocessor : AssetPostprocessor
     {
-        const string ItemIconRoot = "Assets/Project/Art/UI/Icons/Gameplay/Items/";
+        const string ItemIconRoot = "Assets/Project/Art/UI/Icons/Items/";
         const int MaxIconSize = 512;
 
         void OnPreprocessTexture()

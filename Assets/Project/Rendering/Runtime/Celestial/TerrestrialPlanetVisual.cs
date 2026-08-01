@@ -143,11 +143,12 @@ namespace Farion.Rendering.Celestial
                 bodyRadius,
                 terrainRadiusRange,
                 hydrosphere.OceanLevel);
+            ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
             data = new CelestialOceanEffectData(
-                sourceBody.transform.position,
-                bodyRadius,
-                terrainRadiusRange,
-                oceanRadius,
+                renderCenter,
+                bodyRadius * renderScale,
+                terrainRadiusRange * renderScale,
+                oceanRadius * renderScale,
                 profile.OceanProfile);
             return true;
         }
@@ -175,14 +176,32 @@ namespace Farion.Rendering.Celestial
                 : new Vector2(bodyRadius, bodyRadius);
             float atmosphereBaseRadius = GetAtmosphereBaseRadius(bodyRadius, terrainRadiusRange);
             float atmosphereRadius = profile.AtmosphereProfile.GetAtmosphereRadius(atmosphereBaseRadius);
+            ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
 
             data = new CelestialAtmosphereEffectData(
-                sourceBody.transform.position,
-                bodyRadius,
-                atmosphereBaseRadius,
-                atmosphereRadius,
+                renderCenter,
+                bodyRadius * renderScale,
+                atmosphereBaseRadius * renderScale,
+                atmosphereRadius * renderScale,
                 profile.AtmosphereProfile);
             return true;
+        }
+
+        static void ResolveRenderProjection(
+            CelestialBody sourceBody,
+            out Vector3 center,
+            out float scale)
+        {
+            if (sourceBody.TryGetComponent(out CelestialScaledSpaceVisual scaledVisual)
+                && scaledVisual.IsUsingScaledSpace)
+            {
+                center = scaledVisual.RenderCenter;
+                scale = scaledVisual.RenderScale;
+                return;
+            }
+
+            center = sourceBody.transform.position;
+            scale = 1f;
         }
 
         float GetAtmosphereBaseRadius(float bodyRadius, Vector2 terrainRadiusRange)

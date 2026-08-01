@@ -4,6 +4,7 @@ using Farion.UI.Foundation;
 using Farion.UI.Gameplay;
 using Farion.UI.Input;
 using Farion.UI.Navigation;
+using Farion.UI.Styling;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -273,6 +274,61 @@ namespace Farion.Tests.EditMode
 
             Assert.That(systemRoot.ReducedMotion, Is.True);
             Assert.That(changedValue, Is.True);
+        }
+
+        [Test]
+        public void DefaultThemeProvidesDistinctInterfaceAndInstrumentFonts()
+        {
+            const string path =
+                "Assets/Project/Design/UI/Themes/SO_UiTheme_Default.asset";
+            UiTheme theme = AssetDatabase.LoadAssetAtPath<UiTheme>(path);
+
+            Assert.That(theme, Is.Not.Null);
+            SerializedObject serializedTheme = new(theme);
+            Object interfaceFont = serializedTheme
+                .FindProperty("interfaceFont").objectReferenceValue;
+            Object interfaceMediumFont = serializedTheme
+                .FindProperty("interfaceMediumFont").objectReferenceValue;
+            Object instrumentFont = serializedTheme
+                .FindProperty("instrumentFont").objectReferenceValue;
+
+            Assert.That(interfaceFont, Is.Not.Null);
+            Assert.That(interfaceMediumFont, Is.Not.Null);
+            Assert.That(instrumentFont, Is.Not.Null);
+            Assert.That(interfaceFont, Is.Not.SameAs(instrumentFont));
+        }
+
+        [Test]
+        public void AuthoredFlightHudProvidesTelemetryGraphics()
+        {
+            const string path =
+                "Assets/Project/Prefabs/UI/Gameplay/HUD/UI_SpacecraftFlightHud.prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+
+            Assert.That(prefab, Is.Not.Null);
+            Assert.That(
+                prefab.GetComponent<SpacecraftFlightHudPresenter>(),
+                Is.Not.Null);
+            Assert.That(
+                prefab.GetComponentInChildren<SpacecraftFlightHudGraphics>(true),
+                Is.Not.Null);
+            Assert.That(
+                prefab.transform.Find(
+                    "Graphics/FlightCluster/BoostCapacitor/BoostVisual"),
+                Is.Not.Null);
+            Assert.That(
+                prefab.transform.Find(
+                    "NavigationTargetMarker/TargetReadout/DirectionArrow"),
+                Is.Not.Null);
+
+            SerializedObject graphics = new(
+                prefab.GetComponentInChildren<SpacecraftFlightHudGraphics>(true));
+            Assert.That(
+                graphics.FindProperty("boostFrameImage").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(
+                graphics.FindProperty("navigationArrow").objectReferenceValue,
+                Is.Not.Null);
         }
 
         [Test]

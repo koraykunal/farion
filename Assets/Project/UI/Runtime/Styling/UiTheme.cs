@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 namespace Farion.UI.Styling
@@ -16,6 +17,11 @@ namespace Farion.UI.Styling
         [SerializeField] Color primaryText = new(0.88f, 0.91f, 0.93f, 1f);
         [SerializeField] Color secondaryText = new(0.54f, 0.6f, 0.65f, 0.9f);
         [SerializeField] Color supportingText = new(0.68f, 0.76f, 0.81f, 1f);
+
+        [Header("Typography")]
+        [SerializeField] TMP_FontAsset interfaceFont;
+        [SerializeField] TMP_FontAsset interfaceMediumFont;
+        [SerializeField] TMP_FontAsset instrumentFont;
 
         [Header("Signals")]
         [SerializeField] Color focus = new(0.56f, 0.68f, 0.76f, 1f);
@@ -38,6 +44,9 @@ namespace Farion.UI.Styling
         public Color PrimaryText => primaryText;
         public Color SecondaryText => secondaryText;
         public Color SupportingText => supportingText;
+        public TMP_FontAsset InterfaceFont => interfaceFont;
+        public TMP_FontAsset InterfaceMediumFont => interfaceMediumFont;
+        public TMP_FontAsset InstrumentFont => instrumentFont;
         public Color Focus => focus;
         public Color Nominal => nominal;
         public Color Caution => caution;
@@ -51,5 +60,6 @@ namespace Farion.UI.Styling
             stateEnterDuration = Mathf.Max(0f, stateEnterDuration);
             stateExitDuration = Mathf.Max(0f, stateExitDuration);
         }
+
     }
 }

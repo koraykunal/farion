@@ -51,7 +51,8 @@ namespace Farion.Rendering.Lighting
         [Min(0.001f)]
         [SerializeField] float nearClipPlane = 0.1f;
         [Min(1f)]
-        [SerializeField] float farClipPlane = 5000f;
+        [Tooltip("Physical scene visibility. Use scaled-space visuals instead of raising this indefinitely.")]
+        [SerializeField] float farClipPlane = 50000f;
         [SerializeField] bool allowHdr = true;
 
         public Color LightColor => lightColor;

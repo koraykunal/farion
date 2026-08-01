@@ -19,6 +19,8 @@ namespace Farion.UI.Gameplay
         static readonly Color FallbackCautionColor = new(1f, 0.72f, 0.24f, 0.98f);
         static readonly Color FallbackCriticalColor = new(1f, 0.26f, 0.2f, 1f);
         static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
+        const string SectionLabelOpen = "<size=72%><alpha=#96>";
+        const string SectionLabelClose = "</alpha></size>";
 
         [Header("Design")]
         [SerializeField] UiTheme theme;
@@ -34,6 +36,7 @@ namespace Farion.UI.Gameplay
         [SerializeField] TMP_Text advisoryText;
         [SerializeField] RectTransform navigationMarker;
         [SerializeField] TMP_Text navigationMarkerText;
+        [SerializeField] SpacecraftFlightHudGraphics graphics;
         [Min(0f)]
         [SerializeField] float navigationMarkerEdgePadding = 48f;
 
@@ -130,23 +133,27 @@ namespace Farion.UI.Gameplay
         void RefreshText()
         {
             SpacecraftMovementTelemetry telemetry = motor.Telemetry;
+            graphics?.RefreshTelemetry(telemetry);
             flightBuilder.Clear();
             flightBuilder
-                .Append(telemetry.FlightAssistEnabled ? "FLIGHT ASSIST  ON" : "FLIGHT ASSIST  OFF")
+                .Append(SectionLabelOpen)
+                .Append("PROPULSION / CONTROL")
+                .Append(SectionLabelClose)
                 .AppendLine()
-                .Append("THR  ")
-                .AppendSignedPercent(telemetry.Command.Translation.z)
+                .Append("ASSIST      ")
+                .Append(telemetry.FlightAssistEnabled ? "ON" : "OFF")
                 .AppendLine()
-                .Append("VEL  ")
+                .Append("SPEED       ")
                 .Append(telemetry.RelativeSpeed.ToString("0.0", InvariantCulture))
-                .Append(" m/s")
-                .AppendLine()
-                .Append("BST  ")
-                .Append(Mathf.RoundToInt(telemetry.BoostCharge * 100f))
-                .Append('%');
+                .Append(" m/s");
             SetText(flightText, flightBuilder);
 
             navigationBuilder.Clear();
+            navigationBuilder
+                .Append(SectionLabelOpen)
+                .Append("NAVIGATION / LANDING")
+                .Append(SectionLabelClose)
+                .AppendLine();
             float targetDistance = AppendNavigationTarget(telemetry);
             SpacecraftLandingAssessment landingAssessment =
                 landingComputer != null
@@ -158,30 +165,34 @@ namespace Farion.UI.Gameplay
             {
                 var frame = celestialProbe.CurrentSample;
                 navigationBuilder
-                    .Append("ALT  ")
+                    .Append("ALTITUDE    ")
                     .Append(frame.SurfaceAltitude.ToString("0.0", InvariantCulture))
-                    .Append(" m")
-                    .AppendLine()
-                    .Append("V/S  ")
+                    .Append(" m  V/S ")
                     .Append(frame.SurfaceNormalVelocity.ToString("+0.0;-0.0;0.0", InvariantCulture))
                     .Append(" m/s")
                     .AppendLine()
-                    .Append("LAT  ")
+                    .Append("LATERAL     ")
                     .Append(frame.SurfaceTangentialSpeed.ToString("0.0", InvariantCulture))
-                    .Append(" m/s");
+                    .Append(" m/s  GEAR ")
+                    .Append(ResolveGearLabel());
+                graphics?.RefreshLanding(
+                    frame.SurfaceNormalVelocity,
+                    frame.SurfaceTangentialSpeed,
+                    hasFrame: true);
             }
             else
             {
+                graphics?.RefreshLanding(0f, 0f, hasFrame: false);
                 if (navigationTarget == null)
                 {
-                    navigationBuilder.Append("NAV  CRUISE");
+                    navigationBuilder.Append("MODE        CRUISE");
                 }
-            }
 
-            navigationBuilder
-                .AppendLine()
-                .Append("GEAR  ")
-                .Append(ResolveGearLabel());
+                navigationBuilder
+                    .AppendLine()
+                    .Append("GEAR        ")
+                    .Append(ResolveGearLabel());
+            }
             SetText(navigationText, navigationBuilder);
             RefreshNavigationMarkerText(targetDistance);
 
@@ -217,13 +228,13 @@ namespace Farion.UI.Gameplay
                 : 0f;
 
             navigationBuilder
-                .Append("TGT  ")
+                .Append("TARGET      ")
                 .Append(navigationTarget.DisplayName)
-                .Append("  ");
+                .AppendLine()
+                .Append("RANGE       ");
             AppendDistance(navigationBuilder, distance);
             navigationBuilder
-                .AppendLine()
-                .Append("CLS  ")
+                .Append("  RATE ")
                 .Append(closingSpeed.ToString(
                     "+0.0;-0.0;0.0",
                     InvariantCulture))
@@ -302,6 +313,7 @@ namespace Farion.UI.Gameplay
 
             navigationMarker.anchoredPosition = position;
             markerDirection = ResolveMarkerDirection(direction, onScreen);
+            graphics?.RefreshNavigationMarker(direction, onScreen);
         }
 
         void RefreshNavigationMarkerText(float distance)
@@ -366,6 +378,7 @@ namespace Farion.UI.Gameplay
             SetActive(flightText, visible);
             SetActive(navigationText, visible);
             SetActive(advisoryText, visible);
+            graphics?.SetVisible(visible);
             SetMarkerActive(visible && navigationTarget != null);
             if (changed && visible)
             {
@@ -415,21 +428,64 @@ namespace Farion.UI.Gameplay
 
         void ApplyTheme()
         {
-            Color nominal = ResolveNominalColor();
             if (flightText != null)
             {
-                flightText.color = nominal;
+                flightText.color = theme != null
+                    ? theme.PrimaryText
+                    : ResolveNominalColor();
             }
 
             if (navigationText != null)
             {
-                navigationText.color = nominal;
+                navigationText.color = theme != null
+                    ? theme.PrimaryText
+                    : ResolveNominalColor();
             }
 
             if (navigationMarkerText != null)
             {
-                navigationMarkerText.color = nominal;
+                navigationMarkerText.color = theme != null
+                    ? theme.Focus
+                    : ResolveNominalColor();
             }
+
+            graphics?.ApplyTheme(theme);
+
+            if (Application.isPlaying)
+            {
+                ApplyTypography();
+            }
+        }
+
+        void ApplyTypography()
+        {
+            if (theme == null)
+            {
+                return;
+            }
+
+            ApplyFont(flightText, theme.InstrumentFont, 2f, 4f);
+            ApplyFont(navigationText, theme.InstrumentFont, 2f, 2f);
+            ApplyFont(navigationMarkerText, theme.InstrumentFont, 2f, 0f);
+            ApplyFont(advisoryText, theme.InterfaceMediumFont, 5f, 0f);
+        }
+
+        static void ApplyFont(
+            TMP_Text target,
+            TMP_FontAsset font,
+            float characterSpacing,
+            float lineSpacing)
+        {
+            if (target == null || font == null)
+            {
+                return;
+            }
+
+            target.font = font;
+            target.characterSpacing = characterSpacing;
+            target.lineSpacing = lineSpacing;
+            target.outlineColor = new Color32(2, 6, 9, 220);
+            target.outlineWidth = 0.08f;
         }
 
         Color ResolveNominalColor()
