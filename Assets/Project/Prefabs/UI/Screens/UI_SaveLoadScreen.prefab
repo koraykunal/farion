@@ -955,6 +955,7 @@ GameObject:
   - component: {fileID: 5073509376623729271}
   - component: {fileID: 8122017240678921911}
   - component: {fileID: 7595282889905120306}
+  - component: {fileID: 3609656914236614427}
   m_Layer: 5
   m_Name: DeleteButton
   m_TagString: Untagged
@@ -1082,6 +1083,20 @@ MonoBehaviour:
   theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   background: {fileID: 5073509376623729271}
   selectionFrame: {fileID: 8196555274755298570}
+--- !u!114 &3609656914236614427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3443862367225808916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dff85aa0ec43038e1bd47414155070, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Feedback.UiAudioFeedback
+  activationCue: 10
+  selectable: {fileID: 0}
 --- !u!1 &3748835610966959193
 GameObject:
   m_ObjectHideFlags: 0
@@ -2143,6 +2158,7 @@ GameObject:
   - component: {fileID: 2618156475044513849}
   - component: {fileID: 150666003637256484}
   - component: {fileID: 1306319877964354175}
+  - component: {fileID: 8063895246213886760}
   m_Layer: 5
   m_Name: PrimaryButton
   m_TagString: Untagged
@@ -2270,6 +2286,20 @@ MonoBehaviour:
   theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   background: {fileID: 2618156475044513849}
   selectionFrame: {fileID: 4979735253597103377}
+--- !u!114 &8063895246213886760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6228170331723236701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dff85aa0ec43038e1bd47414155070, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Feedback.UiAudioFeedback
+  activationCue: 10
+  selectable: {fileID: 0}
 --- !u!1 &6298443322213576737
 GameObject:
   m_ObjectHideFlags: 0
@@ -2964,6 +2994,7 @@ GameObject:
   - component: {fileID: 2283563434574773585}
   - component: {fileID: 2359351937080160300}
   - component: {fileID: 298817942920983669}
+  - component: {fileID: 8468321962088717640}
   m_Layer: 5
   m_Name: BackButton
   m_TagString: Untagged
@@ -3091,6 +3122,20 @@ MonoBehaviour:
   theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   background: {fileID: 2283563434574773585}
   selectionFrame: {fileID: 9191226642483664305}
+--- !u!114 &8468321962088717640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7125596337693843583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dff85aa0ec43038e1bd47414155070, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Feedback.UiAudioFeedback
+  activationCue: 20
+  selectable: {fileID: 0}
 --- !u!1 &7187000835925646606
 GameObject:
   m_ObjectHideFlags: 0

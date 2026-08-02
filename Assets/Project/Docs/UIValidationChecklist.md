@@ -15,7 +15,7 @@ gate fails.
 
 ## MainMenu
 
-Open `Assets/Project/Scenes/MainMenu.unity`, clear Console, and enter Play Mode.
+Open `Assets/Project/Scenes/SC_MainMenu.unity`, clear Console, and enter Play Mode.
 
 ### Keyboard and mouse
 

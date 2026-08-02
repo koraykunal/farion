@@ -436,6 +436,7 @@ GameObject:
   - component: {fileID: 7734566907852583274}
   - component: {fileID: 4017693721027195896}
   - component: {fileID: 5525969968667138229}
+  - component: {fileID: 7617344359173844782}
   m_Layer: 5
   m_Name: UI_SaveSlot
   m_TagString: Untagged
@@ -555,6 +556,20 @@ MonoBehaviour:
   background: {fileID: 4017693721027195896}
   selectionFrame: {fileID: 5753233251954004897}
   stateMarker: {fileID: 796410030865221049}
+--- !u!114 &7617344359173844782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5423260712303002492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86dff85aa0ec43038e1bd47414155070, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Feedback.UiAudioFeedback
+  activationCue: 10
+  selectable: {fileID: 0}
 --- !u!1 &8102079794046564175
 GameObject:
   m_ObjectHideFlags: 0

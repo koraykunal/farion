@@ -4465,6 +4465,76 @@ MonoBehaviour:
   bodyVisual: {fileID: 2107307736}
   observerCamera: {fileID: 2069305681}
   applyInEditMode: 1
+--- !u!1001 &910000001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cc0e7b00d9df39b4b997f6d7985dfdf4, type: 3}
+--- !u!1 &910000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000012}
+  - component: {fileID: 910000011}
+  m_Layer: 0
+  m_Name: Systems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &910000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561ba1e97fbb4fec96d5fe4d371523b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.AudioSceneContext
+  contextId: 1
+  spacecraftTelemetry: {fileID: 910000020}
+--- !u!4 &910000012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910000020 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1701556989748357691, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d21395da21a408e41a3ae3858ccb4878, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.Spacecraft.ShipAudioTelemetryProvider
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -4476,3 +4546,5 @@ SceneRoots:
   - {fileID: 777299651}
   - {fileID: 2069590343}
   - {fileID: 920000001}
+  - {fileID: 910000001}
+  - {fileID: 910000012}

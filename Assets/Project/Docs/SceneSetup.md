@@ -18,7 +18,7 @@ Create these root objects:
 On `Simulation`:
 
 1. Add `GravitySimulation`.
-2. Assign `Assets/Project/Design/Physics/Gravity/DefaultGravitySettings.asset`.
+2. Assign `Assets/Project/Design/Physics/Gravity/SO_DefaultGravitySettings.asset`.
 3. Add `Test Star`, `Test Planet`, and `Test Moon` to `Registered Bodies`.
 4. Assign the currently explorable `Test Planet` to `Physics Reference Body`.
 5. Keep `Auto Discover Bodies` disabled once those references are assigned.

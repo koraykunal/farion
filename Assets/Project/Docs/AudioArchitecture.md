@@ -1,216 +1,135 @@
 # Farion Audio Architecture
 
-Farion audio is a presentation layer. It reads gameplay telemetry and audio
-authoring state, but it must not own flight physics, possession, damage,
-survival, UI flow, or scene routing.
+FMOD is the only production audio pipeline. Audio consumes gameplay and UI
+state; it never owns flight physics, possession, UI navigation, or scene flow.
 
-## Runtime Ownership
+## Ownership
 
-- `SceneAudioPlayer`
-  - Plays simple Unity-authored scene loops such as main-menu music and ambient
-    beds.
-  - Lives on a scene GameObject, usually `Audio` or `MainMenuAudio`.
-  - Clips and mixer groups are assigned in the Inspector.
-- `ShipAudioTelemetryProvider`
-  - Reads `SpacecraftMotor.Telemetry`, `SpacecraftRig`, `CelestialActorProbe`,
-    `SpacecraftSurfaceContactProbe`, `SpacecraftOceanInteractor`, and
-    `PlayerPossessionController`.
-  - Converts gameplay state into one `ShipAudioTelemetry` contract.
-  - Does not read keyboard input and does not apply physics.
-- `ShipAudioController`
-  - Owns the spacecraft FMOD event instance.
-  - Pushes telemetry into FMOD parameters every frame.
-  - Starts, attaches, stops, and releases the FMOD instance.
-  - Does not play Unity `AudioSource` engine loops.
+- `AudioDirector` is the persistent game-mix owner. It starts the adaptive
+  score and world ambience, writes global FMOD parameters, owns bus volumes,
+  and dispatches UI cues.
+- `AudioSceneContext` is the scene adapter. Main menu publishes
+  `GameContext=0`; gameplay publishes `GameContext=1`, `Atmosphere`, and
+  `Interior` from spacecraft telemetry.
+- `ShipAudioTelemetryProvider` converts produced spacecraft motion and
+  environment state into `ShipAudioTelemetry`.
+- `ShipAudioController` owns the spacecraft FMOD instances and pushes engine
+  parameters. Flight code remains untouched.
+- `UiAudioFeedback` translates Selectable focus and activation into FMOD UI
+  cues. `UiAudioBridge` handles screen-back, pause, success, and error state.
 
-## Folder Layout
+```text
+Gameplay/UI state
+      |
+      +--> AudioSceneContext ----> AudioDirector ----> FMOD globals/buses
+      |
+      +--> ShipAudioTelemetryProvider --> ShipAudioController --> ship events
+      |
+      `--> UiAudioFeedback/Bridge ------> AudioDirector --------> UI events
+```
+
+## Repository Layout
 
 ```text
 Assets/Project/Audio/Runtime
-|-- Common
-|   |-- AudioClipSet.cs
-|   |-- AudioLevelUtility.cs
-|   `-- SceneAudioPlayer.cs
+|-- System
+|   |-- AudioDirector.cs
+|   `-- AudioSceneContext.cs
 `-- Spacecraft
     |-- ShipAudioController.cs
     |-- ShipAudioTelemetry.cs
     |-- ShipAudioTelemetryProvider.cs
     |-- SpacecraftAudioPerspective.cs
     `-- SpacecraftAudioTuningProfile.cs
+
+Assets/Project/Prefabs/Audio/PF_AudioSystem.prefab
+FMODProject/FarionAudio/FarionAudio.fspro
+FMODProject/FarionAudio/Assets
+FMODProject/FarionAudio/Build/Desktop
+Assets/StreamingAssets
 ```
 
-Author audio data under:
+Unity `AudioSource`, `AudioMixer`, and duplicate audio media under
+`Assets/Project/Art/Audio` are intentionally absent. Author and build all
+production sound in FMOD Studio.
+
+## FMOD Contract
+
+Global parameters:
+
+| Parameter | Range | Producer | Meaning |
+| --- | --- | --- | --- |
+| `GameContext` | `0..1` discrete | `AudioSceneContext` | `0` menu, `1` gameplay |
+| `Atmosphere` | `0..1` | spacecraft telemetry | local atmosphere density |
+| `Interior` | `0..1` | possession perspective | exterior-to-interior blend |
+| `Paused` | `0..1` discrete | UI screen router | pause-menu mix state |
+
+Buses:
 
 ```text
-Assets/Project/Art/Audio
-|-- Mixers
+bus:/
 |-- Music
 |-- Ambience
-`-- Spacecraft
+|-- SFX
+`-- UI
 ```
 
-FMOD Studio project and built banks live under:
+Persistent events:
 
 ```text
-FMODProject/FarionAudio/FarionAudio
+event:/Music/AdaptiveScore
+event:/Ambience/World
 ```
 
-## Main Menu Setup
-
-1. Import the main-menu `.wav` under `Assets/Project/Art/Audio/Music`.
-2. Create/select a `MainMenuAudio` GameObject in the main-menu scene.
-3. Add `SceneAudioPlayer`.
-4. Add one loop entry:
-   - `Label`: `MainMenuMusic`
-   - `Clip`: your main-menu WAV
-   - `Spatial`: disabled
-   - `Volume`: start around `0.55`
-   - `Fade In Seconds`: `1.5`
-   - `Fade Out Seconds`: `0.8`
-5. Leave `Log Playback` disabled after confirming the music plays.
-
-## Gameplay Ambience Setup
-
-1. Import ambient `.wav` files under `Assets/Project/Art/Audio/Ambience`.
-2. In the gameplay scene, create/select an `Audio` GameObject.
-3. Add `SceneAudioPlayer`.
-4. Add one or more loop entries:
-   - Space bed: 2D, low volume, long fade.
-   - Planet atmosphere bed: 2D or wide 3D, lower volume until atmosphere logic
-     drives it.
-
-## Spacecraft FMOD Contract
-
-`PF_PlayerStarterShuttle` owns spacecraft audio through root components only:
+UI one-shots:
 
 ```text
-PF_PlayerStarterShuttle
-|-- ShipAudioTelemetryProvider
-`-- ShipAudioController
+event:/UI/Focus
+event:/UI/Confirm
+event:/UI/Back
+event:/UI/Unavailable
+event:/UI/Success
+event:/UI/Error
 ```
 
-The spacecraft engine event is:
+Spacecraft events remain:
 
 ```text
 event:/Ships/StarterShuttle/Engine
-```
-
-Keep the event name `Engine`; speed is a parameter of the engine event, not
-part of its event name.
-
-Required parameters on the continuous engine event:
-
-```text
-Speed  0..100, initial 0
-Roll   -1..1,  initial 0
-Boost  0..1,   initial 0
-```
-
-`Speed` is body-relative ship speed normalized by the Unity audio profile.
-`Roll` is signed pilot roll demand. `Boost` is the produced boost blend and
-should drive a continuous layer, filter, or intensity change.
-
-Boost start and stop transients are separate 3D one-shot events:
-
-```text
 event:/Ships/StarterShuttle/BoostIgnition
 event:/Ships/StarterShuttle/BoostShutdown
 ```
 
-This keeps one-shot triggering deterministic. No `BoostState` parameter is
-required: Unity detects the actual boost-active rising and falling edges and
-plays each event once.
+`Engine`, ignition, and shutdown route to `bus:/SFX`. The engine event keeps
+its existing `Speed`, `Roll`, `Boost`, `Load`, `Perspective`, and state
+contract. New audio logic must read produced telemetry, never raw input.
 
-Optional parameters can be added to the continuous engine event later:
+## Authoring Rules
 
-```text
-Load             0..1
-Perspective      0=Exterior, 1=Cockpit/ShipInterior
-HullStress       0..1
-Impact           0..1
-Atmosphere       0..1
-WaterSubmersion  0..1
-```
+1. Put source WAV files under the relevant FMOD `Assets` subfolder.
+2. Keep one event per semantic action; variation belongs inside that event.
+3. Use `GameContext`, `Atmosphere`, `Interior`, and `Paused` automation or transition
+   regions inside the two persistent events. Unity must not crossfade clips.
+4. Keep UI events 2D one-shots routed to `UI`. Use restrained variation inside
+   FMOD instead of adding more Unity cue code.
+5. Keep spacecraft events 3D and driven by telemetry.
+6. Assign every production event to `Master`, build Desktop banks, and copy the
+   generated `Master.bank` and `Master.strings.bank` to
+   `Assets/StreamingAssets`.
 
-Their controller fields intentionally remain empty until the matching FMOD
-parameters exist. After authoring and rebuilding banks, enter the exact names
-on `ShipAudioController`; empty names are skipped without warnings.
+The current `AdaptiveScore` contains the existing main-menu music as a loop.
+`World` and UI events are authored routing slots and remain silent until their
+final WAV content is added in FMOD Studio.
 
-Unity drives these values from produced motion and telemetry, not raw input:
+## Scene Contract
 
-- `Speed`: body-relative speed normalized to `0..100`.
-- `Load`: smoothed `ShipAudioTelemetry.EngineLoad`; use it for pressure,
-  strain, filtering, and layer weight, not for muting the whole event.
-- `Boost`: smoothed `ShipAudioTelemetry.Boost`; use it for a separate boost
-  layer/envelope.
-- `Roll`: `SpacecraftMotor.LastLocalRotationInput.z`, smoothed.
-- `Perspective`: `0` for exterior/on-foot exterior listening and `1` for
-  cockpit or ship-interior listening. Use it for filtering and mechanical
-  transmission.
+Every enabled build scene contains exactly:
 
-## Boost Authoring Setup
+- one `PF_AudioSystem` prefab instance;
+- one `AudioSceneContext` configured for that scene;
+- one active `FMOD Studio Listener`;
+- zero Unity `AudioListener` and `AudioSource` components.
 
-1. Open `Engine`.
-2. Keep the existing `Speed` and `Roll` authoring.
-3. Set the `Roll` parameter initial value to `0`, not `-1`.
-4. Add a continuous `Boost` parameter with minimum `0`, maximum `1`, and
-   initial value `0`.
-5. Use `Boost` to automate a restrained engine change:
-   - `0`: normal engine.
-   - `0.2`: boost layer begins to become audible.
-   - `1`: full boost layer/intensity.
-6. Do not place the ignition or shutdown WAV files on the continuous `Boost`
-   parameter sheet.
-7. Create a new event named `BoostIgnition`.
-8. Drop `BoostIgnition.wav` on its timeline at `0:00`; leave the instrument as
-   a one-shot and do not add a loop region.
-9. Create a new event named `BoostShutdown`.
-10. Drop `Shutdown.wav` on its timeline at `0:00`; leave it as a one-shot and
-    do not add a loop region.
-11. Make `Engine`, `BoostIgnition`, and `BoostShutdown` 3D events. Start
-    with a minimum distance around `5 m` and maximum distance around `200 m`,
-    then tune in Play Mode.
-12. Assign all three events to `Master` and build the Desktop banks.
-13. Return to Unity and allow the FMOD bank refresh.
-14. On `PF_PlayerStarterShuttle > ShipAudioController`, assign:
-    - `Engine Event`: `event:/Ships/StarterShuttle/Engine`
-    - `Boost Ignition Event`: `event:/Ships/StarterShuttle/BoostIgnition`
-    - `Boost Shutdown Event`: `event:/Ships/StarterShuttle/BoostShutdown`
-15. Keep the parameter fields exactly:
-    - `Speed Parameter`: `Speed`
-    - `Boost Parameter`: `Boost`
-    - `Roll Parameter`: `Roll`
-    - optional fields empty until those parameters exist.
-
-## FMOD Authoring Rules
-
-The engine event should be authored as a continuous engine system:
-
-- Running beds/loops remain continuous for the event lifetime.
-- `Speed` must audibly change pitch, filter, volume, or layer blend.
-- `Boost` should add a separate layer or transition, not just raise volume.
-- `Roll` can add lateral thruster texture, width, pan, or mechanical strain.
-- Keep a quiet idle/running bed audible at `Speed == 0`. Do not let `Load`,
-  `Boost`, or `Roll` automation pull the whole event to silence.
-- `Z` is the flight-assist toggle on the current keyboard input. It must not
-  trigger shutdown or stop the running loop in FMOD.
-
-For a ship engine, avoid making the event a simple one-shot. If the Unity FMOD
-cache reports the event as one-shot, fix the event timeline/loop/sustain logic
-in FMOD Studio, build banks, then refresh banks in Unity.
-
-## Scene Requirements
-
-- Exactly one active `FMOD Studio Listener` should exist on the active gameplay
-  camera.
-- Do not add `FMOD Studio Event Emitter` for the player ship engine. The ship
-  root `ShipAudioController` creates and controls the event instance.
-- Do not add Unity `AudioSource` engine loops to the starter shuttle while FMOD
-  owns spacecraft audio.
-
-## Rule
-
-Spacecraft audio must follow `SpacecraftMotor.Telemetry`, not raw input. If the
-pilot presses a key but the ship cannot produce thrust because of future power,
-damage, mass, or environment constraints, the engine sound should reflect the
-actual produced thrust/load.
+`AudioDirector` survives scene loads and destroys duplicate scene instances.
+The settings screen writes normalized Master, Music, Ambience, SFX, and UI bus
+volumes to `PlayerPrefs` and applies a squared perceptual volume curve.

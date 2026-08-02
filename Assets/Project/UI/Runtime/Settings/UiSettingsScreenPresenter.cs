@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Farion.Audio;
 using Farion.UI.Foundation;
 using Farion.UI.Localization;
 using Farion.UI.Navigation;
@@ -22,6 +23,7 @@ namespace Farion.UI.Settings
         [SerializeField] List<UiSettingsCategoryView> categories = new();
         [SerializeField] GameObject interfaceGroup;
         [SerializeField] GameObject accessibilityGroup;
+        [SerializeField] GameObject audioGroup;
 
         [Header("Header")]
         [SerializeField] TMP_Text titleText;
@@ -37,6 +39,7 @@ namespace Farion.UI.Settings
         [SerializeField] Button backButton;
 
         bool subscribed;
+        AudioDirector audioDirector;
         UiSettingsCategory activeCategory = UiSettingsCategory.Interface;
         UiSettingsOptionView focusedOption;
 
@@ -86,6 +89,12 @@ namespace Farion.UI.Settings
                 preferences.Changed += Refresh;
             }
 
+            audioDirector = AudioDirector.Current;
+            if (audioDirector != null)
+            {
+                audioDirector.Changed += Refresh;
+            }
+
             LocalizationSettings.SelectedLocaleChanged += HandleLocaleChanged;
 
             for (int i = 0; i < options.Count; i++)
@@ -127,6 +136,12 @@ namespace Farion.UI.Settings
             if (preferences != null)
             {
                 preferences.Changed -= Refresh;
+            }
+
+            if (audioDirector != null)
+            {
+                audioDirector.Changed -= Refresh;
+                audioDirector = null;
             }
 
             LocalizationSettings.SelectedLocaleChanged -= HandleLocaleChanged;
@@ -205,6 +220,21 @@ namespace Farion.UI.Settings
                         preferences.SubtitleSize == UiSubtitleSize.Standard
                             ? UiSubtitleSize.Large
                             : UiSubtitleSize.Standard);
+                    break;
+                case UiSettingId.MasterVolume:
+                    audioDirector?.AdjustBusVolume(AudioBusId.Master, direction);
+                    break;
+                case UiSettingId.MusicVolume:
+                    audioDirector?.AdjustBusVolume(AudioBusId.Music, direction);
+                    break;
+                case UiSettingId.AmbienceVolume:
+                    audioDirector?.AdjustBusVolume(AudioBusId.Ambience, direction);
+                    break;
+                case UiSettingId.SfxVolume:
+                    audioDirector?.AdjustBusVolume(AudioBusId.Sfx, direction);
+                    break;
+                case UiSettingId.UiVolume:
+                    audioDirector?.AdjustBusVolume(AudioBusId.Ui, direction);
                     break;
             }
         }
@@ -293,7 +323,73 @@ namespace Farion.UI.Settings
                             : UiLocalization.Get("value.standard", "Standard"));
                     option.SetAvailable(true);
                     break;
+                case UiSettingId.MasterVolume:
+                    ConfigureVolumeOption(
+                        option,
+                        AudioBusId.Master,
+                        "settings.audio.master.title",
+                        "Master volume",
+                        "settings.audio.master.description",
+                        "Control the complete game mix.");
+                    break;
+                case UiSettingId.MusicVolume:
+                    ConfigureVolumeOption(
+                        option,
+                        AudioBusId.Music,
+                        "settings.audio.music.title",
+                        "Music volume",
+                        "settings.audio.music.description",
+                        "Control the adaptive score.");
+                    break;
+                case UiSettingId.AmbienceVolume:
+                    ConfigureVolumeOption(
+                        option,
+                        AudioBusId.Ambience,
+                        "settings.audio.ambience.title",
+                        "Ambience volume",
+                        "settings.audio.ambience.description",
+                        "Control space, atmosphere, and interior ambience.");
+                    break;
+                case UiSettingId.SfxVolume:
+                    ConfigureVolumeOption(
+                        option,
+                        AudioBusId.Sfx,
+                        "settings.audio.sfx.title",
+                        "SFX volume",
+                        "settings.audio.sfx.description",
+                        "Control spacecraft and world sound effects.");
+                    break;
+                case UiSettingId.UiVolume:
+                    ConfigureVolumeOption(
+                        option,
+                        AudioBusId.Ui,
+                        "settings.audio.ui.title",
+                        "UI volume",
+                        "settings.audio.ui.description",
+                        "Control interface navigation and feedback sounds.");
+                    break;
             }
+        }
+
+        void ConfigureVolumeOption(
+            UiSettingsOptionView option,
+            AudioBusId bus,
+            string titleKey,
+            string titleFallback,
+            string descriptionKey,
+            string descriptionFallback)
+        {
+            if (audioDirector == null)
+            {
+                option.SetAvailable(false);
+                return;
+            }
+
+            option.ConfigureContent(
+                UiLocalization.Get(titleKey, titleFallback),
+                UiLocalization.Get(descriptionKey, descriptionFallback),
+                $"{Mathf.RoundToInt(audioDirector.GetBusVolume(bus) * 100f)}%");
+            option.SetAvailable(true);
         }
 
         void SetCategory(
@@ -312,6 +408,11 @@ namespace Farion.UI.Settings
             {
                 accessibilityGroup.SetActive(
                     category == UiSettingsCategory.Accessibility);
+            }
+
+            if (audioGroup != null)
+            {
+                audioGroup.SetActive(category == UiSettingsCategory.Audio);
             }
 
             for (int i = 0; i < categories.Count; i++)
@@ -348,32 +449,17 @@ namespace Farion.UI.Settings
         {
             UiSettingsCategoryView currentCategory = categories.Find(view =>
                 view != null && view.Category == activeCategory);
-            UiSettingsCategoryView interfaceCategory = categories.Find(view =>
-                view != null && view.Category == UiSettingsCategory.Interface);
-            UiSettingsCategoryView accessibilityCategory = categories.Find(view =>
-                view != null && view.Category == UiSettingsCategory.Accessibility);
-
-            if (interfaceCategory != null)
+            List<UiSettingsCategoryView> activeCategories = categories.FindAll(view =>
+                view != null && view.IsActive() && view.IsInteractable());
+            for (int i = 0; i < activeCategories.Count; i++)
             {
-                interfaceCategory.navigation = new UiNavigation
+                activeCategories[i].navigation = new UiNavigation
                 {
                     mode = UiNavigation.Mode.Explicit,
-                    selectOnUp = backButton,
-                    selectOnDown = accessibilityCategory != null
-                        ? (Selectable)accessibilityCategory
+                    selectOnUp = i > 0 ? activeCategories[i - 1] : backButton,
+                    selectOnDown = i < activeCategories.Count - 1
+                        ? activeCategories[i + 1]
                         : backButton
-                };
-            }
-
-            if (accessibilityCategory != null)
-            {
-                accessibilityCategory.navigation = new UiNavigation
-                {
-                    mode = UiNavigation.Mode.Explicit,
-                    selectOnUp = interfaceCategory != null
-                        ? (Selectable)interfaceCategory
-                        : backButton,
-                    selectOnDown = backButton
                 };
             }
 
@@ -452,6 +538,12 @@ namespace Farion.UI.Settings
                     option.SettingId is UiSettingId.ReducedMotion or
                         UiSettingId.Subtitles or
                         UiSettingId.SubtitleSize,
+                UiSettingsCategory.Audio =>
+                    option.SettingId is UiSettingId.MasterVolume or
+                        UiSettingId.MusicVolume or
+                        UiSettingId.AmbienceVolume or
+                        UiSettingId.SfxVolume or
+                        UiSettingId.UiVolume,
                 _ => false
             };
         }
@@ -492,9 +584,14 @@ namespace Farion.UI.Settings
 
         static string GetCategoryLabel(UiSettingsCategory category)
         {
-            return category == UiSettingsCategory.Accessibility
-                ? UiLocalization.Get("settings.subtitle", "Accessibility")
-                : UiLocalization.Get("settings.section.interface", "Interface");
+            return category switch
+            {
+                UiSettingsCategory.Accessibility =>
+                    UiLocalization.Get("settings.subtitle", "Accessibility"),
+                UiSettingsCategory.Audio =>
+                    UiLocalization.Get("settings.section.audio", "Audio"),
+                _ => UiLocalization.Get("settings.section.interface", "Interface")
+            };
         }
 
         void ResolveReferences()

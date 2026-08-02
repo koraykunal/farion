@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Farion.App.Flow;
+using Farion.Audio;
 using Farion.Core.Persistence;
 using Farion.Core.Physics;
 using Farion.Gameplay.Definitions;
@@ -13,6 +14,7 @@ using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Session;
 using Farion.Gameplay.Ships;
+using FMODUnity;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -112,6 +114,8 @@ namespace Farion.Editor.Validation
                         containerIds,
                         report);
                 }
+
+                ValidateAudioComposition(scene, path, report);
             }
             finally
             {
@@ -293,6 +297,51 @@ namespace Farion.Editor.Validation
             FarionValidationReport report)
         {
             ValidateRequiredReference(scenePath, coordinator, "runtimeRoot", report);
+        }
+
+        static void ValidateAudioComposition(
+            Scene scene,
+            string scenePath,
+            FarionValidationReport report)
+        {
+            AudioDirector[] directors = FindSceneComponents<AudioDirector>(scene);
+            AudioSceneContext[] contexts = FindSceneComponents<AudioSceneContext>(scene);
+            StudioListener[] studioListeners = FindSceneComponents<StudioListener>(scene);
+            AudioListener[] unityListeners = FindSceneComponents<AudioListener>(scene);
+            AudioSource[] unitySources = FindSceneComponents<AudioSource>(scene);
+
+            if (directors.Length != 1)
+            {
+                report.AddError($"{scenePath}: expected one AudioDirector, found {directors.Length}.");
+            }
+
+            if (contexts.Length != 1)
+            {
+                report.AddError($"{scenePath}: expected one AudioSceneContext, found {contexts.Length}.");
+            }
+
+            if (studioListeners.Length != 1)
+            {
+                report.AddError($"{scenePath}: expected one FMOD StudioListener, found {studioListeners.Length}.");
+            }
+
+            if (unityListeners.Length > 0 || unitySources.Length > 0)
+            {
+                report.AddError(
+                    $"{scenePath}: production audio is FMOD-only; found " +
+                    $"{unityListeners.Length} AudioListener and {unitySources.Length} AudioSource component(s).");
+            }
+        }
+
+        static T[] FindSceneComponents<T>(Scene scene) where T : Component
+        {
+            List<T> components = new();
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                components.AddRange(root.GetComponentsInChildren<T>(true));
+            }
+
+            return components.ToArray();
         }
 
         static void ValidateGameplayRuntimeRoot(

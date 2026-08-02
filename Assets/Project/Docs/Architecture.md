@@ -20,8 +20,9 @@ This document describes the implemented architecture. Future features belong in
 - `Application`, `Audio`, `Core`, `Gameplay`, `Rendering`, `Simulation`, and
   `UI` contain C# runtime code. Their existing assembly folders are architecture
   boundaries and are not reorganized for visual convenience.
-- `Art` contains Unity-ready models, materials, textures, shaders, VFX, and
-  audio media. Editable source art lives in repository-level `ArtSource`.
+- `Art` contains Unity-ready models, materials, textures, shaders, and VFX.
+  Editable source art lives in repository-level `ArtSource`; production audio
+  media is owned by the repository-level FMOD Studio project.
 - `Design` contains immutable ScriptableObject definitions.
 - `Prefabs` contains authored reusable GameObject composition; `Scenes`
   contains authored scene composition.
@@ -29,9 +30,10 @@ This document describes the implemented architecture. Future features belong in
   state.
 - `Localization`, `Tests`, and `Docs` contain their named support assets.
 
-`Assets/Project/Audio` is runtime audio code; `Assets/Project/Art/Audio` is
-imported audio media. `Fleet` is a gameplay ownership term; the physical home
-ship is organized as a `CapitalShip` asset.
+`Assets/Project/Audio` is runtime audio code. `FMODProject/FarionAudio` owns
+audio authoring and built banks; Unity contains only the runtime bank copies.
+`Fleet` is a gameplay ownership term; the physical home ship is organized as a
+`CapitalShip` asset.
 
 ## Assembly Direction
 
@@ -50,6 +52,7 @@ Farion.Gameplay.Domain
 
 Farion.Rendering.Runtime --> Core + Simulation
 Farion.Audio.Runtime     --> Core + Simulation + Gameplay + FMOD
+Farion.UI.Runtime        --> Application + Audio
 ```
 
 - `Farion.Core.Runtime` owns shared physics, time, persistence identity, and
@@ -72,7 +75,9 @@ Farion.Audio.Runtime     --> Core + Simulation + Gameplay + FMOD
   feedback. It requests application operations and never mutates domain state
   directly.
 - `Farion.Rendering.Runtime` owns URP-specific celestial presentation.
-- `Farion.Audio.Runtime` owns FMOD presentation driven by gameplay telemetry.
+- `Farion.Audio.Runtime` owns the persistent FMOD mix, scene/environment
+  adaptation, UI cue dispatch, and spacecraft presentation driven by gameplay
+  telemetry.
 
 Dependencies do not point back up this list. Domain code does not reference
 Unity, gameplay does not reference UI, and simulation does not reference
@@ -218,8 +223,8 @@ new schema is allowed only after those runtime owners exist.
 - `Assets/Project/Editor` may validate or rebuild a specific authored asset, but
   editor builders are not runtime composition owners.
 - `FarionProjectValidation` checks missing scripts, persistent ids, runtime-root
-  references, definition registry consistency, and authored flight/VFX
-  contracts.
+  references, definition registry consistency, audio composition, and authored
+  flight/VFX contracts.
 - Definitions live under `Assets/Project/Design`; runtime quantities and
   unlocks never live in those assets.
 

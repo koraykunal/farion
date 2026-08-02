@@ -569,6 +569,10 @@ PrefabInstance:
       propertyPath: m_text
       value: CANCEL
       objectReference: {fileID: 0}
+    - target: {fileID: 2435408787079279413, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
+      propertyPath: activationCue
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 6273784691779864178, guid: 7102641673584b646a13bb4624e6d8e5, type: 3}
       propertyPath: m_text
       value:

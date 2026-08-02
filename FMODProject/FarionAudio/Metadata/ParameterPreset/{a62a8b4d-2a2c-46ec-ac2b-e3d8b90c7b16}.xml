@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{a62a8b4d-2a2c-46ec-ac2b-e3d8b90c7b16}">
+		<property name="name">
+			<value>Interior</value>
+		</property>
+		<relationship name="folder">
+			<destination>{ac06c5b8-c6ef-4d93-b5cc-f0837e12826a}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{9d27cb7b-3547-4b2d-bed4-741417cb1f5e}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{9d27cb7b-3547-4b2d-bed4-741417cb1f5e}">
+		<property name="isGlobal">
+			<value>true</value>
+		</property>
+	</object>
+</objects>

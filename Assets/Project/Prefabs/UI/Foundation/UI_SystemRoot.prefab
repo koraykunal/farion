@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 900004}
   - component: {fileID: 900005}
   - component: {fileID: 5631850275050569301}
+  - component: {fileID: 4075977183668448176}
   m_Layer: 5
   m_Name: UI_SystemRoot
   m_TagString: Untagged
@@ -115,3 +116,15 @@ MonoBehaviour:
   systemRoot: {fileID: 900002}
   canvasScaler: {fileID: 0}
   baseReferenceResolution: {x: 1920, y: 1080}
+--- !u!114 &4075977183668448176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f5eb41f99f841ed9202549e7cbb573b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Feedback.UiAudioBridge

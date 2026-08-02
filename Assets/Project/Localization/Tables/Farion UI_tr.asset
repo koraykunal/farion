@@ -593,6 +593,50 @@ MonoBehaviour:
     m_Localized: "Aktar\u0131m y\xF6n\xFCn\xFC tersine \xE7evir"
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058511
+    m_Localized: SES
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058512
+    m_Localized: Ana ses
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058513
+    m_Localized: Oyunun t\xFCm ses kar\u0131\u015F\u0131m\u0131n\u0131 kontrol et.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058514
+    m_Localized: M\xFCzik
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058515
+    m_Localized: Adaptif m\xFCzik seviyesini kontrol et.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058516
+    m_Localized: Ortam sesi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058517
+    m_Localized: Uzay, atmosfer ve i\xE7 mek\xE2n ortam seslerini kontrol et.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058518
+    m_Localized: Efektler
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058519
+    m_Localized: Uzay arac\u0131 ve d\xFCnya ses efektlerini kontrol et.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058520
+    m_Localized: Aray\xFCz sesi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058521
+    m_Localized: Aray\xFCz gezinme ve geri bildirim seslerini kontrol et.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

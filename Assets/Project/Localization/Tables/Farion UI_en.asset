@@ -590,6 +590,50 @@ MonoBehaviour:
     m_Localized: Reverse direction
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058511
+    m_Localized: AUDIO
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058512
+    m_Localized: Master volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058513
+    m_Localized: Control the complete game mix.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058514
+    m_Localized: Music volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058515
+    m_Localized: Control the adaptive score.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058516
+    m_Localized: Ambience volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058517
+    m_Localized: Control space, atmosphere, and interior ambience.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058518
+    m_Localized: SFX volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058519
+    m_Localized: Control spacecraft and world sound effects.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058520
+    m_Localized: UI volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058521
+    m_Localized: Control interface navigation and feedback sounds.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

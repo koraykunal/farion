@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Farion.Audio;
 using Farion.Gameplay.Input;
 using Farion.UI.Foundation;
 using UnityEngine;
@@ -191,9 +192,15 @@ namespace Farion.UI.Navigation
         public bool TryHandleCancel()
         {
             EnsureInitialized();
-            return history.Count > 0 &&
-                   history[^1].Screen.CloseOnCancel &&
-                   CloseTop();
+            bool handled = history.Count > 0 &&
+                           history[^1].Screen.CloseOnCancel &&
+                           CloseTop();
+            if (handled)
+            {
+                AudioDirector.Current?.PlayUi(UiAudioCue.Back);
+            }
+
+            return handled;
         }
 
         public void CloseAll(bool animated)

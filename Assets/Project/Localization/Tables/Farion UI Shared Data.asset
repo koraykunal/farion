@@ -587,6 +587,50 @@ MonoBehaviour:
     m_Key: terminal.cargo.action_swap_detail
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058511
+    m_Key: settings.section.audio
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058512
+    m_Key: settings.audio.master.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058513
+    m_Key: settings.audio.master.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058514
+    m_Key: settings.audio.music.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058515
+    m_Key: settings.audio.music.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058516
+    m_Key: settings.audio.ambience.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058517
+    m_Key: settings.audio.ambience.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058518
+    m_Key: settings.audio.sfx.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058519
+    m_Key: settings.audio.sfx.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058520
+    m_Key: settings.audio.ui.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058521
+    m_Key: settings.audio.ui.description
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

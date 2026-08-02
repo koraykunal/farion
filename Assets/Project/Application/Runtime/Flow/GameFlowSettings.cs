@@ -6,7 +6,7 @@ namespace Farion.App.Flow
     public sealed class GameFlowSettings : ScriptableObject
     {
         const string DefaultGameplaySceneName = "SC_PhysicsSandbox";
-        const string DefaultMainMenuSceneName = "MainMenu";
+        const string DefaultMainMenuSceneName = "SC_MainMenu";
 
         [Header("Scenes")]
         [SerializeField] string mainMenuSceneName = DefaultMainMenuSceneName;
