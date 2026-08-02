@@ -79,7 +79,6 @@ namespace Farion.Rendering.PostProcessing
             static readonly int DetailId = Shader.PropertyToID("_FarionNebulaDetail");
             static readonly int MotionId = Shader.PropertyToID("_FarionNebulaMotion");
             static readonly int WorldToLocalRotationId = Shader.PropertyToID("_FarionNebulaWorldToLocalRotation");
-            static readonly int NoiseId = Shader.PropertyToID("_FarionNebulaNoise");
 
             Material material;
             NebulaVolume volume;
@@ -147,9 +146,6 @@ namespace Farion.Rendering.PostProcessing
                 material.SetMatrix(
                     WorldToLocalRotationId,
                     Matrix4x4.Rotate(Quaternion.Inverse(volumeTransform.rotation)));
-                material.SetTexture(NoiseId, volume.NoiseTexture != null
-                    ? volume.NoiseTexture
-                    : Texture2D.grayTexture);
             }
         }
     }

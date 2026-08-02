@@ -314,7 +314,11 @@ namespace Farion.Tests.EditMode
                 Is.Not.Null);
             Assert.That(
                 prefab.transform.Find(
-                    "Graphics/FlightCluster/BoostCapacitor/BoostVisual"),
+                    "Graphics/FlightCluster/BoostArc"),
+                Is.Not.Null);
+            Assert.That(
+                prefab.transform.Find(
+                    "Graphics/FlightCluster/PropulsionReadout"),
                 Is.Not.Null);
             Assert.That(
                 prefab.transform.Find(
@@ -324,11 +328,25 @@ namespace Farion.Tests.EditMode
             SerializedObject graphics = new(
                 prefab.GetComponentInChildren<SpacecraftFlightHudGraphics>(true));
             Assert.That(
-                graphics.FindProperty("boostFrameImage").objectReferenceValue,
+                graphics.FindProperty("boostArcFillImage").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(
+                graphics.FindProperty("speedValueText").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(
+                graphics.FindProperty("assistValueText").objectReferenceValue,
                 Is.Not.Null);
             Assert.That(
                 graphics.FindProperty("navigationArrow").objectReferenceValue,
                 Is.Not.Null);
+            Assert.That(
+                prefab.transform.Find(
+                    "Graphics/FlightCluster/FlightStatusText"),
+                Is.Null);
+            Assert.That(
+                prefab.transform.Find(
+                    "Graphics/FlightCluster/ThrottleRail"),
+                Is.Null);
         }
 
         [Test]

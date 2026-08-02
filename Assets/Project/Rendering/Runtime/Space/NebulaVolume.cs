@@ -35,9 +35,8 @@ namespace Farion.Rendering.Space
         [InspectorName("Max Step Count")]
         [Tooltip("Upper raymarch budget. Larger structure scales need more samples and cost more GPU time.")]
         [Range(16, 192)]
-        [SerializeField] int stepCount = 144;
+        [SerializeField] int stepCount = 128;
         [SerializeField] float seed = 333f;
-        [SerializeField] Texture2D noiseTexture;
 
         [Header("Motion")]
         [SerializeField] Vector3 driftDirection = new(0.7f, 0.15f, 0.45f);
@@ -55,7 +54,6 @@ namespace Farion.Rendering.Space
         public float Extinction => Mathf.Max(0f, extinction);
         public int StepCount => Mathf.Clamp(stepCount, 16, 192);
         public float Seed => seed;
-        public Texture2D NoiseTexture => noiseTexture;
         public Vector3 DriftDirection => driftDirection.sqrMagnitude > 0.0001f
             ? driftDirection.normalized
             : Vector3.right;

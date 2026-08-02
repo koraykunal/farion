@@ -1,10 +1,5 @@
 Shader "Hidden/Farion/Space/Volumetric Nebula"
 {
-    Properties
-    {
-        [NoScaleOffset] _FarionNebulaNoise("Noise", 2D) = "gray" {}
-    }
-
     SubShader
     {
         Tags
@@ -31,7 +26,7 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
             #define FARION_NEBULA_MAX_STEPS 192
-            #define FARION_SPIRAL_NOISE_ITERATIONS 8
+            #define FARION_SPIRAL_NOISE_ITERATIONS 6
             #define FARION_MAX_FLOAT 3.402823466e+38
 
             float4 _FarionNebulaSphere;
@@ -43,13 +38,11 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
             float4 _FarionNebulaMotion;
             float4x4 _FarionNebulaWorldToLocalRotation;
 
-            TEXTURE2D(_FarionNebulaNoise);
-            SAMPLER(sampler_FarionNebulaNoise);
-            float4 _FarionNebulaNoise_TexelSize;
-
             float Hash13(float3 p)
             {
-                return frac(sin(dot(p, float3(127.1, 311.7, 758.5))) * 43758.54);
+                p = frac(p * 0.1031);
+                p += dot(p, p.yzx + 33.33);
+                return frac((p.x + p.y) * p.z);
             }
 
             float Noise3D(float3 x)
@@ -58,29 +51,22 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                 float3 f = frac(x);
                 f *= f * (3.0 - f - f);
 
-                float2 texelSize = max(abs(_FarionNebulaNoise_TexelSize.xy), float2(1.0 / 256.0, 1.0 / 256.0));
-                float2 uv = p.xy + float2(37.0, 17.0) * p.z + f.xy + 0.5;
-                float a = SAMPLE_TEXTURE2D_LOD(
-                    _FarionNebulaNoise,
-                    sampler_FarionNebulaNoise,
-                    frac(uv * texelSize),
-                    0).r;
-                float b = SAMPLE_TEXTURE2D_LOD(
-                    _FarionNebulaNoise,
-                    sampler_FarionNebulaNoise,
-                    frac((uv + float2(19.0, 73.0)) * texelSize),
-                    0).r;
-                return 2.4 * lerp(a, b, f.z) - 1.0;
+                float lower = lerp(
+                    lerp(Hash13(p), Hash13(p + float3(1.0, 0.0, 0.0)), f.x),
+                    lerp(Hash13(p + float3(0.0, 1.0, 0.0)), Hash13(p + float3(1.0, 1.0, 0.0)), f.x),
+                    f.y);
+                float upper = lerp(
+                    lerp(Hash13(p + float3(0.0, 0.0, 1.0)), Hash13(p + float3(1.0, 0.0, 1.0)), f.x),
+                    lerp(Hash13(p + float3(0.0, 1.0, 1.0)), Hash13(p + 1.0), f.x),
+                    f.y);
+                return lerp(lower, upper, f.z) * 2.0 - 1.0;
             }
 
-            float PaletteNoise(float3 position)
+            float PaletteNoise(float3 position, float cloud)
             {
                 float3 seedOffset = _FarionNebulaDetail.z * float3(0.017, 0.029, 0.043);
                 float3 p = position + seedOffset;
-                float noise = Noise3D(p * 0.12);
-                noise += Noise3D(p * 0.27 + 23.1) * 0.5;
-                noise += Noise3D(p * 0.61 - 47.3) * 0.25;
-                float phase = dot(p, float3(0.52, -0.37, 0.43)) + noise * 1.5;
+                float phase = dot(p, float3(0.52, -0.37, 0.43)) + cloud * 1.5;
                 return sin(phase) * 0.5 + 0.5;
             }
 
@@ -106,11 +92,19 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                 return noise;
             }
 
-            float NebulaMap(float3 position)
+            float3 NebulaDensity(float3 position)
             {
+                float3 seedOffset = _FarionNebulaDetail.z * float3(0.017, 0.029, 0.043);
+                float3 p = position + seedOffset;
+                float cloud = Noise3D(p * 0.18);
+                cloud += Noise3D(p * 0.43 + 19.1) * 0.5;
+                cloud = saturate(cloud / 3.0 + 0.5);
+
                 float spiral = SpiralNoise(position.zxy * 0.4132 + _FarionNebulaDetail.z);
-                float detail = Noise3D(position * 8.5) * 0.12;
-                return 0.9 * (0.5 + spiral * 3.0 + detail);
+                float front = 1.0 - smoothstep(0.08, 0.72, abs(0.5 + spiral * 3.0));
+                front *= front;
+                float body = smoothstep(0.38, 0.66, cloud);
+                return float3(body * lerp(0.12, 1.0, front), front, cloud);
             }
 
             float2 RaySphere(float3 centre, float radius, float3 rayOrigin, float3 rayDirection)
@@ -160,7 +154,7 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                 int stepCount = min(requiredSteps, stepBudget);
                 float stepSize = structureDistance / max(stepCount, 1);
                 float jitter = Hash13(float3(screenUV * _ScreenParams.xy, _FarionNebulaDetail.z)) - 0.5;
-                float distanceAlongRay = (0.5 + jitter * 0.8) * stepSize;
+                float distanceAlongRay = (0.5 + jitter * 0.25) * stepSize;
 
                 float3 accumulatedLight = 0.0;
                 float transmittance = 1.0;
@@ -169,7 +163,10 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                 [loop]
                 for (int i = 0; i < FARION_NEBULA_MAX_STEPS; i++)
                 {
-                    if (i >= stepCount || distanceAlongRay >= structureDistance || transmittance <= 0.01)
+                    if (i >= stepCount
+                        || distanceAlongRay >= structureDistance
+                        || transmittance <= 0.01
+                        || (emissionTransmittance <= 0.01 && extinction <= 0.001))
                     {
                         break;
                     }
@@ -178,16 +175,21 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                     float3 volumePosition = (position - drift) / structureScale;
                     float edge = smoothstep(0.0, edgeFade, 1.0 - length(volumePosition));
 
-                    float distanceToStructure = abs(NebulaMap(position));
-                    float localDensity = 1.0 - smoothstep(0.03, 0.22, distanceToStructure);
-                    localDensity *= densityMultiplier * edge;
+                    float3 densitySample = NebulaDensity(position);
+                    float localDensity = densitySample.x * densityMultiplier * edge;
+                    if (localDensity <= 0.0005)
+                    {
+                        distanceAlongRay += stepSize;
+                        continue;
+                    }
+
                     float densityBand = saturate(localDensity / max(densityMultiplier, 0.001));
                     half3 bodyColor = lerp(
                         _FarionNebulaDeepColor.rgb,
                         _FarionNebulaMidColor.rgb,
                         smoothstep(0.06, 0.62, densityBand));
-                    float highlightMask = smoothstep(0.48, 0.72, PaletteNoise(position));
-                    highlightMask *= lerp(0.65, 1.0, densityBand);
+                    float highlightMask = smoothstep(0.48, 0.72, PaletteNoise(position, densitySample.z));
+                    highlightMask *= lerp(0.15, 1.0, densitySample.y);
                     half3 lightColor = lerp(
                         bodyColor,
                         _FarionNebulaHighlightColor.rgb,

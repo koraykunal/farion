@@ -31,7 +31,6 @@ namespace Farion.UI.Gameplay
         [SerializeField] Camera worldCamera;
 
         [Header("Views")]
-        [SerializeField] TMP_Text flightText;
         [SerializeField] TMP_Text navigationText;
         [SerializeField] TMP_Text advisoryText;
         [SerializeField] RectTransform navigationMarker;
@@ -44,7 +43,6 @@ namespace Farion.UI.Gameplay
         [Min(1f)]
         [SerializeField] float refreshRate = 20f;
 
-        readonly StringBuilder flightBuilder = new(128);
         readonly StringBuilder navigationBuilder = new(128);
         readonly StringBuilder markerBuilder = new(64);
         SpacecraftMotor motor;
@@ -52,7 +50,6 @@ namespace Farion.UI.Gameplay
         SpacecraftLandingComputer landingComputer;
         SpacecraftLandingGuidanceComputer guidanceComputer;
         SpacecraftLandingGearAnimator landingGear;
-        NavigationMarkerDirection markerDirection;
         float nextRefreshTime;
         bool visible;
 
@@ -133,20 +130,10 @@ namespace Farion.UI.Gameplay
         void RefreshText()
         {
             SpacecraftMovementTelemetry telemetry = motor.Telemetry;
-            graphics?.RefreshTelemetry(telemetry);
-            flightBuilder.Clear();
-            flightBuilder
-                .Append(SectionLabelOpen)
-                .Append("PROPULSION / CONTROL")
-                .Append(SectionLabelClose)
-                .AppendLine()
-                .Append("ASSIST      ")
-                .Append(telemetry.FlightAssistEnabled ? "ON" : "OFF")
-                .AppendLine()
-                .Append("SPEED       ")
-                .Append(telemetry.RelativeSpeed.ToString("0.0", InvariantCulture))
-                .Append(" m/s");
-            SetText(flightText, flightBuilder);
+            float speedScale = motor.FlightProfile != null
+                ? motor.FlightProfile.MaxBoostForwardSpeed
+                : 260f;
+            graphics?.RefreshTelemetry(telemetry, speedScale);
 
             navigationBuilder.Clear();
             navigationBuilder
@@ -312,7 +299,6 @@ namespace Farion.UI.Gameplay
             }
 
             navigationMarker.anchoredPosition = position;
-            markerDirection = ResolveMarkerDirection(direction, onScreen);
             graphics?.RefreshNavigationMarker(direction, onScreen);
         }
 
@@ -327,7 +313,6 @@ namespace Farion.UI.Gameplay
 
             markerBuilder.Clear();
             markerBuilder
-                .Append(ResolveMarkerPrefix(markerDirection))
                 .Append(navigationTarget.DisplayName)
                 .AppendLine();
             if (distance <= navigationTarget.ArrivalRadius)
@@ -375,7 +360,6 @@ namespace Farion.UI.Gameplay
         {
             bool changed = visible != shouldShow;
             visible = shouldShow;
-            SetActive(flightText, visible);
             SetActive(navigationText, visible);
             SetActive(advisoryText, visible);
             graphics?.SetVisible(visible);
@@ -428,13 +412,6 @@ namespace Farion.UI.Gameplay
 
         void ApplyTheme()
         {
-            if (flightText != null)
-            {
-                flightText.color = theme != null
-                    ? theme.PrimaryText
-                    : ResolveNominalColor();
-            }
-
             if (navigationText != null)
             {
                 navigationText.color = theme != null
@@ -464,7 +441,6 @@ namespace Farion.UI.Gameplay
                 return;
             }
 
-            ApplyFont(flightText, theme.InstrumentFont, 2f, 4f);
             ApplyFont(navigationText, theme.InstrumentFont, 2f, 2f);
             ApplyFont(navigationMarkerText, theme.InstrumentFont, 2f, 0f);
             ApplyFont(advisoryText, theme.InterfaceMediumFont, 5f, 0f);
@@ -529,48 +505,6 @@ namespace Farion.UI.Gameplay
                 .Append(" m");
         }
 
-        static NavigationMarkerDirection ResolveMarkerDirection(
-            Vector2 direction,
-            bool onScreen)
-        {
-            if (onScreen)
-            {
-                return NavigationMarkerDirection.OnScreen;
-            }
-
-            if (Mathf.Abs(direction.x) >= Mathf.Abs(direction.y))
-            {
-                return direction.x >= 0f
-                    ? NavigationMarkerDirection.Right
-                    : NavigationMarkerDirection.Left;
-            }
-
-            return direction.y >= 0f
-                ? NavigationMarkerDirection.Up
-                : NavigationMarkerDirection.Down;
-        }
-
-        static string ResolveMarkerPrefix(
-            NavigationMarkerDirection direction)
-        {
-            return direction switch
-            {
-                NavigationMarkerDirection.Left => "< ",
-                NavigationMarkerDirection.Right => "> ",
-                NavigationMarkerDirection.Up => "^ ",
-                NavigationMarkerDirection.Down => "v ",
-                _ => string.Empty
-            };
-        }
-
-        enum NavigationMarkerDirection
-        {
-            OnScreen = 0,
-            Left = 1,
-            Right = 2,
-            Up = 3,
-            Down = 4
-        }
     }
 
     static class SpacecraftFlightHudStringBuilderExtensions

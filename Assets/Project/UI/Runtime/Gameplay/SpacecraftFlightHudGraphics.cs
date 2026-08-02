@@ -9,12 +9,20 @@ namespace Farion.UI.Gameplay
     [DisallowMultipleComponent]
     public sealed class SpacecraftFlightHudGraphics : MonoBehaviour
     {
-        [Header("Boost")]
-        [SerializeField] Image boostActiveNotch;
+        [Header("Propulsion")]
+        [SerializeField] TMP_Text speedValueText;
+        [SerializeField] TMP_Text speedUnitText;
+        [SerializeField] TMP_Text assistValueText;
+        [SerializeField] Image speedRailFillImage;
+        [SerializeField] Image assistFrameImage;
+
+        [Header("Boost Arc")]
         [SerializeField] TMP_Text boostValueText;
+        [SerializeField] Image boostArcFillImage;
+        [SerializeField] Image boostArcGlowImage;
         [SerializeField] Image boostFrameImage;
-        [SerializeField] Image boostGlowImage;
-        [SerializeField] CanvasGroup boostGlow;
+        [SerializeField] Image boostIndicatorImage;
+        [SerializeField] Image panelFrameImage;
 
         [Header("Navigation Marker")]
         [SerializeField] RectTransform navigationArrow;
@@ -22,14 +30,6 @@ namespace Farion.UI.Gameplay
         [SerializeField] Image navigationArrowGlowImage;
         [SerializeField] CanvasGroup navigationArrowGroup;
         [SerializeField] CanvasGroup navigationArrowGlow;
-
-        [Header("Control Vector")]
-        [SerializeField] RectTransform thrustDot;
-        [SerializeField] RectTransform throttleNeedle;
-        [Min(1f)]
-        [SerializeField] float thrustTravel = 32f;
-        [Min(1f)]
-        [SerializeField] float throttleTravel = 38f;
 
         [Header("Landing Vector")]
         [SerializeField] CanvasGroup landingGroup;
@@ -40,12 +40,12 @@ namespace Farion.UI.Gameplay
         [SerializeField] float landingSpeedRange = 20f;
 
         UiTheme theme;
-        Vector2 targetThrust;
-        float targetThrottle;
         float targetBoostCharge = 1f;
         float displayedBoostCharge = 1f;
         float targetBoostBlend;
         bool boostActive;
+        float targetSpeedRatio;
+        float displayedSpeedRatio;
         Vector2 targetLanding;
 
         public void SetVisible(bool shouldShow)
@@ -59,46 +59,60 @@ namespace Farion.UI.Gameplay
         public void ApplyTheme(UiTheme value)
         {
             theme = value;
-            ApplySignalColors(0f);
-
-            if (boostValueText != null && theme != null)
-            {
-                boostValueText.font = theme.InstrumentFont;
-                boostValueText.color = theme.SupportingText;
-            }
-
             if (theme == null)
             {
                 return;
             }
 
-            SetColor(boostFrameImage, theme.Focus, 0.9f);
-            SetColor(boostGlowImage, theme.Focus, 0.28f);
+            SetFont(speedValueText, theme.InstrumentFont);
+            SetFont(speedUnitText, theme.InstrumentFont);
+            SetFont(assistValueText, theme.InstrumentFont);
+            SetFont(boostValueText, theme.InstrumentFont);
+            SetTextColor(speedValueText, theme.PrimaryText);
+            SetTextColor(speedUnitText, theme.SupportingText);
+            SetTextColor(boostValueText, theme.PrimaryText);
+
+            SetColor(panelFrameImage, Color.white, 0.9f);
+            SetColor(boostFrameImage, theme.Focus, 0.68f);
+            SetColor(boostIndicatorImage, theme.Focus, 0.42f);
+            SetColor(boostArcFillImage, theme.Focus, 0.88f);
+            SetColor(boostArcGlowImage, theme.Focus, 0.14f);
+            SetColor(speedRailFillImage, theme.Focus, 0.76f);
+            SetColor(assistFrameImage, theme.Focus, 0.72f);
             SetColor(navigationArrowImage, theme.Focus, 0.94f);
             SetColor(navigationArrowGlowImage, theme.Focus, 0.32f);
+            ApplySignalColors();
         }
 
-        public void RefreshTelemetry(SpacecraftMovementTelemetry telemetry)
+        public void RefreshTelemetry(
+            SpacecraftMovementTelemetry telemetry,
+            float speedScale)
         {
             targetBoostCharge = telemetry.BoostCharge;
             targetBoostBlend = telemetry.BoostBlend;
             boostActive = telemetry.BoostActive;
-            targetThrust = new Vector2(
-                telemetry.Command.Translation.x,
-                telemetry.Command.Translation.y) * thrustTravel;
-            targetThrottle = telemetry.Command.Translation.z * throttleTravel;
+            targetSpeedRatio = Mathf.Clamp01(
+                telemetry.RelativeSpeed / Mathf.Max(1f, speedScale));
 
-            if (boostActiveNotch != null)
+            if (speedValueText != null)
             {
-                boostActiveNotch.enabled = telemetry.BoostActive;
+                speedValueText.SetText("{0:0}", telemetry.RelativeSpeed);
+            }
+
+            if (assistValueText != null)
+            {
+                assistValueText.SetText(
+                    telemetry.FlightAssistEnabled ? "ON" : "OFF");
             }
 
             if (boostValueText != null)
             {
-                boostValueText.SetText("{0:0}%", telemetry.BoostCharge * 100f);
+                boostValueText.SetText(
+                    "{0:0}%",
+                    telemetry.BoostCharge * 100f);
             }
 
-            ApplySignalColors(telemetry.BoostBlend);
+            ApplySignalColors();
         }
 
         public void RefreshNavigationMarker(Vector2 direction, bool onScreen)
@@ -153,66 +167,59 @@ namespace Farion.UI.Gameplay
                 displayedBoostCharge,
                 targetBoostCharge,
                 blend);
-
-            if (boostFrameImage != null)
-            {
-                RectTransform frameFill = boostFrameImage.rectTransform;
-                Vector2 anchorMax = frameFill.anchorMax;
-                anchorMax.x = displayedBoostCharge;
-                frameFill.anchorMax = anchorMax;
-            }
-
-            if (boostGlow != null)
-            {
-                float glowTarget = 0.12f + targetBoostBlend * 0.28f;
-                if (boostActive)
-                {
-                    glowTarget += 0.06f;
-                }
-
-                boostGlow.alpha = Mathf.Lerp(
-                    boostGlow.alpha,
-                    glowTarget,
-                    blend);
-            }
-
-            MoveTowards(thrustDot, targetThrust, blend);
-            MoveTowards(
-                throttleNeedle,
-                new Vector2(0f, targetThrottle),
+            displayedSpeedRatio = Mathf.Lerp(
+                displayedSpeedRatio,
+                targetSpeedRatio,
                 blend);
+
+            if (boostArcFillImage != null)
+            {
+                boostArcFillImage.fillAmount = displayedBoostCharge;
+            }
+
+            if (boostArcGlowImage != null)
+            {
+                boostArcGlowImage.fillAmount = displayedBoostCharge;
+                Color glow = boostArcGlowImage.color;
+                glow.a = 0.08f + targetBoostBlend * 0.16f +
+                    (boostActive ? 0.08f : 0f);
+                boostArcGlowImage.color = glow;
+            }
+
+            if (speedRailFillImage != null)
+            {
+                speedRailFillImage.fillAmount = displayedSpeedRatio;
+            }
+
             MoveTowards(landingDot, targetLanding, blend);
         }
 
         void OnValidate()
         {
-            thrustTravel = Mathf.Max(1f, thrustTravel);
-            throttleTravel = Mathf.Max(1f, throttleTravel);
             landingTravel = Mathf.Max(1f, landingTravel);
             landingSpeedRange = Mathf.Max(0.1f, landingSpeedRange);
         }
 
-        void ApplySignalColors(float boostBlend)
+        void ApplySignalColors()
         {
             if (theme == null)
             {
                 return;
             }
 
-            if (boostFrameImage != null)
-            {
-                Color color = Color.Lerp(
-                    theme.SupportingText,
-                    theme.Focus,
-                    Mathf.Clamp01(boostBlend));
-                color.a = 0.9f;
-                boostFrameImage.color = color;
-            }
+            Color signal = Color.Lerp(
+                theme.SupportingText,
+                theme.Focus,
+                targetBoostBlend);
+            signal.a = boostActive ? 1f : 0.88f;
+            SetTextColor(boostValueText, signal);
+            SetColor(boostArcFillImage, signal, signal.a);
 
-            if (boostActiveNotch != null)
-            {
-                boostActiveNotch.color = theme.Focus;
-            }
+            Color assist = assistValueText != null &&
+                assistValueText.text == "ON"
+                    ? theme.Nominal
+                    : theme.SupportingText;
+            SetTextColor(assistValueText, assist);
         }
 
         static void MoveTowards(
@@ -226,6 +233,22 @@ namespace Farion.UI.Gameplay
                     target.anchoredPosition,
                     position,
                     blend);
+            }
+        }
+
+        static void SetFont(TMP_Text target, TMP_FontAsset font)
+        {
+            if (target != null && font != null)
+            {
+                target.font = font;
+            }
+        }
+
+        static void SetTextColor(TMP_Text target, Color color)
+        {
+            if (target != null)
+            {
+                target.color = color;
             }
         }
 
