@@ -13,6 +13,7 @@ namespace Farion.Rendering.Celestial
         [Header("Environment Rendering")]
         [SerializeField] CelestialOceanProfile oceanProfile;
         [SerializeField] CelestialAtmosphereProfile atmosphereProfile;
+        [SerializeField] CelestialCloudProfile cloudProfile;
 
         public event System.Action Changed;
 
@@ -20,6 +21,7 @@ namespace Farion.Rendering.Celestial
         public TerrestrialSurfaceProfile SurfaceProfile => surfaceProfile;
         public CelestialOceanProfile OceanProfile => oceanProfile;
         public CelestialAtmosphereProfile AtmosphereProfile => atmosphereProfile;
+        public CelestialCloudProfile CloudProfile => cloudProfile;
 
         void OnValidate()
         {

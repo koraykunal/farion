@@ -29,6 +29,11 @@ namespace Farion.Simulation.Planetary
         public PlanetType PlanetType => planetType;
         public float AtmosphereDensity => atmosphereDensity;
         public bool HasAtmosphere => atmosphereDensity > 0f;
+        public bool SupportsSurfaceWaterClouds =>
+            HasAtmosphere &&
+            hydrosphereProfile != null &&
+            hydrosphereProfile.HasSurfaceOcean &&
+            hydrosphereProfile.WaterAvailability > 0f;
         public float BackgroundRadiation => backgroundRadiation;
         public CelestialShapeProfile ShapeProfile => shapeProfile;
         public PlanetClimateProfile ClimateProfile => climateProfile;

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a4183b7cee84f758940431f26cb66bd, type: 3}
+  m_Name: SO_DefaultCloudProfile
+  m_EditorClassIdentifier: 
+  shapeNoise: {fileID: 11700000, guid: 70c2adccd53fd45468d11570134863c2, type: 2}
+  detailNoise: {fileID: 11700000, guid: 206e9646e82f94c249cda79e716d3f1d, type: 2}
+  blueNoise: {fileID: 2800000, guid: 36f118343fc974119bee3d09e2111500, type: 3}
+  layerBottom: 0.2
+  layerTop: 0.5
+  shapeScale: 1.15
+  detailScale: 7.5
+  shapeWeights: {x: 1, y: 0.35, z: 0.12, w: 0.03}
+  detailWeights: {x: 1, y: 0.35, z: 0.15}
+  coverage: 0.36
+  densityMultiplier: 1.25
+  detailErosion: 0.22
+  lightAbsorptionThroughCloud: 0.9
+  lightAbsorptionTowardStar: 1.05
+  darknessThreshold: 0.2
+  forwardScattering: 0.7
+  backScattering: 0.2
+  baseBrightness: 0.8
+  phaseStrength: 0.5
+  localWindAxis: {x: 0.25, y: 1, z: 0.1}
+  baseAngularSpeed: 0.25
+  detailAngularSpeed: 0.7
+  viewSteps: 48
+  lightSteps: 6
+  ditherStrength: 1

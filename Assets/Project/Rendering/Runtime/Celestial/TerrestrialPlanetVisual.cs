@@ -19,7 +19,8 @@ namespace Farion.Rendering.Celestial
         ICelestialOceanLevelProvider,
         ICelestialEnvironmentProvider,
         ICelestialOceanEffectSource,
-        ICelestialAtmosphereEffectSource
+        ICelestialAtmosphereEffectSource,
+        ICelestialCloudEffectSource
     {
         [Header("Profile")]
         [SerializeField] TerrestrialPlanetVisualProfile profile;
@@ -45,6 +46,7 @@ namespace Farion.Rendering.Celestial
             SyncProfileSubscription();
             CelestialOceanEffectRegistry.Register(this);
             CelestialAtmosphereEffectRegistry.Register(this);
+            CelestialCloudEffectRegistry.Register(this);
 
             if (applyOnEnable)
             {
@@ -67,6 +69,7 @@ namespace Farion.Rendering.Celestial
         {
             CelestialOceanEffectRegistry.Unregister(this);
             CelestialAtmosphereEffectRegistry.Unregister(this);
+            CelestialCloudEffectRegistry.Unregister(this);
             UnsubscribeFromProfile();
         }
 
@@ -184,6 +187,51 @@ namespace Farion.Rendering.Celestial
                 atmosphereBaseRadius * renderScale,
                 atmosphereRadius * renderScale,
                 profile.AtmosphereProfile);
+            return true;
+        }
+
+        public bool TryGetCloudEffectData(out CelestialCloudEffectData data)
+        {
+            data = default;
+            ResolveComponents();
+
+            PlanetaryGenerationProfile generation = surfaceModel != null
+                ? surfaceModel.GenerationProfile
+                : null;
+            if (profile == null
+                || profile.CloudProfile == null
+                || profile.CloudProfile.ShapeNoise == null
+                || profile.CloudProfile.DetailNoise == null
+                || profile.AtmosphereProfile == null
+                || generation == null
+                || !generation.SupportsSurfaceWaterClouds)
+            {
+                return false;
+            }
+
+            CelestialBody sourceBody = GetComponent<CelestialBody>();
+            if (sourceBody == null)
+            {
+                return false;
+            }
+
+            float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
+            Vector2 terrainRadiusRange = terrainVisual != null && terrainVisual.HasRenderRadiusRange
+                ? terrainVisual.RenderRadiusMinMax
+                : new Vector2(bodyRadius, bodyRadius);
+            float surfaceRadius = GetAtmosphereBaseRadius(bodyRadius, terrainRadiusRange);
+            float atmosphereRadius = profile.AtmosphereProfile.GetAtmosphereRadius(surfaceRadius);
+            profile.CloudProfile.GetLayerRadii(surfaceRadius, atmosphereRadius, out float innerRadius, out float outerRadius);
+            ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
+
+            data = new CelestialCloudEffectData(
+                renderCenter,
+                surfaceRadius * renderScale,
+                innerRadius * renderScale,
+                outerRadius * renderScale,
+                Matrix4x4.Rotate(Quaternion.Inverse(sourceBody.transform.rotation)),
+                generation.PlanetSeed,
+                profile.CloudProfile);
             return true;
         }
 

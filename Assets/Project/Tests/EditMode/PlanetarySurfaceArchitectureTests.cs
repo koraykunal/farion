@@ -86,6 +86,27 @@ namespace Farion.Tests.EditMode
             Assert.That(dominant.Material, Is.SameAs(fallback));
         }
 
+        [Test]
+        public void SurfaceWaterClouds_RequireAtmosphereOceanAndAvailableWater()
+        {
+            PlanetaryGenerationProfile generation = Create<PlanetaryGenerationProfile>();
+            PlanetHydrosphereProfile hydrosphere = Create<PlanetHydrosphereProfile>();
+            SetField(generation, "hydrosphereProfile", hydrosphere);
+
+            Assert.That(generation.SupportsSurfaceWaterClouds, Is.True);
+
+            SetField(hydrosphere, "hasSurfaceOcean", false);
+            Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
+
+            SetField(hydrosphere, "hasSurfaceOcean", true);
+            SetField(hydrosphere, "waterAvailability", 0f);
+            Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
+
+            SetField(hydrosphere, "waterAvailability", 0.4f);
+            SetField(generation, "atmosphereDensity", 0f);
+            Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
+        }
+
         static PlanetClimateSample CreateClimate(PlanetGenerationContext context)
         {
             return new PlanetClimateSample(

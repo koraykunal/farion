@@ -31,6 +31,7 @@ namespace Farion.Editor.Validation
         const string MoonShaderName = "Farion/Celestial/Moon Triplanar";
         const string StarShaderName = "Farion/Lighting/Star Emission";
         const string OceanShaderName = "Hidden/Farion/Celestial/Ocean Post Process";
+        const string CloudShaderName = "Hidden/Farion/Celestial/Cloud Post Process";
         const string AtmosphereShaderName =
             "Hidden/Farion/Celestial/Atmosphere Post Process";
         const string UrpBlueNoiseRoot =
@@ -85,6 +86,7 @@ namespace Farion.Editor.Validation
             IReadOnlyList<ScriptableRendererFeature> features =
                 rendererData.rendererFeatures;
             int oceanIndex = FindFeatureIndex<FarionOceanRendererFeature>(features);
+            int cloudIndex = FindFeatureIndex<FarionCloudRendererFeature>(features);
             int atmosphereIndex =
                 FindFeatureIndex<FarionAtmosphereRendererFeature>(features);
 
@@ -100,13 +102,21 @@ namespace Farion.Editor.Validation
                     $"{RendererDataPath}: {nameof(FarionAtmosphereRendererFeature)} is missing.");
             }
 
-            if (oceanIndex < 0 || atmosphereIndex < 0)
+            if (cloudIndex < 0)
+            {
+                report.AddError(
+                    $"{RendererDataPath}: {nameof(FarionCloudRendererFeature)} is missing.");
+            }
+
+            if (oceanIndex < 0 || cloudIndex < 0 || atmosphereIndex < 0)
             {
                 return;
             }
 
             FarionOceanRendererFeature oceanFeature =
                 (FarionOceanRendererFeature)features[oceanIndex];
+            FarionCloudRendererFeature cloudFeature =
+                (FarionCloudRendererFeature)features[cloudIndex];
             FarionAtmosphereRendererFeature atmosphereFeature =
                 (FarionAtmosphereRendererFeature)features[atmosphereIndex];
 
@@ -122,18 +132,31 @@ namespace Farion.Editor.Validation
                     $"{RendererDataPath}: atmosphere renderer feature is inactive.");
             }
 
-            if (oceanIndex >= atmosphereIndex)
+            if (!cloudFeature.isActive)
             {
                 report.AddError(
-                    $"{RendererDataPath}: ocean feature must precede atmosphere.");
+                    $"{RendererDataPath}: cloud renderer feature is inactive.");
+            }
+
+            if (oceanIndex >= cloudIndex || cloudIndex >= atmosphereIndex)
+            {
+                report.AddError(
+                    $"{RendererDataPath}: ocean, cloud, and atmosphere features are out of order.");
             }
 
             SerializedObject serializedOcean = new(oceanFeature);
+            SerializedObject serializedCloud = new(cloudFeature);
             SerializedObject serializedAtmosphere = new(atmosphereFeature);
             ValidateShaderReference(
                 serializedOcean,
                 "oceanShader",
                 OceanShaderName,
+                RendererDataPath,
+                report);
+            ValidateShaderReference(
+                serializedCloud,
+                "cloudShader",
+                CloudShaderName,
                 RendererDataPath,
                 report);
             ValidateShaderReference(
@@ -145,6 +168,8 @@ namespace Farion.Editor.Validation
 
             int oceanEvent =
                 (int)RenderPassEvent.BeforeRenderingTransparents;
+            int cloudEvent =
+                (int)RenderPassEvent.BeforeRenderingTransparents + 1;
             int atmosphereEvent =
                 (int)RenderPassEvent.BeforeRenderingPostProcessing + 1;
             int underwaterEvent =
@@ -153,6 +178,18 @@ namespace Farion.Editor.Validation
                 serializedOcean,
                 "renderPassEvent",
                 oceanEvent,
+                RendererDataPath,
+                report);
+            ValidateIntegerProperty(
+                serializedCloud,
+                "renderPassEvent",
+                cloudEvent,
+                RendererDataPath,
+                report);
+            ValidateIntegerProperty(
+                serializedCloud,
+                "downsample",
+                2,
                 RendererDataPath,
                 report);
             ValidateIntegerProperty(
@@ -305,6 +342,72 @@ namespace Farion.Editor.Validation
                 report.AddError(
                     $"{PlanetVisualProfilePath}: atmosphere blue noise must use URP's " +
                     $"BlueNoise256 set, found '{blueNoisePath}'.");
+            }
+
+            CelestialCloudProfile clouds = profile.CloudProfile;
+            if (clouds == null)
+            {
+                report.AddError(
+                    $"{PlanetVisualProfilePath}: cloud profile is missing.");
+                return;
+            }
+
+            ValidateCloudVolume(clouds.ShapeNoise, "shape noise", report);
+            ValidateCloudVolume(clouds.DetailNoise, "detail noise", report);
+            Vector4 shapeWeights = clouds.ShapeWeights;
+            if (shapeWeights.x < 0f
+                || shapeWeights.y < 0f
+                || shapeWeights.z < 0f
+                || shapeWeights.w < 0f
+                || shapeWeights.sqrMagnitude <= 0.0001f)
+            {
+                report.AddError(
+                    $"{PlanetVisualProfilePath}: cloud shape weights must be non-negative and non-zero.");
+            }
+
+            Vector3 detailWeights = clouds.DetailWeights;
+            if (detailWeights.x < 0f
+                || detailWeights.y < 0f
+                || detailWeights.z < 0f
+                || detailWeights.sqrMagnitude <= 0.0001f)
+            {
+                report.AddError(
+                    $"{PlanetVisualProfilePath}: cloud detail weights must be non-negative and non-zero.");
+            }
+
+            if (clouds.LayerTop <= clouds.LayerBottom)
+            {
+                report.AddError(
+                    $"{PlanetVisualProfilePath}: cloud layer top must exceed its bottom.");
+            }
+
+            if (clouds.BlueNoise == null)
+            {
+                report.AddError(
+                    $"{PlanetVisualProfilePath}: cloud blue-noise texture is missing.");
+            }
+            else if (!AssetDatabase.GetAssetPath(clouds.BlueNoise).StartsWith(
+                UrpBlueNoiseRoot,
+                StringComparison.Ordinal))
+            {
+                report.AddError(
+                    $"{PlanetVisualProfilePath}: clouds must reuse URP's BlueNoise256 set.");
+            }
+        }
+
+        static void ValidateCloudVolume(
+            Texture3D texture,
+            string label,
+            FarionValidationReport report)
+        {
+            if (texture == null)
+            {
+                report.AddError($"{PlanetVisualProfilePath}: cloud {label} is missing.");
+            }
+            else if (texture.isReadable)
+            {
+                report.AddError(
+                    $"{PlanetVisualProfilePath}: cloud {label} must be CPU non-readable.");
             }
         }
 
