@@ -23,22 +23,36 @@ namespace Farion.UI.Feedback
     {
         readonly struct Message
         {
-            public Message(string text, UiFeedbackSeverity severity, float duration)
+            public Message(
+                string text,
+                UiFeedbackSeverity severity,
+                float duration,
+                Sprite icon,
+                bool includeSeverityLabel,
+                bool isItem)
             {
                 Text = text;
                 Severity = severity;
                 Duration = duration;
+                Icon = icon;
+                IncludeSeverityLabel = includeSeverityLabel;
+                IsItem = isItem;
             }
 
             public string Text { get; }
             public UiFeedbackSeverity Severity { get; }
             public float Duration { get; }
+            public Sprite Icon { get; }
+            public bool IncludeSeverityLabel { get; }
+            public bool IsItem { get; }
         }
 
         [Header("View")]
         [SerializeField] CanvasGroup canvasGroup;
         [SerializeField] TMP_Text messageText;
         [SerializeField] Image signalImage;
+        [SerializeField] Image iconImage;
+        [SerializeField] LayoutElement messageLayout;
 
         [Header("Design")]
         [SerializeField] UiTheme theme;
@@ -47,6 +61,8 @@ namespace Farion.UI.Feedback
         [Range(1, 16)]
         [SerializeField] int queueCapacity = 6;
         [SerializeField] bool animate = true;
+        [Min(120f)]
+        [SerializeField] float maxMessageWidth = 440f;
 
         [Header("Accessibility")]
         [Tooltip("Prefixes each message with a semantic severity label so state never depends on color alone.")]
@@ -67,6 +83,8 @@ namespace Farion.UI.Feedback
         void Awake()
         {
             ResolveReferences();
+            ApplyTypography(isItem: false);
+            SetIcon(null);
             ApplyAlpha(0f);
         }
 
@@ -86,6 +104,7 @@ namespace Farion.UI.Feedback
         {
             defaultDuration = Mathf.Max(0.1f, defaultDuration);
             queueCapacity = Mathf.Clamp(queueCapacity, 1, 16);
+            maxMessageWidth = Mathf.Max(120f, maxMessageWidth);
             ResolveReferences();
         }
 
@@ -93,6 +112,38 @@ namespace Farion.UI.Feedback
             string message,
             UiFeedbackSeverity severity = UiFeedbackSeverity.Information,
             float duration = -1f)
+        {
+            Enqueue(
+                message,
+                severity,
+                duration,
+                null,
+                includeSeverityLabel,
+                isItem: false);
+        }
+
+        public void ShowItem(
+            string itemName,
+            int amount,
+            Sprite icon,
+            float duration = -1f)
+        {
+            Enqueue(
+                FormatItemMessage(itemName, amount),
+                UiFeedbackSeverity.Success,
+                duration,
+                icon,
+                includeLabel: false,
+                isItem: true);
+        }
+
+        void Enqueue(
+            string message,
+            UiFeedbackSeverity severity,
+            float duration,
+            Sprite icon,
+            bool includeLabel,
+            bool isItem)
         {
             if (string.IsNullOrWhiteSpace(message))
             {
@@ -108,7 +159,10 @@ namespace Farion.UI.Feedback
                 new Message(
                     message.Trim(),
                     severity,
-                    duration > 0f ? duration : defaultDuration));
+                    duration > 0f ? duration : defaultDuration,
+                    icon,
+                    includeLabel,
+                    isItem));
             if (routine == null && isActiveAndEnabled)
             {
                 routine = StartCoroutine(PresentQueue());
@@ -178,12 +232,15 @@ namespace Farion.UI.Feedback
 
         void ApplyMessage(Message message)
         {
+            SetIcon(message.Icon);
             if (messageText != null)
             {
+                ApplyTypography(message.IsItem);
                 messageText.text = FormatMessage(
                     message.Text,
                     message.Severity,
-                    includeSeverityLabel);
+                    message.IncludeSeverityLabel);
+                ResizeToMessage();
             }
 
             if (signalImage != null)
@@ -201,16 +258,16 @@ namespace Farion.UI.Feedback
                     UiFeedbackSeverity.Success => new Color(0.78f, 0.9f, 0.7f, 0.95f),
                     UiFeedbackSeverity.Caution => new Color(1f, 0.72f, 0.24f, 0.98f),
                     UiFeedbackSeverity.Error => new Color(1f, 0.26f, 0.2f, 1f),
-                    _ => new Color(0.52f, 0.94f, 0.9f, 0.96f)
+                    _ => new Color(0.68f, 0.76f, 0.81f, 1f)
                 };
             }
 
             return severity switch
             {
-                UiFeedbackSeverity.Success => theme.Focus,
+                UiFeedbackSeverity.Success => theme.Nominal,
                 UiFeedbackSeverity.Caution => theme.Caution,
                 UiFeedbackSeverity.Error => theme.Critical,
-                _ => theme.Nominal
+                _ => theme.SupportingText
             };
         }
 
@@ -226,6 +283,13 @@ namespace Farion.UI.Feedback
             }
 
             return $"{GetSeverityLabel(severity)} · {normalizedMessage}";
+        }
+
+        public static string FormatItemMessage(string itemName, int amount)
+        {
+            return string.IsNullOrWhiteSpace(itemName) || amount <= 0
+                ? string.Empty
+                : $"{itemName.Trim()} ×{amount}";
         }
 
         public static string GetSeverityLabel(UiFeedbackSeverity severity)
@@ -251,14 +315,67 @@ namespace Farion.UI.Feedback
             canvasGroup.blocksRaycasts = false;
         }
 
+        void ResizeToMessage()
+        {
+            if (messageText == null || messageLayout == null)
+            {
+                return;
+            }
+
+            Vector2 preferred = messageText.GetPreferredValues(
+                messageText.text,
+                maxMessageWidth,
+                0f);
+            messageLayout.preferredWidth = Mathf.Min(
+                maxMessageWidth,
+                Mathf.Ceil(preferred.x));
+            messageLayout.preferredHeight = Mathf.Ceil(preferred.y);
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)transform);
+        }
+
+        void SetIcon(Sprite icon)
+        {
+            if (iconImage == null)
+            {
+                return;
+            }
+
+            iconImage.sprite = icon;
+            iconImage.gameObject.SetActive(icon != null);
+        }
+
         void ResolveReferences()
         {
             canvasGroup ??= GetComponent<CanvasGroup>();
+            messageLayout ??= messageText != null
+                ? messageText.GetComponent<LayoutElement>()
+                : null;
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 theme = root != null ? root.Theme : null;
             }
+        }
+
+        void ApplyTypography(bool isItem)
+        {
+            if (messageText == null || theme == null)
+            {
+                return;
+            }
+
+            TMP_FontAsset font = isItem && theme.InterfaceMediumFont != null
+                ? theme.InterfaceMediumFont
+                : theme.InterfaceFont;
+            if (font != null)
+            {
+                messageText.font = font;
+            }
+            messageText.fontWeight = isItem
+                ? FontWeight.Medium
+                : FontWeight.Regular;
+            messageText.fontSize = isItem ? 17f : 14f;
+            messageText.color = theme.PrimaryText;
         }
 
         bool IsReducedMotionEnabled()

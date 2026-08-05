@@ -6,6 +6,7 @@ using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Economy;
 using Farion.Gameplay.Domain.Identity;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Gameplay.Inventory
 {
@@ -16,7 +17,9 @@ namespace Farion.Gameplay.Inventory
         const string DefaultContainerId = "inventory.local";
 
         [Header("Identity")]
-        [SerializeField] string containerId = DefaultContainerId;
+        [FormerlySerializedAs("containerId")]
+        [Tooltip("Used only when this object has no valid PersistentObjectId owner.")]
+        [SerializeField] string fallbackContainerId = DefaultContainerId;
 
         [Header("Capacity")]
         [Min(1)]
@@ -83,7 +86,7 @@ namespace Farion.Gameplay.Inventory
 
         protected virtual void OnValidate()
         {
-            containerId = NormalizeContainerId(containerId);
+            fallbackContainerId = NormalizeContainerId(fallbackContainerId);
             slotCapacity = Mathf.Max(1, slotCapacity);
             stacks ??= new List<InventoryStack>();
             stacks.RemoveAll(stack => stack == null || stack.IsEmpty);
@@ -636,8 +639,8 @@ namespace Farion.Gameplay.Inventory
                 return derivedId;
             }
 
-            string normalized = NormalizeContainerId(containerId);
-            containerId = normalized;
+            string normalized = NormalizeContainerId(fallbackContainerId);
+            fallbackContainerId = normalized;
             return new PersistentEntityId(normalized);
         }
 

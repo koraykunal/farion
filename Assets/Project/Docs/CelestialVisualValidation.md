@@ -25,7 +25,7 @@ View review below.
 
 ## Controlled Game View review
 
-Use `SC_PhysicsSandbox` and capture the same views before and after tuning.
+Use `SC_Expedition` and capture the same views before and after tuning.
 Do not evaluate a surface from only one distance.
 
 ### Terrestrial planet and lava

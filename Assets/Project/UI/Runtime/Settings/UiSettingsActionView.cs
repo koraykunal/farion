@@ -1,3 +1,4 @@
+using Farion.UI.Common;
 using Farion.UI.Foundation;
 using Farion.UI.Styling;
 using TMPro;
@@ -13,6 +14,7 @@ namespace Farion.UI.Settings
         MonoBehaviour,
         IPointerEnterHandler,
         IPointerExitHandler,
+        IPointerClickHandler,
         ISelectHandler,
         IDeselectHandler
     {
@@ -21,9 +23,9 @@ namespace Farion.UI.Settings
         [SerializeField] UiTheme theme;
         [SerializeField] Image background;
         [SerializeField] Image selectionFrame;
+        [SerializeField] bool destructive;
 
-        bool pointerInside;
-        bool selected;
+        UiPointerFocusState focusState;
 
         void Awake()
         {
@@ -50,31 +52,36 @@ namespace Farion.UI.Settings
 
         void OnDisable()
         {
-            pointerInside = false;
-            selected = false;
+            focusState.Reset();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            pointerInside = true;
+            focusState.PointerEnter();
             RefreshVisual();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            pointerInside = false;
+            focusState.PointerExit();
+            RefreshVisual();
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            focusState.PointerClick();
             RefreshVisual();
         }
 
         public void OnSelect(BaseEventData eventData)
         {
-            selected = true;
+            focusState.Select();
             RefreshVisual();
         }
 
         public void OnDeselect(BaseEventData eventData)
         {
-            selected = false;
+            focusState.Deselect();
             RefreshVisual();
         }
 
@@ -88,12 +95,18 @@ namespace Farion.UI.Settings
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 theme = root != null ? root.Theme : null;
             }
+
+            if (labelText != null && theme != null && theme.InterfaceMediumFont != null)
+            {
+                labelText.font = theme.InterfaceMediumFont;
+                labelText.fontWeight = FontWeight.Medium;
+            }
         }
 
         void RefreshVisual()
         {
             bool available = button == null || button.interactable;
-            bool focused = available && (selected || pointerInside);
+            bool focused = available && focusState.IsFocused;
 
             Color normalSurface = theme != null
                 ? theme.ButtonSurface
@@ -110,6 +123,9 @@ namespace Farion.UI.Settings
             Color focus = theme != null
                 ? theme.Focus
                 : new Color(0.56f, 0.68f, 0.76f, 1f);
+            Color critical = theme != null
+                ? theme.Critical
+                : new Color(1f, 0.26f, 0.2f, 1f);
 
             if (background != null)
             {
@@ -124,8 +140,9 @@ namespace Farion.UI.Settings
 
             if (selectionFrame != null)
             {
-                focus.a *= focused ? 0.9f : available ? 0.16f : 0.05f;
-                selectionFrame.color = focus;
+                Color signal = destructive ? critical : focus;
+                signal.a *= focused ? 0.9f : available ? 0.16f : 0.05f;
+                selectionFrame.color = signal;
                 selectionFrame.raycastTarget = false;
             }
         }

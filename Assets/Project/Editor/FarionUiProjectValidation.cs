@@ -9,6 +9,8 @@ using Farion.UI.Loading;
 using Farion.UI.Navigation;
 using Farion.UI.SaveLoad;
 using Farion.UI.Settings;
+using Farion.UI.Styling;
+using TMPro;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.SceneManagement;
@@ -36,7 +38,19 @@ namespace Farion.Editor.Validation
             "Assets/Project/Prefabs/UI/Common/UI_SaveSlot.prefab";
         public const string SaveLoadPrefabPath =
             "Assets/Project/Prefabs/UI/Screens/UI_SaveLoadScreen.prefab";
+        public const string InventoryPrefabPath =
+            "Assets/Project/Prefabs/UI/Screens/UI_InventoryScreen.prefab";
+        public const string PausePrefabPath =
+            "Assets/Project/Prefabs/UI/Screens/UI_PauseMenuScreen.prefab";
+        public const string FlightHudPrefabPath =
+            "Assets/Project/Prefabs/UI/Gameplay/HUD/UI_SpacecraftFlightHud.prefab";
+        const string UiPrefabFolder = "Assets/Project/Prefabs/UI";
+        const string MenuButtonFramePath =
+            "Assets/Project/Art/UI/Textures/Common/UI_MenuButtonFrame.png";
+        const string LegacyFontPath =
+            "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset";
         static readonly Vector2 RequiredReferenceResolution = new(1920f, 1080f);
+        const float MinimumTextContrast = 4.5f;
 
         [MenuItem("Farion/Validation/Validate UI Foundation")]
         public static void ValidateFromMenu()
@@ -78,12 +92,28 @@ namespace Farion.Editor.Validation
                 LoadRequiredPrefab(SaveSlotPrefabPath, report);
             GameObject saveLoadPrefab =
                 LoadRequiredPrefab(SaveLoadPrefabPath, report);
+            GameObject inventoryPrefab =
+                LoadRequiredPrefab(InventoryPrefabPath, report);
+            GameObject pausePrefab =
+                LoadRequiredPrefab(PausePrefabPath, report);
+            GameObject flightHudPrefab =
+                LoadRequiredPrefab(FlightHudPrefabPath, report);
             ValidateSystemRootPrefab(systemRootPrefab, report);
             ValidateConfirmationPrefab(confirmationPrefab, report);
             ValidateLoadingPrefab(loadingPrefab, report);
             ValidateFeedbackPrefab(feedbackPrefab, report);
             ValidateSettingsPrefab(settingsPrefab, report);
             ValidateSaveLoadPrefabs(saveSlotPrefab, saveLoadPrefab, report);
+            ValidateFixedScreenBounds(inventoryPrefab, InventoryPrefabPath, report);
+            ValidateFixedScreenBounds(pausePrefab, PausePrefabPath, report);
+            if (flightHudPrefab != null)
+            {
+                ValidateRequiredComponentInChildren<UiSafeAreaFitter>(
+                    flightHudPrefab,
+                    FlightHudPrefabPath,
+                    report);
+            }
+            ValidateVisualContracts(systemRootPrefab, report);
         }
 
         static GameObject LoadRequiredPrefab(
@@ -196,6 +226,10 @@ namespace Farion.Editor.Validation
                 prefab,
                 LoadingPrefabPath,
                 report);
+            ValidateRequiredComponentInChildren<UiSafeAreaFitter>(
+                prefab,
+                LoadingPrefabPath,
+                report);
 
             FarionPanelFader fader = prefab.GetComponent<FarionPanelFader>();
             if (fader != null && !fader.FadeOnly)
@@ -272,21 +306,11 @@ namespace Farion.Editor.Validation
 
             UiSettingsCategoryView[] categories =
                 prefab.GetComponentsInChildren<UiSettingsCategoryView>(true);
-            if (categories.Length != 2)
-            {
-                report.AddError(
-                    $"{SettingsPrefabPath}: expected exactly 2 settings " +
-                    $"categories, found {categories.Length}.");
-            }
+            ValidateSettingsCategories(categories, report);
 
             UiSettingsOptionView[] options =
                 prefab.GetComponentsInChildren<UiSettingsOptionView>(true);
-            if (options.Length != 5)
-            {
-                report.AddError(
-                    $"{SettingsPrefabPath}: expected exactly 5 authored settings " +
-                    $"options, found {options.Length}.");
-            }
+            ValidateSettingsOptions(options, report);
 
             ValidateRequiredComponentInChildren<UiSettingsActionView>(
                 prefab,
@@ -358,6 +382,260 @@ namespace Farion.Editor.Validation
                 UiScreenLayer.Screen,
                 requiresInitialSelection: true,
                 report);
+        }
+
+        static void ValidateSettingsCategories(
+            UiSettingsCategoryView[] categories,
+            FarionValidationReport report)
+        {
+            HashSet<UiSettingsCategory> authored = new();
+            for (int i = 0; i < categories.Length; i++)
+            {
+                UiSettingsCategory category = categories[i].Category;
+                if (!Enum.IsDefined(typeof(UiSettingsCategory), category))
+                {
+                    report.AddError(
+                        $"{SettingsPrefabPath}: category at index {i} has " +
+                        $"unknown identity '{(int)category}'.");
+                    continue;
+                }
+
+                if (!authored.Add(category))
+                {
+                    report.AddError(
+                        $"{SettingsPrefabPath}: duplicate settings category " +
+                        $"'{category}'.");
+                }
+            }
+
+            foreach (UiSettingsCategory required in
+                     Enum.GetValues(typeof(UiSettingsCategory)))
+            {
+                if (!authored.Contains(required))
+                {
+                    report.AddError(
+                        $"{SettingsPrefabPath}: missing settings category " +
+                        $"'{required}'.");
+                }
+            }
+        }
+
+        static void ValidateSettingsOptions(
+            UiSettingsOptionView[] options,
+            FarionValidationReport report)
+        {
+            HashSet<UiSettingId> authored = new();
+            for (int i = 0; i < options.Length; i++)
+            {
+                UiSettingId setting = options[i].SettingId;
+                if (!Enum.IsDefined(typeof(UiSettingId), setting))
+                {
+                    report.AddError(
+                        $"{SettingsPrefabPath}: option at index {i} has " +
+                        $"unknown identity '{(int)setting}'.");
+                    continue;
+                }
+
+                if (!authored.Add(setting))
+                {
+                    report.AddError(
+                        $"{SettingsPrefabPath}: duplicate settings option " +
+                        $"'{setting}'.");
+                }
+            }
+
+            foreach (UiSettingId required in Enum.GetValues(typeof(UiSettingId)))
+            {
+                if (!authored.Contains(required))
+                {
+                    report.AddError(
+                        $"{SettingsPrefabPath}: missing settings option " +
+                        $"'{required}'.");
+                }
+            }
+        }
+
+        static void ValidateFixedScreenBounds(
+            GameObject prefab,
+            string path,
+            FarionValidationReport report)
+        {
+            if (prefab == null)
+            {
+                return;
+            }
+
+            RectTransform rect = prefab.GetComponent<RectTransform>();
+            if (rect == null || rect.anchorMin != rect.anchorMax)
+            {
+                report.AddError($"{path}: fixed screen root requires fixed anchors.");
+                return;
+            }
+
+            const float padding = 32f;
+            Vector2 size = rect.rect.size;
+            Vector2 pivotPosition = Vector2.Scale(
+                RequiredReferenceResolution,
+                rect.anchorMin) + rect.anchoredPosition;
+            Vector2 min = pivotPosition - Vector2.Scale(size, rect.pivot);
+            Vector2 max = min + size;
+            if (min.x < padding || min.y < padding ||
+                max.x > RequiredReferenceResolution.x - padding ||
+                max.y > RequiredReferenceResolution.y - padding)
+            {
+                report.AddError(
+                    $"{path}: authored root must remain inside the 32 px " +
+                    "reference safe margin.");
+            }
+        }
+
+        static void ValidateVisualContracts(
+            GameObject systemRootPrefab,
+            FarionValidationReport report)
+        {
+            Sprite expectedFrame = AssetDatabase.LoadAssetAtPath<Sprite>(
+                MenuButtonFramePath);
+            string[] prefabGuids = AssetDatabase.FindAssets(
+                "t:Prefab",
+                new[] { UiPrefabFolder });
+            for (int i = 0; i < prefabGuids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(prefabGuids[i]);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null)
+                {
+                    continue;
+                }
+
+                ValidateMissingScripts(prefab, path, report);
+                Transform[] hierarchy =
+                    prefab.GetComponentsInChildren<Transform>(true);
+                for (int j = 0; j < hierarchy.Length; j++)
+                {
+                    if (!string.Equals(
+                            hierarchy[j].name,
+                            "SelectionFrame",
+                            StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    Image image = hierarchy[j].GetComponent<Image>();
+                    if (image == null || image.sprite != expectedFrame)
+                    {
+                        report.AddError(
+                            $"{path}: {GetHierarchyPath(hierarchy[j])} must use " +
+                            $"{MenuButtonFramePath}.");
+                    }
+                }
+
+                ValidateLegacyFonts(
+                    prefab.GetComponentsInChildren<TMP_Text>(true),
+                    path,
+                    report);
+            }
+
+            UiTheme theme = systemRootPrefab != null
+                ? systemRootPrefab.GetComponent<UiSystemRoot>()?.Theme
+                : null;
+            if (theme == null)
+            {
+                return;
+            }
+
+            Color panel = Composite(theme.PanelSurface, theme.VoidSurface);
+            Color button = Composite(theme.ButtonSurface, panel);
+            Color highlighted = Composite(theme.ButtonSurfaceHighlighted, panel);
+            ValidateContrast(theme.PrimaryText, button, "PrimaryText/ButtonSurface", report);
+            ValidateContrast(theme.SecondaryText, button, "SecondaryText/ButtonSurface", report);
+            ValidateContrast(
+                theme.PrimaryText,
+                highlighted,
+                "PrimaryText/ButtonSurfaceHighlighted",
+                report);
+            ValidateContrast(
+                theme.SupportingText,
+                highlighted,
+                "SupportingText/ButtonSurfaceHighlighted",
+                report);
+        }
+
+        static void ValidateContrast(
+            Color foreground,
+            Color background,
+            string role,
+            FarionValidationReport report)
+        {
+            Color composed = Composite(foreground, background);
+            float ratio = ContrastRatio(composed, background);
+            if (ratio < MinimumTextContrast)
+            {
+                report.AddError(
+                    $"UI theme contrast {role} is {ratio:0.00}:1; " +
+                    $"minimum is {MinimumTextContrast:0.0}:1.");
+            }
+        }
+
+        static void ValidateLegacyFonts(
+            TMP_Text[] textComponents,
+            string scope,
+            FarionValidationReport report)
+        {
+            for (int i = 0; i < textComponents.Length; i++)
+            {
+                TMP_Text text = textComponents[i];
+                if (text.font != null &&
+                    string.Equals(
+                        AssetDatabase.GetAssetPath(text.font),
+                        LegacyFontPath,
+                        StringComparison.Ordinal))
+                {
+                    report.AddError(
+                        $"{scope}: {GetHierarchyPath(text.transform)} still uses " +
+                        "the legacy Liberation Sans font.");
+                }
+            }
+        }
+
+        static Color Composite(Color foreground, Color background)
+        {
+            float alpha = foreground.a + background.a * (1f - foreground.a);
+            if (alpha <= 0f)
+            {
+                return Color.clear;
+            }
+
+            return new Color(
+                (foreground.r * foreground.a +
+                 background.r * background.a * (1f - foreground.a)) / alpha,
+                (foreground.g * foreground.a +
+                 background.g * background.a * (1f - foreground.a)) / alpha,
+                (foreground.b * foreground.a +
+                 background.b * background.a * (1f - foreground.a)) / alpha,
+                alpha);
+        }
+
+        static float ContrastRatio(Color first, Color second)
+        {
+            float firstLuminance = RelativeLuminance(first);
+            float secondLuminance = RelativeLuminance(second);
+            float lighter = Mathf.Max(firstLuminance, secondLuminance);
+            float darker = Mathf.Min(firstLuminance, secondLuminance);
+            return (lighter + 0.05f) / (darker + 0.05f);
+        }
+
+        static float RelativeLuminance(Color color)
+        {
+            return 0.2126f * ToLinear(color.r) +
+                   0.7152f * ToLinear(color.g) +
+                   0.0722f * ToLinear(color.b);
+        }
+
+        static float ToLinear(float channel)
+        {
+            return channel <= 0.04045f
+                ? channel / 12.92f
+                : Mathf.Pow((channel + 0.055f) / 1.055f, 2.4f);
         }
 
         static void ValidateScreenPrefab(
@@ -448,6 +726,11 @@ namespace Farion.Editor.Validation
                 {
                     return;
                 }
+
+                ValidateLegacyFonts(
+                    GetSceneComponents<TMP_Text>(scene),
+                    path,
+                    report);
 
                 if (systemRoots.Length == 0)
                 {

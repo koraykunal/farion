@@ -1,4 +1,5 @@
 using System;
+using Farion.UI.Common;
 using Farion.UI.Foundation;
 using Farion.UI.Styling;
 using TMPro;
@@ -27,8 +28,7 @@ namespace Farion.UI.Settings
         [SerializeField] Image selectionFrame;
 
         bool current;
-        bool pointerInside;
-        bool selected;
+        UiPointerFocusState focusState;
 
         public event Action<UiSettingsCategoryView> Chosen;
 
@@ -57,8 +57,7 @@ namespace Farion.UI.Settings
 
         protected override void OnDisable()
         {
-            pointerInside = false;
-            selected = false;
+            focusState.Reset();
             base.OnDisable();
         }
 
@@ -100,6 +99,7 @@ namespace Farion.UI.Settings
                 return;
             }
 
+            focusState.PointerClick();
             Select();
             Choose();
         }
@@ -107,28 +107,28 @@ namespace Farion.UI.Settings
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
-            pointerInside = true;
+            focusState.PointerEnter();
             RefreshVisual();
         }
 
         public override void OnPointerExit(PointerEventData eventData)
         {
             base.OnPointerExit(eventData);
-            pointerInside = false;
+            focusState.PointerExit();
             RefreshVisual();
         }
 
         public override void OnSelect(BaseEventData eventData)
         {
             base.OnSelect(eventData);
-            selected = true;
+            focusState.Select();
             RefreshVisual();
         }
 
         public override void OnDeselect(BaseEventData eventData)
         {
             base.OnDeselect(eventData);
-            selected = false;
+            focusState.Deselect();
             RefreshVisual();
         }
 
@@ -150,12 +150,18 @@ namespace Farion.UI.Settings
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 theme = root != null ? root.Theme : null;
             }
+
+            if (labelText != null && theme != null && theme.InterfaceMediumFont != null)
+            {
+                labelText.font = theme.InterfaceMediumFont;
+                labelText.fontWeight = FontWeight.Medium;
+            }
         }
 
         void RefreshVisual()
         {
             bool available = IsInteractable();
-            bool focused = available && (selected || pointerInside);
+            bool focused = available && focusState.IsFocused;
 
             Color normalSurface = theme != null
                 ? theme.ButtonSurface

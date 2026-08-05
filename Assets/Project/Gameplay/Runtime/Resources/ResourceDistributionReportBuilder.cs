@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
 using UnityEngine;
 

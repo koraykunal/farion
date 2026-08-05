@@ -1,5 +1,6 @@
 using System;
 using Farion.App.Flow;
+using Farion.Gameplay.Commands;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Inventory;
@@ -42,6 +43,7 @@ namespace Farion.UI.Gameplay
         [SerializeField] bool lockCursorDuringGameplay = true;
 
         InventoryContainerComponent playerInventory;
+        IGameplayCommandEvents observedCommandEvents;
 
         public event Action<UiScreenId> ScreenChanged;
         public UiScreenId CurrentScreen => currentScreen;
@@ -58,6 +60,7 @@ namespace Farion.UI.Gameplay
         {
             FarionInputActions.Enable();
             ResolveReferences();
+            BindItemAcquisitionFeedback();
             if (screenRouter != null)
             {
                 screenRouter.TopScreenChanged -= HandleTopScreenChanged;
@@ -69,6 +72,7 @@ namespace Farion.UI.Gameplay
 
         void OnDisable()
         {
+            UnbindItemAcquisitionFeedback();
             if (screenRouter != null)
             {
                 screenRouter.TopScreenChanged -= HandleTopScreenChanged;
@@ -248,6 +252,39 @@ namespace Farion.UI.Gameplay
         void HandleTopScreenChanged(UiScreenId _)
         {
             SynchronizeScreenStateFromRouter(notify: true);
+        }
+
+        void BindItemAcquisitionFeedback()
+        {
+            IGameplayCommandEvents commandEvents = sessionController?.CommandEvents;
+            if (ReferenceEquals(observedCommandEvents, commandEvents))
+            {
+                return;
+            }
+
+            UnbindItemAcquisitionFeedback();
+            observedCommandEvents = commandEvents;
+            if (observedCommandEvents != null)
+            {
+                observedCommandEvents.ItemAcquired += HandleItemAcquired;
+            }
+        }
+
+        void UnbindItemAcquisitionFeedback()
+        {
+            if (observedCommandEvents != null)
+            {
+                observedCommandEvents.ItemAcquired -= HandleItemAcquired;
+                observedCommandEvents = null;
+            }
+        }
+
+        void HandleItemAcquired(InventoryItemDefinition item, int amount)
+        {
+            if (item != null && amount > 0)
+            {
+                feedbackService?.ShowItem(item.DisplayName, amount, item.Icon);
+            }
         }
 
         void SetCurrentScreen(UiScreenId screenId, bool notify)

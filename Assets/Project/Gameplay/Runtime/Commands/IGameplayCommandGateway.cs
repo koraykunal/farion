@@ -1,3 +1,4 @@
+using System;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Processing;
@@ -5,6 +6,11 @@ using Farion.Gameplay.Ships;
 
 namespace Farion.Gameplay.Commands
 {
+    public interface IGameplayCommandEvents
+    {
+        event Action<InventoryItemDefinition, int> ItemAcquired;
+    }
+
     public interface IGameplayCommandGateway
     {
         ResourceHarvestResult CanHarvest(

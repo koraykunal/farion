@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Farion.Core.Persistence;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
@@ -239,6 +239,7 @@ namespace Farion.Gameplay.Interaction
         void Awake()
         {
             ResolveReferences();
+            BindControlLock();
             BindPossessionInteractables();
             BindPossessionContextReceivers();
             ResolveInputSource();
@@ -394,6 +395,7 @@ namespace Farion.Gameplay.Interaction
         void ApplyMode(PlayerPossessionMode nextMode, PlayerPossessionTransitionRequest request)
         {
             ResolveReferences();
+            BindControlLock();
             if (!PlayerPossessionTransitionPolicy.CanTransition(currentMode, nextMode, request))
             {
                 return;
@@ -427,9 +429,6 @@ namespace Farion.Gameplay.Interaction
 
             SetBehaviourEnabled(explorerMotor, firstPerson);
             SetBehaviourEnabled(explorerInput, firstPerson);
-            explorerInput?.SetControlLock(controlLock);
-            spacecraftInput?.SetControlLock(controlLock);
-            explorerInteractionRaycaster?.SetControlLock(controlLock);
 
             if (firstPersonCameraRig != null && explorerMotor != null)
             {
@@ -465,11 +464,6 @@ namespace Farion.Gameplay.Interaction
 
         void ResolveReferences()
         {
-            if (controlLock == null)
-            {
-                controlLock = PlayerControlLock.Active;
-            }
-
             if (spacecraftRoot != null)
             {
                 spacecraftRigidbody ??= spacecraftRoot.GetComponent<Rigidbody>();
@@ -489,6 +483,13 @@ namespace Farion.Gameplay.Interaction
                 explorerInteractionRaycaster ??= explorerRoot.GetComponent<PlayerInteractionRaycaster>();
                 explorerCelestialProbe ??= explorerRoot.GetComponent<CelestialActorProbe>();
             }
+        }
+
+        void BindControlLock()
+        {
+            explorerInput?.SetControlLock(controlLock);
+            spacecraftInput?.SetControlLock(controlLock);
+            explorerInteractionRaycaster?.SetControlLock(controlLock);
         }
 
         void BindPossessionInteractables()

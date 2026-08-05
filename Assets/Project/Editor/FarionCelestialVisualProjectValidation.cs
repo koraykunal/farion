@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Rendering.Celestial;
 using Farion.Rendering.PostProcessing;
 using Farion.Simulation.Planetary;

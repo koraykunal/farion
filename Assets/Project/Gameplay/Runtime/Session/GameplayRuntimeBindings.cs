@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Ships;
+using Farion.Simulation.Celestial;
 using Farion.Simulation.World;
 
 namespace Farion.Gameplay.Session
@@ -18,6 +19,7 @@ namespace Farion.Gameplay.Session
         public GameplayRuntimeBindings(
             GameplayDefinitionRegistry definitions,
             GravitySimulation gravitySimulation,
+            CelestialFrameProvider celestialFrameProvider,
             WorldOriginRebaser originRebaser,
             PlayerInventory localPlayerInventory,
             PlayerPossessionController possession,
@@ -27,6 +29,7 @@ namespace Farion.Gameplay.Session
         {
             Definitions = definitions;
             GravitySimulation = gravitySimulation;
+            CelestialFrameProvider = celestialFrameProvider;
             OriginRebaser = originRebaser;
             LocalPlayerInventory = localPlayerInventory;
             Possession = possession;
@@ -39,6 +42,7 @@ namespace Farion.Gameplay.Session
 
         public GameplayDefinitionRegistry Definitions { get; }
         public GravitySimulation GravitySimulation { get; }
+        public CelestialFrameProvider CelestialFrameProvider { get; }
         public WorldOriginRebaser OriginRebaser { get; }
         public PlayerInventory LocalPlayerInventory { get; }
         public PlayerPossessionController Possession { get; }
@@ -51,6 +55,8 @@ namespace Farion.Gameplay.Session
         public bool IsValid =>
             Definitions != null &&
             GravitySimulation != null &&
+            CelestialFrameProvider != null &&
+            CelestialFrameProvider.UsesSimulation(GravitySimulation) &&
             OriginRebaser != null &&
             LocalPlayerInventory != null &&
             Possession != null &&
@@ -65,6 +71,7 @@ namespace Farion.Gameplay.Session
             if (other == null ||
                 !ReferenceEquals(Definitions, other.Definitions) ||
                 !ReferenceEquals(GravitySimulation, other.GravitySimulation) ||
+                !ReferenceEquals(CelestialFrameProvider, other.CelestialFrameProvider) ||
                 !ReferenceEquals(OriginRebaser, other.OriginRebaser) ||
                 !ReferenceEquals(LocalPlayerInventory, other.LocalPlayerInventory) ||
                 !ReferenceEquals(Possession, other.Possession) ||

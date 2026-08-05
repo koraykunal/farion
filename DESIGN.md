@@ -143,8 +143,8 @@ icon, shape, sound, or motion. Color alone is forbidden.
 
 **Interface Font:** IBM Plex Sans Regular and Medium
 **Instrument Font:** IBM Plex Mono Medium
-**Migration Fallback:** Existing prefabs remain on Liberation Sans until their
-authored composition is deliberately migrated
+**Migration Status:** The authored UI migration is complete. Liberation Sans is
+not an allowed fallback in project UI prefabs or build-scene compositions.
 
 **Character:** Plex Sans keeps navigation and prose quiet and readable. Plex
 Mono is reserved for changing values, measurements, target markers, and console
@@ -189,6 +189,8 @@ shadow, their hierarchy or spacing is wrong.
   frame, 56px standard height.
 - **Hover / Focus:** Transition between 140ms and 200ms with ease-out movement
   and color response. Focus remains visible without pointer hover.
+- **Destructive:** Keep the label in readable Cabin Ivory; use Critical Red on
+  the focus frame or semantic signal, never as low-contrast red-on-red text.
 - **Disabled:** Lower neutral contrast with no accent frame. Disabled controls
   remain readable and never masquerade as available actions.
 
@@ -214,7 +216,8 @@ shadow, their hierarchy or spacing is wrong.
 Navigation uses one selected-state vocabulary across menus and gameplay screens.
 Every opened screen defines a first selectable control. Cancel closes the top
 layer, and closing restores the previously selected control. Pointer activity
-must never permanently erase gamepad focus.
+must never permanently erase gamepad focus. A selection created by a pointer
+returns to its persistent current state when the pointer leaves.
 
 ### Operational HUD
 

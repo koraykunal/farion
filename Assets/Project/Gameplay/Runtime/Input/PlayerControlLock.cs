@@ -8,26 +8,9 @@ namespace Farion.Gameplay.Input
     {
         [SerializeField] PlayerControlLockReason activeReasons;
 
-        public static PlayerControlLock Active { get; private set; }
         public event Action<PlayerControlLockReason> Changed;
         public PlayerControlLockReason ActiveReasons => activeReasons;
         public bool IsGameplayInputLocked => activeReasons != PlayerControlLockReason.None;
-
-        void OnEnable()
-        {
-            if (Active == null || Active == this)
-            {
-                Active = this;
-            }
-        }
-
-        void OnDisable()
-        {
-            if (Active == this)
-            {
-                Active = null;
-            }
-        }
 
         public bool HasLock(PlayerControlLockReason reason)
         {

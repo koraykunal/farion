@@ -66,7 +66,6 @@ namespace Farion.Gameplay.Interaction
         void Update()
         {
             ResolveInputSource();
-            ResolveControlLock();
             if (IsGameplayInputLocked())
             {
                 ClearTarget();
@@ -172,14 +171,6 @@ namespace Farion.Gameplay.Interaction
             }
 
             resolvedInput ??= GetComponent<IFirstPersonInputSource>();
-        }
-
-        void ResolveControlLock()
-        {
-            if (controlLock == null)
-            {
-                controlLock = PlayerControlLock.Active;
-            }
         }
 
         bool IsGameplayInputLocked()

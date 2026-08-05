@@ -11,10 +11,10 @@ namespace Farion.Tests.PlayMode
     public sealed class PossessionLoopSmokeTests
     {
         [UnityTest]
-        public IEnumerator PhysicsSandboxSupportsExitAndReenterPilotLoop()
+        public IEnumerator ExpeditionSupportsExitAndReenterPilotLoop()
         {
             AsyncOperation load = SceneManager.LoadSceneAsync(
-                "SC_PhysicsSandbox",
+                "SC_Expedition",
                 LoadSceneMode.Single);
             Assert.That(load, Is.Not.Null);
             while (!load.isDone)

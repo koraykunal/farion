@@ -1,4 +1,4 @@
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Rendering.PostProcessing;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Planetary;

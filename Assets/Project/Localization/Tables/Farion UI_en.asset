@@ -634,6 +634,18 @@ MonoBehaviour:
     m_Localized: Control interface navigation and feedback sounds.
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058522
+    m_Localized: VELOCITY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058523
+    m_Localized: LANDING VECTOR
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058524
+    m_Localized: BOOST
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

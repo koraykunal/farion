@@ -37,6 +37,7 @@ belong to one ship.
 - Materials: `MAT_<Domain>_<Purpose>`
 - Static meshes: `SM_<Domain>_<Purpose>_<Variant>`
 - Textures: `TX_<Domain>_<Surface>_<Map>`
+- Volume textures: `TX3D_<Domain>_<Purpose>`
 - Icons: `IC_<Purpose>`
 - Prefabs: `PF_<Domain>_<Purpose>`
 

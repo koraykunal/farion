@@ -631,6 +631,18 @@ MonoBehaviour:
     m_Key: settings.audio.ui.description
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058522
+    m_Key: hud.velocity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058523
+    m_Key: hud.landing_vector
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058524
+    m_Key: hud.boost
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

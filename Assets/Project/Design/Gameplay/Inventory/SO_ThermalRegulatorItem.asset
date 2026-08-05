@@ -20,3 +20,6 @@ MonoBehaviour:
   primaryTechDomain: 1
   requiresIdentification: 0
   unidentifiedDisplayName: Unknown Device
+  icon: {fileID: 21300000, guid: fdb0fb73097b41f681853d626b4fd0bc, type: 3}
+  worldPrefab: {fileID: 0}
+  accentColor: {r: 1, g: 1, b: 1, a: 1}

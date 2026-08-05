@@ -3,6 +3,7 @@
     "rootNamespace": "Farion.Tests.PlayMode",
     "references": [
         "Farion.Core.Runtime",
+        "Farion.Simulation.Runtime",
         "Farion.Gameplay.Runtime",
         "Farion.Rendering.Runtime",
         "Farion.UI.Runtime",

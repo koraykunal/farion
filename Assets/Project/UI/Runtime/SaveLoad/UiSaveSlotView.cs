@@ -1,5 +1,6 @@
 using System;
 using Farion.Core.Persistence;
+using Farion.UI.Common;
 using Farion.UI.Foundation;
 using Farion.UI.Localization;
 using Farion.UI.Styling;
@@ -12,7 +13,10 @@ namespace Farion.UI.SaveLoad
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Image))]
-    public sealed class UiSaveSlotView : Selectable
+    public sealed class UiSaveSlotView :
+        Selectable,
+        ISubmitHandler,
+        IPointerClickHandler
     {
         [Header("Content")]
         [SerializeField] TMP_Text indexText;
@@ -26,10 +30,11 @@ namespace Farion.UI.SaveLoad
         [SerializeField] Image selectionFrame;
         [SerializeField] Image stateMarker;
 
-        bool pointerInside;
-        bool selected;
+        UiPointerFocusState focusState;
+        bool current;
 
         public event Action<UiSaveSlotView> Focused;
+        public event Action<UiSaveSlotView> Submitted;
         public SaveGameSlotSummary Summary { get; private set; }
         public int DisplayIndex { get; private set; }
 
@@ -56,8 +61,8 @@ namespace Farion.UI.SaveLoad
 
         protected override void OnDisable()
         {
-            pointerInside = false;
-            selected = false;
+            focusState.Reset();
+            current = false;
             base.OnDisable();
         }
 
@@ -78,10 +83,32 @@ namespace Farion.UI.SaveLoad
             RefreshVisual();
         }
 
+        public void SetCurrent(bool value)
+        {
+            current = value;
+            RefreshVisual();
+        }
+
+        public void OnSubmit(BaseEventData eventData)
+        {
+            if (!IsActive() || !IsInteractable())
+            {
+                return;
+            }
+
+            Submitted?.Invoke(this);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            focusState.PointerClick();
+            RefreshVisual();
+        }
+
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
-            pointerInside = true;
+            focusState.PointerEnter();
             RefreshVisual();
             Focused?.Invoke(this);
         }
@@ -89,14 +116,14 @@ namespace Farion.UI.SaveLoad
         public override void OnPointerExit(PointerEventData eventData)
         {
             base.OnPointerExit(eventData);
-            pointerInside = false;
+            focusState.PointerExit();
             RefreshVisual();
         }
 
         public override void OnSelect(BaseEventData eventData)
         {
             base.OnSelect(eventData);
-            selected = true;
+            focusState.Select();
             RefreshVisual();
             Focused?.Invoke(this);
         }
@@ -104,7 +131,7 @@ namespace Farion.UI.SaveLoad
         public override void OnDeselect(BaseEventData eventData)
         {
             base.OnDeselect(eventData);
-            selected = false;
+            focusState.Deselect();
             RefreshVisual();
         }
 
@@ -118,11 +145,22 @@ namespace Farion.UI.SaveLoad
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 theme = root != null ? root.Theme : null;
             }
+
+            if (theme == null)
+            {
+                return;
+            }
+
+            SetFont(indexText, theme.InstrumentFont, FontWeight.Medium);
+            SetFont(titleText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(timestampText, theme.InstrumentFont, FontWeight.Medium);
+            SetFont(stateText, theme.InstrumentFont, FontWeight.Medium);
         }
 
         void RefreshVisual()
         {
-            bool focused = IsInteractable() && (selected || pointerInside);
+            bool focused = IsInteractable() && focusState.IsFocused;
+            bool emphasized = IsInteractable() && (current || focused);
             Color normalSurface = theme != null
                 ? theme.ButtonSurface
                 : new Color(0.024f, 0.037f, 0.052f, 0.82f);
@@ -144,39 +182,39 @@ namespace Farion.UI.SaveLoad
 
             if (background != null)
             {
-                background.color = focused ? focusedSurface : normalSurface;
+                background.color = emphasized ? focusedSurface : normalSurface;
                 background.raycastTarget = true;
             }
 
             if (indexText != null)
             {
-                indexText.color = focused
+                indexText.color = emphasized
                     ? focus
-                    : new Color(secondary.r, secondary.g, secondary.b, 0.52f);
+                    : secondary;
             }
 
             if (titleText != null)
             {
-                titleText.color = focused
+                titleText.color = emphasized
                     ? primary
                     : Summary.HasData
                         ? new Color(primary.r, primary.g, primary.b, 0.82f)
-                        : new Color(secondary.r, secondary.g, secondary.b, 0.72f);
+                        : secondary;
             }
 
             if (timestampText != null)
             {
-                timestampText.color = focused ? supporting : secondary;
+                timestampText.color = emphasized ? supporting : secondary;
             }
 
             if (stateText != null)
             {
-                stateText.color = ResolveStateColor(focused);
+                stateText.color = ResolveStateColor(emphasized);
             }
 
             if (stateMarker != null)
             {
-                Color markerColor = ResolveStateColor(focused);
+                Color markerColor = ResolveStateColor(emphasized);
                 markerColor.a = Summary.HasData ? 0.9f : 0.24f;
                 stateMarker.color = markerColor;
                 stateMarker.raycastTarget = false;
@@ -184,7 +222,13 @@ namespace Farion.UI.SaveLoad
 
             if (selectionFrame != null)
             {
-                focus.a *= focused ? 0.94f : Summary.HasData ? 0.15f : 0.08f;
+                focus.a *= focused
+                    ? 0.94f
+                    : current
+                        ? 0.58f
+                        : Summary.HasData
+                            ? 0.15f
+                            : 0.08f;
                 selectionFrame.color = focus;
                 selectionFrame.raycastTarget = false;
             }
@@ -216,6 +260,15 @@ namespace Farion.UI.SaveLoad
             if (target != null)
             {
                 target.text = value ?? string.Empty;
+            }
+        }
+
+        static void SetFont(TMP_Text target, TMP_FontAsset font, FontWeight weight)
+        {
+            if (target != null && font != null)
+            {
+                target.font = font;
+                target.fontWeight = weight;
             }
         }
     }

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using Farion.App.Flow;
 using Farion.Audio;
 using Farion.Core.Persistence;
-using Farion.Core.Physics;
+using Farion.Simulation.Celestial;
+using Farion.Simulation.Physics;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Fleet;
@@ -186,6 +187,16 @@ namespace Farion.Editor.Validation
                     ValidateGameplaySession(scenePath, sessionController, report);
                 }
 
+                if (gameObject.TryGetComponent(out GravityActor gravityActor))
+                {
+                    ValidateRequiredReference(scenePath, gravityActor, "simulation", report);
+                }
+
+                if (gameObject.TryGetComponent(out CelestialFrameProvider frameProvider))
+                {
+                    ValidateRequiredReference(scenePath, frameProvider, "simulation", report);
+                }
+
                 if (gameObject.TryGetComponent(out GameplaySaveCoordinator saveCoordinator))
                 {
                     ValidateSaveCoordinator(scenePath, saveCoordinator, report);
@@ -210,6 +221,16 @@ namespace Farion.Editor.Validation
             Dictionary<string, PersistentObjectId> ids,
             FarionValidationReport report)
         {
+            if (!PersistentObjectId.IsValid(persistentObjectId.Id))
+            {
+                string reason = string.IsNullOrEmpty(persistentObjectId.Id)
+                    ? "is empty"
+                    : "contains whitespace or control characters";
+                report.AddError(
+                    $"{scenePath}: {GetHierarchyPath(target)} has an invalid persistent id that {reason}.");
+                return;
+            }
+
             if (!PersistentEntityId.TryCreate(
                     persistentObjectId.Id,
                     out PersistentEntityId persistentId))
@@ -272,6 +293,7 @@ namespace Farion.Editor.Validation
             FarionValidationReport report)
         {
             SerializedObject serialized = new(controller);
+            ValidateRequiredReference(scenePath, controller, "controlLock", report);
             Transform spacecraftRoot =
                 serialized.FindProperty("spacecraftRoot")?.objectReferenceValue as Transform;
             if (spacecraftRoot == null)
@@ -351,6 +373,7 @@ namespace Farion.Editor.Validation
         {
             ValidateRequiredReference(scenePath, runtimeRoot, "definitions", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "gravitySimulation", report);
+            ValidateRequiredReference(scenePath, runtimeRoot, "celestialFrameProvider", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "originRebaser", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "localPlayerInventory", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "possession", report);
@@ -922,6 +945,11 @@ namespace Farion.Editor.Validation
                 else if (!ids.Add(id))
                 {
                     report.AddError($"{registryPath}: duplicate {typeof(T).Name} id '{id}'.");
+                }
+
+                if (definition is InventoryItemDefinition inventoryItem && !inventoryItem.HasIcon)
+                {
+                    report.AddError($"{registryPath}: inventory item '{inventoryItem.ItemId}' has no icon.");
                 }
             }
         }

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using UnityEngine;
 
 namespace Farion.Simulation.Celestial
@@ -16,59 +16,11 @@ namespace Farion.Simulation.Celestial
         [Header("Surface Sources")]
         [SerializeField] List<MonoBehaviour> surfaceSources = new();
 
-        static readonly List<CelestialFrameProvider> EnabledProviders = new();
-        static CelestialFrameProvider active;
+        public GravitySimulation Simulation => simulation;
 
-        public static CelestialFrameProvider Active
+        public bool UsesSimulation(GravitySimulation candidate)
         {
-            get
-            {
-                if (active != null)
-                {
-                    return active;
-                }
-
-                EnabledProviders.RemoveAll(provider => provider == null);
-                if (EnabledProviders.Count > 0)
-                {
-                    active = EnabledProviders[^1];
-                    return active;
-                }
-
-                active = FindAnyObjectByType<CelestialFrameProvider>(
-                    FindObjectsInactive.Exclude);
-                return active;
-            }
-        }
-        public GravitySimulation Simulation => simulation != null ? simulation : GravitySimulation.Active;
-
-        void OnEnable()
-        {
-            EnabledProviders.Remove(this);
-            if (EnabledProviders.Count > 0)
-            {
-#if UNITY_EDITOR
-                Debug.LogWarning(
-                    $"Multiple {nameof(CelestialFrameProvider)} instances detected. Using {name} as active.",
-                    this);
-#endif
-            }
-
-            EnabledProviders.Add(this);
-            active = this;
-        }
-
-        void OnDisable()
-        {
-            EnabledProviders.Remove(this);
-            active = EnabledProviders.Count > 0 ? EnabledProviders[^1] : null;
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStaticState()
-        {
-            EnabledProviders.Clear();
-            active = null;
+            return candidate != null && ReferenceEquals(simulation, candidate);
         }
 
         void OnValidate()

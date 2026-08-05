@@ -1,4 +1,4 @@
-﻿using Farion.Core.Physics;
+﻿using Farion.Simulation.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Simulation.Celestial;
 using UnityEngine;
@@ -41,7 +41,7 @@ namespace Farion.Gameplay.Flight
         public SpacecraftOrbitRegime Regime => regime;
         public bool HasOrbit => currentOrbit.HasFrame;
 
-        GravitySimulation Simulation => simulation != null ? simulation : GravitySimulation.Active;
+        GravitySimulation Simulation => simulation;
 
         void Awake()
         {
@@ -56,6 +56,11 @@ namespace Farion.Gameplay.Flight
         void FixedUpdate()
         {
             RefreshOrbit();
+        }
+
+        public void SetSimulation(GravitySimulation source)
+        {
+            simulation = source;
         }
 
         [ContextMenu("Refresh Orbit")]

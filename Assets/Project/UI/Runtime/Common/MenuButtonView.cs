@@ -11,11 +11,18 @@ namespace Farion.UI.Common
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Button))]
-    public sealed class MenuButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
+    public sealed class MenuButtonView :
+        MonoBehaviour,
+        IPointerEnterHandler,
+        IPointerExitHandler,
+        IPointerClickHandler,
+        ISelectHandler,
+        IDeselectHandler
     {
         [Header("Interaction")]
         [SerializeField] Button button;
         [SerializeField] bool available = true;
+        [SerializeField] bool destructive;
 
         [Header("Content")]
         [SerializeField] TMP_Text titleText;
@@ -54,8 +61,7 @@ namespace Farion.UI.Common
         [SerializeField] Vector3 normalIconScale = Vector3.one;
         [SerializeField] Vector3 highlightedIconScale = Vector3.one;
 
-        bool pointerInside;
-        bool selected;
+        UiPointerFocusState focusState;
         bool capturedContentRootPosition;
         Vector2 contentRootBasePosition;
         float visualAmount;
@@ -114,6 +120,7 @@ namespace Farion.UI.Common
 
             visualTween?.Kill();
             visualTween = null;
+            focusState.Reset();
         }
 
         public void SetAvailable(bool isAvailable)
@@ -145,25 +152,31 @@ namespace Farion.UI.Common
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            pointerInside = true;
+            focusState.PointerEnter();
             RefreshVisualState(immediate: false);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            pointerInside = false;
+            focusState.PointerExit();
+            RefreshVisualState(immediate: false);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            focusState.PointerClick();
             RefreshVisualState(immediate: false);
         }
 
         public void OnSelect(BaseEventData eventData)
         {
-            selected = true;
+            focusState.Select();
             RefreshVisualState(immediate: false);
         }
 
         public void OnDeselect(BaseEventData eventData)
         {
-            selected = false;
+            focusState.Deselect();
             RefreshVisualState(immediate: false);
         }
 
@@ -204,9 +217,21 @@ namespace Farion.UI.Common
             highlightedTitle = theme.PrimaryText;
             normalSubtitle = theme.SecondaryText;
             highlightedSubtitle = theme.SupportingText;
-            accentColor = theme.Focus;
+            accentColor = destructive ? theme.Critical : theme.Focus;
             hoverInDuration = theme.StateEnterDuration;
             hoverOutDuration = theme.StateExitDuration;
+
+            if (titleText != null && theme.InterfaceMediumFont != null)
+            {
+                titleText.font = theme.InterfaceMediumFont;
+                titleText.fontWeight = FontWeight.Medium;
+            }
+
+            if (subtitleText != null && theme.InterfaceFont != null)
+            {
+                subtitleText.font = theme.InterfaceFont;
+                subtitleText.fontWeight = FontWeight.Regular;
+            }
         }
 
         void ApplyAvailability()
@@ -233,7 +258,7 @@ namespace Farion.UI.Common
             immediate |= IsReducedMotionEnabled();
 
             bool isInteractable = available && button != null && button.interactable;
-            bool highlighted = isInteractable && (pointerInside || selected);
+            bool highlighted = isInteractable && focusState.IsFocused;
             float targetHighlight = highlighted ? 1f : 0f;
 
             if (immediate || !Application.isPlaying || !visualStateInitialized)

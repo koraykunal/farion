@@ -1,4 +1,4 @@
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 
 namespace Farion.Simulation.Celestial
 {

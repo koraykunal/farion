@@ -55,7 +55,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.56, g: 0.68, b: 0.76, a: 0.42}
@@ -85,6 +85,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1038668910325224647}
   - component: {fileID: 4696739717027959432}
+  - component: {fileID: 9200000000000000001}
   m_Layer: 5
   m_Name: UI_SpacecraftFlightHud
   m_TagString: Untagged
@@ -114,6 +115,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &9200000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 240308224641177112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5ea4a93b49b60f4ea9446682abff29a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Settings.UiSafeAreaFitter
+  target: {fileID: 1038668910325224647}
+  minimumPadding: {x: 32, y: 32}
 --- !u!114 &4696739717027959432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -124,7 +139,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d6f583d467b54e60b67bb5399a099de1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.SpacecraftFlightHudPresenter
   theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   possessionController: {fileID: 0}
@@ -235,7 +250,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.68, g: 0.76, b: 0.81, a: 0.48}
@@ -1006,6 +1021,7 @@ GameObject:
   - component: {fileID: 5191124090723286309}
   - component: {fileID: 8958387325787580602}
   - component: {fileID: 3848029112838258699}
+  - component: {fileID: 9100000000000000001}
   m_Layer: 5
   m_Name: VelocityLabel
   m_TagString: Untagged
@@ -1087,8 +1103,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 10
-  m_fontSizeBase: 10
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 500
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1443,6 +1459,7 @@ GameObject:
   - component: {fileID: 7690436979698989840}
   - component: {fileID: 3045857867245214607}
   - component: {fileID: 1169733157747615728}
+  - component: {fileID: 9100000000000000002}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -1524,8 +1541,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 10
-  m_fontSizeBase: 10
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4331,8 +4348,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 11
-  m_fontSizeBase: 11
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 500
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4387,6 +4404,7 @@ GameObject:
   - component: {fileID: 7682894794358945558}
   - component: {fileID: 1153524332191309219}
   - component: {fileID: 3423885797456153055}
+  - component: {fileID: 9100000000000000003}
   m_Layer: 5
   m_Name: BoostLabel
   m_TagString: Untagged
@@ -4468,8 +4486,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 11
-  m_fontSizeBase: 11
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 500
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4513,6 +4531,51 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &9100000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1492812073648028580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496a4f992d9d19d4f9e3830fb5f109fe, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Localization.UiLocalizedText
+  target: {fileID: 3848029112838258699}
+  entryKey: hud.velocity
+  fallback: VELOCITY
+--- !u!114 &9100000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2728960679245343153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496a4f992d9d19d4f9e3830fb5f109fe, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Localization.UiLocalizedText
+  target: {fileID: 1169733157747615728}
+  entryKey: hud.landing_vector
+  fallback: LANDING VECTOR
+--- !u!114 &9100000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8439653827322252602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 496a4f992d9d19d4f9e3830fb5f109fe, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Localization.UiLocalizedText
+  target: {fileID: 3423885797456153055}
+  entryKey: hud.boost
+  fallback: BOOST
 --- !u!1 &8557179148158792659
 GameObject:
   m_ObjectHideFlags: 0

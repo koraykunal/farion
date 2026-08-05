@@ -19,18 +19,18 @@ MonoBehaviour:
   layerTop: 0.5
   shapeScale: 1.15
   detailScale: 7.5
-  shapeWeights: {x: 1, y: 0.35, z: 0.12, w: 0.03}
+  shapeWeights: {x: 1, y: 0.43, z: 0.12, w: 0.03}
   detailWeights: {x: 1, y: 0.35, z: 0.15}
-  coverage: 0.36
-  densityMultiplier: 1.25
+  coverage: 0.573
+  densityMultiplier: 5
   detailErosion: 0.22
   lightAbsorptionThroughCloud: 0.9
   lightAbsorptionTowardStar: 1.05
-  darknessThreshold: 0.2
-  forwardScattering: 0.7
-  backScattering: 0.2
-  baseBrightness: 0.8
-  phaseStrength: 0.5
+  darknessThreshold: 0.045
+  forwardScattering: 0.441
+  backScattering: 0.357
+  baseBrightness: 0.72
+  phaseStrength: 1.24
   localWindAxis: {x: 0.25, y: 1, z: 0.1}
   baseAngularSpeed: 0.25
   detailAngularSpeed: 0.7

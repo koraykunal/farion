@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FMOD.Studio;
 using FMODUnity;
 using UnityEngine;
@@ -70,6 +71,10 @@ namespace Farion.Audio
             "event:/UI/Success",
             "event:/UI/Error"
         };
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        static readonly HashSet<string> MissingEventWarnings = new();
+#endif
 
         [Header("Environment Response")]
         [Min(0f)] [SerializeField] float atmosphereAttackSeconds = 0.8f;
@@ -184,7 +189,7 @@ namespace Farion.Audio
             }
             catch (EventNotFoundException)
             {
-                // Missing authored content is reported by FMOD once banks refresh.
+                WarnMissingEventOnce(UiEventPaths[ToUiCueIndex(cue)]);
             }
         }
 
@@ -272,7 +277,18 @@ namespace Farion.Audio
             catch (EventNotFoundException)
             {
                 instance = default;
+                WarnMissingEventOnce(path);
             }
+        }
+
+        static void WarnMissingEventOnce(string path)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (MissingEventWarnings.Add(path))
+            {
+                Debug.LogWarning($"FMOD event was not found: {path}. Refresh or rebuild the FMOD banks.");
+            }
+#endif
         }
 
         static void StopAndRelease(ref EventInstance instance, bool immediate)

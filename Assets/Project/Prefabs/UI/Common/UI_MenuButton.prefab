@@ -254,8 +254,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: INVENTORY
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0d701c7838e153f4989055cfcfdfa859, type: 2}
+  m_sharedMaterial: {fileID: -4805686286678672165, guid: 0d701c7838e153f4989055cfcfdfa859, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -281,7 +281,7 @@ MonoBehaviour:
     rgba: 4294967295
   m_fontSize: 19
   m_fontSizeBase: 19
-  m_fontWeight: 400
+  m_fontWeight: 500
   m_enableAutoSizing: 1
   m_fontSizeMin: 15
   m_fontSizeMax: 19
@@ -466,8 +466,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0079e26c8ba29bb4083d076034bc0743, type: 2}
+  m_sharedMaterial: {fileID: -7927227509661586937, guid: 0079e26c8ba29bb4083d076034bc0743, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -697,6 +697,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Common.MenuButtonView
   button: {fileID: 8863559326310386402}
   available: 1
+  destructive: 0
   titleText: {fileID: 2411182823004995970}
   subtitleText: {fileID: 6273784691779864178}
   iconImage: {fileID: 7757196561709597353}

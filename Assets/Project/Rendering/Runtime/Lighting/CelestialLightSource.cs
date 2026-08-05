@@ -1,4 +1,4 @@
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Simulation.Celestial;
 using UnityEngine;
 

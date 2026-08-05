@@ -6,7 +6,6 @@ namespace Farion.Gameplay.Input
     public static class FarionInputActions
     {
         const string BindingOverridesKey = "farion.input.binding-overrides";
-        const float ReferenceMouseFrameTime = 1f / 60f;
         const float ReferenceGamepadLookRate = 120f;
 
         static InputActionAsset asset;
@@ -61,22 +60,15 @@ namespace Farion.Gameplay.Input
         {
             Vector2 value = action?.ReadValue<Vector2>() ?? Vector2.zero;
             return action?.activeControl?.device is Mouse
-                ? ScaleMouseLook(value, mouseSensitivity, Time.unscaledDeltaTime)
+                ? ScaleMouseLook(value, mouseSensitivity)
                 : ScaleGamepadLook(value, gamepadDegreesPerSecond);
         }
 
         internal static Vector2 ScaleMouseLook(
             Vector2 value,
-            float mouseSensitivity,
-            float frameDeltaTime)
+            float mouseSensitivity)
         {
-            if (frameDeltaTime <= 0f)
-            {
-                return Vector2.zero;
-            }
-
-            float frameScale = ReferenceMouseFrameTime / Mathf.Max(1f / 240f, frameDeltaTime);
-            return value * Mathf.Max(0f, mouseSensitivity) * frameScale;
+            return value * Mathf.Max(0f, mouseSensitivity);
         }
 
         internal static Vector2 ScaleGamepadLook(Vector2 value, float gamepadDegreesPerSecond)

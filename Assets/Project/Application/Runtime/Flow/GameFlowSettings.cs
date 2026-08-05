@@ -1,11 +1,13 @@
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace Farion.App.Flow
 {
+    [MovedFrom(true, "Farion.App.Flow", "Farion.Application.Runtime")]
     [CreateAssetMenu(menuName = "Farion/Application/Game Flow Settings", fileName = "SO_GameFlowSettings")]
     public sealed class GameFlowSettings : ScriptableObject
     {
-        const string DefaultGameplaySceneName = "SC_PhysicsSandbox";
+        const string DefaultGameplaySceneName = "SC_Expedition";
         const string DefaultMainMenuSceneName = "SC_MainMenu";
 
         [Header("Scenes")]

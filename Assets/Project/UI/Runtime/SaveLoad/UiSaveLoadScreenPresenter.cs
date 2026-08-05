@@ -6,6 +6,7 @@ using Farion.UI.Feedback;
 using Farion.UI.Foundation;
 using Farion.UI.Localization;
 using Farion.UI.Navigation;
+using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Localization;
@@ -71,11 +72,13 @@ namespace Farion.UI.SaveLoad
         void Awake()
         {
             ResolveReferences();
+            ApplyTypography();
         }
 
         void OnEnable()
         {
             ResolveReferences();
+            ApplyTypography();
             if (!Application.isPlaying)
             {
                 return;
@@ -145,6 +148,7 @@ namespace Farion.UI.SaveLoad
                 if (slotViews[i] != null)
                 {
                     slotViews[i].Focused += HandleSlotFocused;
+                    slotViews[i].Submitted += HandleSlotSubmitted;
                 }
             }
 
@@ -167,6 +171,7 @@ namespace Farion.UI.SaveLoad
                 if (slotViews[i] != null)
                 {
                     slotViews[i].Focused -= HandleSlotFocused;
+                    slotViews[i].Submitted -= HandleSlotSubmitted;
                 }
             }
 
@@ -191,8 +196,15 @@ namespace Farion.UI.SaveLoad
             }
 
             selectedIndex = index;
+            RefreshCurrentSlot();
             RefreshDetail();
             ConfigureNavigation();
+        }
+
+        void HandleSlotSubmitted(UiSaveSlotView slotView)
+        {
+            HandleSlotFocused(slotView);
+            RequestPrimaryAction();
         }
 
         void Refresh(string preferredSlotName = null)
@@ -246,6 +258,8 @@ namespace Farion.UI.SaveLoad
                     GetTimestamp(summary),
                     GetStateLabel(summary.State));
             }
+
+            RefreshCurrentSlot();
 
             for (int i = count; i < slotViews.Count; i++)
             {
@@ -476,13 +490,13 @@ namespace Farion.UI.SaveLoad
                 return;
             }
 
-            Selectable firstAction = primaryButton;
-            if (mode == UiSaveLoadMode.Load &&
-                deleteButton != null &&
-                deleteButton.gameObject.activeSelf)
-            {
-                firstAction = deleteButton;
-            }
+            Selectable firstAction = primaryButton != null && primaryButton.IsInteractable()
+                ? primaryButton
+                : deleteButton != null &&
+                  deleteButton.gameObject.activeSelf &&
+                  deleteButton.IsInteractable()
+                    ? deleteButton
+                    : backButton;
 
             for (int i = 0; i < slotViews.Count; i++)
             {
@@ -550,6 +564,14 @@ namespace Farion.UI.SaveLoad
             }
 
             screenView.SetFirstSelection(slotViews[selectedIndex]);
+        }
+
+        void RefreshCurrentSlot()
+        {
+            for (int i = 0; i < slotViews.Count; i++)
+            {
+                slotViews[i]?.SetCurrent(i == selectedIndex);
+            }
         }
 
         string GetSelectedSlotName()
@@ -668,6 +690,38 @@ namespace Farion.UI.SaveLoad
             {
                 slotViews.AddRange(
                     GetComponentsInChildren<UiSaveSlotView>(true));
+            }
+        }
+
+        void ApplyTypography()
+        {
+            UiTheme theme = systemRoot != null ? systemRoot.Theme : null;
+            if (theme == null)
+            {
+                return;
+            }
+
+            SetFont(eyebrowText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(titleText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(descriptionText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(detailSlotText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(detailStateText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(detailDescriptionText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(savedLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(savedValueText, theme.InstrumentFont, FontWeight.Medium);
+            SetFont(versionLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(versionValueText, theme.InstrumentFont, FontWeight.Medium);
+            SetFont(backLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(deleteLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(primaryLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+        }
+
+        static void SetFont(TMP_Text target, TMP_FontAsset font, FontWeight weight)
+        {
+            if (target != null && font != null)
+            {
+                target.font = font;
+                target.fontWeight = weight;
             }
         }
 

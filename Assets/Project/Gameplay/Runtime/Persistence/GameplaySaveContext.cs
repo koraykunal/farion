@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;

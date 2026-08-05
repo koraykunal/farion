@@ -18,8 +18,8 @@ This document describes the implemented architecture. Future features belong in
 ## Project Folder Ownership
 
 - `Application`, `Audio`, `Core`, `Gameplay`, `Rendering`, `Simulation`, and
-  `UI` contain C# runtime code. Their existing assembly folders are architecture
-  boundaries and are not reorganized for visual convenience.
+  `UI` contain C# runtime code. Assembly folders follow runtime ownership;
+  files are not regrouped merely for visual symmetry.
 - `Art` contains Unity-ready models, materials, textures, shaders, and VFX.
   Editable source art lives in repository-level `ArtSource`; production audio
   media is owned by the repository-level FMOD Studio project.
@@ -38,24 +38,16 @@ audio authoring and built banks; Unity contains only the runtime bank copies.
 ## Assembly Direction
 
 ```text
-Farion.Core.Runtime
-        |
-        +--> Farion.Simulation.Runtime
-        |
-Farion.Gameplay.Domain
-        |
-        +--> Farion.Gameplay.Runtime
-                    |
-                    +--> Farion.Application.Runtime
-                                |
-                                +--> Farion.UI.Runtime
-
-Farion.Rendering.Runtime --> Core + Simulation
-Farion.Audio.Runtime     --> Core + Simulation + Gameplay + FMOD
-Farion.UI.Runtime        --> Application + Audio
+Farion.Simulation.Runtime --> Core
+Farion.Gameplay.Runtime   --> Domain + Core + Simulation
+Farion.Gameplay.Presentation --> Gameplay + Simulation + VFX Graph
+Farion.App.Runtime        --> Domain + Core + Gameplay
+Farion.Rendering.Runtime  --> Core + Simulation + URP
+Farion.Audio.Runtime      --> Core + Simulation + Gameplay + FMOD
+Farion.UI.Runtime         --> Core + Gameplay + Simulation + App + Audio
 ```
 
-- `Farion.Core.Runtime` owns shared physics, time, persistence identity, and
+- `Farion.Core.Runtime` owns cross-cutting time, persistence identity, and
   save-slot infrastructure.
 - `Farion.Simulation.Runtime` owns gravity composition, authored and generated
   celestial state, planetary sampling, deterministic world identity, streaming
@@ -67,10 +59,15 @@ Farion.UI.Runtime        --> Application + Audio
   owns character, flight, possession, resources, inventory adapters, the
   assigned shuttle binding, Fleet identity, Fleet Storage, Fleet Knowledge, and
   save participants.
-- `Farion.Application.Runtime` owns game flow, local-session composition, save
+- `Farion.Gameplay.Presentation` owns gameplay-facing VFX components and is the
+  only gameplay assembly that references VFX Graph.
+- `Farion.App.Runtime` owns game flow, local-session composition, save
   requests, and the command facade. Its current gameplay command surface
   authorizes resource harvesting, assigned-shuttle cargo loading/unloading,
-  and the first Fleet processing exchange.
+  and the first Fleet processing exchange. The present local gateway still
+  accepts resolved Unity runtime objects; before networking, its outer request
+  boundary must carry persistent ids and expected revisions while application
+  handlers remain the authoritative object resolver.
 - `Farion.UI.Runtime` presents menus, HUD, settings, save/load, inventory, and
   feedback. It requests application operations and never mutates domain state
   directly.
@@ -90,6 +87,7 @@ scene. It explicitly references:
 
 - `GameplayDefinitionRegistry`;
 - `GravitySimulation`;
+- `CelestialFrameProvider` bound to the same simulation;
 - `WorldOriginRebaser`;
 - resource deposit streamers;
 - the local `PlayerInventory`;
@@ -100,8 +98,9 @@ scene. It explicitly references:
 
 `GameplayRuntimeBindings` is the immutable view of those references.
 `GameplaySessionRuntime`, `GameplaySessionController`, command handlers, and
-save participants consume that same view. They do not perform independent scene
-searches or create parallel state.
+save participants consume that same view. The root assigns gravity and celestial
+frame authority to the session shuttle explicitly; production actors do not use
+static active-instance fallbacks or independent scene searches.
 
 `GameplaySessionIdentity` keeps Fleet, local player, explorer actor, assigned
 shuttle, and carried inventory ids distinct. Possession describes who is

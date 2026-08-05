@@ -1,7 +1,7 @@
 using System;
 using Farion.Gameplay.Inventory;
+using Farion.UI.Common;
 using Farion.UI.Foundation;
-using Farion.UI.Localization;
 using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
@@ -12,7 +12,10 @@ namespace Farion.UI.Gameplay
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Image))]
-    public sealed class InventorySlotView : Selectable
+    public sealed class InventorySlotView :
+        Selectable,
+        ISubmitHandler,
+        IPointerClickHandler
     {
         [Header("Content")]
         [SerializeField] TMP_Text nameText;
@@ -25,11 +28,13 @@ namespace Farion.UI.Gameplay
         [SerializeField] Image background;
         [SerializeField] Image selectionFrame;
 
-        bool pointerInside;
-        bool selected;
+        UiPointerFocusState focusState;
+        bool current;
         bool hasItem;
 
         public event Action<InventorySlotView> Focused;
+        public event Action<InventorySlotView> ContextRequested;
+        public event Action<InventorySlotView> PrimaryClicked;
 
         public InventoryStack Stack { get; private set; }
 
@@ -56,8 +61,7 @@ namespace Farion.UI.Gameplay
 
         protected override void OnDisable()
         {
-            pointerInside = false;
-            selected = false;
+            focusState.Reset();
             base.OnDisable();
         }
 
@@ -71,9 +75,9 @@ namespace Farion.UI.Gameplay
                 nameText,
                 item != null
                     ? item.DisplayName
-                    : UiLocalization.Get("inventory.empty.title", "EMPTY SLOT"));
+                    : string.Empty);
             SetText(detailText, item != null ? $"{item.Category} / {item.Form}" : string.Empty);
-            SetText(quantityText, hasItem ? stack.Quantity.ToString() : string.Empty);
+            SetText(quantityText, hasItem ? $"\u00D7{stack.Quantity}" : string.Empty);
 
             if (iconImage != null)
             {
@@ -88,10 +92,44 @@ namespace Farion.UI.Gameplay
             RefreshVisual();
         }
 
+        public void SetCurrent(bool value)
+        {
+            current = value;
+            RefreshVisual();
+        }
+
+        public void OnSubmit(BaseEventData eventData)
+        {
+            if (!IsActive() || !IsInteractable())
+            {
+                return;
+            }
+
+            ContextRequested?.Invoke(this);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (!IsActive() || !IsInteractable())
+            {
+                return;
+            }
+
+            focusState.PointerClick();
+            Select();
+            if (eventData.button == PointerEventData.InputButton.Right)
+            {
+                ContextRequested?.Invoke(this);
+                return;
+            }
+
+            PrimaryClicked?.Invoke(this);
+        }
+
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
-            pointerInside = true;
+            focusState.PointerEnter();
             RefreshVisual();
             Focused?.Invoke(this);
         }
@@ -99,14 +137,14 @@ namespace Farion.UI.Gameplay
         public override void OnPointerExit(PointerEventData eventData)
         {
             base.OnPointerExit(eventData);
-            pointerInside = false;
+            focusState.PointerExit();
             RefreshVisual();
         }
 
         public override void OnSelect(BaseEventData eventData)
         {
             base.OnSelect(eventData);
-            selected = true;
+            focusState.Select();
             RefreshVisual();
             Focused?.Invoke(this);
         }
@@ -114,7 +152,7 @@ namespace Farion.UI.Gameplay
         public override void OnDeselect(BaseEventData eventData)
         {
             base.OnDeselect(eventData);
-            selected = false;
+            focusState.Deselect();
             RefreshVisual();
         }
 
@@ -128,11 +166,21 @@ namespace Farion.UI.Gameplay
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 theme = root != null ? root.Theme : null;
             }
+
+            if (theme == null)
+            {
+                return;
+            }
+
+            SetFont(nameText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(detailText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(quantityText, theme.InstrumentFont, FontWeight.Medium);
         }
 
         void RefreshVisual()
         {
-            bool focused = IsInteractable() && (selected || pointerInside);
+            bool focused = IsInteractable() && focusState.IsFocused;
+            bool emphasized = focused || current;
 
             Color panelNormal = theme != null
                 ? theme.ButtonSurface
@@ -155,27 +203,27 @@ namespace Farion.UI.Gameplay
 
             if (background != null)
             {
-                background.color = focused ? panelFocused : panelNormal;
+                background.color = emphasized ? panelFocused : panelNormal;
                 background.raycastTarget = true;
             }
 
             if (nameText != null)
             {
                 nameText.color = hasItem
-                    ? focused
+                    ? emphasized
                         ? primary
                         : new Color(primary.r, primary.g, primary.b, 0.84f)
-                    : new Color(secondary.r, secondary.g, secondary.b, 0.52f);
+                    : secondary;
             }
 
             if (detailText != null)
             {
-                detailText.color = focused ? supporting : secondary;
+                detailText.color = emphasized ? supporting : secondary;
             }
 
             if (quantityText != null)
             {
-                quantityText.color = focused ? focus : supporting;
+                quantityText.color = emphasized ? focus : supporting;
             }
 
             if (selectionFrame == null)
@@ -183,7 +231,7 @@ namespace Farion.UI.Gameplay
                 return;
             }
 
-            focus.a *= focused ? 0.92f : hasItem ? 0.14f : 0.08f;
+            focus.a *= focused ? 0.92f : current ? 0.58f : hasItem ? 0.14f : 0.06f;
             selectionFrame.color = focus;
             selectionFrame.raycastTarget = false;
         }
@@ -193,6 +241,15 @@ namespace Farion.UI.Gameplay
             if (target != null)
             {
                 target.text = value;
+            }
+        }
+
+        static void SetFont(TMP_Text target, TMP_FontAsset font, FontWeight weight)
+        {
+            if (target != null && font != null)
+            {
+                target.font = font;
+                target.fontWeight = weight;
             }
         }
     }

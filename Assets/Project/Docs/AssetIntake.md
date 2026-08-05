@@ -132,9 +132,11 @@ Reusable authored prefabs live under:
 
 - Shared widgets: `Assets/Project/Prefabs/UI/Common`
 - Flight and gameplay HUDs: `Assets/Project/Prefabs/UI/Gameplay/HUD`
-- Interaction prompts: `Assets/Project/Prefabs/UI/Gameplay/Interaction`
 - Inventory widgets and tooltips: `Assets/Project/Prefabs/UI/Gameplay/Inventory`
 - Full screens and modal panels: `Assets/Project/Prefabs/UI/Screens`
+
+The interaction prompt is part of the authored gameplay HUD; do not create a
+parallel interaction-prefab folder unless a second composition actually reuses it.
 
 Do not create a new screen prefab when a shared widget prefab plus a scene-level
 binding is enough. Put reusable visuals in Common, gameplay-only presenters in

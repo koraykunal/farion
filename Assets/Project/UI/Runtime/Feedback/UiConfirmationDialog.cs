@@ -1,6 +1,7 @@
 using System;
 using Farion.UI.Foundation;
 using Farion.UI.Navigation;
+using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,9 @@ namespace Farion.UI.Feedback
         [SerializeField] TMP_Text confirmLabelText;
         [SerializeField] TMP_Text cancelLabelText;
 
+        [Header("Design")]
+        [SerializeField] UiTheme theme;
+
         [Header("Actions")]
         [SerializeField] Button confirmButton;
         [SerializeField] Button cancelButton;
@@ -34,6 +38,7 @@ namespace Farion.UI.Feedback
         void OnEnable()
         {
             ResolveReferences();
+            ApplyTypography();
             if (confirmButton != null)
             {
                 confirmButton.onClick.RemoveListener(Confirm);
@@ -106,10 +111,34 @@ namespace Farion.UI.Feedback
 
         void ResolveReferences()
         {
+            UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
             if (router == null)
             {
-                UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 router = root != null ? root.ScreenRouter : null;
+            }
+
+            theme ??= root != null ? root.Theme : null;
+        }
+
+        void ApplyTypography()
+        {
+            if (theme == null)
+            {
+                return;
+            }
+
+            SetFont(titleText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(bodyText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(confirmLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(cancelLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+        }
+
+        static void SetFont(TMP_Text target, TMP_FontAsset font, FontWeight weight)
+        {
+            if (target != null && font != null)
+            {
+                target.font = font;
+                target.fontWeight = weight;
             }
         }
 

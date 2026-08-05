@@ -1,3 +1,4 @@
+using System;
 using Farion.App.Commands.Handlers;
 using Farion.Gameplay.Commands;
 using Farion.Gameplay.Interaction;
@@ -8,7 +9,9 @@ using Farion.Gameplay.Ships;
 
 namespace Farion.App.Commands
 {
-    public sealed class GameplayCommandService : IGameplayCommandGateway
+    public sealed class GameplayCommandService :
+        IGameplayCommandGateway,
+        IGameplayCommandEvents
     {
         readonly GameplaySessionRuntime session;
         readonly InventoryCommandHandler inventory;
@@ -26,6 +29,8 @@ namespace Farion.App.Commands
 
         public GameplaySessionRuntime Session => session;
 
+        public event Action<InventoryItemDefinition, int> ItemAcquired;
+
         public ResourceHarvestResult CanHarvest(
             ResourceNodeInteractable source,
             IInventoryContainer destination)
@@ -37,7 +42,20 @@ namespace Farion.App.Commands
             ResourceNodeInteractable source,
             IInventoryContainer destination)
         {
-            return inventory.TryHarvest(source, destination);
+            InventoryItemDefinition item = source?.Definition?.YieldedItem;
+            int quantityBefore = item != null && destination != null
+                ? destination.Count(item)
+                : 0;
+            ResourceHarvestResult result = inventory.TryHarvest(source, destination);
+            int acquired = result == ResourceHarvestResult.Succeeded && item != null
+                ? destination.Count(item) - quantityBefore
+                : 0;
+            if (acquired > 0)
+            {
+                ItemAcquired?.Invoke(item, acquired);
+            }
+
+            return result;
         }
 
         public CargoTransferResult CanLoadAssignedShuttleCargo(

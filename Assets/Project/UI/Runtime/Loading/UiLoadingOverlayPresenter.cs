@@ -3,6 +3,7 @@ using System.Collections;
 using Farion.UI.Foundation;
 using Farion.UI.Localization;
 using Farion.UI.Navigation;
+using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Localization;
@@ -32,6 +33,9 @@ namespace Farion.UI.Loading
         [SerializeField] TMP_Text progressText;
         [SerializeField] Image progressFill;
 
+        [Header("Design")]
+        [SerializeField] UiTheme theme;
+
         UiLoadingPresentation presentation =
             UiLoadingPresentation.PreparingExpedition;
         Coroutine transitionRoutine;
@@ -52,10 +56,13 @@ namespace Farion.UI.Loading
         void Awake()
         {
             ResolveReferences();
+            ApplyTypography();
         }
 
         void OnEnable()
         {
+            ResolveReferences();
+            ApplyTypography();
             LocalizationSettings.SelectedLocaleChanged += HandleLocaleChanged;
             RefreshContent();
         }
@@ -198,10 +205,34 @@ namespace Farion.UI.Loading
 
         void ResolveReferences()
         {
+            UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
             if (screenRouter == null)
             {
-                UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 screenRouter = root != null ? root.ScreenRouter : null;
+            }
+
+            theme ??= root != null ? root.Theme : null;
+        }
+
+        void ApplyTypography()
+        {
+            if (theme == null)
+            {
+                return;
+            }
+
+            SetFont(systemLabelText, theme.InstrumentFont, FontWeight.Medium);
+            SetFont(titleText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(statusText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(progressText, theme.InstrumentFont, FontWeight.Medium);
+        }
+
+        static void SetFont(TMP_Text target, TMP_FontAsset font, FontWeight weight)
+        {
+            if (target != null && font != null)
+            {
+                target.font = font;
+                target.fontWeight = weight;
             }
         }
 

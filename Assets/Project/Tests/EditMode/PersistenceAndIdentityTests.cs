@@ -32,6 +32,24 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void PersistentObjectIdRejectsEmbeddedWhitespaceLikeDomainIdentity()
+        {
+            GameObject owner = new("Invalid Persistent Id");
+            try
+            {
+                PersistentObjectId objectId = owner.AddComponent<PersistentObjectId>();
+                objectId.SetId("player invalid");
+
+                Assert.That(objectId.HasId, Is.False);
+                Assert.That(PersistentEntityId.TryCreate(objectId.Id, out _), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(owner);
+            }
+        }
+
+        [Test]
         public void SchemaFourSaveMigratesWithExplicitCargoAndKnowledgeDefaults()
         {
             GameplaySaveData legacy =

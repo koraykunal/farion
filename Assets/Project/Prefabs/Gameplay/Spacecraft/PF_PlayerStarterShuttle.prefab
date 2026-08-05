@@ -51,7 +51,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2c9ac9deb814ad08db5ed5855352043, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterNozzleVfx
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterNozzleVfx
   sideSign: 1
   steeringRoot: {fileID: 8926889536318064163}
   response: 14
@@ -206,7 +206,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 0
   material: {fileID: 2100000, guid: 0dbcc3220a2b48a8a0c6c2e83e6add11, type: 2}
   radius: 0.58
@@ -1135,7 +1135,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4aee0e6153894bf0a138e60cefe749c4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftReentryVfxController
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftReentryVfxController
   atmosphereInteractor: {fileID: 4839201847601284471}
   material: {fileID: 2100000, guid: 6f4ccb189ac647f78caa175c138c814d, type: 2}
   response: 6
@@ -1400,7 +1400,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a5a6f51bb664a28baea92c06f36054f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.ShuttleCargoInventory
-  containerId: inventory.local
+  fallbackContainerId: inventory.local
   slotCapacity: 24
   stacks: []
 --- !u!114 &291845060493645677
@@ -1702,7 +1702,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2c9ac9deb814ad08db5ed5855352043, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterNozzleVfx
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterNozzleVfx
   sideSign: -1
   steeringRoot: {fileID: 1970649407067824572}
   response: 14
@@ -2074,7 +2074,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 3
   material: {fileID: 2100000, guid: 08bb28567bfd4ef5b0a41375f45ab729, type: 2}
   radius: 0.5
@@ -2187,7 +2187,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 4
   material: {fileID: 2100000, guid: 5e149e7ee28446e584bb35ce404acea3, type: 2}
   radius: 0.88
@@ -2368,7 +2368,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 1
   material: {fileID: 2100000, guid: c50e5cb2ebc343fc912bfcc9a6538aac, type: 2}
   radius: 0.42
@@ -2779,7 +2779,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 4
   material: {fileID: 2100000, guid: 5e149e7ee28446e584bb35ce404acea3, type: 2}
   radius: 0.88
@@ -2892,7 +2892,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 1
   material: {fileID: 2100000, guid: c50e5cb2ebc343fc912bfcc9a6538aac, type: 2}
   radius: 0.42
@@ -2948,7 +2948,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 68db0c36183f4603a055ca8286fc724f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterVfxController
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterVfxController
   motor: {fileID: 3359784979145954321}
   celestialProbe: {fileID: 7190813019005924918}
   oceanInteractor: {fileID: 789528504066411760}
@@ -3416,7 +3416,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 2
   material: {fileID: 2100000, guid: 26fe46e3e9fa46fc8232778a522f47a7, type: 2}
   radius: 0.68
@@ -3529,7 +3529,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 0
   material: {fileID: 2100000, guid: 0dbcc3220a2b48a8a0c6c2e83e6add11, type: 2}
   radius: 0.58
@@ -3712,7 +3712,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 2
   material: {fileID: 2100000, guid: 26fe46e3e9fa46fc8232778a522f47a7, type: 2}
   radius: 0.68
@@ -3893,7 +3893,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db6e7d53cd4a46329d2da488e7b6f9ba, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftThrusterMeshLayer
   layerKind: 3
   material: {fileID: 2100000, guid: 08bb28567bfd4ef5b0a41375f45ab729, type: 2}
   radius: 0.5

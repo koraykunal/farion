@@ -98,7 +98,7 @@ controller nozzle references.
 
 ## Manual Acceptance
 
-1. Open `SC_PhysicsSandbox`.
+1. Open `SC_Expedition`.
 2. Confirm both effects originate from their own nozzle and point aft.
 3. Check idle, cruise, boost, throttle release, yaw, roll, atmosphere, and
    underwater behavior.

@@ -1,6 +1,6 @@
-# SC_PhysicsSandbox Setup
+# SC_Expedition Setup
 
-Use `Assets/Project/Scenes/SC_PhysicsSandbox.unity` as the first authored scene.
+Use `Assets/Project/Scenes/SC_Expedition.unity` as the first authored scene.
 Do not use a scene builder.
 
 ## Scene Hierarchy
@@ -617,7 +617,7 @@ lowering exposure. The star dome does not own nebula rendering.
 ### Volumetric Nebula
 
 `Bodies/NebulaVolume` owns the single world-space nebula in
-`SC_PhysicsSandbox`. `FarionNebulaRendererFeature` raymarches only inside that
+`SC_Expedition`. `FarionNebulaRendererFeature` raymarches only inside that
 sphere, stops at scene depth, and is wired through `PC_Renderer.asset`.
 
 The density model uses the supplied Shadertoy spiral-wave volume. `Structure
@@ -635,7 +635,7 @@ The scene must have exactly one `GlobalVolume` under `Lighting`:
 1. Create or select `GlobalVolume`.
 2. Enable `Is Global`.
 3. Create/assign a scene Volume Profile under
-   `Assets/Project/Scenes/SC_PhysicsSandbox`.
+   `Assets/Project/Scenes/SC_Expedition`.
 4. Add these overrides:
    - `Bloom`: enabled, low threshold, moderate intensity for the star material.
    - `Tonemapping`: `ACES`.
@@ -766,7 +766,7 @@ For a camera:
 5. Keep obstacle avoidance enabled. The camera ignores colliders under its
    spacecraft target and sphere-casts against the configured obstacle layers.
 
-`SC_PhysicsSandbox` includes the production flight HUD presenter under
+`SC_Expedition` includes the production flight HUD presenter under
 `GameplayCanvas/HudRoot/SpacecraftFlightHud`. It is visible only while the
 player is piloting and reads existing flight/landing telemetry.
 

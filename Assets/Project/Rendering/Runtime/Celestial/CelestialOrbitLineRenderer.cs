@@ -1,6 +1,7 @@
 using System.Collections.Generic;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Farion.Rendering.Celestial
 {
@@ -16,7 +17,10 @@ namespace Farion.Rendering.Celestial
         [Header("Display")]
         [SerializeField] bool showOrbitLines = true;
         [SerializeField] bool updateInEditMode = true;
-        [SerializeField] bool updateEveryFrame = true;
+        [FormerlySerializedAs("updateEveryFrame")]
+        [SerializeField] bool autoRefresh = true;
+        [Min(0.02f)]
+        [SerializeField] float refreshInterval = 0.1f;
         [Range(16, 512)]
         [SerializeField] int sampleCount = 160;
         [Min(0.001f)]
@@ -33,6 +37,8 @@ namespace Farion.Rendering.Celestial
         Transform container;
         Material runtimeMaterial;
         bool ownsContainer;
+        bool refreshRequested;
+        float nextRefreshTime;
 
         public bool ShowOrbitLines
         {
@@ -63,16 +69,24 @@ namespace Farion.Rendering.Celestial
         {
             sampleCount = Mathf.Clamp(sampleCount, 16, 512);
             lineWidth = Mathf.Max(0.001f, lineWidth);
+            refreshInterval = Mathf.Max(0.02f, refreshInterval);
+            refreshRequested = true;
         }
 
         void LateUpdate()
         {
-            if (!updateEveryFrame)
+            if (!autoRefresh)
             {
                 return;
             }
 
             if (!Application.isPlaying && !updateInEditMode)
+            {
+                return;
+            }
+
+            float now = Time.realtimeSinceStartup;
+            if (!refreshRequested && now < nextRefreshTime)
             {
                 return;
             }
@@ -83,7 +97,10 @@ namespace Farion.Rendering.Celestial
         [ContextMenu("Refresh Orbit Lines")]
         public void RefreshOrbitLines()
         {
-            GravitySimulation source = simulation != null ? simulation : GravitySimulation.Active;
+            refreshRequested = false;
+            nextRefreshTime = Time.realtimeSinceStartup + refreshInterval;
+
+            GravitySimulation source = simulation;
             if (source == null)
             {
                 SetAllLinesVisible(false);

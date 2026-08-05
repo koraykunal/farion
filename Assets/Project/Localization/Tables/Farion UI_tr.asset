@@ -637,6 +637,18 @@ MonoBehaviour:
     m_Localized: Aray\xFCz gezinme ve geri bildirim seslerini kontrol et.
     m_Metadata:
       m_Items: []
+  - m_Id: 1264058522
+    m_Localized: HIZ
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058523
+    m_Localized: "\u0130N\u0130\u015E VEKT\xD6R\xDC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058524
+    m_Localized: "TAKV\u0130YE"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

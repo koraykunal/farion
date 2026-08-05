@@ -37,7 +37,6 @@ namespace Farion.Gameplay.Flight
 
         void Update()
         {
-            ResolveControlLock();
             if (IsGameplayInputLocked())
             {
                 CurrentInput = new SpacecraftInputState(
@@ -91,14 +90,6 @@ namespace Farion.Gameplay.Flight
         public void SetControlLock(PlayerControlLock nextControlLock)
         {
             controlLock = nextControlLock;
-        }
-
-        void ResolveControlLock()
-        {
-            if (controlLock == null)
-            {
-                controlLock = PlayerControlLock.Active;
-            }
         }
 
         bool IsGameplayInputLocked()

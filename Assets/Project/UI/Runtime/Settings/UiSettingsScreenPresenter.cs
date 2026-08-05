@@ -3,6 +3,7 @@ using Farion.Audio;
 using Farion.UI.Foundation;
 using Farion.UI.Localization;
 using Farion.UI.Navigation;
+using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Localization;
@@ -51,11 +52,13 @@ namespace Farion.UI.Settings
         void Awake()
         {
             ResolveReferences();
+            ApplyTypography();
         }
 
         void OnEnable()
         {
             ResolveReferences();
+            ApplyTypography();
             if (!Application.isPlaying)
             {
                 return;
@@ -638,6 +641,31 @@ namespace Farion.UI.Settings
             if (firstOption != null)
             {
                 screenView.SetFirstSelection(firstOption);
+            }
+        }
+
+        void ApplyTypography()
+        {
+            UiTheme theme = systemRoot != null ? systemRoot.Theme : null;
+            if (theme == null)
+            {
+                return;
+            }
+
+            SetFont(titleText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(categoryTitleText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(detailTitleText, theme.InterfaceMediumFont, FontWeight.Medium);
+            SetFont(detailDescriptionText, theme.InterfaceFont, FontWeight.Regular);
+            SetFont(detailValueText, theme.InstrumentFont, FontWeight.Medium);
+            SetFont(backLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
+        }
+
+        static void SetFont(TMP_Text target, TMP_FontAsset font, FontWeight weight)
+        {
+            if (target != null && font != null)
+            {
+                target.font = font;
+                target.fontWeight = weight;
             }
         }
 

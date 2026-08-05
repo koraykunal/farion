@@ -6,6 +6,7 @@
         "Farion.Simulation.Runtime",
         "Farion.Gameplay.Domain",
         "Farion.Gameplay.Runtime",
+        "Farion.Gameplay.Presentation",
         "Farion.Audio.Runtime",
         "Farion.UI.Runtime",
         "Unity.InputSystem"

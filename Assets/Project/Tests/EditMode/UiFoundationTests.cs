@@ -1,4 +1,5 @@
 using Farion.Gameplay.Input;
+using Farion.UI.Common;
 using Farion.UI.Feedback;
 using Farion.UI.Foundation;
 using Farion.UI.Gameplay;
@@ -262,6 +263,34 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void FeedbackFormatsItemAcquisitionAndKeepsBottomCenterLayout()
+        {
+            const string path =
+                "Assets/Project/Prefabs/UI/Foundation/UI_FeedbackOverlay.prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            UiFeedbackService feedback = prefab.GetComponent<UiFeedbackService>();
+            RectTransform rect = prefab.GetComponent<RectTransform>();
+            SerializedObject serializedFeedback = new(feedback);
+            LayoutElement iconLayout = prefab.transform
+                .Find("ItemIcon")
+                .GetComponent<LayoutElement>();
+
+            Assert.That(
+                UiFeedbackService.FormatItemMessage("Iron Ore", 2),
+                Is.EqualTo("Iron Ore ×2"));
+            Assert.That(
+                serializedFeedback.FindProperty("iconImage").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(prefab.GetComponent<HorizontalLayoutGroup>(), Is.Not.Null);
+            Assert.That(prefab.GetComponent<ContentSizeFitter>(), Is.Not.Null);
+            Assert.That(iconLayout.preferredWidth, Is.EqualTo(64f));
+            Assert.That(iconLayout.preferredHeight, Is.EqualTo(64f));
+            Assert.That(rect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0f)));
+            Assert.That(rect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0f)));
+            Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(0f, 72f)));
+        }
+
+        [Test]
         public void SystemRootExposesRuntimeReducedMotionPreference()
         {
             root = new GameObject("UI_SystemRoot");
@@ -274,6 +303,47 @@ namespace Farion.Tests.EditMode
 
             Assert.That(systemRoot.ReducedMotion, Is.True);
             Assert.That(changedValue, Is.True);
+        }
+
+        [Test]
+        public void PointerOwnedSelectionStopsHoveringAfterPointerExit()
+        {
+            UiPointerFocusState state = new();
+            state.Select();
+            state.PointerEnter();
+            state.PointerExit();
+            Assert.That(state.IsFocused, Is.True);
+
+            state.PointerEnter();
+            state.PointerClick();
+            state.PointerExit();
+            Assert.That(state.IsFocused, Is.False);
+        }
+
+        [Test]
+        public void InventorySlotRequestsQuickViewFromRightClickAndSubmit()
+        {
+            root = new GameObject("InventorySlotTestRoot");
+            EventSystem eventSystem = root.AddComponent<EventSystem>();
+            GameObject slotObject = new(
+                "InventorySlot",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(InventorySlotView));
+            slotObject.transform.SetParent(root.transform);
+            InventorySlotView slot = slotObject.GetComponent<InventorySlotView>();
+            int requestCount = 0;
+            slot.ContextRequested += _ => requestCount++;
+
+            slot.OnPointerClick(
+                new PointerEventData(eventSystem)
+                {
+                    button = PointerEventData.InputButton.Right
+                });
+            slot.OnSubmit(new BaseEventData(eventSystem));
+
+            Assert.That(requestCount, Is.EqualTo(2));
         }
 
         [Test]

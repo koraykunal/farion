@@ -24,7 +24,6 @@ namespace Farion.Gameplay.Character
 
         void Update()
         {
-            ResolveControlLock();
             if (IsGameplayInputLocked())
             {
                 CurrentInput = FirstPersonInputState.None;
@@ -50,14 +49,6 @@ namespace Farion.Gameplay.Character
         public void SetControlLock(PlayerControlLock nextControlLock)
         {
             controlLock = nextControlLock;
-        }
-
-        void ResolveControlLock()
-        {
-            if (controlLock == null)
-            {
-                controlLock = PlayerControlLock.Active;
-            }
         }
 
         bool IsGameplayInputLocked()

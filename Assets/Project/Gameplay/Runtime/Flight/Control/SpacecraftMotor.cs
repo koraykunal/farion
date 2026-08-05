@@ -1,4 +1,4 @@
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Gameplay.Actors;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -140,6 +140,11 @@ namespace Farion.Gameplay.Flight
             inputSource = source as MonoBehaviour;
         }
 
+        public void SetSimulation(GravitySimulation source)
+        {
+            simulation = source;
+        }
+
         public void SetFlightAssistEnabled(bool enabled)
         {
             flightAssistEnabled = enabled;
@@ -208,7 +213,7 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            GravitySimulation source = simulation != null ? simulation : GravitySimulation.Active;
+            GravitySimulation source = simulation;
             if (source == null)
             {
                 return;

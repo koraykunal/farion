@@ -20,3 +20,6 @@ MonoBehaviour:
   primaryTechDomain: 0
   requiresIdentification: 0
   unidentifiedDisplayName: Unknown Component
+  icon: {fileID: 21300000, guid: b1931ad50ec9464c8d230542bee31d13, type: 3}
+  worldPrefab: {fileID: 0}
+  accentColor: {r: 1, g: 1, b: 1, a: 1}

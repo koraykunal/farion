@@ -74,7 +74,6 @@ Assets/Project/Prefabs/UI/
   Foundation/   System root, confirmation, loading, and feedback prefabs
   Gameplay/
     HUD/
-    Interaction/
     Inventory/
   Screens/
 ```
@@ -230,6 +229,11 @@ menu or runtime builder.
 - `UiPreferencesService` remains the authority for persisted values and locale
   changes.
 
+`FarionInputActions` can persist and reset binding overrides, but the authored
+Settings screen does not yet expose interactive rebinding. That feature needs a
+complete capture, conflict, cancel, persistence, and device-prompt flow; it must
+not be represented by a nonfunctional settings row.
+
 The prefab keeps category navigation, option groups, context copy, and the back
 action as authored references. Scenes only hold standard prefab-instance
 overrides such as transform and object name. Its panels and focus frames reuse
@@ -292,9 +296,10 @@ moves. Slot and screen chrome use the shared English and Turkish string table.
 
 Item names, categories, forms, and research domains currently come from the
 gameplay definitions. The UI does not invent icons or descriptive copy that the
-domain does not provide. When definition localization and item artwork are
-introduced, they should extend `InventoryItemDefinition`; the presenter remains
-the domain-to-prefab adapter.
+domain does not provide. Definition-backed names and interaction prompts are
+not yet localized; that requires a structured localization identity at the
+gameplay-to-presentation boundary rather than translating fallback strings in
+individual presenters. The presenter remains the domain-to-prefab adapter.
 
 ## Validation Contract
 
@@ -313,6 +318,14 @@ The validator blocks a build when:
 - An authored interactive screen has controls but no initial focus provider.
 - A scene has an invalid EventSystem or input-module binding.
 - Feedback severity labels are disabled and state would depend on color alone.
+- A selection frame uses anything other than the shared menu-frame sprite.
+- A settings category or option identity is duplicated, or an enum-defined
+  settings contract entry is missing from the authored Settings prefab.
+- An authored UI prefab or build-scene composition references the retired
+  Liberation Sans asset.
+- Theme text and interactive-surface combinations fall below WCAG AA contrast.
+- Full-screen HUD/loading content lacks Safe Area fitting, or a fixed screen
+  leaves the 32-pixel reference safe margin.
 
 EditMode tests cover Canvas-sibling discovery, confirmation resolution, modal
 history, real EventSystem focus restoration, device prompt labels, accessible

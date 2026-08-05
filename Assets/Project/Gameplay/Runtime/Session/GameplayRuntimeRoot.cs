@@ -1,11 +1,14 @@
 using System.Collections.Generic;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
+using Farion.Gameplay.Actors;
 using Farion.Gameplay.Definitions;
+using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Ships;
+using Farion.Simulation.Celestial;
 using Farion.Simulation.World;
 using UnityEngine;
 
@@ -20,6 +23,7 @@ namespace Farion.Gameplay.Session
 
         [Header("Simulation")]
         [SerializeField] GravitySimulation gravitySimulation;
+        [SerializeField] CelestialFrameProvider celestialFrameProvider;
         [SerializeField] WorldOriginRebaser originRebaser;
         [SerializeField] List<ResourceDepositRuntimeSpawner> resourceStreamers = new();
 
@@ -37,6 +41,7 @@ namespace Farion.Gameplay.Session
             bindings ??= new GameplayRuntimeBindings(
                 definitions,
                 gravitySimulation,
+                celestialFrameProvider,
                 originRebaser,
                 localPlayerInventory,
                 possession,
@@ -46,12 +51,31 @@ namespace Farion.Gameplay.Session
 
         public bool HasValidAuthoring => Bindings.IsValid;
 
+        void Awake()
+        {
+            ApplySimulationAuthority();
+        }
+
         void OnValidate()
         {
             fleet ??= GetComponent<FleetRuntime>();
             resourceStreamers ??= new List<ResourceDepositRuntimeSpawner>();
             resourceStreamers.RemoveAll(streamer => streamer == null);
             bindings = null;
+        }
+
+        void ApplySimulationAuthority()
+        {
+            if (assignedShuttle?.Motor == null)
+            {
+                return;
+            }
+
+            assignedShuttle.Motor.SetSimulation(gravitySimulation);
+            assignedShuttle.Motor.GetComponent<CelestialActorProbe>()
+                ?.SetFrameProvider(celestialFrameProvider);
+            assignedShuttle.Motor.GetComponent<SpacecraftOrbitComputer>()
+                ?.SetSimulation(gravitySimulation);
         }
     }
 }

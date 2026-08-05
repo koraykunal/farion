@@ -10,10 +10,10 @@ namespace Farion.Tests.PlayMode
     public sealed class CelestialSurfacePatchPlayModeTests
     {
         [UnityTest]
-        public IEnumerator PhysicsSandboxHandsCollisionOffWithoutAnAuthorityGap()
+        public IEnumerator ExpeditionHandsCollisionOffWithoutAnAuthorityGap()
         {
             AsyncOperation load = SceneManager.LoadSceneAsync(
-                "SC_PhysicsSandbox",
+                "SC_Expedition",
                 LoadSceneMode.Single);
             Assert.That(load, Is.Not.Null);
             while (!load.isDone)

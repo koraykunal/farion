@@ -8,6 +8,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
+using UnityEngine.UI;
 
 namespace Farion.UI.Gameplay
 {
@@ -34,8 +35,16 @@ namespace Farion.UI.Gameplay
         [SerializeField] TMP_Text detailMetaText;
         [SerializeField] TMP_Text detailStackText;
         [SerializeField] TMP_Text detailDomainText;
+        [SerializeField] Image detailIconImage;
+
+        [Header("Quick View")]
+        [SerializeField] RectTransform tooltipPrefab;
 
         InventorySlotView focusedSlot;
+        InventorySlotView tooltipSlot;
+        RectTransform tooltipRoot;
+        TMP_Text tooltipTitleText;
+        TMP_Text tooltipBodyText;
         bool subscribed;
 
         public event Action<InventoryPanelPresenter, InventoryStack> FocusedStackChanged;
@@ -56,12 +65,14 @@ namespace Farion.UI.Gameplay
         void OnEnable()
         {
             ResolveReferences();
+            HideTooltip();
             Subscribe();
             Refresh();
         }
 
         void OnDisable()
         {
+            HideTooltip();
             Unsubscribe();
         }
 
@@ -81,6 +92,7 @@ namespace Farion.UI.Gameplay
 
         public void Refresh()
         {
+            HideTooltip();
             EnsureSlotViews();
 
             IReadOnlyList<InventoryStack> stacks = inventory != null
@@ -139,6 +151,10 @@ namespace Farion.UI.Gameplay
 
                 slot.Focused -= HandleSlotFocused;
                 slot.Focused += HandleSlotFocused;
+                slot.ContextRequested -= HandleContextRequested;
+                slot.ContextRequested += HandleContextRequested;
+                slot.PrimaryClicked -= HandlePrimaryClicked;
+                slot.PrimaryClicked += HandlePrimaryClicked;
             }
         }
 
@@ -176,6 +192,8 @@ namespace Farion.UI.Gameplay
                 if (slotViews[i] != null)
                 {
                     slotViews[i].Focused -= HandleSlotFocused;
+                    slotViews[i].ContextRequested -= HandleContextRequested;
+                    slotViews[i].PrimaryClicked -= HandlePrimaryClicked;
                 }
             }
 
@@ -194,9 +212,52 @@ namespace Farion.UI.Gameplay
                 return;
             }
 
+            focusedSlot?.SetCurrent(false);
             focusedSlot = slot;
+            focusedSlot.SetCurrent(true);
             RefreshDetail(slot.Stack);
             FocusedStackChanged?.Invoke(this, slot.Stack);
+        }
+
+        void HandleContextRequested(InventorySlotView slot)
+        {
+            if (slot == null || slot.Stack == null || slot.Stack.IsEmpty)
+            {
+                HideTooltip();
+                return;
+            }
+
+            if (tooltipSlot == slot && tooltipRoot != null && tooltipRoot.gameObject.activeSelf)
+            {
+                HideTooltip();
+                return;
+            }
+
+            EnsureTooltip();
+            if (tooltipRoot == null)
+            {
+                return;
+            }
+
+            tooltipSlot = slot;
+            InventoryItemDefinition item = slot.Stack.Item;
+            SetText(tooltipTitleText, item.DisplayName.ToUpperInvariant());
+            SetText(
+                tooltipBodyText,
+                $"{FormatEnum(item.Category)}  /  {FormatEnum(item.Form)}\n" +
+                $"{UiLocalization.Get("inventory.stack", "STACK").ToUpperInvariant()}  " +
+                $"{slot.Stack.Quantity} / {item.MaxStackSize}\n" +
+                $"{UiLocalization.Get("inventory.domain", "RESEARCH DOMAIN").ToUpperInvariant()}  " +
+                FormatEnum(item.PrimaryTechDomain));
+
+            tooltipRoot.SetAsLastSibling();
+            tooltipRoot.gameObject.SetActive(true);
+            PositionTooltip(slot.transform as RectTransform);
+        }
+
+        void HandlePrimaryClicked(InventorySlotView _)
+        {
+            HideTooltip();
         }
 
         void RefreshHeader(int usedSlots, int totalSlots)
@@ -216,9 +277,11 @@ namespace Farion.UI.Gameplay
             if (focusedSlot == null ||
                 !focusedSlot.gameObject.activeInHierarchy)
             {
+                focusedSlot?.SetCurrent(false);
                 focusedSlot = FindInitialSlot();
             }
 
+            focusedSlot?.SetCurrent(true);
             RefreshDetail(focusedSlot != null ? focusedSlot.Stack : null);
             if (screenView != null && focusedSlot != null)
             {
@@ -254,6 +317,12 @@ namespace Farion.UI.Gameplay
                            stack.Item != null;
             if (!hasItem)
             {
+                if (detailIconImage != null)
+                {
+                    detailIconImage.sprite = null;
+                    detailIconImage.enabled = false;
+                }
+
                 SetText(
                     detailTitleText,
                     UiLocalization.Get("inventory.empty.title", "EMPTY SLOT"));
@@ -268,6 +337,14 @@ namespace Farion.UI.Gameplay
             }
 
             InventoryItemDefinition item = stack.Item;
+            if (detailIconImage != null)
+            {
+                detailIconImage.sprite = item.Icon;
+                detailIconImage.enabled = item.HasIcon;
+                detailIconImage.color = item.AccentColor;
+                detailIconImage.raycastTarget = false;
+            }
+
             SetText(detailTitleText, item.DisplayName.ToUpperInvariant());
             SetText(
                 detailMetaText,
@@ -289,6 +366,48 @@ namespace Farion.UI.Gameplay
             if (slotContainer == null)
             {
                 slotContainer = transform.Find("SlotPanel/SlotContainer");
+            }
+        }
+
+        void EnsureTooltip()
+        {
+            if (tooltipRoot != null || tooltipPrefab == null)
+            {
+                return;
+            }
+
+            tooltipRoot = Instantiate(tooltipPrefab, transform);
+            tooltipRoot.name = tooltipPrefab.name;
+            tooltipTitleText = tooltipRoot.Find("Title")?.GetComponent<TMP_Text>();
+            tooltipBodyText = tooltipRoot.Find("Body")?.GetComponent<TMP_Text>();
+            tooltipRoot.gameObject.SetActive(false);
+        }
+
+        void PositionTooltip(RectTransform slot)
+        {
+            if (slot == null || tooltipRoot == null || transform is not RectTransform screen)
+            {
+                return;
+            }
+
+            Vector3[] corners = new Vector3[4];
+            slot.GetWorldCorners(corners);
+            Vector2 position = screen.InverseTransformPoint(corners[2]);
+            position.x += 12f;
+
+            Rect bounds = screen.rect;
+            Vector2 size = tooltipRoot.rect.size;
+            position.x = Mathf.Clamp(position.x, bounds.xMin + 24f, bounds.xMax - size.x - 24f);
+            position.y = Mathf.Clamp(position.y, bounds.yMin + size.y + 24f, bounds.yMax - 24f);
+            tooltipRoot.anchoredPosition = position;
+        }
+
+        void HideTooltip()
+        {
+            tooltipSlot = null;
+            if (tooltipRoot != null)
+            {
+                tooltipRoot.gameObject.SetActive(false);
             }
         }
 

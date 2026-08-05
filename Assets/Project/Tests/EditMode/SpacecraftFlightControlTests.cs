@@ -1,5 +1,5 @@
 using Farion.Audio.Spacecraft;
-using Farion.Core.Physics;
+using Farion.Simulation.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
@@ -330,18 +330,22 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void MouseLookScalingPreservesPhysicalMotionAcrossFrameRates()
+        public void MouseLookScalingPreservesAccumulatedPhysicalMotionAcrossFrameRates()
         {
-            Vector2 atSixtyFps = FarionInputActions.ScaleMouseLook(
-                new Vector2(2f, -2f),
-                1f,
-                1f / 60f);
-            Vector2 atOneTwentyFps = FarionInputActions.ScaleMouseLook(
-                new Vector2(1f, -1f),
-                1f,
-                1f / 120f);
+            Vector2 physicalMotion = new(120f, -60f);
+            Vector2 expected = physicalMotion * 1.5f;
 
-            Assert.That(atOneTwentyFps, Is.EqualTo(atSixtyFps));
+            foreach (int frameCount in new[] { 30, 60, 120 })
+            {
+                Vector2 accumulated = Vector2.zero;
+                Vector2 frameMotion = physicalMotion / frameCount;
+                for (int frame = 0; frame < frameCount; frame++)
+                {
+                    accumulated += FarionInputActions.ScaleMouseLook(frameMotion, 1.5f);
+                }
+
+                Assert.That(Vector2.Distance(accumulated, expected), Is.LessThan(0.001f));
+            }
         }
 
         [Test]
@@ -412,7 +416,7 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void ActorProbeFallsBackToActiveCelestialFrameProvider()
+        public void ActorProbeUsesOnlyExplicitCelestialFrameProvider()
         {
             GameObject providerObject = new("Frame Provider");
             GameObject actorObject = new("Actor");
@@ -420,10 +424,10 @@ namespace Farion.Tests.EditMode
             {
                 CelestialFrameProvider provider =
                     providerObject.AddComponent<CelestialFrameProvider>();
-                provider.enabled = false;
-                provider.enabled = true;
                 CelestialActorProbe probe = actorObject.AddComponent<CelestialActorProbe>();
 
+                Assert.That(probe.FrameProvider, Is.Null);
+                probe.SetFrameProvider(provider);
                 Assert.That(probe.FrameProvider, Is.SameAs(provider));
             }
             finally

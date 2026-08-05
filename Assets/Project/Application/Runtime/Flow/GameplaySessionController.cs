@@ -6,9 +6,11 @@ using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Session;
 using Farion.Gameplay.Ships;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace Farion.App.Flow
 {
+    [MovedFrom(true, "Farion.App.Flow", "Farion.Application.Runtime")]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(GameplayRuntimeRoot))]
     public sealed class GameplaySessionController : MonoBehaviour
@@ -40,6 +42,7 @@ namespace Farion.App.Flow
             TryGetRuntime(out GameplaySessionRuntime currentRuntime)
                 ? ResolveCommands(currentRuntime)
                 : null;
+        public IGameplayCommandEvents CommandEvents => Commands;
         public string SaveSlotName =>
             saveCoordinator != null
                 ? saveCoordinator.SlotName

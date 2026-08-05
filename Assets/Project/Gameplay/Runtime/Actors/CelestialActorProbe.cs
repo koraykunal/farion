@@ -30,8 +30,7 @@ namespace Farion.Gameplay.Actors
         Rigidbody cachedRigidbody;
         CelestialFrameSample currentSample;
 
-        public CelestialFrameProvider FrameProvider =>
-            frameProvider != null ? frameProvider : CelestialFrameProvider.Active;
+        public CelestialFrameProvider FrameProvider => frameProvider;
         public CelestialFrameSample CurrentSample => currentSample;
         public bool HasSample => currentSample.HasBody;
         public Rigidbody Rigidbody => cachedRigidbody != null ? cachedRigidbody : cachedRigidbody = GetComponent<Rigidbody>();

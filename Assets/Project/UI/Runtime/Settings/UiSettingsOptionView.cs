@@ -1,4 +1,5 @@
 using System;
+using Farion.UI.Common;
 using Farion.UI.Foundation;
 using Farion.UI.Styling;
 using TMPro;
@@ -27,8 +28,7 @@ namespace Farion.UI.Settings
         [SerializeField] Image background;
         [SerializeField] Image selectionFrame;
 
-        bool pointerInside;
-        bool selected;
+        UiPointerFocusState focusState;
         string displayTitle = string.Empty;
         string displayDescription = string.Empty;
         string displayValue = string.Empty;
@@ -64,8 +64,7 @@ namespace Farion.UI.Settings
 
         protected override void OnDisable()
         {
-            pointerInside = false;
-            selected = false;
+            focusState.Reset();
             base.OnDisable();
         }
 
@@ -128,6 +127,7 @@ namespace Farion.UI.Settings
                 return;
             }
 
+            focusState.PointerClick();
             Select();
             RequestAdjustment(
                 eventData.button == PointerEventData.InputButton.Right ? -1 : 1);
@@ -136,7 +136,7 @@ namespace Farion.UI.Settings
         public override void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
-            pointerInside = true;
+            focusState.PointerEnter();
             RefreshVisual();
             Focused?.Invoke(this);
         }
@@ -144,14 +144,14 @@ namespace Farion.UI.Settings
         public override void OnPointerExit(PointerEventData eventData)
         {
             base.OnPointerExit(eventData);
-            pointerInside = false;
+            focusState.PointerExit();
             RefreshVisual();
         }
 
         public override void OnSelect(BaseEventData eventData)
         {
             base.OnSelect(eventData);
-            selected = true;
+            focusState.Select();
             RefreshVisual();
             Focused?.Invoke(this);
         }
@@ -159,7 +159,7 @@ namespace Farion.UI.Settings
         public override void OnDeselect(BaseEventData eventData)
         {
             base.OnDeselect(eventData);
-            selected = false;
+            focusState.Deselect();
             RefreshVisual();
         }
 
@@ -181,12 +181,24 @@ namespace Farion.UI.Settings
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
                 theme = root != null ? root.Theme : null;
             }
+
+            if (titleText != null && theme != null && theme.InterfaceMediumFont != null)
+            {
+                titleText.font = theme.InterfaceMediumFont;
+                titleText.fontWeight = FontWeight.Medium;
+            }
+
+            if (valueText != null && theme != null && theme.InstrumentFont != null)
+            {
+                valueText.font = theme.InstrumentFont;
+                valueText.fontWeight = FontWeight.Medium;
+            }
         }
 
         void RefreshVisual()
         {
             bool available = IsInteractable();
-            bool focused = available && (selected || pointerInside);
+            bool focused = available && focusState.IsFocused;
 
             Color panelNormal = theme != null
                 ? theme.ButtonSurface
