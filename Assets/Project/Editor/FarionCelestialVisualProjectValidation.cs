@@ -50,6 +50,7 @@ namespace Farion.Editor.Validation
         public static void ValidateSceneObject(
             GameObject gameObject,
             string scenePath,
+            bool isSimulationZone,
             FarionValidationReport report)
         {
             if (gameObject.TryGetComponent(out CelestialBodyVisual bodyVisual))
@@ -64,12 +65,20 @@ namespace Farion.Editor.Validation
 
             if (gameObject.TryGetComponent(out CelestialSurfacePatchSystem patchSystem))
             {
-                ValidateSurfacePatchSystem(patchSystem, scenePath, report);
+                ValidateSurfacePatchSystem(
+                    patchSystem,
+                    scenePath,
+                    isSimulationZone,
+                    report);
             }
 
             if (gameObject.TryGetComponent(out CelestialStarVisual starVisual))
             {
-                ValidateStarVisual(starVisual, scenePath, report);
+                ValidateStarVisual(
+                    starVisual,
+                    scenePath,
+                    isSimulationZone,
+                    report);
             }
         }
 
@@ -619,14 +628,22 @@ namespace Farion.Editor.Validation
         static void ValidateSurfacePatchSystem(
             CelestialSurfacePatchSystem patchSystem,
             string scenePath,
+            bool isSimulationZone,
             FarionValidationReport report)
         {
             string scope = $"{scenePath}: {GetHierarchyPath(patchSystem.transform)}";
             SerializedObject serialized = new(patchSystem);
             ValidateObjectReference(serialized, "profile", scope, report);
             ValidateObjectReference(serialized, "bodyVisual", scope, report);
-            ValidateObjectReference(serialized, "targetCamera", scope, report);
-            ValidateObjectReference(serialized, "collisionObserverSource", scope, report);
+            if (!isSimulationZone)
+            {
+                ValidateObjectReference(serialized, "targetCamera", scope, report);
+                ValidateObjectReference(
+                    serialized,
+                    "collisionObserverSource",
+                    scope,
+                    report);
+            }
 
             MonoBehaviour collisionObserverSource =
                 serialized.FindProperty("collisionObserverSource")?.objectReferenceValue
@@ -692,6 +709,7 @@ namespace Farion.Editor.Validation
         static void ValidateStarVisual(
             CelestialStarVisual visual,
             string scenePath,
+            bool isSimulationZone,
             FarionValidationReport report)
         {
             string scope = $"{scenePath}: {GetHierarchyPath(visual.transform)}";
@@ -703,7 +721,10 @@ namespace Farion.Editor.Validation
             SerializedObject serialized = new(visual);
             ValidateObjectReference(serialized, "lightSource", scope, report);
             ValidateObjectReference(serialized, "starRenderer", scope, report);
-            ValidateObjectReference(serialized, "observerCamera", scope, report);
+            if (!isSimulationZone)
+            {
+                ValidateObjectReference(serialized, "observerCamera", scope, report);
+            }
 
             SerializedProperty transformProperty =
                 serialized.FindProperty("starVisualTransform");

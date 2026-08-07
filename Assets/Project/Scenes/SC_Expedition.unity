@@ -161,13 +161,173 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
   weight: 1
   sharedProfile: {fileID: 11400000, guid: b2cced2787023854b91388ab8146a209, type: 2}
+--- !u!1001 &101437577
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1944801546}
+    m_Modifications:
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2158.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 5.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 2.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: castRadius
+      value: 0.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: controlLock
+      value:
+      objectReference: {fileID: 1891705759}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: maxDistance
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: viewReference
+      value:
+      objectReference: {fileID: 2069305678}
+    - target: {fileID: 4695914025171897078, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_Name
+      value: Player Explorer
+      objectReference: {fileID: 0}
+    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_Constraints
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_Interpolate
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_CollisionDetection
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: controlLock
+      value:
+      objectReference: {fileID: 1891705759}
+    - target: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: mouseSensitivity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8714087835574942023, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: frameProvider
+      value:
+      objectReference: {fileID: 476981474}
+    - target: {fileID: 9022320798132655451, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: viewReference
+      value:
+      objectReference: {fileID: 2069305678}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+--- !u!114 &101437578 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
+--- !u!114 &101437579 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
+--- !u!114 &101437580 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9022320798132655451, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
+--- !u!54 &101437581 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &101437582 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4695914025171897078, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &101437583 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1784853116956105904, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
+--- !u!4 &101437584 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &152738350
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -521,6 +681,108 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
   m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
+--- !u!1 &158838722
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 158838724}
+  - component: {fileID: 158838723}
+  m_Layer: 0
+  m_Name: Multiplayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &158838723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 158838722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f86a6826ed049948a83468be53ec764, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Session.MultiplayerSceneContext
+  runtimeRoot: {fileID: 920000004}
+  offlineExplorer: {fileID: 101437582}
+  possession: {fileID: 1917591035}
+  spacecraftMotor: {fileID: 1678406301}
+  spacecraftInput: {fileID: 1678406302}
+  spacecraftRigidbody: {fileID: 1678406309}
+  gravitySimulation: {fileID: 476981471}
+  celestialFrameProvider: {fileID: 476981474}
+  originRebaser: {fileID: 476981473}
+  resourceStreamers:
+  - {fileID: 922402158}
+  surfacePatchSystems:
+  - {fileID: 922402160}
+  spacecraftCameraRig: {fileID: 672124906}
+  firstPersonCameraRig: {fileID: 2069305682}
+  viewReference: {fileID: 2069305678}
+  controlLock: {fileID: 1891705759}
+  spawnPoints:
+  - {fileID: 1005994522}
+  - {fileID: 265020830}
+  - {fileID: 2084476328}
+  - {fileID: 1151225729}
+  surfaceClearance: 1.08
+--- !u!4 &158838724
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 158838722}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -262666, y: 0, z: 124825}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1005994522}
+  - {fileID: 265020830}
+  - {fileID: 2084476328}
+  - {fileID: 1151225729}
+  m_Father: {fileID: 1944801546}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &265020829
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 265020830}
+  m_Layer: 0
+  m_Name: Spawn_2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &265020830
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 265020829}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 264826.53, y: 5.7, z: -124824.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 158838724}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -629,8 +891,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_UsePipelineSettings: 1
   m_AdditionalLightsShadowResolutionTier: 2
   m_CustomShadowLayers: 0
@@ -677,7 +939,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b0c6fcab710c8e94c902e2f6d8590e62, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.GravitySimulation
   settings: {fileID: 11400000, guid: 2edfb3b296b04fc4d9f69762ba589d6a, type: 2}
   physicsReferenceBody: {fileID: 922402147}
@@ -713,7 +975,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6e3fa050e50a4743a3992d022eca79f6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.World.WorldOriginRebaser
   settings: {fileID: 11400000, guid: 6799d7f003dd4eacb53a2104a65fbba1, type: 2}
   trackingTarget: {fileID: 0}
@@ -737,7 +999,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7b4d1f8c2a6b4ab3aa5591e6b0db57f1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialFrameProvider
   simulation: {fileID: 476981471}
   environmentSources:
@@ -900,7 +1162,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 60b9fe0006befcd46beb11974c08121a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftCameraRig
   exteriorTarget: {fileID: 1678406297}
   cockpitTarget: {fileID: 0}
@@ -946,7 +1208,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
 --- !u!1 &733625510
 GameObject:
@@ -998,7 +1260,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 9fe158cc1956f8c43b75bff5cc5e49d5, type: 2}
   applyInEditMode: 1
@@ -1014,7 +1276,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Test Star
   bodyType: 0
@@ -1141,7 +1403,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614eb7b496224fbd82ffa684591be353, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightSource
   body: {fileID: 733625513}
   radiationSource: {fileID: 733625519}
@@ -1155,7 +1417,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e485273ad23c4c778982d5d5829118f3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialRadiationSource
   body: {fileID: 733625513}
   profile: {fileID: 11400000, guid: 076a8bd9b2ab4b3f818b8c563a906a44, type: 2}
@@ -1169,7 +1431,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: celestial.test-star
 --- !u!114 &733625521
@@ -1182,7 +1444,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 49367193ace64547a9bbfe5a80876247, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialStarVisual
   profile: {fileID: 11400000, guid: 80bfee7118864b1db71aa07fc0508041, type: 2}
   scaledSpaceProfile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
@@ -1255,7 +1517,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73ff7679bce941f0949a9fa36fb21f9a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightingRig
   profile: {fileID: 11400000, guid: 2b4d723e74a0ac94fac5a7927c8ec78c, type: 2}
   primarySource: {fileID: 733625518}
@@ -1293,7 +1555,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d2dc33b0c7c74af8b8b4f6b94de6229a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Space.StarDomeController
   profile: {fileID: 11400000, guid: ada5dcf8924d49079d431e09b24c8b30, type: 2}
   applyOnEnable: 1
@@ -1310,7 +1572,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a58b5d9828e947359ec7e7a4c05af062, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialLodController
   targetCamera: {fileID: 2069305681}
   visuals:
@@ -1328,7 +1590,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 93889cbb63db486187f7c03cfe7eac33, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialOrbitLineRenderer
   simulation: {fileID: 476981471}
   showOrbitLines: 1
@@ -1480,7 +1742,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f927aa0bca054ea6805e496fc833c886, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.InventoryPanelPresenter
 --- !u!114 &900100004 stripped
 MonoBehaviour:
@@ -1491,7 +1753,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
 --- !u!1 &900200000
 GameObject:
@@ -1554,7 +1816,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
   screenId: 100
   layer: 0
@@ -1620,7 +1882,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 0.94, g: 0.91, b: 0.83, a: 0.92}
@@ -1630,7 +1892,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 0079e26c8ba29bb4083d076034bc0743, type: 2}
   m_sharedMaterial: {fileID: -7927227509661586937, guid: 0079e26c8ba29bb4083d076034bc0743, type: 2}
@@ -1712,7 +1974,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
       propertyPath: controlLock
-      value: 
+      value:
       objectReference: {fileID: 1891705759}
     - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
       propertyPath: screens.Array.size
@@ -1720,15 +1982,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
       propertyPath: 'screens.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 900200003}
     - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
       propertyPath: 'screens.Array.data[1]'
-      value: 
+      value:
       objectReference: {fileID: 709315116}
     - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
       propertyPath: 'screens.Array.data[2]'
-      value: 
+      value:
       objectReference: {fileID: 900100004}
     - target: {fileID: 900004, guid: 7e6e729311ba4cfea7096bd3bd33d8f2, type: 3}
       propertyPath: 'screens.Array.data[3]'
@@ -1765,7 +2027,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18663dcf01964076a96e66b8c610cb00, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Foundation.UiSystemRoot
 --- !u!114 &900300004 stripped
 MonoBehaviour:
@@ -1776,7 +2038,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 43015c45ce424f7181dca745ea8e8478, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Input.UiInputDeviceService
 --- !u!114 &900300005 stripped
 MonoBehaviour:
@@ -1787,7 +2049,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fe827a9ec6b4efaa3ef4a2d2b6809e6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenRouter
 --- !u!1001 &901000000
 PrefabInstance:
@@ -2154,6 +2416,76 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40cf4b39ab7a4e5690948d49070aef54, type: 3}
   m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Navigation.UiScreenView
+--- !u!1001 &910000001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cc0e7b00d9df39b4b997f6d7985dfdf4, type: 3}
+--- !u!1 &910000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910000012}
+  - component: {fileID: 910000011}
+  m_Layer: 0
+  m_Name: Systems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &910000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561ba1e97fbb4fec96d5fe4d371523b2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.AudioSceneContext
+  contextId: 1
+  spacecraftTelemetry: {fileID: 910000020}
+--- !u!4 &910000012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910000020 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1701556989748357691, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d21395da21a408e41a3ae3858ccb4878, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.Spacecraft.ShipAudioTelemetryProvider
 --- !u!1 &920000000
 GameObject:
   m_ObjectHideFlags: 0
@@ -2202,7 +2534,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501e0ea991a147569d712701c20e56e0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetKnowledgeRuntime
 --- !u!114 &920000004
 MonoBehaviour:
@@ -2214,7 +2546,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c34405800644338b4dcd45a09e2e686, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Session.GameplayRuntimeRoot
   definitions: {fileID: 11400000, guid: e1f437824dc54f30a15891d3a77e3217, type: 2}
   gravitySimulation: {fileID: 476981471}
@@ -2222,7 +2554,7 @@ MonoBehaviour:
   originRebaser: {fileID: 476981473}
   resourceStreamers:
   - {fileID: 922402158}
-  localPlayerInventory: {fileID: 990561846}
+  localPlayerInventory: {fileID: 101437583}
   possession: {fileID: 1917591035}
   assignedShuttle: {fileID: 1678406330}
   fleet: {fileID: 920000007}
@@ -2236,7 +2568,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: fleet.local
 --- !u!114 &920000006
@@ -2249,7 +2581,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 956b9c04405f48bb8f8f30abad89adf4, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetStorageInventory
   fallbackContainerId: inventory.local
   slotCapacity: 48
@@ -2264,7 +2596,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf72c30c488a495d8af233a25426ebb0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetRuntime
   persistentId: {fileID: 920000005}
   knowledge: {fileID: 920000003}
@@ -2324,7 +2656,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 05ea708a8f4fcb64d80047baab728a2e, type: 2}
   applyInEditMode: 1
@@ -2340,7 +2672,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Test Planet
   bodyType: 1
@@ -2467,7 +2799,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 922402147}
   surfaceModel: {fileID: 922402157}
@@ -2496,7 +2828,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
   profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
   terrainVisual: {fileID: 922402152}
@@ -2513,7 +2845,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 922402147}
   generationProfile: {fileID: 11400000, guid: 1ff9db461b1b46e48af26cd43336dcae, type: 2}
@@ -2530,7 +2862,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
   body: {fileID: 922402147}
   surfaceModel: {fileID: 922402157}
@@ -2558,7 +2890,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: celestial.test-planet
 --- !u!114 &922402160
@@ -2571,7 +2903,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d24e35f46a784b89ab12c3d4e5f60718, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialSurfacePatchSystem
   profile: {fileID: 11400000, guid: a34f56b78c904d12ae34f56b78c90d12, type: 2}
   bodyVisual: {fileID: 922402152}
@@ -2591,7 +2923,7 @@ MonoBehaviour:
   skippedUnchangedRefreshCount: 0
   lastTransitionBuildCount: 0
   lastTransitionCommitFrame: -1
---- !u!1 &990561836
+--- !u!1 &1005994521
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2599,267 +2931,29 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 990561837}
-  - component: {fileID: 990561840}
-  - component: {fileID: 990561839}
-  - component: {fileID: 990561838}
-  - component: {fileID: 990561842}
-  - component: {fileID: 990561841}
-  - component: {fileID: 990561844}
-  - component: {fileID: 990561843}
-  - component: {fileID: 990561845}
-  - component: {fileID: 990561846}
-  - component: {fileID: 990561847}
+  - component: {fileID: 1005994522}
   m_Layer: 0
-  m_Name: Player Explorer
+  m_Name: Spawn_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &990561837
+--- !u!4 &1005994522
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
+  m_GameObject: {fileID: 1005994521}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2158.53, y: 5.7, z: 2.1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 264822.53, y: 5.7, z: -124824.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1944801546}
+  m_Father: {fileID: 158838724}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &990561838
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &990561839
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Enabled: 0
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &990561840
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &990561841
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
-  mouseSensitivity: 1
-  gamepadLookDegreesPerSecond: 150
-  controlLock: {fileID: 1891705759}
---- !u!54 &990561842
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
---- !u!114 &990561843
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
-  profile: {fileID: 11400000, guid: 83dee516fa8b4632bcbb28acd5b0e3f5, type: 2}
-  inputSource: {fileID: 990561841}
-  viewReference: {fileID: 2069305678}
-  applyCelestialGravity: 1
-  grounded: 0
-  walkableGround: 0
-  groundSlopeAngle: 0
-  surfaceSpeed: 0
-  verticalSpeed: 0
-  touchingWater: 0
-  underwater: 0
-  waterDepth: 0
-  waterSubmergedFraction: 0
-  localUp: {x: 0, y: 1, z: 0}
-  groundNormal: {x: 0, y: 1, z: 0}
---- !u!114 &990561844
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d25fd99b97c4ca48f4aebe4425840b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Actors.CelestialActorProbe
-  frameProvider: {fileID: 476981474}
-  dominantBodyName: 
-  surfaceAltitude: 0
-  surfaceSlopeAngleDegrees: 0
-  oceanAltitude: 0
-  atmosphereAltitude: 0
-  insideAtmosphere: 0
-  belowOceanLevel: 0
-  radialVelocity: 0
-  tangentialSpeed: 0
-  surfaceNormalVelocity: 0
-  surfaceTangentialSpeed: 0
-  speedRelativeToBody: 0
-  localUp: {x: 0, y: 1, z: 0}
-  gravityAcceleration: {x: 0, y: 0, z: 0}
---- !u!114 &990561845
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
-  inputSource: {fileID: 990561841}
-  controlLock: {fileID: 1891705759}
-  viewReference: {fileID: 2069305678}
-  maxDistance: 6
-  castRadius: 0.45
-  interactionLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  triggerInteraction: 2
-  hasTarget: 0
-  currentPrompt: 
-  currentTargetTransform: {fileID: 0}
---- !u!114 &990561846
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
-  fallbackContainerId: inventory.local
-  slotCapacity: 12
-  stacks: []
---- !u!114 &990561847
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 990561836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
-  persistentId: player.explorer
 --- !u!1001 &1136215600
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2877,6 +2971,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b16fa7e754864e0db8c542e696b2fa03, type: 3}
+--- !u!1 &1151225728
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1151225729}
+  m_Layer: 0
+  m_Name: Spawn_4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1151225729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1151225728}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 264826.53, y: 5.7, z: -124820.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 158838724}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1317745336
 GameObject:
   m_ObjectHideFlags: 0
@@ -2923,7 +3048,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e4e1358212cc86449edc2c485798f10, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.GravityActor
   simulation: {fileID: 476981471}
   alignUpAgainstGravity: 1
@@ -3195,7 +3320,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3756892544726139654, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value: 
+      value:
       objectReference: {fileID: 0}
     - target: {fileID: 4289152935129214295, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_LocalScale.x
@@ -3223,11 +3348,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4918412385370244340, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value: 
+      value:
       objectReference: {fileID: 0}
     - target: {fileID: 5383031462875425764, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value: 
+      value:
       objectReference: {fileID: 0}
     - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3287,7 +3412,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8165542165073250860, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_Mesh
-      value: 
+      value:
       objectReference: {fileID: 0}
     - target: {fileID: 8579063232482358793, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_LocalScale.x
@@ -3299,11 +3424,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8607803184205426111, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: celestialProbe
-      value: 
+      value:
       objectReference: {fileID: 1678406324}
     - target: {fileID: 8607803184205426111, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: oceanInteractor
-      value: 
+      value:
       objectReference: {fileID: 1678406317}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3324,7 +3449,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a37fae9001c495cbc8611c85c486f84, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftRig
 --- !u!114 &1678406299 stripped
 MonoBehaviour:
@@ -3335,7 +3460,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 240ea934eebc42bf9fd3088b670f8e90, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
 --- !u!114 &1678406301 stripped
 MonoBehaviour:
@@ -3346,7 +3471,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9bd89b4c96f34fd4e9d670f2eb2c0a02, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftMotor
 --- !u!114 &1678406302 stripped
 MonoBehaviour:
@@ -3357,7 +3482,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
 --- !u!54 &1678406309 stripped
 Rigidbody:
@@ -3373,7 +3498,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbe3b10ddd4148a4a6ef589ef2108d17, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftOceanInteractor
 --- !u!114 &1678406324 stripped
 MonoBehaviour:
@@ -3384,7 +3509,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d25fd99b97c4ca48f4aebe4425840b2, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Actors.CelestialActorProbe
 --- !u!114 &1678406330 stripped
 MonoBehaviour:
@@ -3395,7 +3520,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee3ff7f66b694542bf9062bbb6cba7cd, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.ShuttleRuntimeBinding
 --- !u!1 &1738582683
 GameObject:
@@ -3490,7 +3615,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -3507,7 +3632,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -3554,7 +3679,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc97f6f987a24a7da3c79acef9cfa4f1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.GameplayUiController
   currentScreen: 100
   inventoryPanel: {fileID: 900100003}
@@ -3566,7 +3691,7 @@ MonoBehaviour:
   confirmationDialog: {fileID: 0}
   loadingOverlay: {fileID: 0}
   saveLoadScreen: {fileID: 0}
-  interactionRaycaster: {fileID: 990561845}
+  interactionRaycaster: {fileID: 101437579}
   interactionPromptText: {fileID: 900200013}
   interactionPromptPrefix: E
   lockCursorDuringGameplay: 1
@@ -3580,7 +3705,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1a739a33de0447638f2977c488050d22, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Input.PlayerControlLock
   activeReasons: 0
 --- !u!114 &1891705760
@@ -3593,7 +3718,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05a0c010b8cca7f4283fe3fc6a17d3b6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Persistence.GameplaySaveCoordinator
   slotName: autosave
   consumeStartupRequestOnStart: 1
@@ -3608,7 +3733,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71b1c94751624c24ae13a79cce587eb6, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.App.Runtime::Farion.App.Flow.GameplaySessionController
   localPlayerId: player.local
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
@@ -3657,7 +3782,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f51b22b953e42e9a984584a2737ed88, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.KeyboardBoardingInput
 --- !u!114 &1917591035
 MonoBehaviour:
@@ -3669,7 +3794,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27301337013f42f48461e2c5149285d9, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerPossessionController
   initialMode: 0
   currentMode: 0
@@ -3692,12 +3817,12 @@ MonoBehaviour:
   exteriorTransitionDistance: 0.45
   exteriorTransitionCooldownSeconds: 0.35
   exteriorTransitionProgressDistance: 0.75
-  explorerRoot: {fileID: 990561836}
-  explorerRigidbody: {fileID: 990561842}
-  explorerMotor: {fileID: 990561843}
-  explorerInput: {fileID: 990561841}
+  explorerRoot: {fileID: 101437582}
+  explorerRigidbody: {fileID: 101437581}
+  explorerMotor: {fileID: 101437580}
+  explorerInput: {fileID: 101437578}
   firstPersonCameraRig: {fileID: 2069305682}
-  explorerInteractionRaycaster: {fileID: 990561845}
+  explorerInteractionRaycaster: {fileID: 101437579}
   exitPoseClearance: 0.25
   snapExplorerToExteriorSurface: 1
   exteriorGroundClearance: 0.08
@@ -3751,7 +3876,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
@@ -3782,7 +3907,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
@@ -3797,7 +3922,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d048faec1174ec5875d598c5330938e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Input.UiInputModuleBinder
   inputModule: {fileID: 1939519868}
 --- !u!1 &1944801545
@@ -3831,10 +3956,11 @@ Transform:
   m_Children:
   - {fileID: 1317745337}
   - {fileID: 1678406297}
-  - {fileID: 990561837}
+  - {fileID: 101437584}
   - {fileID: 1917591033}
   - {fileID: 1975656743}
   - {fileID: 8000000000000000002}
+  - {fileID: 158838724}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1967590417
@@ -3931,15 +4057,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4696739717027959432, guid: 7e2af27300545e04eb8b4a987fdc9009, type: 3}
       propertyPath: worldCamera
-      value: 
+      value:
       objectReference: {fileID: 2069305681}
     - target: {fileID: 4696739717027959432, guid: 7e2af27300545e04eb8b4a987fdc9009, type: 3}
       propertyPath: navigationTarget
-      value: 
+      value:
       objectReference: {fileID: 2047954382}
     - target: {fileID: 4696739717027959432, guid: 7e2af27300545e04eb8b4a987fdc9009, type: 3}
       propertyPath: possessionController
-      value: 
+      value:
       objectReference: {fileID: 1917591035}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4022,7 +4148,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d67c9c8b5fd740a09fa057541ae55d54, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Navigation.FlightNavigationTarget
 --- !u!1 &2069305677
 GameObject:
@@ -4069,7 +4195,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
@@ -4164,10 +4290,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ced45a73ad04689b7acff5d28915f41, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonCameraRig
-  target: {fileID: 990561843}
-  inputSource: {fileID: 990561841}
+  target: {fileID: 101437580}
+  inputSource: {fileID: 101437578}
   eyeHeight: 1.65
   pitchLimit: 82
   positionResponsiveness: 28
@@ -4183,7 +4309,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
   nonRigidbodyVelocity: 1
   attenuationObject: {fileID: 0}
@@ -4219,6 +4345,37 @@ Transform:
   - {fileID: 1939519867}
   - {fileID: 1891705753}
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2084476327
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2084476328}
+  m_Layer: 0
+  m_Name: Spawn_3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2084476328
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2084476327}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 264822.53, y: 5.7, z: -124820.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 158838724}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2107307728
 GameObject:
@@ -4271,7 +4428,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: c9716310537b1f74ba20424113e5f417, type: 2}
   applyInEditMode: 1
@@ -4287,7 +4444,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Test Moon
   bodyType: 2
@@ -4414,7 +4571,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 2107307731}
   surfaceModel: {fileID: 0}
@@ -4443,7 +4600,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: celestial.test-moon
 --- !u!1 &8000000000000000001
@@ -4488,7 +4645,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d62d1ba6f5ac485b96dec06c9d2ca7ff, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Space.NebulaVolume
   radius: 8000
   edgeFade: 0.5
@@ -4513,7 +4670,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 922402152}
@@ -4529,82 +4686,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 2107307736}
   observerCamera: {fileID: 2069305681}
   applyInEditMode: 1
---- !u!1001 &910000001
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications: []
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: cc0e7b00d9df39b4b997f6d7985dfdf4, type: 3}
---- !u!1 &910000010
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 910000012}
-  - component: {fileID: 910000011}
-  m_Layer: 0
-  m_Name: Systems
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &910000011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 910000010}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 561ba1e97fbb4fec96d5fe4d371523b2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.AudioSceneContext
-  contextId: 1
-  spacecraftTelemetry: {fileID: 910000020}
---- !u!4 &910000012
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 910000010}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &910000020 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1701556989748357691, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d21395da21a408e41a3ae3858ccb4878, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.Spacecraft.ShipAudioTelemetryProvider
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

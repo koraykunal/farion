@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Farion.App.Flow;
 using Farion.Audio;
 using Farion.Core.Persistence;
@@ -7,14 +8,29 @@ using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Identity;
+using Farion.Gameplay.Character;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Flight;
+using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Resources;
 using Farion.Gameplay.Session;
 using Farion.Gameplay.Ships;
+using Farion.Multiplayer.Player;
+using Farion.Multiplayer.Session;
+using Farion.Multiplayer.Spawning;
+using Farion.Multiplayer.World;
+using Farion.Multiplayer.World.Zones;
+using FishNet.Component.Observing;
+using FishNet.Managing;
+using FishNet.Managing.Object;
+using FishNet.Managing.Observing;
+using FishNet.Managing.Timing;
+using FishNet.Object;
+using FishNet.Component.Transforming.Beta;
+using FishNet.Transporting.Tugboat;
 using FMODUnity;
 using UnityEditor;
 using UnityEditor.Build;
@@ -28,6 +44,11 @@ namespace Farion.Editor.Validation
 {
     public sealed class FarionProjectValidator : IPreprocessBuildWithReport
     {
+        const string MultiplayerPresentationScenePath =
+            "Assets/Project/Scenes/SC_MultiplayerShell.unity";
+        const string WorldZoneScenePath =
+            "Assets/Project/Scenes/SC_WorldZone.unity";
+
         public int callbackOrder => -1000;
 
         [MenuItem("Farion/Validation/Validate Project")]
@@ -58,6 +79,7 @@ namespace Farion.Editor.Validation
             FarionValidationReport report = new();
             ValidateBuildScenes(report);
             ValidateDefinitionRegistries(report);
+            ValidateMultiplayerAssets(report);
             FarionUiProjectValidator.ValidateProject(report);
             FarionCelestialVisualProjectValidator.ValidateProjectAssets(report);
             return report;
@@ -106,6 +128,9 @@ namespace Farion.Editor.Validation
                     new(StringComparer.Ordinal);
                 Dictionary<PersistentEntityId, InventoryContainerComponent> containerIds =
                     new();
+                SimulationZoneContext[] zones =
+                    FindSceneComponents<SimulationZoneContext>(scene);
+                bool isSimulationZone = zones.Length > 0;
                 foreach (GameObject root in scene.GetRootGameObjects())
                 {
                     ValidateHierarchy(
@@ -113,10 +138,25 @@ namespace Farion.Editor.Validation
                         path,
                         persistentIds,
                         containerIds,
+                        isSimulationZone,
                         report);
                 }
 
-                ValidateAudioComposition(scene, path, report);
+                if (isSimulationZone)
+                {
+                    ValidateSimulationZoneScene(scene, path, zones, report);
+                }
+                else
+                {
+                    ValidateAudioComposition(scene, path, report);
+                    if (path == MultiplayerPresentationScenePath)
+                    {
+                        ValidateMultiplayerPresentationScene(
+                            scene,
+                            path,
+                            report);
+                    }
+                }
             }
             finally
             {
@@ -132,6 +172,7 @@ namespace Farion.Editor.Validation
             string scenePath,
             Dictionary<string, PersistentObjectId> persistentIds,
             Dictionary<PersistentEntityId, InventoryContainerComponent> containerIds,
+            bool isSimulationZone,
             FarionValidationReport report)
         {
             foreach (Transform item in root.GetComponentsInChildren<Transform>(true))
@@ -168,6 +209,7 @@ namespace Farion.Editor.Validation
                 FarionCelestialVisualProjectValidator.ValidateSceneObject(
                     gameObject,
                     scenePath,
+                    isSimulationZone,
                     report);
 
                 if (gameObject.TryGetComponent(out PlayerPossessionController possessionController))
@@ -205,6 +247,62 @@ namespace Farion.Editor.Validation
                 if (gameObject.TryGetComponent(out GameplayRuntimeRoot runtimeRoot))
                 {
                     ValidateGameplayRuntimeRoot(scenePath, runtimeRoot, report);
+                }
+
+                if (gameObject.TryGetComponent(
+                        out MultiplayerSceneContext multiplayerContext))
+                {
+                    if (isSimulationZone)
+                    {
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "gravitySimulation",
+                            report);
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "celestialFrameProvider",
+                            report);
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "originRebaser",
+                            report);
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "simulationZoneContext",
+                            report);
+                    }
+                    else
+                    {
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "runtimeRoot",
+                            report);
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "spacecraftCameraRig",
+                            report);
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "firstPersonCameraRig",
+                            report);
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "viewReference",
+                            report);
+                        ValidateRequiredReference(
+                            scenePath,
+                            multiplayerContext,
+                            "controlLock",
+                            report);
+                    }
                 }
 
                 if (gameObject.TryGetComponent(out FleetRuntime fleet))
@@ -352,6 +450,90 @@ namespace Farion.Editor.Validation
                 report.AddError(
                     $"{scenePath}: production audio is FMOD-only; found " +
                     $"{unityListeners.Length} AudioListener and {unitySources.Length} AudioSource component(s).");
+            }
+        }
+
+        static void ValidateSimulationZoneScene(
+            Scene scene,
+            string scenePath,
+            SimulationZoneContext[] zones,
+            FarionValidationReport report)
+        {
+            if (zones.Length != 1)
+            {
+                report.AddError(
+                    $"{scenePath}: expected one SimulationZoneContext, found {zones.Length}.");
+            }
+
+            if (FindSceneComponents<AudioDirector>(scene).Length > 0 ||
+                FindSceneComponents<AudioListener>(scene).Length > 0 ||
+                FindSceneComponents<StudioListener>(scene).Length > 0)
+            {
+                report.AddError(
+                    $"{scenePath}: a simulation zone must not duplicate global audio ownership.");
+            }
+
+            MultiplayerSceneContext[] contexts =
+                FindSceneComponents<MultiplayerSceneContext>(scene);
+            if (contexts.Length != 1)
+            {
+                report.AddError(
+                    $"{scenePath}: expected one MultiplayerSceneContext, found {contexts.Length}.");
+                return;
+            }
+
+            SerializedProperty formations = new SerializedObject(contexts[0])
+                .FindProperty("starterShipFormations");
+            if (formations == null || formations.arraySize != 4)
+            {
+                report.AddError(
+                    $"{scenePath}: starter ship formations must contain Count_1 through Count_4.");
+                return;
+            }
+
+            for (int i = 0; i < formations.arraySize; i++)
+            {
+                Transform formation = formations.GetArrayElementAtIndex(i)
+                    .objectReferenceValue as Transform;
+                if (formation == null || formation.name != $"Count_{i + 1}")
+                {
+                    report.AddError(
+                        $"{scenePath}: starter ship formation {i + 1} is missing or misordered.");
+                    continue;
+                }
+
+                for (int shipIndex = 0; shipIndex <= i; shipIndex++)
+                {
+                    if (formation.Find($"Ship_{shipIndex + 1}") == null)
+                    {
+                        report.AddError(
+                            $"{scenePath}: {formation.name}/Ship_{shipIndex + 1} is missing.");
+                    }
+                }
+            }
+        }
+
+        static void ValidateMultiplayerPresentationScene(
+            Scene scene,
+            string scenePath,
+            FarionValidationReport report)
+        {
+            if (FindSceneComponents<Camera>(scene).Length != 1 ||
+                FindSceneComponents<FirstPersonCameraRig>(scene).Length != 1 ||
+                FindSceneComponents<SpacecraftCameraRig>(scene).Length != 1 ||
+                FindSceneComponents<PlayerControlLock>(scene).Length != 1)
+            {
+                report.AddError(
+                    $"{scenePath}: multiplayer presentation requires exactly one " +
+                    "Camera, FirstPersonCameraRig, SpacecraftCameraRig, and PlayerControlLock.");
+            }
+
+            if (FindSceneComponents<CelestialBody>(scene).Length > 0 ||
+                FindSceneComponents<GravitySimulation>(scene).Length > 0 ||
+                FindSceneComponents<GameplayRuntimeRoot>(scene).Length > 0)
+            {
+                report.AddError(
+                    $"{scenePath}: multiplayer presentation must not own world simulation or offline gameplay state.");
             }
         }
 
@@ -916,6 +1098,225 @@ namespace Farion.Editor.Validation
                     inventoryItems, item => item.ItemId, path, report);
                 ValidateDefinitionList<ResourceNodeDefinition>(
                     serialized.FindProperty("resourceNodes"), item => item.NodeId, path, report);
+            }
+        }
+
+        static void ValidateMultiplayerAssets(FarionValidationReport report)
+        {
+            const string sessionPath =
+                "Assets/Project/Resources/Multiplayer/PF_NetworkSessionRoot.prefab";
+            const string playerPath =
+                "Assets/Project/Prefabs/Gameplay/Character/PF_PlayerExplorerNetwork.prefab";
+            const string sessionPlayerPath =
+                "Assets/Project/Prefabs/Multiplayer/PF_NetworkSessionPlayer.prefab";
+            const string starterShipPath =
+                "Assets/Project/Prefabs/Multiplayer/PF_StarterShuttleNetwork.prefab";
+            GameObject session = AssetDatabase.LoadAssetAtPath<GameObject>(sessionPath);
+            GameObject player = AssetDatabase.LoadAssetAtPath<GameObject>(playerPath);
+            GameObject sessionPlayer =
+                AssetDatabase.LoadAssetAtPath<GameObject>(sessionPlayerPath);
+            GameObject starterShip =
+                AssetDatabase.LoadAssetAtPath<GameObject>(starterShipPath);
+            if (session == null ||
+                player == null ||
+                sessionPlayer == null ||
+                starterShip == null)
+            {
+                report.AddError(
+                    "Multiplayer session, player, or starter ship prefab is missing.");
+                return;
+            }
+
+            NetworkManager manager = session.GetComponent<NetworkManager>();
+            TimeManager timeManager = session.GetComponent<TimeManager>();
+            Tugboat tugboat = session.GetComponent<Tugboat>();
+            ObserverManager observerManager = session.GetComponent<ObserverManager>();
+            if (manager == null ||
+                timeManager == null ||
+                tugboat == null ||
+                observerManager == null ||
+                session.GetComponent<MultiplayerSessionController>() == null ||
+                session.GetComponent<NetworkPlayerSpawner>() == null ||
+                session.GetComponent<NetworkWorldOriginAuthority>() == null ||
+                session.GetComponent<ZonePhysicsTickDriver>() == null ||
+                session.GetComponent<NetworkZoneCoordinator>() == null)
+            {
+                report.AddError($"{sessionPath}: incomplete networking composition.");
+            }
+
+            if (observerManager != null)
+            {
+                SerializedProperty conditions =
+                    new SerializedObject(observerManager)
+                        .FindProperty("_defaultConditions");
+                bool hasSceneCondition = false;
+                for (int i = 0; conditions != null && i < conditions.arraySize; i++)
+                {
+                    if (conditions.GetArrayElementAtIndex(i).objectReferenceValue
+                        is SceneCondition)
+                    {
+                        hasSceneCondition = true;
+                        break;
+                    }
+                }
+
+                if (!hasSceneCondition)
+                {
+                    report.AddError(
+                        $"{sessionPath}: ObserverManager must include FishNet SceneCondition.");
+                }
+            }
+
+            ValidateRequiredBuildScene(MultiplayerPresentationScenePath, report);
+            ValidateRequiredBuildScene(WorldZoneScenePath, report);
+
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(WorldZoneScenePath) == null)
+            {
+                return;
+            }
+
+            MultiplayerSessionController sessionController =
+                session.GetComponent<MultiplayerSessionController>();
+            NetworkZoneCoordinator zoneCoordinator =
+                session.GetComponent<NetworkZoneCoordinator>();
+            if (sessionController != null)
+            {
+                SerializedObject controllerSerialized =
+                    new(sessionController);
+                if (controllerSerialized.FindProperty("zoneCoordinator")
+                        ?.objectReferenceValue != zoneCoordinator ||
+                    controllerSerialized.FindProperty("presentationSceneName")
+                        ?.stringValue != "SC_MultiplayerShell" ||
+                    controllerSerialized.FindProperty("startingZoneSceneName")
+                        ?.stringValue != "SC_WorldZone")
+                {
+                    report.AddError(
+                        $"{sessionPath}: multiplayer shell or starting-zone routing is incomplete.");
+                }
+            }
+
+            if (timeManager != null)
+            {
+                SerializedObject timeSerialized = new(timeManager);
+                if (timeSerialized.FindProperty("_tickRate").intValue != 100 ||
+                    timeSerialized.FindProperty("_physicsMode").intValue !=
+                    (int)PhysicsMode.TimeManager)
+                {
+                    report.AddError($"{sessionPath}: TimeManager must use 100 Hz network physics.");
+                }
+            }
+
+            if (tugboat != null)
+            {
+                SerializedObject tugboatSerialized = new(tugboat);
+                if (tugboatSerialized.FindProperty("_maximumClients").intValue != 4)
+                {
+                    report.AddError($"{sessionPath}: Tugboat must allow exactly four clients.");
+                }
+            }
+
+            NetworkObject networkObject = player.GetComponent<NetworkObject>();
+            if (networkObject == null ||
+                !networkObject.EnablePrediction ||
+                player.GetComponent<NetworkExplorerController>() == null ||
+                player.GetComponentInChildren<NetworkTickSmoother>(true) == null)
+            {
+                report.AddError($"{playerPath}: predicted network explorer composition is invalid.");
+            }
+
+            NetworkObject sessionPlayerObject =
+                sessionPlayer.GetComponent<NetworkObject>();
+            if (sessionPlayerObject == null ||
+                !sessionPlayerObject.IsGlobal ||
+                sessionPlayer.GetComponent<NetworkSessionPlayer>() == null)
+            {
+                report.AddError(
+                    $"{sessionPlayerPath}: global session identity composition is invalid.");
+            }
+
+            NetworkObject starterShipObject =
+                starterShip.GetComponent<NetworkObject>();
+            Rigidbody starterShipBody = starterShip.GetComponent<Rigidbody>();
+            if (starterShipObject == null ||
+                starterShip.GetComponent<NetworkStarterShip>() == null ||
+                starterShipBody == null ||
+                !starterShipBody.isKinematic ||
+                starterShip.GetComponent<SpacecraftMotor>()?.enabled != false ||
+                starterShip.GetComponent<KeyboardSpacecraftInput>()?.enabled != false)
+            {
+                report.AddError(
+                    $"{starterShipPath}: parked network starter ship composition is invalid.");
+            }
+
+            NetworkPlayerSpawner playerSpawner =
+                session.GetComponent<NetworkPlayerSpawner>();
+            SerializedProperty sessionPlayerReference = playerSpawner == null
+                ? null
+                : new SerializedObject(playerSpawner)
+                    .FindProperty("sessionPlayerPrefab");
+            if (sessionPlayerReference?.objectReferenceValue != sessionPlayerObject)
+            {
+                report.AddError(
+                    $"{sessionPath}: session player prefab reference is missing.");
+            }
+
+            SerializedProperty starterShipReference = playerSpawner == null
+                ? null
+                : new SerializedObject(playerSpawner)
+                    .FindProperty("starterShipPrefab");
+            if (starterShipReference?.objectReferenceValue != starterShipObject)
+            {
+                report.AddError(
+                    $"{sessionPath}: starter ship prefab reference is missing.");
+            }
+
+            Rigidbody playerBody = player.GetComponent<Rigidbody>();
+            if (playerBody == null ||
+                (playerBody.constraints & RigidbodyConstraints.FreezeRotation) !=
+                    RigidbodyConstraints.FreezeRotation)
+            {
+                report.AddError(
+                    $"{playerPath}: explorer Rigidbody must freeze physics rotation.");
+            }
+
+            if (manager != null)
+            {
+                if (manager.SpawnablePrefabs is not DefaultPrefabObjects registeredPrefabs)
+                {
+                    report.AddError(
+                        $"{sessionPath}: NetworkManager must use the Farion default prefab registry.");
+                }
+                else if (registeredPrefabs.Prefabs.Count != 3 ||
+                         networkObject == null ||
+                         sessionPlayerObject == null ||
+                         starterShipObject == null ||
+                         !registeredPrefabs.Prefabs.Contains(networkObject) ||
+                         !registeredPrefabs.Prefabs.Contains(sessionPlayerObject) ||
+                         !registeredPrefabs.Prefabs.Contains(starterShipObject))
+                {
+                    report.AddError(
+                        $"{sessionPath}: spawnable prefab registry must contain exactly the Farion session player, explorer, and starter ship.");
+                }
+            }
+
+        }
+
+        static void ValidateRequiredBuildScene(
+            string scenePath,
+            FarionValidationReport report)
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) == null)
+            {
+                report.AddError($"{scenePath}: required multiplayer scene is missing.");
+                return;
+            }
+
+            if (!Array.Exists(
+                    EditorBuildSettings.scenes,
+                    scene => scene.enabled && scene.path == scenePath))
+            {
+                report.AddError(
+                    $"{scenePath}: required multiplayer scene must be enabled in Build Profiles.");
             }
         }
 

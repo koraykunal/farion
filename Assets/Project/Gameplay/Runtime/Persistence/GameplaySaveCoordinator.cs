@@ -40,6 +40,12 @@ namespace Farion.Gameplay.Persistence
 
         void Start()
         {
+            if (ResolveRuntimeRoot()?.Mode == GameplaySessionMode.Multiplayer)
+            {
+                enabled = false;
+                return;
+            }
+
             if (!consumeStartupRequestOnStart)
             {
                 return;

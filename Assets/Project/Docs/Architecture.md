@@ -45,6 +45,7 @@ Farion.App.Runtime        --> Domain + Core + Gameplay
 Farion.Rendering.Runtime  --> Core + Simulation + URP
 Farion.Audio.Runtime      --> Core + Simulation + Gameplay + FMOD
 Farion.UI.Runtime         --> Core + Gameplay + Simulation + App + Audio
+Farion.Multiplayer.Runtime --> Simulation + Gameplay + UI + FishNet
 ```
 
 - `Farion.Core.Runtime` owns cross-cutting time, persistence identity, and
@@ -75,6 +76,9 @@ Farion.UI.Runtime         --> Core + Gameplay + Simulation + App + Audio
 - `Farion.Audio.Runtime` owns the persistent FMOD mix, scene/environment
   adaptation, UI cue dispatch, and spacecraft presentation driven by gameplay
   telemetry.
+- `Farion.Multiplayer.Runtime` owns the optional FishNet listen-server session,
+  Tugboat transport, predicted network explorer, connection spawning, and
+  shared-origin replication. Lower assemblies do not reference FishNet.
 
 Dependencies do not point back up this list. Domain code does not reference
 Unity, gameplay does not reference UI, and simulation does not reference
@@ -212,6 +216,16 @@ new schema is allowed only after those runtime owners exist.
 - `SpacecraftMotor` owns spacecraft motion and publishes telemetry.
 - Camera, HUD, FMOD, and thruster VFX consume telemetry and do not feed state
   back into flight physics.
+- Multiplayer uses a separate one-shot session mode. Offline save, inventory,
+  possession, shuttle control, and commands remain inactive during that mode;
+  the server owns player spawning, movement reconciliation, and origin shifts.
+- Multiplayer composition is `SC_MultiplayerShell` for local presentation plus
+  one shared `SC_WorldZone` connection scene with isolated 3D physics. The
+  current origin authority is intentionally single-zone; loading a different
+  zone is rejected until origin state and broadcasts are keyed by zone id.
+- Starter ships currently provide server-spawned parked identities and authored
+  formations only. Network boarding, possession, ship movement authority, and
+  replicated flight are not implemented.
 - Ocean and atmosphere rendering remain in rendering-owned URP paths while
   simulation exposes narrow environment contracts needed by gameplay.
 
@@ -236,7 +250,7 @@ The following systems are product direction, not current implementation:
 - shuttle and capital-ship upgrades;
 - equipment instances and loadouts;
 - research terminals or technology voting;
-- multiplayer transport and replication.
+- inventory, interaction, shuttle, Fleet, save, and progression replication.
 
 The next safe architectural increment is to finish the imported Capital Ship
 Fleet visual alignment, present processing results, and prove the local

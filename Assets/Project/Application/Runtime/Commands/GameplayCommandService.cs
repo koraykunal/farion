@@ -30,6 +30,7 @@ namespace Farion.App.Commands
         public GameplaySessionRuntime Session => session;
 
         public event Action<InventoryItemDefinition, int> ItemAcquired;
+        public event Action<CargoTransferReceipt> CargoTransferCompleted;
 
         public ResourceHarvestResult CanHarvest(
             ResourceNodeInteractable source,
@@ -67,7 +68,15 @@ namespace Farion.App.Commands
         public CargoTransferResult TryLoadAssignedShuttleCargo(
             ShuttleCargoInventory destination)
         {
-            return fleetCargo.TryLoadAssignedShuttleCargo(destination);
+            CargoTransferResult result =
+                fleetCargo.TryLoadAssignedShuttleCargo(destination);
+            CargoTransferCompleted?.Invoke(
+                new CargoTransferReceipt(
+                    CargoTransferKind.LoadShuttle,
+                    result,
+                    session.LocalInventory?.CaptureContainerSnapshot(),
+                    destination?.CaptureContainerSnapshot()));
+            return result;
         }
 
         public CargoTransferResult CanUnloadAssignedShuttleCargo(
@@ -79,7 +88,15 @@ namespace Farion.App.Commands
         public CargoTransferResult TryUnloadAssignedShuttleCargo(
             ShuttleCargoInventory source)
         {
-            return fleetCargo.TryUnloadAssignedShuttleCargo(source);
+            CargoTransferResult result =
+                fleetCargo.TryUnloadAssignedShuttleCargo(source);
+            CargoTransferCompleted?.Invoke(
+                new CargoTransferReceipt(
+                    CargoTransferKind.UnloadToFleet,
+                    result,
+                    source?.CaptureContainerSnapshot(),
+                    session.FleetStorage?.CaptureContainerSnapshot()));
+            return result;
         }
 
         public FleetProcessingResult CanProcessFleetRecipe(

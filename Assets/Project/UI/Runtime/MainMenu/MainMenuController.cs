@@ -1,3 +1,4 @@
+using System;
 using Farion.App.Flow;
 using Farion.Core.Persistence;
 using Farion.UI.Feedback;
@@ -32,6 +33,8 @@ namespace Farion.UI.MainMenu
         public bool HasAnySaveData =>
             saveGameAvailability != null &&
             saveGameAvailability.HasAnySaveData;
+
+        public event Action<MainMenuAction> CoopActionRequested;
 
         void Awake()
         {
@@ -97,6 +100,10 @@ namespace Farion.UI.MainMenu
                     break;
                 case MainMenuAction.ConfirmExit:
                     GameFlowService.Quit();
+                    break;
+                case MainMenuAction.HostGame:
+                case MainMenuAction.JoinLocalhost:
+                    CoopActionRequested?.Invoke(action);
                     break;
             }
         }
@@ -232,7 +239,7 @@ namespace Farion.UI.MainMenu
             ShowFeedback("Confirmation screen is not configured.");
         }
 
-        void ShowFeedback(
+        public void ShowFeedback(
             string message,
             UiFeedbackSeverity severity = UiFeedbackSeverity.Information)
         {

@@ -1,6 +1,16 @@
 using System.Collections;
+using System.Reflection;
+using Farion.App.Flow;
+using Farion.Core.Persistence;
+using Farion.Gameplay.Commands;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Persistence;
+using Farion.Gameplay.Resources;
+using Farion.Gameplay.Session;
+using Farion.Gameplay.Ships;
+using Farion.UI.Feedback;
+using Farion.UI.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,6 +20,8 @@ namespace Farion.Tests.PlayMode
 {
     public sealed class PossessionLoopSmokeTests
     {
+        const string UnloadWorkflowSlot = "playmode-unload-workflow";
+
         [UnityTest]
         public IEnumerator ExpeditionSupportsExitAndReenterPilotLoop()
         {
@@ -47,7 +59,9 @@ namespace Farion.Tests.PlayMode
 
             SpacecraftCameraRig cameraRig = Object.FindAnyObjectByType<SpacecraftCameraRig>();
             Assert.That(cameraRig, Is.Not.Null);
-            Assert.That(GameObject.Find("SpacecraftFlightHud"), Is.Not.Null);
+            Assert.That(
+                Object.FindAnyObjectByType<SpacecraftFlightHudPresenter>(),
+                Is.Not.Null);
 
             PilotSeatInteractable pilotSeat =
                 Object.FindAnyObjectByType<PilotSeatInteractable>(
@@ -67,6 +81,129 @@ namespace Farion.Tests.PlayMode
             Assert.That(controller.IsPilotingSpacecraft, Is.True);
         }
 
+        [UnityTest]
+        public IEnumerator ExpeditionCompletesHarvestUnloadAndSaveLoadWorkflow()
+        {
+            SaveGameFileService.DeleteSlot(UnloadWorkflowSlot);
+            SaveGameStartupRequest.RequestNewGame();
+
+            try
+            {
+                AsyncOperation load = SceneManager.LoadSceneAsync(
+                    "SC_Expedition",
+                    LoadSceneMode.Single);
+                Assert.That(load, Is.Not.Null);
+                while (!load.isDone)
+                {
+                    yield return null;
+                }
+
+                yield return null;
+
+                GameplaySessionController controller =
+                    Object.FindAnyObjectByType<GameplaySessionController>();
+                Assert.That(controller, Is.Not.Null);
+                GameplaySessionRuntime runtime = controller.Runtime;
+                Assert.That(runtime, Is.Not.Null);
+                Assert.That(controller.Commands, Is.Not.Null);
+
+                ResourceNodeInteractable resource =
+                    Object.FindAnyObjectByType<ResourceNodeInteractable>();
+                if (resource == null)
+                {
+                    resource = CreateWorkflowResource();
+                }
+
+                Assert.That(resource, Is.Not.Null);
+                Assert.That(resource.Definition, Is.Not.Null);
+                Assert.That(resource.Definition.YieldedItem, Is.Not.Null);
+                var item = resource.Definition.YieldedItem;
+
+                Assert.That(
+                    controller.Commands.TryHarvest(
+                        resource,
+                        runtime.LocalInventory),
+                    Is.EqualTo(ResourceHarvestResult.Succeeded));
+                int harvested = runtime.LocalInventory.Count(item);
+                Assert.That(harvested, Is.GreaterThan(0));
+
+                Assert.That(
+                    controller.TryLoadAssignedShuttleCargo(
+                        runtime.ShuttleBinding.Cargo),
+                    Is.EqualTo(CargoTransferResult.Succeeded));
+                Assert.That(runtime.LocalInventory.Count(item), Is.Zero);
+                Assert.That(runtime.ShuttleBinding.Cargo.Count(item), Is.EqualTo(harvested));
+
+                ShuttleDockingBoundary dockingBoundary =
+                    Object.FindAnyObjectByType<ShuttleDockingBoundary>();
+                FleetCargoUnloadInteractable unload =
+                    Object.FindAnyObjectByType<FleetCargoUnloadInteractable>();
+                Collider shuttleCollider =
+                    runtime.ShuttleBinding.GetComponentInChildren<Collider>();
+                Assert.That(dockingBoundary, Is.Not.Null);
+                Assert.That(unload, Is.Not.Null);
+                Assert.That(shuttleCollider, Is.Not.Null);
+
+                MethodInfo enterBoundary = typeof(ShuttleDockingBoundary)
+                    .GetMethod(
+                        "OnTriggerEnter",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(enterBoundary, Is.Not.Null);
+                enterBoundary.Invoke(dockingBoundary, new object[] { shuttleCollider });
+
+                UiFeedbackService feedback =
+                    Object.FindAnyObjectByType<UiFeedbackService>();
+                Assert.That(feedback, Is.Not.Null);
+                feedback.Clear();
+                string unloadMessage = null;
+                feedback.MessageShown += CaptureUnloadMessage;
+
+                InteractionContext context = new(
+                    runtime.Possession.gameObject,
+                    runtime.Possession.transform,
+                    default,
+                    controller.Commands);
+                Assert.That(unload.CanInteract(context), Is.True);
+                unload.Interact(context);
+
+                for (int frame = 0; frame < 10 && unloadMessage == null; frame++)
+                {
+                    yield return null;
+                }
+
+                feedback.MessageShown -= CaptureUnloadMessage;
+                Assert.That(runtime.ShuttleBinding.Cargo.Count(item), Is.Zero);
+                Assert.That(runtime.FleetStorage.Count(item), Is.EqualTo(harvested));
+                Assert.That(unloadMessage, Does.Contain("UNLOAD COMPLETE"));
+                Assert.That(unloadMessage, Does.Contain("FLEET STORAGE"));
+
+                GameplaySaveCoordinator saves =
+                    controller.GetComponent<GameplaySaveCoordinator>();
+                Assert.That(saves, Is.Not.Null);
+                Assert.That(saves.Save(UnloadWorkflowSlot).Succeeded, Is.True);
+                Assert.That(
+                    runtime.FleetStorage.TryRemove(item, harvested),
+                    Is.EqualTo(harvested));
+                Assert.That(runtime.FleetStorage.Count(item), Is.Zero);
+                Assert.That(saves.Load(UnloadWorkflowSlot).Succeeded, Is.True);
+                Assert.That(runtime.FleetStorage.Count(item), Is.EqualTo(harvested));
+
+                void CaptureUnloadMessage(
+                    string message,
+                    UiFeedbackSeverity _)
+                {
+                    if (message.Contains("UNLOAD COMPLETE"))
+                    {
+                        unloadMessage = message;
+                    }
+                }
+            }
+            finally
+            {
+                SaveGameFileService.DeleteSlot(UnloadWorkflowSlot);
+            }
+        }
+
         static Collider FindCollider(SpacecraftMotor motor, string colliderName)
         {
             Collider[] colliders = motor.GetComponentsInChildren<Collider>(true);
@@ -80,6 +217,42 @@ namespace Farion.Tests.PlayMode
             }
 
             return null;
+        }
+
+        static ResourceNodeInteractable CreateWorkflowResource()
+        {
+            ResourceDepositRuntimeSpawner spawner =
+                Object.FindAnyObjectByType<ResourceDepositRuntimeSpawner>();
+            Assert.That(spawner, Is.Not.Null);
+
+            FieldInfo distributionField = typeof(ResourceDepositRuntimeSpawner)
+                .GetField(
+                    "resourceDistribution",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(distributionField, Is.Not.Null);
+            ResourceDistributionProfile distribution =
+                distributionField.GetValue(spawner) as ResourceDistributionProfile;
+            Assert.That(distribution, Is.Not.Null);
+
+            ResourceNodeDefinition definition = null;
+            for (int i = 0; i < distribution.Rules.Count; i++)
+            {
+                if (distribution.Rules[i]?.Resource != null)
+                {
+                    definition = distribution.Rules[i].Resource;
+                    break;
+                }
+            }
+
+            Assert.That(definition, Is.Not.Null);
+            ResourceNodeInteractable resource =
+                new GameObject("PlayMode Workflow Resource")
+                    .AddComponent<ResourceNodeInteractable>();
+            resource.Configure(
+                definition,
+                Mathf.Max(1, definition.AmountPerHarvest),
+                seed: 1);
+            return resource;
         }
 
         static void AssertLandingContact(

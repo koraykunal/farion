@@ -55,7 +55,7 @@ namespace Farion.Tests.PlayMode
                 patchSystem.transform.position +
                 surfaceDirection * (outerRadius + bodyVisual.Body.Radius * 1.1f);
             yield return null;
-            yield return new WaitForEndOfFrame();
+            yield return null;
 
             Assert.That(patchSystem.SurfaceModeActive, Is.False);
             Assert.That(patchSystem.PatchTransitionPending, Is.False);
@@ -87,7 +87,7 @@ namespace Farion.Tests.PlayMode
                 yield return null;
             }
 
-            yield return new WaitForEndOfFrame();
+            yield return null;
             Assert.That(patchSystem.SurfaceModeActive, Is.True);
             Assert.That(
                 patchSystem.CollisionAuthority,
@@ -129,7 +129,7 @@ namespace Farion.Tests.PlayMode
                 yield return null;
             }
 
-            yield return new WaitForEndOfFrame();
+            yield return null;
 
             Assert.That(patchSystem.SurfaceModeActive, Is.True);
             Assert.That(patchSystem.PatchTransitionPending, Is.False);
@@ -187,12 +187,19 @@ namespace Farion.Tests.PlayMode
             Assert.That(patchSystem.ActiveColliderCount, Is.EqualTo(0));
             Assert.That(globalCollider.enabled, Is.True);
 
-            camera.transform.position =
+            Vector3 farCameraPosition =
                 patchSystem.transform.position +
                 surfaceDirection * (outerRadius + bodyVisual.Body.Radius * 1.1f);
 
-            yield return null;
-            yield return new WaitForEndOfFrame();
+            remainingFrames = 60;
+            while (patchSystem.SurfaceModeActive && remainingFrames-- > 0)
+            {
+                camera.transform.position = farCameraPosition;
+                collisionObserver.position = farCameraPosition;
+                collisionObserver.linearVelocity =
+                    bodyVisual.Body.GetVelocityAtPoint(farCameraPosition);
+                yield return null;
+            }
 
             Assert.That(patchSystem.SurfaceModeActive, Is.False);
             Assert.That(

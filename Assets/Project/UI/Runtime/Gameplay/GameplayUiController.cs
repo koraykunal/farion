@@ -267,6 +267,8 @@ namespace Farion.UI.Gameplay
             if (observedCommandEvents != null)
             {
                 observedCommandEvents.ItemAcquired += HandleItemAcquired;
+                observedCommandEvents.CargoTransferCompleted +=
+                    HandleCargoTransferCompleted;
             }
         }
 
@@ -275,6 +277,8 @@ namespace Farion.UI.Gameplay
             if (observedCommandEvents != null)
             {
                 observedCommandEvents.ItemAcquired -= HandleItemAcquired;
+                observedCommandEvents.CargoTransferCompleted -=
+                    HandleCargoTransferCompleted;
                 observedCommandEvents = null;
             }
         }
@@ -285,6 +289,54 @@ namespace Farion.UI.Gameplay
             {
                 feedbackService?.ShowItem(item.DisplayName, amount, item.Icon);
             }
+        }
+
+        void HandleCargoTransferCompleted(CargoTransferReceipt receipt)
+        {
+            bool succeeded = receipt.Result == CargoTransferResult.Succeeded;
+            ShowFeedback(
+                FormatCargoTransferMessage(receipt),
+                succeeded
+                    ? UiFeedbackSeverity.Success
+                    : receipt.Result == CargoTransferResult.EmptySource ||
+                      receipt.Result == CargoTransferResult.InsufficientCapacity
+                        ? UiFeedbackSeverity.Caution
+                        : UiFeedbackSeverity.Error);
+        }
+
+        internal static string FormatCargoTransferMessage(
+            CargoTransferReceipt receipt)
+        {
+            if (receipt.Result == CargoTransferResult.Succeeded)
+            {
+                return receipt.Kind == CargoTransferKind.LoadShuttle
+                    ? $"CARGO LOADED  /  EXPLORER {FormatSlots(receipt.Source)}  /  SHUTTLE {FormatSlots(receipt.Destination)}"
+                    : $"UNLOAD COMPLETE  /  SHUTTLE {FormatSlots(receipt.Source)}  /  FLEET STORAGE {FormatSlots(receipt.Destination)}";
+            }
+
+            return receipt.Result switch
+            {
+                CargoTransferResult.EmptySource =>
+                    receipt.Kind == CargoTransferKind.LoadShuttle
+                        ? "NO EXPLORER CARGO TO LOAD."
+                        : "SHUTTLE CARGO IS EMPTY.",
+                CargoTransferResult.InsufficientCapacity =>
+                    receipt.Kind == CargoTransferKind.LoadShuttle
+                        ? "SHUTTLE CARGO HAS INSUFFICIENT CAPACITY."
+                        : "FLEET STORAGE HAS INSUFFICIENT CAPACITY.",
+                CargoTransferResult.DefinitionMismatch =>
+                    "CARGO CONTAINS AN INCOMPATIBLE ITEM.",
+                CargoTransferResult.StaleState =>
+                    "CARGO CHANGED. TRY AGAIN.",
+                _ => "CARGO TRANSFER FAILED."
+            };
+        }
+
+        static string FormatSlots(InventoryContainerSnapshot snapshot)
+        {
+            return snapshot == null
+                ? "--/-- SLOTS"
+                : $"{snapshot.Stacks.Count:00}/{snapshot.SlotCapacity:00} SLOTS";
         }
 
         void SetCurrentScreen(UiScreenId screenId, bool notify)

@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bodyName: Test Planet
   bodyType: 1
-  radius: 800
+  radius: 1600
   surfaceGravity: 9.81
-  initialVelocity: {x: 0, y: 0, z: 28.46}
+  initialVelocity: {x: 0, y: 0, z: 28.983}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9

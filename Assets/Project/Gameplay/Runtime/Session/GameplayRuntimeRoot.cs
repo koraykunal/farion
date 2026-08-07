@@ -37,6 +37,9 @@ namespace Farion.Gameplay.Session
 
         GameplayRuntimeBindings bindings;
 
+        public GameplaySessionMode Mode { get; private set; } =
+            GameplaySessionMode.Offline;
+
         public GameplayRuntimeBindings Bindings =>
             bindings ??= new GameplayRuntimeBindings(
                 definitions,
@@ -53,7 +56,11 @@ namespace Farion.Gameplay.Session
 
         void Awake()
         {
-            ApplySimulationAuthority();
+            Mode = GameplaySessionModeRequest.ConsumeOrDefault();
+            if (Mode == GameplaySessionMode.Offline)
+            {
+                ApplySimulationAuthority();
+            }
         }
 
         void OnValidate()

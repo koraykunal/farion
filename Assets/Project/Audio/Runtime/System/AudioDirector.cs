@@ -298,7 +298,10 @@ namespace Farion.Audio
                 return;
             }
 
-            instance.stop(immediate ? STOP_MODE.IMMEDIATE : STOP_MODE.ALLOWFADEOUT);
+            instance.stop(
+                immediate
+                    ? FMOD.Studio.STOP_MODE.IMMEDIATE
+                    : FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
             instance.release();
             instance.clearHandle();
         }

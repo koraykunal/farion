@@ -25,6 +25,8 @@ namespace Farion.Simulation.World
 
         readonly List<Transform> uniqueShiftRoots = new();
 
+        public bool AutomaticRebasing { get; private set; } = true;
+
         public Vector3 AccumulatedOriginOffset => accumulatedOriginOffset;
         public Vector3 LastOriginOffset => lastOriginOffset;
         public int ShiftCount => shiftCount;
@@ -69,7 +71,10 @@ namespace Farion.Simulation.World
 
         void FixedUpdate()
         {
-            RebaseIfNeeded();
+            if (AutomaticRebasing)
+            {
+                RebaseIfNeeded();
+            }
         }
 
         void OnValidate()
@@ -173,6 +178,11 @@ namespace Farion.Simulation.World
             {
                 ValidateSetup(logWarnings: false);
             }
+        }
+
+        public void SetAutomaticRebasing(bool enabled)
+        {
+            AutomaticRebasing = enabled;
         }
 
         bool ValidateSetup(bool logWarnings)

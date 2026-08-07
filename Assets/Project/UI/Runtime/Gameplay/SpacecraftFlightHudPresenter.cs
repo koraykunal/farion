@@ -379,6 +379,7 @@ namespace Farion.UI.Gameplay
         {
             SetVisible(
                 possessionController != null &&
+                possessionController.isActiveAndEnabled &&
                 possessionController.IsPilotingSpacecraft &&
                 motor != null);
         }

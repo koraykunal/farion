@@ -71,8 +71,8 @@ namespace Farion.Gameplay.Interaction
                     ? shuttle.Cargo
                     : null;
                 if (candidate != null &&
-                    commands.CanUnloadAssignedShuttleCargo(candidate) ==
-                    CargoTransferResult.Succeeded)
+                    CanAttempt(
+                        commands.CanUnloadAssignedShuttleCargo(candidate)))
                 {
                     cargo = candidate;
                     return true;
@@ -80,6 +80,14 @@ namespace Farion.Gameplay.Interaction
             }
 
             return false;
+        }
+
+        static bool CanAttempt(CargoTransferResult result)
+        {
+            return result != CargoTransferResult.MissingSource &&
+                   result != CargoTransferResult.MissingDestination &&
+                   result != CargoTransferResult.UnauthorizedSource &&
+                   result != CargoTransferResult.UnauthorizedDestination;
         }
     }
 }

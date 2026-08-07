@@ -86,6 +86,13 @@ namespace Farion.App.Flow
         void Awake()
         {
             ResolveReferences();
+            if (runtimeRoot != null &&
+                runtimeRoot.Mode == GameplaySessionMode.Multiplayer)
+            {
+                enabled = false;
+                return;
+            }
+
             TryGetRuntime(out _);
         }
 
@@ -102,7 +109,8 @@ namespace Farion.App.Flow
         public bool TryGetRuntime(out GameplaySessionRuntime currentRuntime)
         {
             ResolveReferences();
-            if (runtimeRoot == null)
+            if (runtimeRoot == null ||
+                runtimeRoot.Mode == GameplaySessionMode.Multiplayer)
             {
                 currentRuntime = null;
                 return false;

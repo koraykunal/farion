@@ -240,7 +240,10 @@ namespace Farion.Audio.Spacecraft
                 return;
             }
 
-            engineInstance.stop(allowFadeoutOnStop ? STOP_MODE.ALLOWFADEOUT : STOP_MODE.IMMEDIATE);
+            engineInstance.stop(
+                allowFadeoutOnStop
+                    ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT
+                    : FMOD.Studio.STOP_MODE.IMMEDIATE);
             StopReleasedInstance();
         }
 

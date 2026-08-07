@@ -26,9 +26,7 @@ namespace Farion.Simulation.Celestial
         void OnValidate()
         {
             environmentSources ??= new List<MonoBehaviour>();
-            environmentSources.RemoveAll(source => source == null || source is not ICelestialEnvironmentProvider);
             surfaceSources ??= new List<MonoBehaviour>();
-            surfaceSources.RemoveAll(source => source == null || source is not ICelestialSurfaceProvider);
         }
 
         public CelestialFrameSample Sample(Vector3 position, Vector3 velocity)

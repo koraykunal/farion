@@ -10,6 +10,8 @@ namespace Farion.UI.MainMenu
         Exit = 5,
         Back = 6,
         ConfirmExit = 7,
-        CancelExit = 8
+        CancelExit = 8,
+        HostGame = 9,
+        JoinLocalhost = 10
     }
 }

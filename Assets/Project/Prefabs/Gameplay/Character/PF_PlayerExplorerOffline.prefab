@@ -1,0 +1,156 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5138219808071866581
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_Name
+      value: PF_PlayerExplorerOffline
+      objectReference: {fileID: 0}
+    - target: {fileID: 1686796207704571904, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4214005064574897550, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: inputSource
+      value: 
+      objectReference: {fileID: 6026398833783421529}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6026398833783421529}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4112231222536447658}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2765614504481203930}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1784853116956105904}
+  m_SourcePrefab: {fileID: 100100000, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+--- !u!1 &4695914025171897078 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 5138219808071866581}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6026398833783421529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4695914025171897078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
+  mouseSensitivity: 2.5
+  gamepadLookDegreesPerSecond: 150
+  controlLock: {fileID: 0}
+--- !u!114 &4112231222536447658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4695914025171897078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
+  inputSource: {fileID: 6026398833783421529}
+  controlLock: {fileID: 0}
+  viewReference: {fileID: 8340159192544499298}
+  maxDistance: 4
+  castRadius: 0.35
+  interactionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  triggerInteraction: 2
+  hasTarget: 0
+  currentPrompt: 
+  currentTargetTransform: {fileID: 0}
+--- !u!114 &2765614504481203930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4695914025171897078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: player.explorer
+--- !u!114 &1784853116956105904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4695914025171897078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
+  fallbackContainerId: inventory.local
+  slotCapacity: 12
+  stacks: []
+--- !u!4 &8340159192544499298 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3814739279682014903, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 5138219808071866581}
+  m_PrefabAsset: {fileID: 0}

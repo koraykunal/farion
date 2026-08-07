@@ -44,7 +44,10 @@ The project currently provides:
 - FMOD spacecraft presentation and authored thruster VFX.
 
 The production capital-ship visual alignment, processing result presentation,
-upgrade application, and multiplayer loop are not complete yet.
+upgrade application, and multiplayer gameplay replication are not complete yet.
+The first FishNet/Tugboat networking foundation now provides a separate
+development-only host/client path, four predicted explorers, server spawning,
+and one shared floating-origin bubble without changing offline saves.
 
 ## Phase 1: Complete the Unload Workflow
 
@@ -63,12 +66,9 @@ Implemented playable work:
 1. Authored the first capital-ship return/docking boundary.
 2. Exposed unload only while the assigned shuttle is inside that boundary.
 3. Added a physical unload interaction and Fleet navigation target.
-
-Remaining playable work:
-
-1. Present shuttle cargo, Fleet Storage, and the command result through an
-   authored interaction surface.
-2. Prove harvest -> shuttle cargo -> dock -> unload -> save/load in Play Mode.
+4. Presented shuttle cargo, Fleet Storage, and transfer results through the
+   existing gameplay feedback surface.
+5. Proved harvest -> shuttle cargo -> dock -> unload -> save/load in Play Mode.
 
 No repair, equipment, crafting, research terminal, capital-ship room, or
 networking work belongs in this phase.
@@ -123,7 +123,8 @@ Only after the local loop is stable:
 3. Add unique equipment only if installed-instance identity is actually needed.
 4. Add research choice presentation around Fleet Knowledge.
 5. Wrap proven commands with host-authoritative networking.
-6. Validate two players before expanding to four.
+6. Validate the existing two-to-four-player Tugboat explorer foundation before
+   adding Steam transport or gameplay-state replication.
 
 ## Engineering Gates
 

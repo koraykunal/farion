@@ -31,8 +31,8 @@ namespace Farion.Gameplay.Interaction
         public bool CanInteract(InteractionContext context)
         {
             return context.Commands != null &&
-                   context.Commands.CanLoadAssignedShuttleCargo(cargo) ==
-                   CargoTransferResult.Succeeded;
+                   CanAttempt(
+                       context.Commands.CanLoadAssignedShuttleCargo(cargo));
         }
 
         public void Interact(InteractionContext context)
@@ -43,6 +43,14 @@ namespace Farion.Gameplay.Interaction
         void ResolveCargo()
         {
             cargo ??= GetComponentInParent<ShuttleCargoInventory>();
+        }
+
+        static bool CanAttempt(CargoTransferResult result)
+        {
+            return result != CargoTransferResult.MissingSource &&
+                   result != CargoTransferResult.MissingDestination &&
+                   result != CargoTransferResult.UnauthorizedSource &&
+                   result != CargoTransferResult.UnauthorizedDestination;
         }
     }
 }

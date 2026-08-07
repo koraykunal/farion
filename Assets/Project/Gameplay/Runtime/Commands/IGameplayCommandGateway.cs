@@ -9,6 +9,33 @@ namespace Farion.Gameplay.Commands
     public interface IGameplayCommandEvents
     {
         event Action<InventoryItemDefinition, int> ItemAcquired;
+        event Action<CargoTransferReceipt> CargoTransferCompleted;
+    }
+
+    public enum CargoTransferKind
+    {
+        LoadShuttle = 0,
+        UnloadToFleet = 1
+    }
+
+    public readonly struct CargoTransferReceipt
+    {
+        public CargoTransferReceipt(
+            CargoTransferKind kind,
+            CargoTransferResult result,
+            InventoryContainerSnapshot source,
+            InventoryContainerSnapshot destination)
+        {
+            Kind = kind;
+            Result = result;
+            Source = source;
+            Destination = destination;
+        }
+
+        public CargoTransferKind Kind { get; }
+        public CargoTransferResult Result { get; }
+        public InventoryContainerSnapshot Source { get; }
+        public InventoryContainerSnapshot Destination { get; }
     }
 
     public interface IGameplayCommandGateway

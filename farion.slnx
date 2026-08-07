@@ -1,12 +1,17 @@
 ﻿<Solution>
-  <Project Path="Farion.Simulation.Runtime.csproj" />
+  <Project Path="FishNet.Runtime.csproj" />
+  <Project Path="FishNet.Codegen.Cecil.csproj" />
   <Project Path="Farion.Gameplay.Runtime.csproj" />
+  <Project Path="Farion.Multiplayer.Runtime.csproj" />
+  <Project Path="Farion.Simulation.Runtime.csproj" />
   <Project Path="Farion.Gameplay.Presentation.csproj" />
   <Project Path="Farion.Audio.Runtime.csproj" />
+  <Project Path="GameKit.Dependencies.csproj" />
   <Project Path="Farion.UI.Runtime.csproj" />
   <Project Path="Farion.Rendering.Runtime.csproj" />
   <Project Path="FMODUnityResonanceEditor.csproj" />
   <Project Path="Farion.Tests.PlayMode.csproj" />
+  <Project Path="Unity.FishNet.Codegen.csproj" />
   <Project Path="FMODUnityEditor.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="FMODUnity.csproj" />

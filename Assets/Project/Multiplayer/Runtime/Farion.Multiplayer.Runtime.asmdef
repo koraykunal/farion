@@ -1,0 +1,21 @@
+{
+    "name": "Farion.Multiplayer.Runtime",
+    "rootNamespace": "Farion.Multiplayer",
+    "references": [
+        "Farion.Core.Runtime",
+        "Farion.Simulation.Runtime",
+        "Farion.Gameplay.Runtime",
+        "Farion.Rendering.Runtime",
+        "Farion.UI.Runtime",
+        "FishNet.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

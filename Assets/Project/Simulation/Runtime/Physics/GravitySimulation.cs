@@ -28,6 +28,8 @@ namespace Farion.Simulation.Physics
 
         readonly List<CelestialBody> simulationBodies = new();
 
+        public bool IntegrationEnabled { get; private set; } = true;
+
         public IReadOnlyList<CelestialBody> Bodies => simulationBodies;
         public GravitySettings Settings => settings;
         public float GravitationalConstant => settings != null ? settings.GravitationalConstant : DefaultGravitationalConstant;
@@ -51,7 +53,7 @@ namespace Farion.Simulation.Physics
 
         void FixedUpdate()
         {
-            if (simulationBodies.Count == 0)
+            if (!IntegrationEnabled || simulationBodies.Count == 0)
             {
                 return;
             }
@@ -84,6 +86,16 @@ namespace Farion.Simulation.Physics
                 {
                     simulationBodies.Add(body);
                 }
+            }
+        }
+
+        public void SetIntegrationEnabled(bool enabled)
+        {
+            IntegrationEnabled = enabled;
+            if (simulationBodies.Count > 0)
+            {
+                UpdateReferenceFrameAcceleration();
+                UpdateReferenceFrameVelocity();
             }
         }
 

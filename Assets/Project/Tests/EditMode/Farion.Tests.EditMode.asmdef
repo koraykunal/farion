@@ -9,6 +9,7 @@
         "Farion.Gameplay.Presentation",
         "Farion.Audio.Runtime",
         "Farion.UI.Runtime",
+        "Farion.Multiplayer.Runtime",
         "Unity.InputSystem"
     ],
     "includePlatforms": [

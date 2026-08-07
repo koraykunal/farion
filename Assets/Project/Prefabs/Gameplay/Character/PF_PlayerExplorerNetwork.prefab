@@ -1,0 +1,228 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &7381135520629162643
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_Name
+      value: PF_PlayerExplorerNetwork
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1409566100695945647}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2325502369699534513}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7160784324326372813}
+    - targetCorrespondingSourceObject: {fileID: 3821590133421603000, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6508252084040059505}
+  m_SourcePrefab: {fileID: 100100000, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+--- !u!4 &1587842498773394760 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &6009504344761039403 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3821590133421603000, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6508252084040059505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6009504344761039403}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 453481867b26f7c43b5bf38802a5f50e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.Beta.NetworkTickSmoother
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 2325502369699534513}
+  _networkObjectCache: {fileID: 0}
+  _initializationSettings:
+    TargetTransform: {fileID: 1587842498773394760}
+    DetachOnStart: 1
+    AttachOnStop: 1
+  _controllerMovementSettings:
+    EnableTeleport: 0
+    TeleportThreshold: 0
+    AdaptiveInterpolationValue: 0
+    InterpolationValue: 2
+    SmoothedProperties: 4294967295
+    SnapNonSmoothedProperties: 0
+  _favorPredictionNetworkTransform: 1
+  _spectatorMovementSettings:
+    EnableTeleport: 0
+    TeleportThreshold: 0
+    AdaptiveInterpolationValue: 0
+    InterpolationValue: 2
+    SmoothedProperties: 4294967295
+    SnapNonSmoothedProperties: 0
+--- !u!114 &6634973100569104157 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4214005064574897550, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920533967313834160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
+--- !u!1 &6920533967313834160 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1409566100695945647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920533967313834160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
+  mouseSensitivity: 2.5
+  gamepadLookDegreesPerSecond: 150
+  controlLock: {fileID: 0}
+--- !u!114 &2325502369699534513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920533967313834160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
+  _localLevelOfDetailCalculationType: 0
+  _useLevelOfDetail: 0
+  _useRootLevelOfDetail: 1
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 1
+  _predictionType: 1
+  _localReconcileCorrectionType: 2
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 255
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 255
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 65535
+  <SpawnableCollectionId>k__BackingField: 0
+  <AssetPathHash>k__BackingField: 8544479690900110713
+  SceneId: 0
+  SerializedTransformProperties:
+    Position: {x: 0, y: 0, z: 0}
+    Rotation: {x: 0, y: 0, z: 0, w: 0}
+    Scale: {x: 0, y: 0, z: 0}
+    IsValid: 0
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 0
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours: []
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  _initializedTimestamp: 0
+--- !u!114 &7160784324326372813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920533967313834160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27a86fd7a79b4e549aef6ae3f80b5aac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Player.NetworkExplorerController
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 2325502369699534513}
+  _networkObjectCache: {fileID: 0}
+  _tickCallbacks: 6
+  motor: {fileID: 6634973100569104157}
+  input: {fileID: 1409566100695945647}
+  ownerHiddenRenderers:
+  - {fileID: 8144684682209624723}
+--- !u!23 &8144684682209624723 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1686796207704571904, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
