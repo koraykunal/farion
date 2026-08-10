@@ -13,6 +13,8 @@ namespace Farion.Simulation.Planetary
         [SerializeField, Min(0f)] float temperatureBlendCelsius = 8f;
         [SerializeField, Range(0f, 0.5f)] float aridityBlend = 0.16f;
         [SerializeField, Range(0f, 0.5f)] float radiationBlend = 0.08f;
+        [Tooltip("1 blends factors as a geometric mean so one weak factor cannot erase a biome. Higher values sharpen toward a strict product and narrow every transition.")]
+        [SerializeField, Range(0.2f, 3f)] float suitabilitySharpness = 1f;
         [SerializeField] List<BiomeDistributionRule> rules = new();
 
         public BiomeDefinition FallbackBiome => fallbackBiome;
@@ -21,6 +23,7 @@ namespace Farion.Simulation.Planetary
         public float TemperatureBlendCelsius => Mathf.Max(0f, temperatureBlendCelsius);
         public float AridityBlend => Mathf.Clamp(aridityBlend, 0f, 0.5f);
         public float RadiationBlend => Mathf.Clamp(radiationBlend, 0f, 0.5f);
+        public float SuitabilitySharpness => Mathf.Clamp(suitabilitySharpness, 0.2f, 3f);
         public IReadOnlyList<BiomeDistributionRule> Rules => rules;
 
         void OnValidate()

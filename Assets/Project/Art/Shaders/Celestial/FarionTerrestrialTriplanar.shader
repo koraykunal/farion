@@ -1,4 +1,4 @@
-﻿Shader "Farion/Celestial/Terrestrial Triplanar"
+Shader "Farion/Celestial/Terrestrial Triplanar"
 {
     Properties
     {
@@ -21,6 +21,13 @@
         _NoiseScale2("Noise Scale 2", Float) = 50
         _RockNormalScale("Rock Normal Scale", Float) = 21
         _NormalStrength("Normal Strength", Range(0, 1)) = 0.5
+
+        [Header(Detiling)]
+        _DetileStrength("Detile Strength", Range(0, 1)) = 0.75
+        _DetileScale("Detile Noise Scale", Float) = 3.5
+        _DetileRatio("Detile Second Tile Ratio", Range(0.15, 0.9)) = 0.37
+        _MacroVariation("Macro Variation", Range(0, 0.6)) = 0.22
+        _MacroScale("Macro Noise Scale", Float) = 1.1
 
         [Header(Blending)]
         _OceanLevel("Ocean Level", Range(0, 1)) = 1
@@ -90,6 +97,7 @@
             SAMPLER(sampler_NoiseTex);
             TEXTURE2D(_RockNormal);
             TEXTURE2D_ARRAY(_SurfaceBaseColorArray);
+            SAMPLER(sampler_SurfaceBaseColorArray);
             TEXTURE2D_ARRAY(_SurfaceNormalArray);
             TEXTURE2D_ARRAY(_SurfaceRoughnessArray);
             TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray);
@@ -136,6 +144,11 @@
                 half _SteepnessThreshold;
                 half _FlatToSteepBlend;
                 half _FlatToSteepNoise;
+                half _DetileStrength;
+                float _DetileScale;
+                half _DetileRatio;
+                half _MacroVariation;
+                float _MacroScale;
                 half _Metallic;
                 half _LandSmoothness;
                 half _OceanSmoothness;
@@ -259,15 +272,6 @@
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
-            float3 FarionWarpSurfacePosition(float3 positionOS)
-            {
-                float3 direction = positionOS / max(_BodyRadius, 0.0001);
-                float3 phase = float3(
-                    dot(direction, float3(7.13, 11.71, 17.17)),
-                    dot(direction, float3(13.37, 5.83, 19.19)),
-                    dot(direction, float3(17.89, 13.11, 7.31)));
-                return positionOS + sin(phase) * (_BodyRadius * 0.0025);
-            }
 
             half4 FarionSampleOverlay(
                 TEXTURE2D_PARAM(overlayTexture, overlaySampler),
@@ -308,23 +312,39 @@
                 return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
             }
 
-            half4 FarionSampleSurfaceBaseColor(float3 positionOS, float3 normalOS, float worldTileSize, int layer)
+            half4 FarionSampleSurfaceBaseColorAtScale(float3 positionOS, float3 weights, float worldTileSize, int layer)
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
-                float3 weights = FarionTriplanarWeights(normalOS);
-                half4 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_NoiseTex, samplePosition.zy, layer);
-                half4 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_NoiseTex, samplePosition.xz, layer);
-                half4 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_NoiseTex, samplePosition.xy, layer);
+                half4 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer);
+                half4 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer);
+                half4 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceBaseColorArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer);
                 return x * weights.x + y * weights.y + z * weights.z;
+            }
+
+            half4 FarionSampleSurfaceBaseColor(float3 positionOS, float3 normalOS, float worldTileSize, int layer, half detune)
+            {
+                float3 weights = FarionTriplanarWeights(normalOS);
+                half4 primary = FarionSampleSurfaceBaseColorAtScale(positionOS, weights, worldTileSize, layer);
+                if (_DetileStrength <= 0.001h)
+                {
+                    return primary;
+                }
+
+                half4 secondary = FarionSampleSurfaceBaseColorAtScale(
+                    positionOS,
+                    weights,
+                    worldTileSize * _DetileRatio,
+                    layer);
+                return lerp(primary, secondary, detune);
             }
 
             half FarionSampleSurfaceRoughness(float3 positionOS, float3 normalOS, float worldTileSize, int layer)
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_NoiseTex, samplePosition.zy, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_NoiseTex, samplePosition.xz, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_NoiseTex, samplePosition.xy, layer).r;
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceRoughnessArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer).r;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -332,9 +352,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_NoiseTex, samplePosition.zy, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_NoiseTex, samplePosition.xz, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_NoiseTex, samplePosition.xy, layer).r;
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer).r;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -342,9 +362,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_NoiseTex, samplePosition.zy, layer).r;
-                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_NoiseTex, samplePosition.xz, layer).r;
-                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_NoiseTex, samplePosition.xy, layer).r;
+                half x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer).r;
+                half y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer).r;
+                half z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceHeightArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer).r;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -352,9 +372,9 @@
             {
                 float3 samplePosition = positionOS / max(worldTileSize, 0.001);
                 float3 weights = FarionTriplanarWeights(normalOS);
-                half3 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_NoiseTex, samplePosition.zy, layer).rgb;
-                half3 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_NoiseTex, samplePosition.xz, layer).rgb;
-                half3 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_NoiseTex, samplePosition.xy, layer).rgb;
+                half3 x = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer).rgb;
+                half3 y = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer).rgb;
+                half3 z = SAMPLE_TEXTURE2D_ARRAY(_SurfaceEmissionArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer).rgb;
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
@@ -385,7 +405,7 @@
                 return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
             }
 
-            half3 FarionUnpackSurfaceNormalOS(
+            half3 FarionUnpackSurfaceNormalAtScale(
                 float3 positionOS,
                 float3 normalOS,
                 float worldTileSize,
@@ -397,13 +417,13 @@
                 float3 axisSign = sign(normalOS);
 
                 half3 normalX = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_NoiseTex, samplePosition.zy, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceBaseColorArray, samplePosition.zy, layer),
                     strength);
                 half3 normalY = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_NoiseTex, samplePosition.xz, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceBaseColorArray, samplePosition.xz, layer),
                     strength);
                 half3 normalZ = UnpackNormalScale(
-                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_NoiseTex, samplePosition.xy, layer),
+                    SAMPLE_TEXTURE2D_ARRAY(_SurfaceNormalArray, sampler_SurfaceBaseColorArray, samplePosition.xy, layer),
                     strength);
 
                 normalX = half3(normalX.z * axisSign.x, normalX.y, normalX.x);
@@ -411,6 +431,26 @@
                 normalZ = half3(normalZ.x, normalZ.y, normalZ.z * axisSign.z);
 
                 return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
+            }
+
+            half3 FarionUnpackSurfaceNormalOS(
+                float3 positionOS,
+                float3 normalOS,
+                float worldTileSize,
+                int layer,
+                half strength,
+                half detune)
+            {
+                half3 primary = FarionUnpackSurfaceNormalAtScale(
+                    positionOS, normalOS, worldTileSize, layer, strength);
+                if (_DetileStrength <= 0.001h)
+                {
+                    return primary;
+                }
+
+                half3 secondary = FarionUnpackSurfaceNormalAtScale(
+                    positionOS, normalOS, worldTileSize * _DetileRatio, layer, strength);
+                return normalize(lerp(primary, secondary, detune));
             }
 
             InputData FarionBuildPbrInputData(Varyings input, half3 normalWS)
@@ -433,7 +473,14 @@
             half4 Fragment(Varyings input) : SV_Target
             {
                 float3 normalOS = normalize(input.normalOS);
-                float3 surfacePositionOS = FarionWarpSurfacePosition(input.positionOS);
+                float3 surfacePositionOS = input.positionOS;
+                half surfaceDetune = _DetileStrength <= 0.001h
+                    ? 0.0h
+                    : lerp(0.15h, 0.85h,
+                        FarionSampleTriplanarNoise(input.positionOS, input.normalOS, _DetileScale).g) *
+                        _DetileStrength;
+                half surfaceMacro = FarionSampleTriplanarNoise(
+                    input.positionOS, input.normalOS, _MacroScale).r;
                 float3 radialOS = normalize(input.positionOS);
                 float terrainRadius = length(input.positionOS);
                 float heightRange = max(_RadiusMinMax.y - _RadiusMinMax.x, 0.0001);
@@ -510,7 +557,10 @@
 
                 float3 normalTangent = normalize(normalOS - radialOS * dot(normalOS, radialOS));
                 half banding = dot(sphereTangent, normalTangent) * 0.5h + 0.5h;
-                banding = floor(banding * (_SteepBands + 1.0h)) / max(_SteepBands, 1.0h);
+                half bandScaled = banding * (_SteepBands + 1.0h);
+                half bandStep = floor(bandScaled);
+                banding = (bandStep + smoothstep(0.35h, 0.65h, bandScaled - bandStep)) /
+                    max(_SteepBands, 1.0h);
                 banding = (abs(banding - 0.5h) * 2.0h - 0.5h) * _SteepBandStrength;
                 half3 steepTerrain = lerp(_SteepLow.rgb, _SteepHigh.rgb, saturate(aboveOcean01 + banding));
                 half3 baseSteepTerrain = steepTerrain;
@@ -584,7 +634,8 @@
                                 surfacePositionOS,
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
-                                textureLayer).rgb * weight;
+                                textureLayer,
+                                surfaceDetune).rgb * weight;
                         }
                     }
                     surfaceBaseColor /= max(surfaceTextureWeight, 0.0001h);
@@ -640,6 +691,7 @@
                 }
 
                 landColor *= lerp(0.9h, 1.12h, saturate(smallNoise + detailNoise * 0.2h));
+                landColor *= lerp(1.0h - _MacroVariation, 1.0h + _MacroVariation, surfaceMacro);
                 landColor = lerp(landColor, shoreColor, shoreBlendWeight * hasOcean);
                 half wetNoise = saturate(texNoise2.g * 0.65h + texNoise.b * 0.35h);
                 half wetShoreMask = shorelineBand * landWaterBlend * _ShoreWetness * lerp(0.72h, 1.0h, wetNoise);
@@ -715,7 +767,8 @@
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
                                 textureLayer,
-                                _SurfaceParams[surfaceSlot].x) * weight;
+                                _SurfaceParams[surfaceSlot].x,
+                                surfaceDetune) * weight;
                         }
                     }
                     surfaceNormalOS = normalize(surfaceNormalOS / max(surfaceTextureWeight, 0.0001h));

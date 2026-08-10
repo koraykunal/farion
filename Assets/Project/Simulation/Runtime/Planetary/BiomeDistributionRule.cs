@@ -31,16 +31,27 @@ namespace Farion.Simulation.Planetary
                 return 0f;
             }
 
-            float score = SelectionPriority;
-            score *= PlanetarySampling.EvaluateRange(altitudeRange, altitude, profile.AltitudeBlend);
-            score *= PlanetarySampling.EvaluateRange(slopeRange, slopeDegrees, profile.SlopeBlendDegrees);
-            score *= PlanetarySampling.EvaluateRange(
+            const int FactorCount = 5;
+            float product = PlanetarySampling.EvaluateRange(altitudeRange, altitude, profile.AltitudeBlend);
+            if (product <= 0f)
+            {
+                return 0f;
+            }
+
+            product *= PlanetarySampling.EvaluateRange(slopeRange, slopeDegrees, profile.SlopeBlendDegrees);
+            product *= PlanetarySampling.EvaluateRange(
                 temperatureRange,
                 climate.TemperatureCelsius,
                 profile.TemperatureBlendCelsius);
-            score *= PlanetarySampling.EvaluateRange(aridityRange, climate.Aridity, profile.AridityBlend);
-            score *= PlanetarySampling.EvaluateRange(radiationRange, climate.Radiation, profile.RadiationBlend);
-            return Mathf.Max(0f, score);
+            product *= PlanetarySampling.EvaluateRange(aridityRange, climate.Aridity, profile.AridityBlend);
+            product *= PlanetarySampling.EvaluateRange(radiationRange, climate.Radiation, profile.RadiationBlend);
+            if (product <= 0f)
+            {
+                return 0f;
+            }
+
+            float blended = Mathf.Pow(product, profile.SuitabilitySharpness / FactorCount);
+            return Mathf.Max(0f, SelectionPriority * blended);
         }
     }
 }
