@@ -34,7 +34,9 @@ namespace Farion.Gameplay.Flight
         [SerializeField] bool crushingDepth;
 
         Rigidbody cachedRigidbody;
+        ISpacecraftPhysicsBody offlinePhysicsBody;
         SpacecraftOceanInteractionSample currentInteraction;
+        bool externalSimulation;
 
         public SpacecraftOceanInteractionSample CurrentInteraction => currentInteraction;
         public bool IsTouchingWater => currentInteraction.IsTouchingWater;
@@ -46,6 +48,7 @@ namespace Farion.Gameplay.Flight
         void Awake()
         {
             cachedRigidbody = GetComponent<Rigidbody>();
+            offlinePhysicsBody = new RigidbodySpacecraftPhysicsBody(cachedRigidbody);
             ResolveComponents();
         }
 
@@ -56,8 +59,26 @@ namespace Farion.Gameplay.Flight
 
         void FixedUpdate()
         {
+            if (!externalSimulation)
+            {
+                Simulate(Time.fixedDeltaTime, offlinePhysicsBody);
+            }
+        }
+
+        public void SetExternalSimulation(bool enabled)
+        {
+            externalSimulation = enabled;
+        }
+
+        public void Simulate(float deltaTime, ISpacecraftPhysicsBody physicsBody)
+        {
+            if (physicsBody == null || deltaTime <= 0f)
+            {
+                return;
+            }
+
             RefreshInteraction();
-            ApplyInteractionForces();
+            ApplyInteractionForces(deltaTime, physicsBody);
         }
 
         [ContextMenu("Refresh Ocean Interaction")]
@@ -79,7 +100,9 @@ namespace Farion.Gameplay.Flight
             ApplyRuntimeState();
         }
 
-        void ApplyInteractionForces()
+        void ApplyInteractionForces(
+            float deltaTime,
+            ISpacecraftPhysicsBody physicsBody)
         {
             if (!currentInteraction.IsTouchingWater)
             {
@@ -88,18 +111,28 @@ namespace Farion.Gameplay.Flight
 
             if (applyBuoyancy && currentInteraction.BuoyancyAcceleration.sqrMagnitude > 0.0001f)
             {
-                Rigidbody.AddForce(currentInteraction.BuoyancyAcceleration, ForceMode.Acceleration);
+                physicsBody.AddForce(
+                    currentInteraction.BuoyancyAcceleration,
+                    ForceMode.Acceleration);
             }
 
             if (applyDrag && currentInteraction.DragAcceleration.sqrMagnitude > 0.0001f)
             {
-                Rigidbody.AddForce(currentInteraction.DragAcceleration, ForceMode.Acceleration);
+                physicsBody.AddForce(
+                    currentInteraction.DragAcceleration,
+                    ForceMode.Acceleration);
             }
 
             if (dampAngularVelocity && profile != null && profile.AngularDamping > 0f)
             {
-                float damping = 1f - Mathf.Exp(-profile.AngularDamping * currentInteraction.SubmergedFraction * Time.fixedDeltaTime);
-                Rigidbody.angularVelocity = Vector3.Lerp(Rigidbody.angularVelocity, Vector3.zero, damping);
+                float damping = 1f - Mathf.Exp(
+                    -profile.AngularDamping *
+                    currentInteraction.SubmergedFraction *
+                    deltaTime);
+                physicsBody.SetAngularVelocity(Vector3.Lerp(
+                    physicsBody.AngularVelocity,
+                    Vector3.zero,
+                    damping));
             }
         }
 

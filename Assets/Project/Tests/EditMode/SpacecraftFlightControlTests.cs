@@ -1,9 +1,10 @@
 using Farion.Audio.Spacecraft;
-using Farion.Simulation.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
+using Farion.Gameplay.Presentation.Flight;
 using Farion.Simulation.Celestial;
+using Farion.Simulation.Physics;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -569,7 +570,9 @@ namespace Farion.Tests.EditMode
                 oceanRadius > 0f,
                 oceanRadius,
                 hasAtmosphere: true,
-                atmosphereRadius: 60f);
+                atmosphereRadius: 60f,
+                terrainRadiusMinMax: new Vector2(body.Radius, body.Radius),
+                atmosphereBaseRadius: oceanRadius > 0f ? oceanRadius : body.Radius);
             return new CelestialFrameSample(
                 body,
                 position,

@@ -1,8 +1,10 @@
+using Farion.Core.Identity;
+using Farion.Gameplay.Interaction;
 using System.Collections.Generic;
-using Farion.Simulation.Physics;
 using Farion.Simulation.Celestial;
+using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
-using Farion.Simulation.World.Identity;
+using Farion.Simulation.World;
 using UnityEngine;
 
 namespace Farion.Gameplay.Resources
@@ -182,6 +184,21 @@ namespace Farion.Gameplay.Resources
 
             spawnedNodeCount = spawnedNodes.Count;
             trackedDepositDeltaCount = depositDeltaStore.Count;
+        }
+
+        public CelestialBody Body => body;
+
+        public IReadOnlyList<ResourceDepositData> GeneratedDeposits => deposits;
+
+        public bool TryGetSpawnedNode(
+            GeneratedEntityId depositId,
+            out ResourceNodeInteractable node)
+        {
+            node = null;
+            return depositId.IsValid &&
+                   spawnedNodes.TryGetValue(depositId, out SpawnedDepositNode spawned) &&
+                   spawned.Node != null &&
+                   spawned.Node.TryGetComponent(out node);
         }
 
         [ContextMenu("Clear Resource Nodes")]

@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fe4f6a51aa84b129e06fbb65d934702, type: 3}
   m_Name: SO_DefaultOceanProfile
   m_EditorClassIdentifier: 
-  radiusOffset: 0
   deepColor: {r: 0.01, g: 0.055, b: 0.115, a: 1}
   shallowColor: {r: 0.055, g: 0.32, b: 0.42, a: 1}
   fresnelColor: {r: 0.48, g: 0.82, b: 0.92, a: 1}

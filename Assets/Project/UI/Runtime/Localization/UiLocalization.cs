@@ -1,6 +1,8 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
-using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.Localization.Tables;
 
 namespace Farion.UI.Localization
 {
@@ -10,45 +12,42 @@ namespace Farion.UI.Localization
         public const string EnglishLocaleCode = "en";
         public const string TurkishLocaleCode = "tr";
 
-        public static string Get(string entryKey, string fallback)
+        static readonly HashSet<string> missingEntryKeys = new(StringComparer.Ordinal);
+        static StringTable cachedTable;
+        static Locale cachedLocale;
+        static bool localeChangeHooked;
+
+        public static IReadOnlyCollection<string> MissingEntryKeys => missingEntryKeys;
+
+        public static string Get(string entryKey)
         {
             if (string.IsNullOrWhiteSpace(entryKey))
             {
-                return fallback ?? string.Empty;
+                return string.Empty;
             }
 
-            try
+            StringTable table = ResolveTable();
+            StringTableEntry entry = table?.GetEntry(entryKey);
+            if (entry == null)
             {
-                if (!LocalizationSettings.InitializationOperation.IsDone ||
-                    LocalizationSettings.SelectedLocale == null)
-                {
-                    return fallback ?? string.Empty;
-                }
-
-                AsyncOperationHandle<string> operation =
-                    new LocalizedString(TableName, entryKey)
-                        .GetLocalizedStringAsync();
-                if (!operation.IsDone ||
-                    operation.Status != AsyncOperationStatus.Succeeded)
-                {
-                    return fallback ?? string.Empty;
-                }
-
-                string value = operation.Result;
-                return string.IsNullOrWhiteSpace(value) ||
-                       value.StartsWith("No translation found", System.StringComparison.Ordinal)
-                    ? fallback ?? string.Empty
-                    : value;
+                missingEntryKeys.Add(entryKey);
+                return entryKey;
             }
-            catch
+
+            string value = entry.GetLocalizedString();
+            if (string.IsNullOrWhiteSpace(value))
             {
-                return fallback ?? string.Empty;
+                missingEntryKeys.Add(entryKey);
+                return entryKey;
             }
+
+            return value;
         }
 
         public static bool TrySelectLocale(string localeCode)
         {
             if (string.IsNullOrWhiteSpace(localeCode) ||
+                !LocalizationSettings.HasSettings ||
                 LocalizationSettings.AvailableLocales == null)
             {
                 return false;
@@ -69,9 +68,51 @@ namespace Farion.UI.Localization
             return string.Equals(
                 localeCode,
                 TurkishLocaleCode,
-                System.StringComparison.OrdinalIgnoreCase)
+                StringComparison.OrdinalIgnoreCase)
                 ? TurkishLocaleCode
                 : EnglishLocaleCode;
+        }
+
+        static StringTable ResolveTable()
+        {
+            if (!LocalizationSettings.HasSettings)
+            {
+                return null;
+            }
+
+            HookLocaleChange();
+
+            Locale locale = LocalizationSettings.SelectedLocale;
+            if (locale == null)
+            {
+                return null;
+            }
+
+            if (cachedTable != null && ReferenceEquals(cachedLocale, locale))
+            {
+                return cachedTable;
+            }
+
+            cachedTable = LocalizationSettings.StringDatabase.GetTable(TableName, locale);
+            cachedLocale = locale;
+            return cachedTable;
+        }
+
+        static void HookLocaleChange()
+        {
+            if (localeChangeHooked)
+            {
+                return;
+            }
+
+            LocalizationSettings.SelectedLocaleChanged += OnSelectedLocaleChanged;
+            localeChangeHooked = true;
+        }
+
+        static void OnSelectedLocaleChanged(Locale locale)
+        {
+            cachedTable = null;
+            cachedLocale = null;
         }
     }
 }

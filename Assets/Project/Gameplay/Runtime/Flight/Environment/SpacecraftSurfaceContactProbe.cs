@@ -21,13 +21,13 @@ namespace Farion.Gameplay.Flight
 
         Rigidbody cachedRigidbody;
         SpacecraftSurfaceContactSample currentContact = SpacecraftSurfaceContactSample.Empty;
-        float lastContactTime = float.NegativeInfinity;
         CelestialBody accumulatedBody;
         Vector3 accumulatedPoint;
         Vector3 accumulatedNormal;
         float accumulatedSeparation;
-        float accumulatedFixedTime = float.NegativeInfinity;
         int accumulatedContactCount;
+        bool contactReportedSinceLastStep;
+        bool externalSimulation;
 
         public SpacecraftSurfaceContactSample CurrentContact => currentContact;
         public bool HasContact => hasContact;
@@ -40,11 +40,35 @@ namespace Farion.Gameplay.Flight
 
         void FixedUpdate()
         {
-            timeSinceLastContact = lastContactTime > 0f ? Time.time - lastContactTime : float.PositiveInfinity;
-            if (Time.fixedTime - lastContactTime > Time.fixedDeltaTime * 1.5f)
+            if (!externalSimulation)
+            {
+                BeginSimulationStep(Time.fixedDeltaTime);
+            }
+        }
+
+        public void SetExternalSimulation(bool enabled)
+        {
+            externalSimulation = enabled;
+        }
+
+        public void BeginSimulationStep(float deltaTime)
+        {
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
+
+            timeSinceLastContact = contactReportedSinceLastStep
+                ? 0f
+                : timeSinceLastContact + deltaTime;
+            if (!contactReportedSinceLastStep &&
+                timeSinceLastContact > deltaTime * 1.5f)
             {
                 ClearContact();
             }
+
+            contactReportedSinceLastStep = false;
+            ResetAccumulator(null);
         }
 
         void OnCollisionEnter(Collision collision)
@@ -71,7 +95,7 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            if (accumulatedBody != body || !Mathf.Approximately(accumulatedFixedTime, Time.fixedTime))
+            if (accumulatedBody != body)
             {
                 ResetAccumulator(body);
             }
@@ -101,7 +125,8 @@ namespace Farion.Gameplay.Flight
                 accumulatedContactCount,
                 Time.time);
 
-            lastContactTime = Time.fixedTime;
+            contactReportedSinceLastStep = true;
+            timeSinceLastContact = 0f;
             ApplyRuntimeState();
         }
 
@@ -110,7 +135,6 @@ namespace Farion.Gameplay.Flight
             currentContact = SpacecraftSurfaceContactSample.Empty;
             accumulatedBody = null;
             accumulatedContactCount = 0;
-            accumulatedFixedTime = float.NegativeInfinity;
             ApplyRuntimeState();
         }
 
@@ -121,7 +145,6 @@ namespace Farion.Gameplay.Flight
             accumulatedNormal = Vector3.zero;
             accumulatedSeparation = float.PositiveInfinity;
             accumulatedContactCount = 0;
-            accumulatedFixedTime = Time.fixedTime;
         }
 
         void ApplyRuntimeState()

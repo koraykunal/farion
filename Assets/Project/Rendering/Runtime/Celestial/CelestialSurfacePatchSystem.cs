@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Farion.Simulation.Physics;
+using Farion.Core.Physics;
 using Farion.Simulation.Celestial;
+using Farion.Simulation.Physics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -18,7 +19,7 @@ namespace Farion.Rendering.Celestial
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CelestialBody))]
     [RequireComponent(typeof(CelestialBodyVisual))]
-    public sealed class CelestialSurfacePatchSystem : MonoBehaviour
+    public sealed partial class CelestialSurfacePatchSystem : MonoBehaviour
     {
         const string PatchContainerName = "Adaptive Surface Patches";
         const int PatchBudgetReserve = 32;
@@ -354,7 +355,7 @@ namespace Farion.Rendering.Celestial
             for (int face = 0; face < 6; face++)
             {
                 CollectDesiredPatch(
-                    (CubeFace)face,
+                    (CelestialCubeFace)face,
                     level: 0,
                     x: 0,
                     y: 0,
@@ -663,7 +664,7 @@ namespace Farion.Rendering.Celestial
         }
 
         void CollectDesiredPatch(
-            CubeFace face,
+            CelestialCubeFace face,
             int level,
             int x,
             int y,
@@ -674,7 +675,7 @@ namespace Farion.Rendering.Celestial
             float baseRadius)
         {
             PatchKey key = new(face, level, x, y);
-            Vector3 centerDirection = CubeDirection(face, uMin + size * 0.5f, vMin + size * 0.5f);
+            Vector3 centerDirection = CelestialCubeProjection.ToDirection(face, uMin + size * 0.5f, vMin + size * 0.5f);
             float patchWorldSize = baseRadius * size;
             float observerDistance = Vector3.Distance(
                 observerLocalPosition,
@@ -956,7 +957,7 @@ namespace Farion.Rendering.Celestial
             PatchDescriptor descriptor,
             Vector3 direction)
         {
-            ProjectDirection(direction, out CubeFace face, out float u, out float v);
+            CelestialCubeProjection.Project(direction, out CelestialCubeFace face, out float u, out float v);
             if (face != descriptor.Key.Face)
             {
                 return false;
@@ -967,69 +968,6 @@ namespace Farion.Rendering.Celestial
                 u <= descriptor.UMin + descriptor.Size + Epsilon &&
                 v >= descriptor.VMin - Epsilon &&
                 v <= descriptor.VMin + descriptor.Size + Epsilon;
-        }
-
-        static void ProjectDirection(
-            Vector3 direction,
-            out CubeFace face,
-            out float u,
-            out float v)
-        {
-            Vector3 absolute = new(
-                Mathf.Abs(direction.x),
-                Mathf.Abs(direction.y),
-                Mathf.Abs(direction.z));
-            if (absolute.x >= absolute.y && absolute.x >= absolute.z)
-            {
-                float denominator = Mathf.Max(0.000001f, absolute.x);
-                if (direction.x >= 0f)
-                {
-                    face = CubeFace.PositiveX;
-                    u = -direction.z / denominator;
-                    v = -direction.y / denominator;
-                }
-                else
-                {
-                    face = CubeFace.NegativeX;
-                    u = direction.z / denominator;
-                    v = -direction.y / denominator;
-                }
-
-                return;
-            }
-
-            if (absolute.y >= absolute.z)
-            {
-                float denominator = Mathf.Max(0.000001f, absolute.y);
-                if (direction.y >= 0f)
-                {
-                    face = CubeFace.PositiveY;
-                    u = direction.x / denominator;
-                    v = direction.z / denominator;
-                }
-                else
-                {
-                    face = CubeFace.NegativeY;
-                    u = direction.x / denominator;
-                    v = -direction.z / denominator;
-                }
-
-                return;
-            }
-
-            float zDenominator = Mathf.Max(0.000001f, absolute.z);
-            if (direction.z >= 0f)
-            {
-                face = CubeFace.PositiveZ;
-                u = direction.x / zDenominator;
-                v = -direction.y / zDenominator;
-            }
-            else
-            {
-                face = CubeFace.NegativeZ;
-                u = -direction.x / zDenominator;
-                v = -direction.y / zDenominator;
-            }
         }
 
         bool AreDesiredCollisionPatchesReady()
@@ -1108,7 +1046,7 @@ namespace Farion.Rendering.Celestial
                 {
                     int x = extendedX - 1;
                     float u = descriptor.UMin + descriptor.Size * (x / (float)resolution);
-                    Vector3 direction = CubeDirection(descriptor.Key.Face, u, v);
+                    Vector3 direction = CelestialCubeProjection.ToDirection(descriptor.Key.Face, u, v);
                     bool isSurfaceVertex = x >= 0 && x <= resolution && y >= 0 && y <= resolution;
                     float vertexRadius;
                     if (isSurfaceVertex)
@@ -1240,7 +1178,7 @@ namespace Farion.Rendering.Celestial
             patch.Collider.sharedMesh = null;
             patch.Collider.enabled = false;
             patch.GameObject.name = $"Surface Patch {descriptor.Key}";
-            patch.GameObject.layer = gameObject.layer;
+            patch.GameObject.layer = FarionLayers.CelestialSurface;
             bodyVisual.ConfigureSurfaceRenderer(patch.Renderer);
         }
 
@@ -1622,146 +1560,12 @@ namespace Farion.Rendering.Celestial
             return faceAngularSize / Mathf.Max(1, resolution);
         }
 
-        static Vector3 CubeDirection(CubeFace face, float u, float v)
-        {
-            Vector3 direction = face switch
-            {
-                CubeFace.PositiveX => new Vector3(1f, -v, -u),
-                CubeFace.NegativeX => new Vector3(-1f, -v, u),
-                CubeFace.PositiveY => new Vector3(u, 1f, v),
-                CubeFace.NegativeY => new Vector3(u, -1f, -v),
-                CubeFace.PositiveZ => new Vector3(u, -v, 1f),
-                _ => new Vector3(-u, -v, -1f)
-            };
-            return direction.normalized;
-        }
-
-        enum CubeFace
-        {
-            PositiveX,
-            NegativeX,
-            PositiveY,
-            NegativeY,
-            PositiveZ,
-            NegativeZ
-        }
-
         enum PatchEdge
         {
             Bottom,
             Right,
             Top,
             Left
-        }
-
-        readonly struct PatchKey : IEquatable<PatchKey>
-        {
-            public PatchKey(CubeFace face, int level, int x, int y)
-            {
-                Face = face;
-                Level = level;
-                X = x;
-                Y = y;
-            }
-
-            public CubeFace Face { get; }
-            public int Level { get; }
-            public int X { get; }
-            public int Y { get; }
-
-            public bool Equals(PatchKey other)
-            {
-                return Face == other.Face && Level == other.Level && X == other.X && Y == other.Y;
-            }
-
-            public override bool Equals(object obj)
-            {
-                return obj is PatchKey other && Equals(other);
-            }
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    int hash = (int)Face;
-                    hash = hash * 397 ^ Level;
-                    hash = hash * 397 ^ X;
-                    return hash * 397 ^ Y;
-                }
-            }
-
-            public override string ToString()
-            {
-                return $"{Face} L{Level} ({X},{Y})";
-            }
-        }
-
-        readonly struct PatchDescriptor
-        {
-            public PatchDescriptor(
-                PatchKey key,
-                float uMin,
-                float vMin,
-                float size,
-                Vector3 centerDirection,
-                float patchWorldSize)
-            {
-                Key = key;
-                UMin = uMin;
-                VMin = vMin;
-                Size = size;
-                CenterDirection = centerDirection;
-                PatchWorldSize = patchWorldSize;
-            }
-
-            public PatchKey Key { get; }
-            public float UMin { get; }
-            public float VMin { get; }
-            public float Size { get; }
-            public Vector3 CenterDirection { get; }
-            public float PatchWorldSize { get; }
-        }
-
-        readonly struct PatchBuildWork
-        {
-            public PatchBuildWork(
-                PatchDescriptor descriptor,
-                bool rebuildGeometry,
-                bool prepareCollision)
-            {
-                Descriptor = descriptor;
-                RebuildGeometry = rebuildGeometry;
-                PrepareCollision = prepareCollision;
-            }
-
-            public PatchDescriptor Descriptor { get; }
-            public bool RebuildGeometry { get; }
-            public bool PrepareCollision { get; }
-        }
-
-        sealed class SurfacePatch
-        {
-            public SurfacePatch(
-                GameObject gameObject,
-                MeshFilter filter,
-                MeshRenderer renderer,
-                MeshCollider collider,
-                Mesh mesh)
-            {
-                GameObject = gameObject;
-                Filter = filter;
-                Renderer = renderer;
-                Collider = collider;
-                Mesh = mesh;
-            }
-
-            public GameObject GameObject { get; }
-            public MeshFilter Filter { get; }
-            public MeshRenderer Renderer { get; }
-            public MeshCollider Collider { get; }
-            public Mesh Mesh { get; }
-            public PatchDescriptor Descriptor { get; set; }
-            public bool CollisionBaked { get; set; }
         }
     }
 }

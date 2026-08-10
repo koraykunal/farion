@@ -65,6 +65,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7160784324326372813}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7246138248365821139}
     - targetCorrespondingSourceObject: {fileID: 3821590133421603000, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6508252084040059505}
@@ -91,9 +94,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 453481867b26f7c43b5bf38802a5f50e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.Beta.NetworkTickSmoother
-  _componentIndexCache: 255
+  _componentIndexCache: 1
   _addedNetworkObject: {fileID: 2325502369699534513}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 2325502369699534513}
   _initializationSettings:
     TargetTransform: {fileID: 1587842498773394760}
     DetachOnStart: 1
@@ -189,7 +192,9 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 7160784324326372813}
+  - {fileID: 6508252084040059505}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -213,12 +218,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27a86fd7a79b4e549aef6ae3f80b5aac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Player.NetworkExplorerController
-  _componentIndexCache: 255
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 2325502369699534513}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 2325502369699534513}
   _tickCallbacks: 6
   motor: {fileID: 6634973100569104157}
   input: {fileID: 1409566100695945647}
+  interactionRaycaster: {fileID: 7246138248365821139}
   ownerHiddenRenderers:
   - {fileID: 8144684682209624723}
 --- !u!23 &8144684682209624723 stripped
@@ -226,3 +232,32 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 1686796207704571904, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
   m_PrefabInstance: {fileID: 7381135520629162643}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &7246138248365821140 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3814739279682014903, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7246138248365821139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920533967313834160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
+  inputSource: {fileID: 1409566100695945647}
+  controlLock: {fileID: 0}
+  viewReference: {fileID: 7246138248365821140}
+  maxDistance: 6
+  castRadius: 0.35
+  interactionLayers:
+    serializedVersion: 2
+    m_Bits: 2432
+  triggerInteraction: 2
+  hasTarget: 0
+  currentPrompt:
+  currentTargetTransform: {fileID: 0}

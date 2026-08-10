@@ -245,9 +245,9 @@ namespace Farion.UI.Gameplay
             SetText(
                 tooltipBodyText,
                 $"{FormatEnum(item.Category)}  /  {FormatEnum(item.Form)}\n" +
-                $"{UiLocalization.Get("inventory.stack", "STACK").ToUpperInvariant()}  " +
+                $"{UiLocalization.Get(UiTextKeys.InventoryStack).ToUpperInvariant()}  " +
                 $"{slot.Stack.Quantity} / {item.MaxStackSize}\n" +
-                $"{UiLocalization.Get("inventory.domain", "RESEARCH DOMAIN").ToUpperInvariant()}  " +
+                $"{UiLocalization.Get(UiTextKeys.InventoryDomain).ToUpperInvariant()}  " +
                 FormatEnum(item.PrimaryTechDomain));
 
             tooltipRoot.SetAsLastSibling();
@@ -262,14 +262,14 @@ namespace Farion.UI.Gameplay
 
         void RefreshHeader(int usedSlots, int totalSlots)
         {
-            SetText(titleText, UiLocalization.Get("inventory.title", "INVENTORY"));
+            SetText(titleText, UiLocalization.Get(UiTextKeys.InventoryTitle));
             SetText(
                 detailLabelText,
-                UiLocalization.Get("inventory.detail", "ITEM DETAIL"));
+                UiLocalization.Get(UiTextKeys.InventoryDetail));
             SetText(
                 capacityText,
                 $"{usedSlots:00} / {Mathf.Max(0, totalSlots):00} " +
-                UiLocalization.Get("inventory.slots", "SLOTS").ToUpperInvariant());
+                UiLocalization.Get(UiTextKeys.InventorySlots).ToUpperInvariant());
         }
 
         void RefreshFocus()
@@ -325,12 +325,10 @@ namespace Farion.UI.Gameplay
 
                 SetText(
                     detailTitleText,
-                    UiLocalization.Get("inventory.empty.title", "EMPTY SLOT"));
+                    UiLocalization.Get(UiTextKeys.InventoryEmptyTitle));
                 SetText(
                     detailMetaText,
-                    UiLocalization.Get(
-                        "inventory.empty.description",
-                        "Available for collected materials and components."));
+                    UiLocalization.Get(UiTextKeys.InventoryEmptyDescription));
                 SetText(detailStackText, string.Empty);
                 SetText(detailDomainText, string.Empty);
                 return;
@@ -351,11 +349,11 @@ namespace Farion.UI.Gameplay
                 $"{FormatEnum(item.Category)}  /  {FormatEnum(item.Form)}");
             SetText(
                 detailStackText,
-                $"{UiLocalization.Get("inventory.stack", "STACK").ToUpperInvariant()}  " +
+                $"{UiLocalization.Get(UiTextKeys.InventoryStack).ToUpperInvariant()}  " +
                 $"{stack.Quantity} / {item.MaxStackSize}");
             SetText(
                 detailDomainText,
-                $"{UiLocalization.Get("inventory.domain", "RESEARCH DOMAIN").ToUpperInvariant()}\n" +
+                $"{UiLocalization.Get(UiTextKeys.InventoryDomain).ToUpperInvariant()}\n" +
                 FormatEnum(item.PrimaryTechDomain));
         }
 

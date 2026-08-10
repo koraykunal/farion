@@ -5,6 +5,11 @@ namespace Farion.Gameplay.Interaction
     [DisallowMultipleComponent]
     public sealed class PilotSeatInteractable : MonoBehaviour, IInteractable
     {
+
+        void Awake()
+        {
+            InteractableLayerBinding.Apply(this);
+        }
         [SerializeField] PlayerPossessionController possessionController;
         [SerializeField] string prompt = "Pilot seat";
 

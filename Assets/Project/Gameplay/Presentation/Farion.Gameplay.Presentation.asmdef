@@ -1,6 +1,6 @@
 {
     "name": "Farion.Gameplay.Presentation",
-    "rootNamespace": "Farion.Gameplay",
+    "rootNamespace": "Farion.Gameplay.Presentation",
     "references": [
         "Farion.Gameplay.Runtime",
         "Farion.Simulation.Runtime",

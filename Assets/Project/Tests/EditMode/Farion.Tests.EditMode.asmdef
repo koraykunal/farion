@@ -2,15 +2,18 @@
     "name": "Farion.Tests.EditMode",
     "rootNamespace": "Farion.Tests.EditMode",
     "references": [
+        "Farion.Core.Identity",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Farion.Gameplay.Domain",
         "Farion.Gameplay.Runtime",
         "Farion.Gameplay.Presentation",
+        "Farion.Rendering.Runtime",
         "Farion.Audio.Runtime",
         "Farion.UI.Runtime",
         "Farion.Multiplayer.Runtime",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Farion.Tests.Support"
     ],
     "includePlatforms": [
         "Editor"

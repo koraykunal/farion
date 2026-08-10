@@ -1,7 +1,12 @@
+using Farion.Core.Identity;
 using System;
-using Farion.Simulation.World.Identity;
+using Farion.Gameplay.Interaction;
+using Farion.Multiplayer.Spawning;
+using Farion.Simulation.World;
+using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using UnityEngine;
 
 namespace Farion.Multiplayer.Session
 {
@@ -9,13 +14,39 @@ namespace Farion.Multiplayer.Session
     {
         readonly SyncVar<ulong> sessionPlayerId = new();
         readonly SyncVar<ulong> currentZoneId = new();
+        readonly SyncVar<ulong> assignedStarterShipId = new();
+        readonly SyncVar<ulong> claimedStarterShipId = new();
+        readonly SyncVar<PlayerPossessionMode> possessionMode = new();
+        NetworkPlayerSpawner playerSpawner;
+
+        public static NetworkSessionPlayer Local { get; private set; }
 
         public ulong SessionPlayerId => sessionPlayerId.Value;
         public GeneratedEntityId CurrentZoneId => currentZoneId.Value == 0UL
             ? GeneratedEntityId.None
             : new GeneratedEntityId(currentZoneId.Value);
+        public GeneratedEntityId AssignedStarterShipId =>
+            assignedStarterShipId.Value == 0UL
+                ? GeneratedEntityId.None
+                : new GeneratedEntityId(assignedStarterShipId.Value);
+        public GeneratedEntityId ClaimedStarterShipId =>
+            claimedStarterShipId.Value == 0UL
+                ? GeneratedEntityId.None
+                : new GeneratedEntityId(claimedStarterShipId.Value);
+        public PlayerPossessionMode PossessionMode => possessionMode.Value;
 
-        internal void Initialize(ulong value)
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetLocal()
+        {
+            Local = null;
+        }
+
+        void Awake()
+        {
+            assignedStarterShipId.OnChange += OnAssignedStarterShipChanged;
+        }
+
+        internal void Initialize(ulong value, NetworkPlayerSpawner spawner)
         {
             if (value == 0UL)
             {
@@ -29,11 +60,132 @@ namespace Farion.Multiplayer.Session
             }
 
             sessionPlayerId.Value = value;
+            assignedStarterShipId.Value = 0UL;
+            possessionMode.Value = PlayerPossessionMode.OnFoot;
+            playerSpawner = spawner;
+        }
+
+        public override void OnStartClient()
+        {
+            RefreshLocalBinding();
+        }
+
+        public override void OnOwnershipClient(NetworkConnection prevOwner)
+        {
+            RefreshLocalBinding();
+        }
+
+        public override void OnStopClient()
+        {
+            if (Local == this)
+            {
+                Local = null;
+            }
+        }
+
+        public bool RequestUseStarterShip(GeneratedEntityId shipId)
+        {
+            if (!IsOwner || !shipId.IsValid)
+            {
+                return false;
+            }
+
+            RequestUseStarterShipServerRpc(shipId.Value);
+            return true;
+        }
+
+        [ServerRpc]
+        void RequestUseStarterShipServerRpc(
+            ulong shipId,
+            NetworkConnection sender = null)
+        {
+            if (sender == null ||
+                !sender.IsActive ||
+                sender.ClientId != OwnerId ||
+                shipId == 0UL)
+            {
+                return;
+            }
+
+            playerSpawner?.TryUseStarterShip(
+                this,
+                new GeneratedEntityId(shipId));
+        }
+
+        public bool RequestExitStarterShip(GeneratedEntityId shipId)
+        {
+            if (!IsOwner || !shipId.IsValid)
+            {
+                return false;
+            }
+
+            RequestExitStarterShipServerRpc(shipId.Value);
+            return true;
+        }
+
+        [ServerRpc]
+        void RequestExitStarterShipServerRpc(
+            ulong shipId,
+            NetworkConnection sender = null)
+        {
+            if (sender == null ||
+                !sender.IsActive ||
+                sender.ClientId != OwnerId ||
+                shipId == 0UL)
+            {
+                return;
+            }
+
+            playerSpawner?.TryExitStarterShip(
+                this,
+                new GeneratedEntityId(shipId));
         }
 
         internal void SetCurrentZone(GeneratedEntityId value)
         {
             currentZoneId.Value = value.Value;
+        }
+
+        internal void SetAssignedStarterShip(GeneratedEntityId value)
+        {
+            assignedStarterShipId.Value = value.Value;
+        }
+
+        internal void SetClaimedStarterShip(GeneratedEntityId value)
+        {
+            claimedStarterShipId.Value = value.Value;
+        }
+
+        internal void SetPossessionMode(PlayerPossessionMode value)
+        {
+            possessionMode.Value = value;
+        }
+
+        void RefreshLocalBinding()
+        {
+            if (IsOwner)
+            {
+                Local = this;
+                NotifyAssignedStarterShipReady();
+            }
+            else if (Local == this)
+            {
+                Local = null;
+            }
+        }
+
+        void OnAssignedStarterShipChanged(ulong previous, ulong next, bool asServer)
+        {
+            NotifyAssignedStarterShipReady();
+        }
+
+        void NotifyAssignedStarterShipReady()
+        {
+            if (IsOwner && AssignedStarterShipId.IsValid)
+            {
+                MultiplayerSessionController.Active
+                    ?.NotifyAssignedStarterShipReady();
+            }
         }
     }
 }

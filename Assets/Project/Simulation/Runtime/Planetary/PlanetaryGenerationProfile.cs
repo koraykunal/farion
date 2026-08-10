@@ -20,6 +20,11 @@ namespace Farion.Simulation.Planetary
         [SerializeField] CelestialShapeProfile shapeProfile;
         [SerializeField] PlanetClimateProfile climateProfile;
         [SerializeField] PlanetHydrosphereProfile hydrosphereProfile;
+        [Tooltip("Atmosphere shell thickness as a fraction of the atmosphere base radius.")]
+        [Min(0f)]
+        [SerializeField] float atmosphereScale = 0.322f;
+        [Min(0f)]
+        [SerializeField] float atmosphereRadiusOffset;
         [SerializeField] BiomeDistributionProfile biomeDistribution;
         [SerializeField] SurfaceMaterialDistributionProfile surfaceMaterialDistribution;
         [SerializeField] PlanetSurfaceStateProfile surfaceStateProfile;
@@ -29,6 +34,8 @@ namespace Farion.Simulation.Planetary
         public PlanetType PlanetType => planetType;
         public float AtmosphereDensity => atmosphereDensity;
         public bool HasAtmosphere => atmosphereDensity > 0f;
+        public float AtmosphereScale => Mathf.Max(0f, atmosphereScale);
+        public float AtmosphereRadiusOffset => Mathf.Max(0f, atmosphereRadiusOffset);
         public bool SupportsSurfaceWaterClouds =>
             HasAtmosphere &&
             hydrosphereProfile != null &&

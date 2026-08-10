@@ -29,6 +29,7 @@ namespace Farion.Gameplay.Actors
 
         Rigidbody cachedRigidbody;
         CelestialFrameSample currentSample;
+        bool externalSimulation;
 
         public CelestialFrameProvider FrameProvider => frameProvider;
         public CelestialFrameSample CurrentSample => currentSample;
@@ -42,7 +43,17 @@ namespace Farion.Gameplay.Actors
 
         protected virtual void FixedUpdate()
         {
+            if (externalSimulation)
+            {
+                return;
+            }
+
             RefreshSample();
+        }
+
+        public void SetExternalSimulation(bool enabled)
+        {
+            externalSimulation = enabled;
         }
 
         public void SetFrameProvider(CelestialFrameProvider provider)

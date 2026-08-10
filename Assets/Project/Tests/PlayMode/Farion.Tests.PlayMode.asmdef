@@ -2,6 +2,7 @@
     "name": "Farion.Tests.PlayMode",
     "rootNamespace": "Farion.Tests.PlayMode",
     "references": [
+        "Farion.Core.Identity",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Farion.Gameplay.Runtime",
@@ -10,7 +11,8 @@
         "Farion.App.Runtime",
         "Farion.Multiplayer.Runtime",
         "FishNet.Runtime",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Farion.Tests.Support"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

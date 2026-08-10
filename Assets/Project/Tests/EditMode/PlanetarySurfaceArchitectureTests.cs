@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Reflection;
 using Farion.Simulation.Planetary;
+using Farion.Tests;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -40,7 +40,7 @@ namespace Farion.Tests.EditMode
         {
             BiomeDefinition fallback = Create<BiomeDefinition>();
             BiomeDistributionProfile distribution = Create<BiomeDistributionProfile>();
-            SetField(distribution, "fallbackBiome", fallback);
+            TestFieldAccess.SetField(distribution, "fallbackBiome", fallback);
             PlanetGenerationContext context = PlanetGenerationContext.CreateDefault(17);
             PlanetClimateSample climate = CreateClimate(context);
 
@@ -59,7 +59,7 @@ namespace Farion.Tests.EditMode
         {
             SurfaceMaterialDefinition fallback = Create<SurfaceMaterialDefinition>();
             SurfaceMaterialDistributionProfile distribution = Create<SurfaceMaterialDistributionProfile>();
-            SetField(distribution, "fallbackMaterial", fallback);
+            TestFieldAccess.SetField(distribution, "fallbackMaterial", fallback);
             PlanetGenerationContext context = PlanetGenerationContext.CreateDefault(31);
             PlanetClimateSample climate = CreateClimate(context);
             List<SurfaceMaterialWeight> weights = new();
@@ -91,19 +91,19 @@ namespace Farion.Tests.EditMode
         {
             PlanetaryGenerationProfile generation = Create<PlanetaryGenerationProfile>();
             PlanetHydrosphereProfile hydrosphere = Create<PlanetHydrosphereProfile>();
-            SetField(generation, "hydrosphereProfile", hydrosphere);
+            TestFieldAccess.SetField(generation, "hydrosphereProfile", hydrosphere);
 
             Assert.That(generation.SupportsSurfaceWaterClouds, Is.True);
 
-            SetField(hydrosphere, "hasSurfaceOcean", false);
+            TestFieldAccess.SetField(hydrosphere, "hasSurfaceOcean", false);
             Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
 
-            SetField(hydrosphere, "hasSurfaceOcean", true);
-            SetField(hydrosphere, "waterAvailability", 0f);
+            TestFieldAccess.SetField(hydrosphere, "hasSurfaceOcean", true);
+            TestFieldAccess.SetField(hydrosphere, "waterAvailability", 0f);
             Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
 
-            SetField(hydrosphere, "waterAvailability", 0.4f);
-            SetField(generation, "atmosphereDensity", 0f);
+            TestFieldAccess.SetField(hydrosphere, "waterAvailability", 0.4f);
+            TestFieldAccess.SetField(generation, "atmosphereDensity", 0f);
             Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
         }
 
@@ -129,13 +129,5 @@ namespace Farion.Tests.EditMode
             return instance;
         }
 
-        static void SetField<T>(T target, string fieldName, object value)
-        {
-            FieldInfo field = typeof(T).GetField(
-                fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, $"Missing private field '{fieldName}' on {typeof(T).Name}.");
-            field.SetValue(target, value);
-        }
     }
 }

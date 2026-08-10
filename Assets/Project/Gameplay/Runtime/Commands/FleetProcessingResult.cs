@@ -7,6 +7,7 @@ namespace Farion.Gameplay.Commands
         InvalidRecipe = 2,
         MissingStorage = 3,
         UnauthorizedStorage = 4,
-        Rejected = 5
+        Rejected = 5,
+        StaleStorage = 6
     }
 }

@@ -1,8 +1,9 @@
+using Farion.Core.Identity;
 using System.Collections;
-using System.Reflection;
 using Farion.Gameplay.Character;
-using Farion.Multiplayer.World.Zones;
-using Farion.Simulation.World.Identity;
+using Farion.Multiplayer.World;
+using Farion.Simulation.World;
+using Farion.Tests;
 using FishNet.Managing.Scened;
 using NUnit.Framework;
 using UnityEngine;
@@ -161,7 +162,7 @@ namespace Farion.Tests.PlayMode
             FirstPersonMotor motor = actor.AddComponent<FirstPersonMotor>();
             FirstPersonMotorProfile profile =
                 ScriptableObject.CreateInstance<FirstPersonMotorProfile>();
-            SetField(motor, "profile", profile);
+            TestFieldAccess.SetField(motor, "profile", profile);
             Rigidbody body = actor.GetComponent<Rigidbody>();
             body.useGravity = false;
 
@@ -202,13 +203,5 @@ namespace Farion.Tests.PlayMode
             return context;
         }
 
-        static void SetField<T>(object target, string fieldName, T value)
-        {
-            FieldInfo field = target.GetType().GetField(
-                fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, fieldName);
-            field.SetValue(target, value);
-        }
     }
 }

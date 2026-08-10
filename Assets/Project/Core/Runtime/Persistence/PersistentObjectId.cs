@@ -1,3 +1,4 @@
+using Farion.Core.Identity;
 using UnityEngine;
 
 namespace Farion.Core.Persistence
@@ -7,41 +8,32 @@ namespace Farion.Core.Persistence
     {
         [SerializeField] string persistentId;
 
-        public string Id => Normalize(persistentId);
-        public bool HasId => IsValid(Id);
+        public string Id => IdentifierText.Normalize(persistentId);
+        public bool HasId => IdentifierText.IsValid(Id);
+
+        public bool TryGetEntityId(out PersistentEntityId entityId)
+        {
+            return PersistentEntityId.TryCreate(persistentId, out entityId);
+        }
 
         public void SetId(string id)
         {
-            persistentId = Normalize(id);
+            persistentId = IdentifierText.Normalize(id);
         }
 
         void OnValidate()
         {
-            persistentId = Normalize(persistentId);
+            persistentId = IdentifierText.Normalize(persistentId);
         }
 
         public static string Normalize(string id)
         {
-            return string.IsNullOrWhiteSpace(id) ? string.Empty : id.Trim();
+            return IdentifierText.Normalize(id);
         }
 
         public static bool IsValid(string id)
         {
-            string normalized = Normalize(id);
-            if (string.IsNullOrEmpty(normalized))
-            {
-                return false;
-            }
-
-            for (int i = 0; i < normalized.Length; i++)
-            {
-                if (char.IsWhiteSpace(normalized[i]) || char.IsControl(normalized[i]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return IdentifierText.IsValidRaw(id);
         }
     }
 }

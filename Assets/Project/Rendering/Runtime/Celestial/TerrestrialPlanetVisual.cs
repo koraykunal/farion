@@ -1,6 +1,6 @@
-using Farion.Simulation.Physics;
 using Farion.Rendering.PostProcessing;
 using Farion.Simulation.Celestial;
+using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
 using UnityEngine;
 
@@ -17,7 +17,6 @@ namespace Farion.Rendering.Celestial
     public sealed class TerrestrialPlanetVisual :
         MonoBehaviour,
         ICelestialOceanLevelProvider,
-        ICelestialEnvironmentProvider,
         ICelestialOceanEffectSource,
         ICelestialAtmosphereEffectSource,
         ICelestialCloudEffectSource
@@ -86,34 +85,16 @@ namespace Farion.Rendering.Celestial
             return true;
         }
 
-        public bool TryGetEnvironment(CelestialBody body, out CelestialEnvironmentSample sample)
+        bool TryResolveEnvironment(
+            out CelestialBody sourceBody,
+            out CelestialEnvironmentSample environment)
         {
-            sample = default;
-            if (profile == null || body == null || body != GetComponent<CelestialBody>())
-            {
-                return false;
-            }
-
             ResolveComponents();
-
-            float bodyRadius = Mathf.Max(0.01f, body.Radius);
-            Vector2 terrainRadiusRange = terrainVisual != null && terrainVisual.HasRenderRadiusRange
-                ? terrainVisual.RenderRadiusMinMax
-                : new Vector2(bodyRadius, bodyRadius);
-
-            PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
-            bool hasOcean = profile.OceanProfile != null && hydrosphere != null && hydrosphere.HasSurfaceOcean;
-            float oceanRadius = hasOcean
-                ? profile.OceanProfile.GetOceanRadius(bodyRadius, terrainRadiusRange, hydrosphere.OceanLevel)
-                : 0f;
-
-            bool hasAtmosphere = profile.AtmosphereProfile != null && HasSimulatedAtmosphere();
-            float atmosphereRadius = hasAtmosphere
-                ? profile.AtmosphereProfile.GetAtmosphereRadius(GetAtmosphereBaseRadius(bodyRadius, terrainRadiusRange))
-                : 0f;
-
-            sample = new CelestialEnvironmentSample(body, hasOcean, oceanRadius, hasAtmosphere, atmosphereRadius);
-            return hasOcean || hasAtmosphere;
+            sourceBody = GetComponent<CelestialBody>();
+            environment = default;
+            return sourceBody != null &&
+                   surfaceModel != null &&
+                   surfaceModel.TryGetEnvironment(sourceBody, out environment);
         }
 
         public bool TryGetOceanEffectData(out CelestialOceanEffectData data)
@@ -129,29 +110,21 @@ namespace Farion.Rendering.Celestial
                 return false;
             }
 
-            ResolveComponents();
-
-            CelestialBody sourceBody = GetComponent<CelestialBody>();
-            if (sourceBody == null)
+            if (!TryResolveEnvironment(
+                    out CelestialBody sourceBody,
+                    out CelestialEnvironmentSample environment) ||
+                !environment.HasOcean)
             {
                 return false;
             }
 
             float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
-            Vector2 terrainRadiusRange = terrainVisual != null && terrainVisual.HasRenderRadiusRange
-                ? terrainVisual.RenderRadiusMinMax
-                : new Vector2(bodyRadius, bodyRadius);
-
-            float oceanRadius = profile.OceanProfile.GetOceanRadius(
-                bodyRadius,
-                terrainRadiusRange,
-                hydrosphere.OceanLevel);
             ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
             data = new CelestialOceanEffectData(
                 renderCenter,
                 bodyRadius * renderScale,
-                terrainRadiusRange * renderScale,
-                oceanRadius * renderScale,
+                environment.TerrainRadiusMinMax * renderScale,
+                environment.OceanRadius * renderScale,
                 profile.OceanProfile);
             return true;
         }
@@ -165,27 +138,22 @@ namespace Farion.Rendering.Celestial
                 return false;
             }
 
-            ResolveComponents();
-
-            CelestialBody sourceBody = GetComponent<CelestialBody>();
-            if (sourceBody == null)
+            if (!TryResolveEnvironment(
+                    out CelestialBody sourceBody,
+                    out CelestialEnvironmentSample environment) ||
+                !environment.HasAtmosphere)
             {
                 return false;
             }
 
             float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
-            Vector2 terrainRadiusRange = terrainVisual != null && terrainVisual.HasRenderRadiusRange
-                ? terrainVisual.RenderRadiusMinMax
-                : new Vector2(bodyRadius, bodyRadius);
-            float atmosphereBaseRadius = GetAtmosphereBaseRadius(bodyRadius, terrainRadiusRange);
-            float atmosphereRadius = profile.AtmosphereProfile.GetAtmosphereRadius(atmosphereBaseRadius);
             ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
 
             data = new CelestialAtmosphereEffectData(
                 renderCenter,
                 bodyRadius * renderScale,
-                atmosphereBaseRadius * renderScale,
-                atmosphereRadius * renderScale,
+                environment.AtmosphereBaseRadius * renderScale,
+                environment.AtmosphereRadius * renderScale,
                 profile.AtmosphereProfile);
             return true;
         }
@@ -209,18 +177,16 @@ namespace Farion.Rendering.Celestial
                 return false;
             }
 
-            CelestialBody sourceBody = GetComponent<CelestialBody>();
-            if (sourceBody == null)
+            if (!TryResolveEnvironment(
+                    out CelestialBody sourceBody,
+                    out CelestialEnvironmentSample environment) ||
+                !environment.HasAtmosphere)
             {
                 return false;
             }
 
-            float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
-            Vector2 terrainRadiusRange = terrainVisual != null && terrainVisual.HasRenderRadiusRange
-                ? terrainVisual.RenderRadiusMinMax
-                : new Vector2(bodyRadius, bodyRadius);
-            float surfaceRadius = GetAtmosphereBaseRadius(bodyRadius, terrainRadiusRange);
-            float atmosphereRadius = profile.AtmosphereProfile.GetAtmosphereRadius(surfaceRadius);
+            float surfaceRadius = environment.AtmosphereBaseRadius;
+            float atmosphereRadius = environment.AtmosphereRadius;
             profile.CloudProfile.GetLayerRadii(surfaceRadius, atmosphereRadius, out float innerRadius, out float outerRadius);
             ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
 
@@ -250,23 +216,6 @@ namespace Farion.Rendering.Celestial
 
             center = sourceBody.transform.position;
             scale = 1f;
-        }
-
-        float GetAtmosphereBaseRadius(float bodyRadius, Vector2 terrainRadiusRange)
-        {
-            PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
-            if (profile != null
-                && profile.OceanProfile != null
-                && hydrosphere != null
-                && hydrosphere.HasSurfaceOcean)
-            {
-                return profile.OceanProfile.GetOceanRadius(
-                    bodyRadius,
-                    terrainRadiusRange,
-                    hydrosphere.OceanLevel);
-            }
-
-            return Mathf.Max(0.01f, bodyRadius);
         }
 
         PlanetHydrosphereProfile ResolveHydrosphere()

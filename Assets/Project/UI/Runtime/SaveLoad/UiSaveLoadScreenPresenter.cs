@@ -8,11 +8,11 @@ using Farion.UI.Localization;
 using Farion.UI.Navigation;
 using Farion.UI.Styling;
 using TMPro;
+using UiNavigation = UnityEngine.UI.Navigation;
 using UnityEngine;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using UnityEngine.UI;
-using UiNavigation = UnityEngine.UI.Navigation;
 
 namespace Farion.UI.SaveLoad
 {
@@ -221,31 +221,27 @@ namespace Farion.UI.SaveLoad
             SetText(
                 eyebrowText,
                 mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get("save_load.eyebrow.save", "EXPEDITION RECORD")
-                    : UiLocalization.Get("save_load.eyebrow.load", "RETURN TO EXPEDITION"));
+                    ? UiLocalization.Get(UiTextKeys.SaveLoadEyebrowSave)
+                    : UiLocalization.Get(UiTextKeys.SaveLoadEyebrowLoad));
             SetText(
                 titleText,
                 mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get("save_load.title.save", "SAVE GAME")
-                    : UiLocalization.Get("save_load.title.load", "LOAD GAME"));
+                    ? UiLocalization.Get(UiTextKeys.SaveLoadTitleSave)
+                    : UiLocalization.Get(UiTextKeys.SaveLoadTitleLoad));
             SetText(
                 descriptionText,
                 mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get(
-                        "save_load.description.save",
-                        "Choose a slot for the current expedition state.")
-                    : UiLocalization.Get(
-                        "save_load.description.load",
-                        "Choose a compatible record to continue your expedition."));
-            SetText(backLabelText, UiLocalization.Get("common.back", "BACK"));
-            SetText(deleteLabelText, UiLocalization.Get("common.delete", "DELETE"));
+                    ? UiLocalization.Get(UiTextKeys.SaveLoadDescriptionSave)
+                    : UiLocalization.Get(UiTextKeys.SaveLoadDescriptionLoad));
+            SetText(backLabelText, UiLocalization.Get(UiTextKeys.CommonBack));
+            SetText(deleteLabelText, UiLocalization.Get(UiTextKeys.CommonDelete));
             SetText(
                 primaryLabelText,
                 mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get("common.save", "SAVE")
-                    : UiLocalization.Get("common.load", "LOAD"));
-            SetText(savedLabelText, UiLocalization.Get("save_load.saved", "SAVED"));
-            SetText(versionLabelText, UiLocalization.Get("save_load.version", "SAVE VERSION"));
+                    ? UiLocalization.Get(UiTextKeys.CommonSave)
+                    : UiLocalization.Get(UiTextKeys.CommonLoad));
+            SetText(savedLabelText, UiLocalization.Get(UiTextKeys.SaveLoadSaved));
+            SetText(versionLabelText, UiLocalization.Get(UiTextKeys.SaveLoadVersion));
 
             int count = Mathf.Min(slotViews.Count, summaries.Count);
             for (int i = 0; i < count; i++)
@@ -291,7 +287,7 @@ namespace Farion.UI.SaveLoad
                 versionValueText,
                 summary.SchemaVersion > 0
                     ? $"V{summary.SchemaVersion}"
-                    : UiLocalization.Get("save_load.not_available", "NOT AVAILABLE"));
+                    : UiLocalization.Get(UiTextKeys.SaveLoadNotAvailable));
 
             bool canLoad = mode == UiSaveLoadMode.Load && summary.IsLoadable;
             bool canSave = mode == UiSaveLoadMode.Save;
@@ -321,9 +317,7 @@ namespace Farion.UI.SaveLoad
                 if (!summary.IsLoadable || loadRequested == null)
                 {
                     ShowFeedback(
-                        UiLocalization.Get(
-                            "save_load.feedback.unavailable",
-                            "This save cannot be loaded."),
+                        UiLocalization.Get(UiTextKeys.SaveLoadFeedbackUnavailable),
                         UiFeedbackSeverity.Caution);
                     return;
                 }
@@ -337,9 +331,7 @@ namespace Farion.UI.SaveLoad
             if (saveRequested == null)
             {
                 ShowFeedback(
-                    UiLocalization.Get(
-                        "save_load.feedback.save_unavailable",
-                        "Saving is not available."),
+                    UiLocalization.Get(UiTextKeys.SaveLoadFeedbackSaveUnavailable),
                     UiFeedbackSeverity.Error);
                 return;
             }
@@ -351,11 +343,9 @@ namespace Farion.UI.SaveLoad
             }
 
             PresentConfirmation(
-                UiLocalization.Get("save_load.overwrite.title", "OVERWRITE SAVE"),
-                UiLocalization.Get(
-                    "save_load.overwrite.body",
-                    "The existing record in this slot will be replaced."),
-                UiLocalization.Get("save_load.overwrite.confirm", "OVERWRITE"),
+                UiLocalization.Get(UiTextKeys.SaveLoadOverwriteTitle),
+                UiLocalization.Get(UiTextKeys.SaveLoadOverwriteBody),
+                UiLocalization.Get(UiTextKeys.SaveLoadOverwriteConfirm),
                 () => PerformSave(summary.SlotName));
         }
 
@@ -370,11 +360,9 @@ namespace Farion.UI.SaveLoad
 
             string slotName = summaries[selectedIndex].SlotName;
             PresentConfirmation(
-                UiLocalization.Get("save_load.delete.title", "DELETE SAVE"),
-                UiLocalization.Get(
-                    "save_load.delete.body",
-                    "This record and its recovery backup will be permanently deleted."),
-                UiLocalization.Get("common.delete", "DELETE"),
+                UiLocalization.Get(UiTextKeys.SaveLoadDeleteTitle),
+                UiLocalization.Get(UiTextKeys.SaveLoadDeleteBody),
+                UiLocalization.Get(UiTextKeys.CommonDelete),
                 () => PerformDelete(slotName));
         }
 
@@ -385,9 +373,7 @@ namespace Farion.UI.SaveLoad
             {
                 ShowFeedback(
                     string.Format(
-                        UiLocalization.Get(
-                            "save_load.feedback.save_failed",
-                            "Save failed: {0}."),
+                        UiLocalization.Get(UiTextKeys.SaveLoadFeedbackSaveFailed),
                         result.Status),
                     UiFeedbackSeverity.Error);
                 return;
@@ -396,7 +382,7 @@ namespace Farion.UI.SaveLoad
             Refresh(slotName);
             CatalogChanged?.Invoke();
             ShowFeedback(
-                UiLocalization.Get("save_load.feedback.saved", "Game saved."),
+                UiLocalization.Get(UiTextKeys.SaveLoadFeedbackSaved),
                 UiFeedbackSeverity.Success);
         }
 
@@ -408,9 +394,7 @@ namespace Farion.UI.SaveLoad
             {
                 ShowFeedback(
                     string.Format(
-                        UiLocalization.Get(
-                            "save_load.feedback.delete_failed",
-                            "Delete failed: {0}."),
+                        UiLocalization.Get(UiTextKeys.SaveLoadFeedbackDeleteFailed),
                         result.Status),
                     UiFeedbackSeverity.Error);
                 return;
@@ -419,7 +403,7 @@ namespace Farion.UI.SaveLoad
             Refresh(slotName);
             CatalogChanged?.Invoke();
             ShowFeedback(
-                UiLocalization.Get("save_load.feedback.deleted", "Save deleted."),
+                UiLocalization.Get(UiTextKeys.SaveLoadFeedbackDeleted),
                 UiFeedbackSeverity.Information);
         }
 
@@ -437,9 +421,7 @@ namespace Farion.UI.SaveLoad
             }
 
             ShowFeedback(
-                UiLocalization.Get(
-                    "save_load.feedback.confirmation_unavailable",
-                    "Confirmation is not available."),
+                UiLocalization.Get(UiTextKeys.SaveLoadFeedbackConfirmationUnavailable),
                 UiFeedbackSeverity.Error);
         }
 
@@ -587,11 +569,9 @@ namespace Farion.UI.SaveLoad
                     slotName,
                     SaveGameSlotCatalog.DefaultSlotName,
                     StringComparison.OrdinalIgnoreCase)
-                ? UiLocalization.Get("save_load.slot.primary", "PRIMARY SLOT")
+                ? UiLocalization.Get(UiTextKeys.SaveLoadSlotPrimary)
                 : string.Format(
-                    UiLocalization.Get(
-                        "save_load.slot.manual",
-                        "MANUAL SLOT {0:00}"),
+                    UiLocalization.Get(UiTextKeys.SaveLoadSlotManual),
                     index);
         }
 
@@ -599,7 +579,7 @@ namespace Farion.UI.SaveLoad
         {
             if (!summary.BestTimestampUtc.HasValue)
             {
-                return UiLocalization.Get("save_load.empty", "NO SAVE DATA");
+                return UiLocalization.Get(UiTextKeys.SaveLoadEmpty);
             }
 
             string localeCode = LocalizationSettings.SelectedLocale?.Identifier.Code;
@@ -620,14 +600,14 @@ namespace Farion.UI.SaveLoad
             return state switch
             {
                 SaveGameSlotState.Available =>
-                    UiLocalization.Get("save_load.state.ready", "READY"),
+                    UiLocalization.Get(UiTextKeys.SaveLoadStateReady),
                 SaveGameSlotState.RecoverableBackup =>
-                    UiLocalization.Get("save_load.state.backup", "BACKUP"),
+                    UiLocalization.Get(UiTextKeys.SaveLoadStateBackup),
                 SaveGameSlotState.Unsupported =>
-                    UiLocalization.Get("save_load.state.unsupported", "UNSUPPORTED"),
+                    UiLocalization.Get(UiTextKeys.SaveLoadStateUnsupported),
                 SaveGameSlotState.Invalid =>
-                    UiLocalization.Get("save_load.state.invalid", "DAMAGED"),
-                _ => UiLocalization.Get("save_load.state.empty", "EMPTY")
+                    UiLocalization.Get(UiTextKeys.SaveLoadStateInvalid),
+                _ => UiLocalization.Get(UiTextKeys.SaveLoadStateEmpty)
             };
         }
 
@@ -636,22 +616,14 @@ namespace Farion.UI.SaveLoad
             return state switch
             {
                 SaveGameSlotState.Available =>
-                    UiLocalization.Get("save_load.detail.ready", "READY TO LOAD"),
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailReady),
                 SaveGameSlotState.RecoverableBackup =>
-                    UiLocalization.Get(
-                        "save_load.detail.backup",
-                        "RECOVERY BACKUP AVAILABLE"),
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailBackup),
                 SaveGameSlotState.Unsupported =>
-                    UiLocalization.Get(
-                        "save_load.detail.unsupported",
-                        "SAVE VERSION NOT SUPPORTED"),
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailUnsupported),
                 SaveGameSlotState.Invalid =>
-                    UiLocalization.Get(
-                        "save_load.detail.invalid",
-                        "SAVE DATA COULD NOT BE READ"),
-                _ => UiLocalization.Get(
-                    "save_load.detail.empty",
-                    "AVAILABLE FOR A NEW SAVE")
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailInvalid),
+                _ => UiLocalization.Get(UiTextKeys.SaveLoadDetailEmpty)
             };
         }
 
@@ -660,24 +632,14 @@ namespace Farion.UI.SaveLoad
             return state switch
             {
                 SaveGameSlotState.Available =>
-                    UiLocalization.Get(
-                        "save_load.detail.ready_description",
-                        "This record is compatible with the current game version."),
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailReadyDescription),
                 SaveGameSlotState.RecoverableBackup =>
-                    UiLocalization.Get(
-                        "save_load.detail.backup_description",
-                        "The primary record is unavailable. A compatible recovery copy will be used."),
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailBackupDescription),
                 SaveGameSlotState.Unsupported =>
-                    UiLocalization.Get(
-                        "save_load.detail.unsupported_description",
-                        "This record was created by an incompatible game version."),
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailUnsupportedDescription),
                 SaveGameSlotState.Invalid =>
-                    UiLocalization.Get(
-                        "save_load.detail.invalid_description",
-                        "The record exists but its contents are not valid."),
-                _ => UiLocalization.Get(
-                    "save_load.detail.empty_description",
-                    "No expedition record has been written to this slot.")
+                    UiLocalization.Get(UiTextKeys.SaveLoadDetailInvalidDescription),
+                _ => UiLocalization.Get(UiTextKeys.SaveLoadDetailEmptyDescription)
             };
         }
 

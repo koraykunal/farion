@@ -1003,7 +1003,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialFrameProvider
   simulation: {fileID: 476981471}
   environmentSources:
-  - {fileID: 922402154}
+  - {fileID: 922402157}
   surfaceSources:
   - {fileID: 922402157}
 --- !u!1 &657189156
@@ -1184,7 +1184,7 @@ MonoBehaviour:
   avoidObstacles: 1
   obstacleLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 448
   collisionRadius: 0.35
   collisionPadding: 0.15
   minimumTargetDistance: 1
@@ -2623,6 +2623,7 @@ GameObject:
   - component: {fileID: 922402159}
   - component: {fileID: 922402160}
   - component: {fileID: 8000000000000000101}
+  - component: {fileID: 8800000000000000001}
   m_Layer: 0
   m_Name: Test Planet
   m_TagString: Untagged
@@ -2848,7 +2849,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 922402147}
-  generationProfile: {fileID: 11400000, guid: 1ff9db461b1b46e48af26cd43336dcae, type: 2}
+  generationProfile: {fileID: 11400000, guid: a9d263dcb6044288a2c0c264ca7a5880, type: 2}
   shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
   primaryRadiationSource: {fileID: 733625519}
   surfaceNormalSampleStep: 0.004
@@ -2923,6 +2924,22 @@ MonoBehaviour:
   skippedUnchangedRefreshCount: 0
   lastTransitionBuildCount: 0
   lastTransitionCommitFrame: -1
+--- !u!114 &8800000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 922402144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
+  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
+  body: {fileID: 922402147}
+  surfaceModel: {fileID: 922402157}
+  patchSystem: {fileID: 922402160}
 --- !u!1 &1005994521
 GameObject:
   m_ObjectHideFlags: 0

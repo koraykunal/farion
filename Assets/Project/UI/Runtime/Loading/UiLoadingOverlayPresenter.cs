@@ -161,33 +161,25 @@ namespace Farion.UI.Loading
         {
             SetText(
                 systemLabelText,
-                UiLocalization.Get("loading.system", "SYSTEM TRANSIT"));
+                UiLocalization.Get(UiTextKeys.LoadingSystem));
 
             switch (presentation)
             {
                 case UiLoadingPresentation.ReturningToMainMenu:
                     SetText(
                         titleText,
-                        UiLocalization.Get(
-                            "loading.main_menu.title",
-                            "RETURNING TO MAIN MENU"));
+                        UiLocalization.Get(UiTextKeys.LoadingMainMenuTitle));
                     SetText(
                         statusText,
-                        UiLocalization.Get(
-                            "loading.main_menu.status",
-                            "Restoring command interface"));
+                        UiLocalization.Get(UiTextKeys.LoadingMainMenuStatus));
                     break;
                 default:
                     SetText(
                         titleText,
-                        UiLocalization.Get(
-                            "loading.gameplay.title",
-                            "PREPARING EXPEDITION"));
+                        UiLocalization.Get(UiTextKeys.LoadingGameplayTitle));
                     SetText(
                         statusText,
-                        UiLocalization.Get(
-                            "loading.gameplay.status",
-                            "Loading mission environment"));
+                        UiLocalization.Get(UiTextKeys.LoadingGameplayStatus));
                     break;
             }
         }

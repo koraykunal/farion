@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Farion.Core.Time;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -45,9 +44,11 @@ namespace Farion.Simulation.Physics
             RefreshBodies();
             ConfigureBodies();
 
-            if (settings != null && settings.ApplyFixedTimeStepOnStart)
+            if (settings != null &&
+                settings.ApplyFixedTimeStepOnStart &&
+                settings.FixedTimeStep > 0f)
             {
-                SimulationClock.ApplyFixedStep(settings.FixedTimeStep);
+                UnityEngine.Time.fixedDeltaTime = settings.FixedTimeStep;
             }
         }
 
@@ -128,13 +129,27 @@ namespace Farion.Simulation.Physics
             return offset.normalized * (GravitationalConstant * body.Mass / sqrDistance);
         }
 
+        public Vector3 CalculateOrbitalAcceleration(CelestialBody body)
+        {
+            if (body == null || !body.ParticipatesInNBody)
+            {
+                return Vector3.zero;
+            }
+
+            CelestialBody attractor = body.OrbitAttractor;
+            return body.MotionMode == CelestialBodyMotionMode.KinematicOrbit &&
+                   attractor != null &&
+                   attractor.ParticipatesInNBody
+                ? CalculateAccelerationFromBody(body.Position, attractor)
+                : CalculateAcceleration(body.Position, body);
+        }
+
         public GravitySample FindDominantBody(Vector3 point, CelestialBody ignoredBody = null)
         {
             CelestialBody dominantBody = null;
             Vector3 dominantAcceleration = Vector3.zero;
             float dominantAccelerationSqr = 0f;
-            float centerDistance = 0f;
-            float surfaceDistance = 0f;
+            CelestialSurfaceSample dominantSurface = default;
 
             foreach (CelestialBody body in simulationBodies)
             {
@@ -153,20 +168,23 @@ namespace Farion.Simulation.Physics
                 dominantBody = body;
                 dominantAcceleration = acceleration;
                 dominantAccelerationSqr = accelerationSqr;
-                CelestialSurfaceSample surfaceSample = body.SampleSurface(point);
-                centerDistance = surfaceSample.CenterDistance;
-                surfaceDistance = surfaceSample.SurfaceDistance;
+                dominantSurface = body.SampleSurface(point);
             }
 
             return dominantBody != null
-                ? new GravitySample(dominantBody, dominantAcceleration, centerDistance, surfaceDistance, dominantBody.SampleSurface(point).Normal)
+                ? new GravitySample(
+                    dominantBody,
+                    dominantAcceleration,
+                    dominantSurface.CenterDistance,
+                    dominantSurface.SurfaceDistance,
+                    dominantSurface.Normal)
                 : GravitySample.Empty;
         }
 
         public GravitySample FindNearestSurface(Vector3 point)
         {
             CelestialBody nearestBody = null;
-            float nearestCenterDistance = 0f;
+            CelestialSurfaceSample nearestSurface = default;
             float nearestSurfaceDistance = float.PositiveInfinity;
             Vector3 acceleration = Vector3.zero;
 
@@ -184,13 +202,18 @@ namespace Farion.Simulation.Physics
                 }
 
                 nearestBody = body;
-                nearestCenterDistance = surfaceSample.CenterDistance;
+                nearestSurface = surfaceSample;
                 nearestSurfaceDistance = surfaceSample.SurfaceDistance;
                 acceleration = body.ParticipatesInNBody ? CalculateAccelerationFromBody(point, body) : Vector3.zero;
             }
 
             return nearestBody != null
-                ? new GravitySample(nearestBody, acceleration, nearestCenterDistance, nearestSurfaceDistance, nearestBody.SampleSurface(point).Normal)
+                ? new GravitySample(
+                    nearestBody,
+                    acceleration,
+                    nearestSurface.CenterDistance,
+                    nearestSurface.SurfaceDistance,
+                    nearestSurface.Normal)
                 : GravitySample.Empty;
         }
 
@@ -304,8 +327,7 @@ namespace Farion.Simulation.Physics
                     continue;
                 }
 
-                Vector3 acceleration = CalculateAcceleration(body.Position, body);
-                body.IntegrateVelocity(acceleration, deltaTime);
+                body.IntegrateVelocity(CalculateOrbitalAcceleration(body), deltaTime);
             }
         }
 

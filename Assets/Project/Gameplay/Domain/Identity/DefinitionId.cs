@@ -1,4 +1,5 @@
 using System;
+using Farion.Core.Identity;
 
 namespace Farion.Gameplay.Domain.Identity
 {
@@ -8,8 +9,8 @@ namespace Farion.Gameplay.Domain.Identity
 
         public DefinitionId(string value)
         {
-            string normalized = Normalize(value);
-            if (!IsValidValue(normalized))
+            string normalized = IdentifierText.Normalize(value);
+            if (!IdentifierText.IsValid(normalized))
             {
                 throw new ArgumentException(
                     "Definition ids must be non-empty and cannot contain whitespace or control characters.",
@@ -20,12 +21,12 @@ namespace Farion.Gameplay.Domain.Identity
         }
 
         public string Value => value ?? string.Empty;
-        public bool IsValid => IsValidValue(Value);
+        public bool IsValid => IdentifierText.IsValid(Value);
 
         public static bool TryCreate(string value, out DefinitionId id)
         {
-            string normalized = Normalize(value);
-            if (!IsValidValue(normalized))
+            string normalized = IdentifierText.Normalize(value);
+            if (!IdentifierText.IsValid(normalized))
             {
                 id = default;
                 return false;
@@ -37,7 +38,7 @@ namespace Farion.Gameplay.Domain.Identity
 
         public static string Normalize(string value)
         {
-            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+            return IdentifierText.Normalize(value);
         }
 
         public static bool operator ==(DefinitionId left, DefinitionId right)
@@ -73,24 +74,6 @@ namespace Farion.Gameplay.Domain.Identity
         public override string ToString()
         {
             return Value;
-        }
-
-        static bool IsValidValue(string candidate)
-        {
-            if (string.IsNullOrEmpty(candidate))
-            {
-                return false;
-            }
-
-            for (int i = 0; i < candidate.Length; i++)
-            {
-                if (char.IsWhiteSpace(candidate[i]) || char.IsControl(candidate[i]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 }

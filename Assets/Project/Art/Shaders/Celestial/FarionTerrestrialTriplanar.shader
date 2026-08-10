@@ -259,6 +259,16 @@
                 return x * weights.x + y * weights.y + z * weights.z;
             }
 
+            float3 FarionWarpSurfacePosition(float3 positionOS)
+            {
+                float3 direction = positionOS / max(_BodyRadius, 0.0001);
+                float3 phase = float3(
+                    dot(direction, float3(7.13, 11.71, 17.17)),
+                    dot(direction, float3(13.37, 5.83, 19.19)),
+                    dot(direction, float3(17.89, 13.11, 7.31)));
+                return positionOS + sin(phase) * (_BodyRadius * 0.0025);
+            }
+
             half4 FarionSampleOverlay(
                 TEXTURE2D_PARAM(overlayTexture, overlaySampler),
                 float3 positionOS,
@@ -423,6 +433,7 @@
             half4 Fragment(Varyings input) : SV_Target
             {
                 float3 normalOS = normalize(input.normalOS);
+                float3 surfacePositionOS = FarionWarpSurfacePosition(input.positionOS);
                 float3 radialOS = normalize(input.positionOS);
                 float terrainRadius = length(input.positionOS);
                 float heightRange = max(_RadiusMinMax.y - _RadiusMinMax.x, 0.0001);
@@ -570,7 +581,7 @@
                         if (FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer))
                         {
                             surfaceBaseColor += FarionSampleSurfaceBaseColor(
-                                input.positionOS,
+                                surfacePositionOS,
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
                                 textureLayer).rgb * weight;
@@ -604,7 +615,7 @@
                             textureLayer))
                         {
                             surfaceHeight += FarionSampleSurfaceHeight(
-                                input.positionOS,
+                                surfacePositionOS,
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
                                 textureLayer) * weight;
@@ -655,12 +666,12 @@
                 {
                     half3 lavaColor = FarionSampleOverlay(
                         TEXTURE2D_ARGS(_LavaBaseColor, sampler_NoiseTex),
-                        input.positionOS,
+                        surfacePositionOS,
                         normalOS,
                         _LavaWorldTileSize).rgb;
                     lavaRoughness = FarionSampleOverlay(
                         TEXTURE2D_ARGS(_LavaRoughness, sampler_NoiseTex),
-                        input.positionOS,
+                        surfacePositionOS,
                         normalOS,
                         _LavaWorldTileSize).r;
                     albedo = lerp(albedo, lavaColor, lavaMask);
@@ -670,12 +681,12 @@
                 {
                     half3 snowColor = FarionSampleOverlay(
                         TEXTURE2D_ARGS(_SnowBaseColor, sampler_NoiseTex),
-                        input.positionOS,
+                        surfacePositionOS,
                         normalOS,
                         _SnowWorldTileSize).rgb;
                     snowRoughness = FarionSampleOverlay(
                         TEXTURE2D_ARGS(_SnowRoughness, sampler_NoiseTex),
-                        input.positionOS,
+                        surfacePositionOS,
                         normalOS,
                         _SnowWorldTileSize).r;
                     albedo = lerp(albedo, snowColor, snowMask);
@@ -700,7 +711,7 @@
                         if (FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer))
                         {
                             surfaceNormalOS += FarionUnpackSurfaceNormalOS(
-                                input.positionOS,
+                                surfacePositionOS,
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
                                 textureLayer,
@@ -714,7 +725,7 @@
                 {
                     half3 lavaNormalOS = FarionUnpackOverlayNormalOS(
                         TEXTURE2D_ARGS(_LavaNormal, sampler_NoiseTex),
-                        input.positionOS,
+                        surfacePositionOS,
                         normalOS,
                         _LavaWorldTileSize,
                         _LavaNormalStrength);
@@ -724,7 +735,7 @@
                 {
                     half3 snowNormalOS = FarionUnpackOverlayNormalOS(
                         TEXTURE2D_ARGS(_SnowNormal, sampler_NoiseTex),
-                        input.positionOS,
+                        surfacePositionOS,
                         normalOS,
                         _SnowWorldTileSize,
                         _SnowNormalStrength);
@@ -755,7 +766,7 @@
                             textureLayer))
                         {
                             surfaceAmbientOcclusion += FarionSampleSurfaceAmbientOcclusion(
-                                input.positionOS,
+                                surfacePositionOS,
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
                                 textureLayer) * weight;
@@ -795,7 +806,7 @@
                         if (FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer))
                         {
                             surfaceTextureSmoothness += (1.0h - FarionSampleSurfaceRoughness(
-                                input.positionOS,
+                                surfacePositionOS,
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
                                 textureLayer)) * weight;
@@ -828,7 +839,7 @@
                             textureLayer))
                         {
                             surfaceEmission += FarionSampleSurfaceEmission(
-                                input.positionOS,
+                                surfacePositionOS,
                                 normalOS,
                                 _SurfaceTextureParams[surfaceSlot].x,
                                 textureLayer)
@@ -853,7 +864,7 @@
                 {
                     half3 lavaEmission = FarionSampleOverlay(
                         TEXTURE2D_ARGS(_LavaEmission, sampler_NoiseTex),
-                        input.positionOS,
+                        surfacePositionOS,
                         normalOS,
                         _LavaWorldTileSize).rgb;
                     surfaceEmission += lavaEmission

@@ -1,10 +1,62 @@
-using Farion.Simulation.Physics;
 using Farion.Gameplay.Actors;
+using Farion.Simulation.Physics;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace Farion.Gameplay.Flight
 {
+    public interface ISpacecraftPhysicsBody
+    {
+        Vector3 Position { get; }
+        Vector3 WorldCenterOfMass { get; }
+        Vector3 LinearVelocity { get; }
+        Vector3 AngularVelocity { get; }
+        void SetLinearVelocity(Vector3 velocity);
+        void SetAngularVelocity(Vector3 velocity);
+        void MovePosition(Vector3 position);
+        void AddForce(Vector3 force, ForceMode mode);
+        void AddRelativeTorque(Vector3 torque, ForceMode mode);
+        void Commit();
+    }
+
+    public struct SpacecraftMotorState
+    {
+        public bool FlightAssistEnabled;
+        public Vector3 RequestedTranslation;
+        public Vector3 RequestedRotation;
+        public bool RequestedBoost;
+        public bool RequestedBrake;
+        public Vector3 CurrentTranslation;
+        public Vector3 CurrentRotation;
+        public bool CurrentBoost;
+        public bool CurrentBrake;
+        public Vector3 SmoothedTranslation;
+        public Vector3 SmoothedRotationInput;
+        public SpacecraftBoostState Boost;
+    }
+
+    sealed class RigidbodySpacecraftPhysicsBody : ISpacecraftPhysicsBody
+    {
+        readonly Rigidbody body;
+
+        public RigidbodySpacecraftPhysicsBody(Rigidbody body) => this.body = body;
+        public Vector3 Position => body.position;
+        public Vector3 WorldCenterOfMass => body.worldCenterOfMass;
+        public Vector3 LinearVelocity => body.linearVelocity;
+        public Vector3 AngularVelocity => body.angularVelocity;
+        public void SetLinearVelocity(Vector3 velocity) =>
+            body.linearVelocity = velocity;
+        public void SetAngularVelocity(Vector3 velocity) =>
+            body.angularVelocity = velocity;
+        public void MovePosition(Vector3 position) => body.MovePosition(position);
+        public void AddForce(Vector3 force, ForceMode mode) => body.AddForce(force, mode);
+        public void AddRelativeTorque(Vector3 torque, ForceMode mode) =>
+            body.AddRelativeTorque(torque, mode);
+        public void Commit()
+        {
+        }
+    }
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     public sealed class SpacecraftMotor : MonoBehaviour
@@ -40,6 +92,7 @@ namespace Farion.Gameplay.Flight
         [SerializeField] bool suspendRotationWhileInSurfaceContact = true;
 
         Rigidbody cachedRigidbody;
+        RigidbodySpacecraftPhysicsBody offlinePhysicsBody;
         ISpacecraftInputSource resolvedInput;
         SpacecraftInputState currentInput;
         SpacecraftPilotCommand requestedCommand = SpacecraftPilotCommand.None;
@@ -55,6 +108,7 @@ namespace Farion.Gameplay.Flight
         Vector3 lastGravityCompensationAcceleration;
         Vector3 lastLocalLinearAcceleration;
         Vector3 lastLocalAngularAcceleration;
+        bool externalSimulation;
 
         public Rigidbody Rigidbody =>
             cachedRigidbody != null ? cachedRigidbody : cachedRigidbody = GetComponent<Rigidbody>();
@@ -88,6 +142,7 @@ namespace Farion.Gameplay.Flight
         void Awake()
         {
             ConfigureRigidbody();
+            offlinePhysicsBody = new RigidbodySpacecraftPhysicsBody(Rigidbody);
             ResolveReferences();
             boostController.Reset();
             RefreshTelemetry();
@@ -107,31 +162,96 @@ namespace Farion.Gameplay.Flight
 
         void Update()
         {
-            ResolveReferences();
-            currentInput = resolvedInput?.CurrentInput ?? SpacecraftInputState.None;
-            SpacecraftPilotCommand nextCommand = BuildPilotCommand(currentInput);
-            if (nextCommand.ToggleFlightAssist)
+            if (externalSimulation)
             {
-                flightAssistEnabled = !flightAssistEnabled;
+                return;
             }
 
-            requestedCommand = new SpacecraftPilotCommand(
-                nextCommand.Translation,
-                nextCommand.Rotation,
-                nextCommand.Boost,
-                nextCommand.Brake,
-                toggleFlightAssist: false);
+            ResolveReferences();
+            SetInput(resolvedInput?.CurrentInput ?? SpacecraftInputState.None);
         }
 
         void FixedUpdate()
         {
+            if (externalSimulation)
+            {
+                return;
+            }
+
             ResolveReferences();
-            float deltaTime = Time.fixedDeltaTime;
-            ApplyGravity();
+            SimulatePreparedInput(Time.fixedDeltaTime, offlinePhysicsBody);
+        }
+
+        public void Simulate(
+            SpacecraftInputState input,
+            float deltaTime,
+            ISpacecraftPhysicsBody physicsBody)
+        {
+            if (physicsBody == null || deltaTime <= 0f)
+            {
+                return;
+            }
+
+            SetInput(input);
+            SimulatePreparedInput(deltaTime, physicsBody);
+        }
+
+        void SimulatePreparedInput(
+            float deltaTime,
+            ISpacecraftPhysicsBody physicsBody)
+        {
+            ApplyGravity(physicsBody);
             UpdateSmoothedCommand(deltaTime);
             UpdateBoost(deltaTime);
-            ApplyFlightControl();
-            RefreshTelemetry();
+            ApplyFlightControl(physicsBody);
+            physicsBody.Commit();
+            RefreshTelemetry(physicsBody);
+        }
+
+        public void SetExternalSimulation(bool enabled)
+        {
+            externalSimulation = enabled;
+            if (enabled)
+            {
+                currentInput = SpacecraftInputState.None;
+                requestedCommand = SpacecraftPilotCommand.None;
+            }
+        }
+
+        public SpacecraftMotorState CaptureState() => new()
+        {
+            FlightAssistEnabled = flightAssistEnabled,
+            RequestedTranslation = requestedCommand.Translation,
+            RequestedRotation = requestedCommand.Rotation,
+            RequestedBoost = requestedCommand.Boost,
+            RequestedBrake = requestedCommand.Brake,
+            CurrentTranslation = currentCommand.Translation,
+            CurrentRotation = currentCommand.Rotation,
+            CurrentBoost = currentCommand.Boost,
+            CurrentBrake = currentCommand.Brake,
+            SmoothedTranslation = smoothedTranslation,
+            SmoothedRotationInput = smoothedRotationInput,
+            Boost = boostController.CaptureState()
+        };
+
+        public void RestoreState(SpacecraftMotorState state)
+        {
+            flightAssistEnabled = state.FlightAssistEnabled;
+            requestedCommand = new SpacecraftPilotCommand(
+                state.RequestedTranslation,
+                state.RequestedRotation,
+                state.RequestedBoost,
+                state.RequestedBrake,
+                toggleFlightAssist: false);
+            currentCommand = new SpacecraftPilotCommand(
+                state.CurrentTranslation,
+                state.CurrentRotation,
+                state.CurrentBoost,
+                state.CurrentBrake,
+                toggleFlightAssist: false);
+            smoothedTranslation = state.SmoothedTranslation;
+            smoothedRotationInput = state.SmoothedRotationInput;
+            boostController.RestoreState(state.Boost);
         }
 
         public void SetInputSource(ISpacecraftInputSource source)
@@ -205,7 +325,24 @@ namespace Farion.Gameplay.Flight
             celestialProbe ??= GetComponent<CelestialActorProbe>();
         }
 
-        void ApplyGravity()
+        void SetInput(SpacecraftInputState input)
+        {
+            currentInput = input;
+            SpacecraftPilotCommand nextCommand = BuildPilotCommand(input);
+            if (nextCommand.ToggleFlightAssist)
+            {
+                flightAssistEnabled = !flightAssistEnabled;
+            }
+
+            requestedCommand = new SpacecraftPilotCommand(
+                nextCommand.Translation,
+                nextCommand.Rotation,
+                nextCommand.Boost,
+                nextCommand.Brake,
+                toggleFlightAssist: false);
+        }
+
+        void ApplyGravity(ISpacecraftPhysicsBody physicsBody)
         {
             lastGravityAcceleration = Vector3.zero;
             if (!applyGravity)
@@ -220,8 +357,8 @@ namespace Farion.Gameplay.Flight
             }
 
             lastGravityAcceleration =
-                source.CalculateReferenceFrameAcceleration(Rigidbody.position);
-            Rigidbody.AddForce(lastGravityAcceleration, ForceMode.Acceleration);
+                source.CalculateReferenceFrameAcceleration(physicsBody.Position);
+            physicsBody.AddForce(lastGravityAcceleration, ForceMode.Acceleration);
         }
 
         void UpdateSmoothedCommand(float deltaTime)
@@ -259,10 +396,12 @@ namespace Farion.Gameplay.Flight
                 BoostRechargeDelay);
         }
 
-        void ApplyFlightControl()
+        void ApplyFlightControl(ISpacecraftPhysicsBody physicsBody)
         {
-            Vector3 localRelativeVelocity = transform.InverseTransformDirection(RelativeVelocity);
-            Vector3 localAngularVelocity = transform.InverseTransformDirection(Rigidbody.angularVelocity);
+            Vector3 relativeVelocity = physicsBody.LinearVelocity -
+                ResolveFlightReferenceVelocity(physicsBody.WorldCenterOfMass);
+            Vector3 localRelativeVelocity = transform.InverseTransformDirection(relativeVelocity);
+            Vector3 localAngularVelocity = transform.InverseTransformDirection(physicsBody.AngularVelocity);
             Vector3 localGravity = transform.InverseTransformDirection(lastGravityAcceleration);
             SpacecraftFlightControlFrame frame = new(
                 currentCommand,
@@ -283,7 +422,7 @@ namespace Farion.Gameplay.Flight
 
             if (lastThrustAcceleration.sqrMagnitude > 0.000001f)
             {
-                Rigidbody.AddForce(lastThrustAcceleration, ForceMode.Acceleration);
+                physicsBody.AddForce(lastThrustAcceleration, ForceMode.Acceleration);
             }
 
             lastLocalAngularAcceleration = output.LocalAngularAcceleration;
@@ -295,7 +434,7 @@ namespace Farion.Gameplay.Flight
 
             if (lastLocalAngularAcceleration.sqrMagnitude > 0.000001f)
             {
-                Rigidbody.AddRelativeTorque(lastLocalAngularAcceleration, ForceMode.Acceleration);
+                physicsBody.AddRelativeTorque(lastLocalAngularAcceleration, ForceMode.Acceleration);
             }
         }
 
@@ -341,9 +480,15 @@ namespace Farion.Gameplay.Flight
 
         void RefreshTelemetry()
         {
-            Vector3 relativeVelocity = RelativeVelocity;
+            RefreshTelemetry(offlinePhysicsBody ??= new RigidbodySpacecraftPhysicsBody(Rigidbody));
+        }
+
+        void RefreshTelemetry(ISpacecraftPhysicsBody physicsBody)
+        {
+            Vector3 relativeVelocity = physicsBody.LinearVelocity -
+                ResolveFlightReferenceVelocity(physicsBody.WorldCenterOfMass);
             Vector3 localRelativeVelocity = transform.InverseTransformDirection(relativeVelocity);
-            Vector3 localAngularVelocity = transform.InverseTransformDirection(Rigidbody.angularVelocity);
+            Vector3 localAngularVelocity = transform.InverseTransformDirection(physicsBody.AngularVelocity);
             currentThrusterCommand = BuildThrusterCommand(
                 lastLocalLinearAcceleration,
                 lastLocalAngularAcceleration);
@@ -361,7 +506,10 @@ namespace Farion.Gameplay.Flight
                 boostController.Charge);
         }
 
-        Vector3 ResolveFlightReferenceVelocity()
+        Vector3 ResolveFlightReferenceVelocity() =>
+            ResolveFlightReferenceVelocity(Rigidbody.worldCenterOfMass);
+
+        Vector3 ResolveFlightReferenceVelocity(Vector3 worldCenterOfMass)
         {
             if (!useBodyRelativeFlightAssist)
             {
@@ -373,7 +521,7 @@ namespace Farion.Gameplay.Flight
                 SpacecraftSurfaceContactSample contact = surfaceContactProbe.CurrentContact;
                 if (contact.HasContact && contact.Body != null)
                 {
-                    return contact.Body.GetVelocityAtPoint(Rigidbody.worldCenterOfMass);
+                    return contact.Body.GetVelocityAtPoint(worldCenterOfMass);
                 }
             }
 

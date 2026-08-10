@@ -2,6 +2,7 @@
     "name": "Farion.Rendering.Runtime",
     "rootNamespace": "Farion.Rendering",
     "references": [
+        "Farion.Core.Identity",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Unity.RenderPipelines.Core.Runtime",

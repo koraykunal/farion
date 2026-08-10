@@ -1,6 +1,6 @@
-using DG.Tweening;
 using Farion.UI.Foundation;
 using Farion.UI.Styling;
+using DG.Tweening;
 using UnityEngine;
 
 namespace Farion.UI.Common

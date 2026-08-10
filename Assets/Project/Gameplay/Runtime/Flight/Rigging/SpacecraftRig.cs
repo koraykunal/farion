@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using Farion.Core.Physics;
+using Farion.Gameplay.Interaction;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -26,6 +29,11 @@ namespace Farion.Gameplay.Flight
         public Transform ChaseCameraTarget => chaseCameraTarget;
         public Transform CockpitCameraTarget => cockpitCameraTarget;
 
+        void Awake()
+        {
+            ClassifyColliderLayers();
+        }
+
         void OnValidate()
         {
             AutoAssignReferences();
@@ -34,6 +42,32 @@ namespace Farion.Gameplay.Flight
         void Reset()
         {
             AutoAssignReferences();
+        }
+
+        [ContextMenu("Classify Collider Layers")]
+        public void ClassifyColliderLayers()
+        {
+            List<Collider> colliders = new();
+            GetComponentsInChildren(true, colliders);
+            for (int i = 0; i < colliders.Count; i++)
+            {
+                Collider collider = colliders[i];
+                if (collider == null)
+                {
+                    continue;
+                }
+
+                GameObject owner = collider.gameObject;
+                if (collider.isTrigger)
+                {
+                    owner.layer = FarionLayers.Interactable;
+                    continue;
+                }
+
+                owner.layer = owner.GetComponentInParent<SpacecraftInteriorCollider>() != null
+                    ? FarionLayers.SpacecraftInterior
+                    : FarionLayers.SpacecraftExterior;
+            }
         }
 
         public void OpenRamp()

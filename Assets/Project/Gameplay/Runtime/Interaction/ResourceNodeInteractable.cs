@@ -1,8 +1,9 @@
+using Farion.Core.Identity;
 using System;
 using Farion.Gameplay.Commands;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Resources;
-using Farion.Simulation.World.Identity;
+using Farion.Simulation.World;
 using UnityEngine;
 
 namespace Farion.Gameplay.Interaction
@@ -43,6 +44,7 @@ namespace Farion.Gameplay.Interaction
 
         void Awake()
         {
+            InteractableLayerBinding.Apply(this);
             if (initializeReserveOnAwake && !depleted && remainingQuantity <= 0)
             {
                 InitializeReserve();
@@ -79,16 +81,37 @@ namespace Farion.Gameplay.Interaction
 
         public bool CanInteract(InteractionContext context)
         {
-            IInventoryContainer inventory = ResolveInventory(context);
             return context.Commands != null &&
-                   context.Commands.CanHarvest(this, inventory) ==
+                   TryBuildHarvestRequest(context, out ResourceHarvestRequest request) &&
+                   context.Commands.CanHarvest(request) ==
                    ResourceHarvestResult.Succeeded;
         }
 
         public void Interact(InteractionContext context)
         {
+            if (context.Commands != null &&
+                TryBuildHarvestRequest(context, out ResourceHarvestRequest request))
+            {
+                context.Commands.TryHarvest(request);
+            }
+        }
+
+        bool TryBuildHarvestRequest(
+            InteractionContext context,
+            out ResourceHarvestRequest request)
+        {
             IInventoryContainer inventory = ResolveInventory(context);
-            context.Commands?.TryHarvest(this, inventory);
+            if (inventory == null || !depositId.IsValid)
+            {
+                request = default;
+                return false;
+            }
+
+            request = new ResourceHarvestRequest(
+                depositId,
+                inventory.ContainerId,
+                inventory.Revision);
+            return true;
         }
 
         public void RefreshRuntimeState()

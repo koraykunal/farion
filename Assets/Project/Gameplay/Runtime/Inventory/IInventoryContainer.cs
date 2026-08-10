@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Farion.Core.Identity;
 using Farion.Gameplay.Domain.Identity;
 
 namespace Farion.Gameplay.Inventory

@@ -17,9 +17,13 @@ This document describes the implemented architecture. Future features belong in
 
 ## Project Folder Ownership
 
-- `Application`, `Audio`, `Core`, `Gameplay`, `Rendering`, `Simulation`, and
-  `UI` contain C# runtime code. Assembly folders follow runtime ownership;
-  files are not regrouped merely for visual symmetry.
+- `App`, `Audio`, `Core`, `Gameplay`, `Multiplayer`, `Rendering`, `Simulation`,
+  and `UI` contain C# runtime code. Assembly folders follow
+  runtime ownership; files are not regrouped merely for visual symmetry.
+- `Resources` holds only assets that must load before any scene exists. Its
+  single entry is the multiplayer session root prefab, which the development
+  command-line runner instantiates at `BeforeSceneLoad`. Nothing else may be
+  added; every other asset is referenced explicitly from a scene or prefab.
 - `Art` contains Unity-ready models, materials, textures, shaders, and VFX.
   Editable source art lives in repository-level `ArtSource`; production audio
   media is owned by the repository-level FMOD Studio project.
@@ -38,40 +42,70 @@ audio authoring and built banks; Unity contains only the runtime bank copies.
 ## Assembly Direction
 
 ```text
+Farion.Core.Identity      --> (nothing; pure C#)
+Farion.Core.Runtime       --> Core.Identity
+Farion.Gameplay.Domain    --> Core.Identity
 Farion.Simulation.Runtime --> Core
-Farion.Gameplay.Runtime   --> Domain + Core + Simulation
+Farion.Gameplay.Runtime   --> Core.Identity + Domain + Core + Simulation
 Farion.Gameplay.Presentation --> Gameplay + Simulation + VFX Graph
-Farion.App.Runtime        --> Domain + Core + Gameplay
+Farion.App.Runtime        --> Core.Identity + Domain + Core + Gameplay
 Farion.Rendering.Runtime  --> Core + Simulation + URP
 Farion.Audio.Runtime      --> Core + Simulation + Gameplay + FMOD
 Farion.UI.Runtime         --> Core + Gameplay + Simulation + App + Audio
-Farion.Multiplayer.Runtime --> Simulation + Gameplay + UI + FishNet
+Farion.Multiplayer.Runtime --> Core + Simulation + Gameplay + Rendering + UI + FishNet
+Farion.Editor            --> every runtime assembly (Editor platform only)
 ```
 
-- `Farion.Core.Runtime` owns cross-cutting time, persistence identity, and
-  save-slot infrastructure.
+Assembly references are written by name. GUID references are not used, so the
+graph stays readable in the `.asmdef` files themselves.
+
+A namespace is the owning assembly's root namespace plus at most one feature
+segment, and the folder path mirrors it: `Assets/Project/<Area>/<Assembly>/<Feature>`.
+A feature folder subdivides further only when its file count makes one flat
+folder unreadable; `Gameplay/Runtime/Flight` is the only case today, and its
+48 files still share the single namespace `Farion.Gameplay.Flight`.
+
+`Design` mirrors the same shape: an authoring asset lives under
+`Design/<Area>/<Feature>` matching the namespace of the type it instantiates.
+
+The application layer is `App`, not `Application`, in both the folder and the
+namespace. `Farion.Application` would shadow `UnityEngine.Application` for every
+type under `Farion`, because C# resolves a bare `Application` by walking the
+enclosing namespaces outward.
+
+- `Farion.Core.Identity` has `noEngineReferences` and no references at all. It
+  owns `IdentifierText`, the single validation rule every Farion identifier
+  obeys, and `PersistentEntityId`. It exists so that `Farion.Core.Runtime` and
+  `Farion.Gameplay.Domain` share one rule without either depending on the
+  other.
+- `Farion.Core.Runtime` owns persistence identity, save-slot infrastructure,
+  and the physics layer contract (`FarionLayers`).
 - `Farion.Simulation.Runtime` owns gravity composition, authored and generated
-  celestial state, planetary sampling, deterministic world identity, streaming
-  coordinates, and local origin rebasing.
+  celestial state, planetary sampling, deterministic world identity, and local
+  origin rebasing.
 - `Farion.Gameplay.Domain` has `noEngineReferences`. It currently owns
-  `DefinitionId`, `PersistentEntityId`, revisioned stack inventory state, and
-  Fleet Knowledge state.
+  `DefinitionId`, revisioned stack inventory state, and Fleet Knowledge state.
 - `Farion.Gameplay.Runtime` adapts domain and simulation contracts to Unity. It
   owns character, flight, possession, resources, inventory adapters, the
   assigned shuttle binding, Fleet identity, Fleet Storage, Fleet Knowledge, and
   save participants.
-- `Farion.Gameplay.Presentation` owns gameplay-facing VFX components and is the
-  only gameplay assembly that references VFX Graph.
+- `Farion.Gameplay.Presentation` owns gameplay-facing VFX components in
+  `Farion.Gameplay.Presentation.Flight` and is the only gameplay assembly that
+  references VFX Graph. It never shares a namespace with gameplay runtime code.
 - `Farion.App.Runtime` owns game flow, local-session composition, save
   requests, and the command facade. Its current gameplay command surface
   authorizes resource harvesting, assigned-shuttle cargo loading/unloading,
-  and the first Fleet processing exchange. The present local gateway still
-  accepts resolved Unity runtime objects; before networking, its outer request
-  boundary must carry persistent ids and expected revisions while application
-  handlers remain the authoritative object resolver.
+  and the first Fleet processing exchange. Its request boundary carries only
+  identifiers and expected revisions: `ResourceHarvestRequest`,
+  `CargoTransferRequest`, and `FleetProcessingRequest` name a deposit,
+  container, or recipe by id. `SessionCommandScope` is the single authoritative
+  resolver; a caller cannot smuggle a runtime object past authorization, and a
+  stale caller view is rejected by revision instead of silently applied.
 - `Farion.UI.Runtime` presents menus, HUD, settings, save/load, inventory, and
   feedback. It requests application operations and never mutates domain state
-  directly.
+  directly. Every player-facing string is a key in `UiTextKeys`; no English
+  text is embedded in presenters, and the UI validator fails the build if a
+  declared key is missing from any locale.
 - `Farion.Rendering.Runtime` owns URP-specific celestial presentation.
 - `Farion.Audio.Runtime` owns the persistent FMOD mix, scene/environment
   adaptation, UI cue dispatch, and spacecraft presentation driven by gameplay
@@ -79,10 +113,43 @@ Farion.Multiplayer.Runtime --> Simulation + Gameplay + UI + FishNet
 - `Farion.Multiplayer.Runtime` owns the optional FishNet listen-server session,
   Tugboat transport, predicted network explorer, connection spawning, and
   shared-origin replication. Lower assemblies do not reference FishNet.
+- `Farion.Editor` is an Editor-platform assembly that owns validation and asset
+  import policy. It is not auto-referenced and owns no runtime state.
+- `Farion.Tests.Support` owns the reflection helper both test assemblies share.
 
 Dependencies do not point back up this list. Domain code does not reference
 Unity, gameplay does not reference UI, and simulation does not reference
 rendering.
+
+## Physics Layers
+
+`FarionLayers` in `Farion.Core.Runtime` names the layers authored in
+`ProjectSettings/TagManager.asset`:
+
+```text
+6  CelestialSurface     generated planet, moon, and adaptive patch geometry
+7  SpacecraftExterior   solid hull colliders
+8  SpacecraftInterior   colliders under a SpacecraftInteriorCollider marker
+9  Explorer             the player capsule outside a ship
+10 ExplorerInterior     the player capsule inside a ship
+11 Interactable         interaction trigger volumes and interactable roots
+```
+
+Runtime owners derive layers from authored structure, so prefabs and scenes
+never carry layer indices by hand. `SpacecraftRig` classifies its own collider
+tree, `CelestialBodyVisual` and `CelestialSurfacePatchSystem` classify generated
+surface geometry, each `IInteractable` classifies itself, and possession moves
+the explorer capsule between `Explorer` and `ExplorerInterior`.
+
+The collision matrix carries the rules that used to be runtime
+`Physics.IgnoreCollision` bookkeeping. `ExplorerInterior` does not collide with
+`SpacecraftExterior`, which is the whole hull pass-through rule; interior
+geometry and interaction volumes still collide. Celestial surfaces do not
+collide with each other or with interior geometry, and interaction volumes do
+not collide with terrain or with each other.
+
+`FarionProjectValidator` asserts both the layer names and the matrix, so a
+changed project setting fails the build instead of silently changing physics.
 
 ## Runtime Composition
 
@@ -208,11 +275,17 @@ new schema is allowed only after those runtime owners exist.
 ## Simulation and Presentation
 
 - `GravitySimulation` is the gravity and translating-reference-frame authority.
+  It integrates with semi-implicit (symplectic) Euler at a configurable substep
+  count. That is a deliberate choice: it is cheap, stable for the bounded
+  orbits this game authors, and its slow drift is bounded by save snapshots,
+  which restore exact body state. A higher-order integrator is only warranted
+  if long unsaved sessions ever need to preserve orbital elements exactly.
 - `CelestialBody` owns runtime physical body state.
 - `PlanetSurfaceModel` owns generated surface, climate, biome, material, and
   terrain-feature sampling.
 - `WorldOriginRebaser` is a local Unity-space precision adapter, not a universe
-  coordinate authority.
+  coordinate authority. No universe coordinate type exists; one will be added
+  only when a workflow needs to address positions outside a single zone.
 - `SpacecraftMotor` owns spacecraft motion and publishes telemetry.
 - Camera, HUD, FMOD, and thruster VFX consume telemetry and do not feed state
   back into flight physics.
@@ -226,18 +299,36 @@ new schema is allowed only after those runtime owners exist.
 - Starter ships currently provide server-spawned parked identities and authored
   formations only. Network boarding, possession, ship movement authority, and
   replicated flight are not implemented.
-- Ocean and atmosphere rendering remain in rendering-owned URP paths while
-  simulation exposes narrow environment contracts needed by gameplay.
+- `PlanetSurfaceModel` is the environment authority. It owns terrain radius
+  range, ocean radius, and atmosphere extent, computed from simulation profiles
+  alone, and publishes them through `ICelestialEnvironmentProvider`. Rendering
+  consumes that sample for its ocean, atmosphere, and cloud shells instead of
+  computing geometry of its own, so a headless server keeps a complete
+  environment. Rendering profiles hold appearance only.
+- Local presentation binding is shared: `LocalPlayerCameraBinding` owns which
+  camera rig follows which actor and the cursor capture state, and
+  `WorldFocusTracking` owns the origin-rebase and resource-streaming target.
+  Offline possession and the multiplayer scene context both call the same
+  owners instead of each duplicating the rules.
+- Multiplayer freezes celestial integration and automatic origin rebasing on
+  purpose: every peer must agree on body state, and frozen bodies agree
+  trivially. Enabling integration requires a replicated or provably
+  deterministic solver first.
 
 ## Authoring and Validation
 
 - Production scenes and prefabs are authored assets under
-  `Assets/Project/Scenes` and `Assets/Project/Prefabs`.
-- `Assets/Project/Editor` may validate or rebuild a specific authored asset, but
-  editor builders are not runtime composition owners.
-- `FarionProjectValidation` checks missing scripts, persistent ids, runtime-root
-  references, definition registry consistency, audio composition, and authored
-  flight/VFX contracts.
+  `Assets/Project/Scenes` and `Assets/Project/Prefabs`. They are the source of
+  truth. No editor script generates them, because a generator and the asset it
+  once produced drift apart and neither one stays authoritative.
+- `Assets/Project/Editor` validates authored assets and owns import policy. It
+  never owns runtime state and never builds production scenes or prefabs.
+- `FarionProjectValidation` checks physics layers and the collision matrix,
+  missing scripts, persistent ids, runtime-root references, definition registry
+  consistency, audio composition, and authored flight/VFX contracts.
+- `FarionUiProjectValidation` additionally checks that every localization key
+  is translated in every locale and that no authored `UiLocalizedText`
+  references an unknown key.
 - Definitions live under `Assets/Project/Design`; runtime quantities and
   unlocks never live in those assets.
 

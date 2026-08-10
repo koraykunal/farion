@@ -6,6 +6,11 @@ namespace Farion.Gameplay.Interaction
     [DisallowMultipleComponent]
     public sealed class VehicleBoardingPoint : MonoBehaviour, IInteractable
     {
+
+        void Awake()
+        {
+            InteractableLayerBinding.Apply(this);
+        }
         const string DefaultPrompt = "Enter ship";
         const string LegacyCockpitPrompt = "Enter cockpit";
 
@@ -16,10 +21,12 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] PlayerPossessionController possessionController;
         [SerializeField] string prompt = DefaultPrompt;
 
+        IInteractable runtimeInteractable;
+
         public Transform ExitPoint => exitPoint != null ? exitPoint : transform;
         public bool HasExplicitExitPoint => exitPoint != null;
-        public string InteractionPrompt => ResolvePrompt();
-        public bool IsBound => possessionController != null;
+        public string InteractionPrompt => runtimeInteractable?.InteractionPrompt ?? ResolvePrompt();
+        public bool IsBound => runtimeInteractable != null || possessionController != null;
 
         void Reset()
         {
@@ -34,18 +41,32 @@ namespace Farion.Gameplay.Interaction
 
         public void Bind(PlayerPossessionController controller)
         {
+            runtimeInteractable = null;
             possessionController = controller;
+        }
+
+        public void Bind(IInteractable interactable)
+        {
+            possessionController = null;
+            runtimeInteractable = interactable;
         }
 
         public bool CanInteract(InteractionContext context)
         {
-            return possessionController != null &&
+            return runtimeInteractable?.CanInteract(context) ??
+                   possessionController != null &&
                    possessionController.IsOnFoot &&
                    possessionController.CanEnterShipInterior;
         }
 
         public void Interact(InteractionContext context)
         {
+            if (runtimeInteractable != null)
+            {
+                runtimeInteractable.Interact(context);
+                return;
+            }
+
             possessionController?.EnterShipInterior();
         }
 

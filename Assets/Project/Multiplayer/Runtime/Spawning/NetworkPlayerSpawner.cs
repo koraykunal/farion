@@ -1,8 +1,10 @@
+using Farion.Core.Identity;
 using System.Collections.Generic;
+using Farion.Gameplay.Interaction;
 using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.World;
-using Farion.Simulation.World.Identity;
+using Farion.Simulation.World;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Object;
@@ -27,7 +29,7 @@ namespace Farion.Multiplayer.Spawning
         readonly Dictionary<int, NetworkObject> sessionPlayers = new();
         readonly Dictionary<int, NetworkObject> players = new();
         readonly Dictionary<SceneHandle, MultiplayerSceneContext> contexts = new();
-        readonly Dictionary<SceneHandle, List<NetworkObject>> starterShips = new();
+        readonly Dictionary<SceneHandle, Dictionary<int, NetworkObject>> starterShips = new();
         ulong nextSessionPlayerId;
         NetworkWorldOriginAuthority originAuthority;
 
@@ -177,9 +179,7 @@ namespace Farion.Multiplayer.Spawning
             players.Add(connection.ClientId, player);
             connection.SetFirstObject(player);
 
-            if (networkManager.ClientManager.Connection != null &&
-                connection.ClientId ==
-                networkManager.ClientManager.Connection.ClientId)
+            if (IsHostConnection(connection))
             {
                 originAuthority?.SetServerTrackingTarget(player.transform);
             }
@@ -199,6 +199,8 @@ namespace Farion.Multiplayer.Spawning
                 return;
             }
 
+            ReleaseStarterShipClaims(args.ConnectionId);
+            RemoveStarterShip(args.ConnectionId);
             sessionPlayers.Remove(args.ConnectionId);
             players.Remove(args.ConnectionId);
             slots.Release(args.ConnectionId);
@@ -240,52 +242,51 @@ namespace Farion.Multiplayer.Spawning
             }
 
             Scene scene = sceneContext.gameObject.scene;
-            int partySize = 0;
-            foreach (NetworkConnection connection in
-                     networkManager.ServerManager.Clients.Values)
-            {
-                if (connection.IsActive && connection.Scenes.Contains(scene))
-                {
-                    partySize++;
-                }
-            }
-
-            partySize = Mathf.Clamp(partySize, 0, MaximumPlayers);
             if (!starterShips.TryGetValue(
                     scene.handle,
-                    out List<NetworkObject> ships))
+                    out Dictionary<int, NetworkObject> ships))
             {
-                ships = new List<NetworkObject>(MaximumPlayers);
+                ships = new Dictionary<int, NetworkObject>(MaximumPlayers);
                 starterShips.Add(scene.handle, ships);
             }
 
-            ships.RemoveAll(ship => ship == null);
-            if (ships.Count == partySize)
+            HashSet<int> activeSlots = new();
+            List<NetworkConnection> failedConnections = new();
+            foreach (NetworkConnection connection in
+                     networkManager.ServerManager.Clients.Values)
             {
-                return;
-            }
-
-            for (int i = 0; i < ships.Count; i++)
-            {
-                if (ships[i] != null && ships[i].IsSpawned)
+                if (!connection.IsActive ||
+                    !connection.Scenes.Contains(scene) ||
+                    !slots.TryReserve(connection.ClientId, out int slot))
                 {
-                    networkManager.ServerManager.Despawn(ships[i]);
+                    continue;
                 }
-            }
 
-            ships.Clear();
-            for (int i = 0; i < partySize; i++)
-            {
+                activeSlots.Add(slot);
+                if (ships.TryGetValue(slot, out NetworkObject existing) &&
+                    existing != null)
+                {
+                    if (!AssignStarterShip(
+                            connection,
+                            existing.GetComponent<NetworkStarterShip>()))
+                    {
+                        failedConnections.Add(connection);
+                    }
+
+                    continue;
+                }
+
                 if (!sceneContext.TryGetStarterShipPose(
-                        partySize,
-                        i,
+                        MaximumPlayers,
+                        slot,
                         out Vector3 position,
                         out Quaternion rotation))
                 {
                     Debug.LogError(
-                        $"Starter ship formation {partySize} slot {i + 1} is invalid.",
+                        $"Starter ship formation {MaximumPlayers} slot {slot + 1} is invalid.",
                         sceneContext);
-                    break;
+                    failedConnections.Add(connection);
+                    continue;
                 }
 
                 NetworkObject ship = Instantiate(
@@ -296,11 +297,331 @@ namespace Farion.Multiplayer.Spawning
                     StableHashUtility.Combine(
                         sceneContext.ZoneId.Value,
                         "starter_ship",
-                        i));
-                ship.GetComponent<NetworkStarterShip>()?.Initialize(shipId, i);
+                        slot));
+                NetworkStarterShip starterShip =
+                    ship.GetComponent<NetworkStarterShip>();
+                starterShip?.Initialize(shipId, slot);
+                starterShip?.BindScene(
+                    sceneContext.GravitySimulation,
+                    sceneContext.CelestialFrameProvider,
+                    originAuthority);
                 networkManager.ServerManager.Spawn(ship, null, scene);
                 sceneContext.AttachToShiftedWorld(ship.transform);
-                ships.Add(ship);
+                ships[slot] = ship;
+                if (!AssignStarterShip(connection, starterShip))
+                {
+                    failedConnections.Add(connection);
+                }
+            }
+
+            for (int i = 0; i < failedConnections.Count; i++)
+            {
+                failedConnections[i].Disconnect(immediately: true);
+            }
+
+            List<int> staleSlots = new();
+            foreach (KeyValuePair<int, NetworkObject> pair in ships)
+            {
+                if (!activeSlots.Contains(pair.Key))
+                {
+                    staleSlots.Add(pair.Key);
+                }
+            }
+
+            for (int i = 0; i < staleSlots.Count; i++)
+            {
+                DespawnStarterShip(ships, staleSlots[i]);
+            }
+        }
+
+        void RemoveStarterShip(int connectionId)
+        {
+            if (!slots.TryGetReserved(connectionId, out int slot))
+            {
+                return;
+            }
+
+            foreach (Dictionary<int, NetworkObject> ships in starterShips.Values)
+            {
+                DespawnStarterShip(ships, slot);
+            }
+        }
+
+        internal bool TryUseStarterShip(
+            NetworkSessionPlayer sessionPlayer,
+            GeneratedEntityId requestedShipId)
+        {
+            if (!TryResolveStarterShip(
+                    sessionPlayer,
+                    requestedShipId,
+                    out NetworkConnection connection,
+                    out NetworkObject player,
+                    out NetworkStarterShip starterShip))
+            {
+                return false;
+            }
+
+            if (sessionPlayer.PossessionMode == PlayerPossessionMode.OnFoot)
+            {
+                return TryClaimStarterShip(
+                    sessionPlayer,
+                    requestedShipId,
+                    connection,
+                    player,
+                    starterShip);
+            }
+
+            if (sessionPlayer.PossessionMode != PlayerPossessionMode.ShipInterior ||
+                sessionPlayer.ClaimedStarterShipId != requestedShipId ||
+                !starterShip.TryBeginPiloting(sessionPlayer, player))
+            {
+                return false;
+            }
+
+            player.GetComponent<NetworkExplorerController>()
+                ?.SetPossessionActive(false);
+            if (IsHostConnection(connection))
+            {
+                originAuthority?.SetServerTrackingTarget(starterShip.transform);
+            }
+
+            if (starterShip.Rig != null &&
+                starterShip.Rig.PilotSeatPoint != null)
+            {
+                PlaceExplorer(
+                    player,
+                    starterShip.Rig.PilotSeatPoint.position,
+                    starterShip.Rig.PilotSeatPoint.rotation);
+            }
+
+            sessionPlayer.SetPossessionMode(PlayerPossessionMode.Spacecraft);
+            return true;
+        }
+
+        bool AssignStarterShip(
+            NetworkConnection connection,
+            NetworkStarterShip starterShip)
+        {
+            if (connection == null ||
+                starterShip == null ||
+                !sessionPlayers.TryGetValue(
+                    connection.ClientId,
+                    out NetworkObject sessionObject) ||
+                sessionObject == null)
+            {
+                return false;
+            }
+
+            NetworkSessionPlayer sessionPlayer =
+                sessionObject.GetComponent<NetworkSessionPlayer>();
+            if (sessionPlayer == null || !starterShip.EntityId.IsValid)
+            {
+                return false;
+            }
+
+            sessionPlayer.SetAssignedStarterShip(starterShip.EntityId);
+            return true;
+        }
+
+        bool TryClaimStarterShip(
+            NetworkSessionPlayer sessionPlayer,
+            GeneratedEntityId requestedShipId,
+            NetworkConnection connection,
+            NetworkObject player,
+            NetworkStarterShip starterShip)
+        {
+            if (sessionPlayer.ClaimedStarterShipId.IsValid ||
+                !starterShip.TryGetInteriorPose(
+                    out Vector3 interiorPosition,
+                    out Quaternion interiorRotation) ||
+                !starterShip.TryClaim(
+                    sessionPlayer,
+                    connection,
+                    player.transform.position))
+            {
+                return false;
+            }
+
+            PlaceExplorer(
+                player,
+                interiorPosition,
+                interiorRotation);
+            sessionPlayer.SetClaimedStarterShip(requestedShipId);
+            sessionPlayer.SetPossessionMode(
+                PlayerPossessionMode.ShipInterior);
+            return true;
+        }
+
+        internal bool TryExitStarterShip(
+            NetworkSessionPlayer sessionPlayer,
+            GeneratedEntityId requestedShipId)
+        {
+            if (!TryResolveStarterShip(
+                    sessionPlayer,
+                    requestedShipId,
+                    out _,
+                    out NetworkObject player,
+                    out NetworkStarterShip starterShip) ||
+                sessionPlayer.PossessionMode != PlayerPossessionMode.Spacecraft ||
+                sessionPlayer.ClaimedStarterShipId != requestedShipId ||
+                !starterShip.IsPiloted ||
+                !starterShip.IsClaimedBy(sessionPlayer.SessionPlayerId) ||
+                !starterShip.TryGetExitPose(
+                    out Vector3 exitPosition,
+                    out Quaternion exitRotation))
+            {
+                return false;
+            }
+
+            PlaceExplorer(player, exitPosition, exitRotation);
+            player.GetComponent<NetworkExplorerController>()
+                ?.SetPossessionActive(true);
+            if (IsHostConnection(sessionPlayer.Owner))
+            {
+                originAuthority?.SetServerTrackingTarget(player.transform);
+            }
+
+            sessionPlayer.SetClaimedStarterShip(GeneratedEntityId.None);
+            sessionPlayer.SetPossessionMode(PlayerPossessionMode.OnFoot);
+            starterShip.ClearClaim();
+            return true;
+        }
+
+        bool TryResolveStarterShip(
+            NetworkSessionPlayer sessionPlayer,
+            GeneratedEntityId requestedShipId,
+            out NetworkConnection connection,
+            out NetworkObject player,
+            out NetworkStarterShip starterShip)
+        {
+            connection = sessionPlayer?.Owner;
+            player = null;
+            starterShip = null;
+            if (connection == null ||
+                !connection.IsActive ||
+                !requestedShipId.IsValid ||
+                !sessionPlayers.TryGetValue(
+                    connection.ClientId,
+                    out NetworkObject registeredSessionPlayer) ||
+                registeredSessionPlayer != sessionPlayer.NetworkObject ||
+                !players.TryGetValue(connection.ClientId, out player) ||
+                player == null ||
+                !slots.TryGetReserved(connection.ClientId, out int slot) ||
+                !starterShips.TryGetValue(
+                    player.gameObject.scene.handle,
+                    out Dictionary<int, NetworkObject> ships) ||
+                !ships.TryGetValue(slot, out NetworkObject ship) ||
+                ship == null)
+            {
+                return false;
+            }
+
+            starterShip = ship.GetComponent<NetworkStarterShip>();
+            return starterShip != null &&
+                sessionPlayer.AssignedStarterShipId == requestedShipId &&
+                starterShip.EntityId == requestedShipId;
+        }
+
+        bool IsHostConnection(NetworkConnection connection)
+        {
+            NetworkConnection local = networkManager.ClientManager.Connection;
+            return connection != null &&
+                local != null &&
+                connection.ClientId == local.ClientId;
+        }
+
+        static void PlaceExplorer(
+            NetworkObject player,
+            Vector3 position,
+            Quaternion rotation)
+        {
+            if (player.TryGetComponent(out Rigidbody body))
+            {
+                body.position = position;
+                body.rotation = rotation;
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
+
+                return;
+            }
+
+            player.transform.SetPositionAndRotation(position, rotation);
+        }
+
+        void ReleaseStarterShipClaims(int connectionId)
+        {
+            foreach (Dictionary<int, NetworkObject> ships in starterShips.Values)
+            {
+                foreach (NetworkObject ship in ships.Values)
+                {
+                    NetworkStarterShip starterShip =
+                        ship != null
+                            ? ship.GetComponent<NetworkStarterShip>()
+                            : null;
+                    if (starterShip != null)
+                    {
+                        ulong claimedSessionPlayerId =
+                            starterShip.ClaimedBySessionPlayerId;
+                        if (starterShip.ReleaseClaim(connectionId))
+                        {
+                            ClearSessionClaim(claimedSessionPlayerId);
+                        }
+                    }
+                }
+            }
+        }
+
+        void ClearSessionClaim(ulong sessionPlayerId)
+        {
+            if (sessionPlayerId == 0UL)
+            {
+                return;
+            }
+
+            foreach (NetworkObject sessionObject in sessionPlayers.Values)
+            {
+                NetworkSessionPlayer sessionPlayer =
+                    sessionObject != null
+                        ? sessionObject.GetComponent<NetworkSessionPlayer>()
+                        : null;
+                if (sessionPlayer != null &&
+                    sessionPlayer.SessionPlayerId == sessionPlayerId)
+                {
+                    sessionPlayer.SetClaimedStarterShip(
+                        GeneratedEntityId.None);
+                    sessionPlayer.SetPossessionMode(
+                        PlayerPossessionMode.OnFoot);
+                    return;
+                }
+            }
+        }
+
+        void DespawnStarterShip(
+            Dictionary<int, NetworkObject> ships,
+            int slot)
+        {
+            if (!ships.Remove(slot, out NetworkObject ship) ||
+                ship == null)
+            {
+                return;
+            }
+
+            NetworkStarterShip starterShip =
+                ship.GetComponent<NetworkStarterShip>();
+            if (starterShip != null && starterShip.IsClaimed)
+            {
+                ulong claimedSessionPlayerId =
+                    starterShip.ClaimedBySessionPlayerId;
+                starterShip.ClearClaim();
+                ClearSessionClaim(claimedSessionPlayerId);
+            }
+
+            if (ship.IsSpawned)
+            {
+                networkManager.ServerManager.Despawn(ship);
             }
         }
 
@@ -319,7 +640,7 @@ namespace Farion.Multiplayer.Spawning
 
             NetworkObject sessionPlayer = Instantiate(sessionPlayerPrefab);
             sessionPlayer.GetComponent<NetworkSessionPlayer>()
-                .Initialize(NextSessionPlayerId());
+                .Initialize(NextSessionPlayerId(), this);
             networkManager.ServerManager.Spawn(sessionPlayer, connection);
             sessionPlayers.Add(connection.ClientId, sessionPlayer);
             return true;

@@ -309,6 +309,8 @@ Transform:
   - {fileID: 1781217938}
   - {fileID: 1772746506}
   - {fileID: 651725585}
+  - {fileID: 1477076276}
+  - {fileID: 1148478147}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &247757151
@@ -643,7 +645,7 @@ GameObject:
   - component: {fileID: 651725578}
   - component: {fileID: 651725577}
   m_Layer: 0
-  m_Name: Test Star
+  m_Name: Starting Star
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -722,7 +724,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
-  definition: {fileID: 11400000, guid: 9fe158cc1956f8c43b75bff5cc5e49d5, type: 2}
+  definition: {fileID: 11400000, guid: 31f48b91e2fb43619076b6afd6b936cb, type: 2}
   applyInEditMode: 1
   applyOnAwake: 1
   syncTransformScaleToRadius: 1
@@ -738,16 +740,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
-  bodyName: Test Star
+  bodyName: Starting Star
   bodyType: 0
   radius: 1200
-  surfaceGravity: 35
+  surfaceGravity: 350
   initialVelocity: {x: 0, y: 0, z: 0}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 0
+  orbitAttractor: {fileID: 0}
 --- !u!54 &651725583
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -874,6 +877,119 @@ Transform:
   m_Children: []
   m_Father: {fileID: 463113332}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &985521777
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 985521778}
+  - component: {fileID: 985521781}
+  - component: {fileID: 985521780}
+  - component: {fileID: 985521779}
+  m_Layer: 0
+  m_Name: Terrain Mesh
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &985521778
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 985521777}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1477076276}
+  m_LocalEulerAnglesHint: {x: 0, y: -360, z: 17.844}
+--- !u!64 &985521779
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 985521777}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
+--- !u!23 &985521780
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 985521777}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 310287156d04410f92928d6675c1283c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &985521781
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 985521777}
+  m_Mesh: {fileID: 0}
 --- !u!1 &1008928209
 GameObject:
   m_ObjectHideFlags: 0
@@ -1014,8 +1130,316 @@ MonoBehaviour:
   - {fileID: 1796747984}
   - {fileID: 412401546}
   - {fileID: 463113332}
-  surfaceClearance: 1.08
+  surfaceClearance: 1.02
   starterShipSurfaceClearance: 3
+--- !u!1 &1148478145
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1148478147}
+  - component: {fileID: 1148478158}
+  - component: {fileID: 1148478157}
+  - component: {fileID: 1148478156}
+  - component: {fileID: 1148478155}
+  - component: {fileID: 1148478148}
+  - component: {fileID: 1148478154}
+  - component: {fileID: 1148478153}
+  - component: {fileID: 1148478159}
+  - component: {fileID: 1148478146}
+  - component: {fileID: 1148478152}
+  - component: {fileID: 1148478151}
+  - component: {fileID: 1148478149}
+  m_Layer: 0
+  m_Name: Rime
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1148478146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
+  body: {fileID: 1148478148}
+  generationProfile: {fileID: 11400000, guid: dfcdb85c483641668d1217535da4ccc2, type: 2}
+  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  primaryRadiationSource: {fileID: 651725579}
+  surfaceNormalSampleStep: 0.004
+--- !u!4 &1148478147
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.05925786, y: 0.47871935, z: 0.091452956, w: 0.87117887}
+  m_LocalPosition: {x: -60000, y: -1600, z: 170000}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1487326492}
+  m_Father: {fileID: 246392134}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1148478148
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
+  bodyName: Rime
+  bodyType: 1
+  radius: 800
+  surfaceGravity: 5
+  initialVelocity: {x: -54.44911, y: 0, z: 0}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.12, z: 0}
+  deriveMassFromSurfaceGravity: 1
+  explicitMass: 1e+9
+  participatesInNBody: 1
+  motionMode: 1
+  orbitAttractor: {fileID: 651725582}
+--- !u!114 &1148478149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
+  profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
+  bodyVisual: {fileID: 1148478153}
+  observerCamera: {fileID: 0}
+  applyInEditMode: 1
+--- !u!114 &1148478151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: body.starting_system.planet_03
+--- !u!114 &1148478152
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
+  body: {fileID: 1148478148}
+  surfaceModel: {fileID: 1148478146}
+  frameProvider: {fileID: 0}
+  resourceDistribution: {fileID: 11400000, guid: 0af34747162d49e49ee65ef59e3312d3, type: 2}
+  spawnOnStart: 1
+  container: {fileID: 0}
+  trackingTarget: {fileID: 0}
+  maxSpawnedDeposits: 192
+  spawnRadius: 360
+  despawnRadius: 520
+  streamRefreshInterval: 0.35
+  maximumSpawnsPerRefresh: 8
+  maximumCandidateEvaluationsPerRefresh: 32
+  surfaceOffset: 1.96
+  skipOceanCoveredDeposits: 1
+  oceanSurfaceClearance: 0.05
+--- !u!114 &1148478153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
+  body: {fileID: 1148478148}
+  surfaceModel: {fileID: 1148478146}
+  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
+  meshObjectName: Terrain Mesh
+  renderResolution: 57
+  lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
+  editModePreviewLod: 1
+  syncSphereCollider: 1
+  generateMeshCollider: 1
+  bakeMeshCollider: 1
+  material: {fileID: 0}
+  normalizeBodyTransformScale: 1
+  disableRootRenderer: 1
+  disableRootColliders: 1
+  rebuildInEditMode: 1
+  meshColliderSkippedBecauseBodyIsDynamic: 0
+--- !u!114 &1148478154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
+  definition: {fileID: 11400000, guid: 80a115bde9b54ef1a418fa41eef1ffab, type: 2}
+  applyInEditMode: 1
+  applyOnAwake: 1
+  syncTransformScaleToRadius: 0
+--- !u!54 &1148478155
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  serializedVersion: 5
+  m_Mass: 1e+9
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!135 &1148478156
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 800
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1148478157
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1148478158
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1148478159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
+  profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
+  terrainVisual: {fileID: 1148478153}
+  surfaceModel: {fileID: 1148478146}
+  applyInEditMode: 1
+  applyOnEnable: 1
 --- !u!1 &1266854582
 GameObject:
   m_ObjectHideFlags: 0
@@ -1172,6 +1596,427 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1009712691}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1477076275
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1477076276}
+  - component: {fileID: 1477076287}
+  - component: {fileID: 1477076286}
+  - component: {fileID: 1477076285}
+  - component: {fileID: 1477076284}
+  - component: {fileID: 1477076283}
+  - component: {fileID: 1477076282}
+  - component: {fileID: 1477076281}
+  - component: {fileID: 1477076289}
+  - component: {fileID: 1477076288}
+  - component: {fileID: 1477076280}
+  - component: {fileID: 1477076279}
+  - component: {fileID: 1477076277}
+  m_Layer: 0
+  m_Name: Ember
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1477076276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.098648295, y: 0.2727923, z: -0.09920725, w: 0.951846}
+  m_LocalPosition: {x: -78000, y: -1600, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 985521778}
+  m_Father: {fileID: 246392134}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1477076277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
+  profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
+  bodyVisual: {fileID: 1477076281}
+  observerCamera: {fileID: 0}
+  applyInEditMode: 1
+--- !u!114 &1477076279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId: body.starting_system.planet_02
+--- !u!114 &1477076280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
+  body: {fileID: 1477076283}
+  surfaceModel: {fileID: 1477076288}
+  frameProvider: {fileID: 0}
+  resourceDistribution: {fileID: 11400000, guid: 0af34747162d49e49ee65ef59e3312d3, type: 2}
+  spawnOnStart: 1
+  container: {fileID: 0}
+  trackingTarget: {fileID: 0}
+  maxSpawnedDeposits: 192
+  spawnRadius: 360
+  despawnRadius: 520
+  streamRefreshInterval: 0.35
+  maximumSpawnsPerRefresh: 8
+  maximumCandidateEvaluationsPerRefresh: 32
+  surfaceOffset: 1.96
+  skipOceanCoveredDeposits: 1
+  oceanSurfaceClearance: 0.05
+--- !u!114 &1477076281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
+  body: {fileID: 1477076283}
+  surfaceModel: {fileID: 1477076288}
+  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
+  meshObjectName: Terrain Mesh
+  renderResolution: 57
+  lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
+  editModePreviewLod: 1
+  syncSphereCollider: 1
+  generateMeshCollider: 1
+  bakeMeshCollider: 1
+  material: {fileID: 0}
+  normalizeBodyTransformScale: 1
+  disableRootRenderer: 1
+  disableRootColliders: 1
+  rebuildInEditMode: 1
+  meshColliderSkippedBecauseBodyIsDynamic: 0
+--- !u!114 &1477076282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
+  definition: {fileID: 11400000, guid: 71b9609693f94ff6be299ba823334dad, type: 2}
+  applyInEditMode: 1
+  applyOnAwake: 1
+  syncTransformScaleToRadius: 0
+--- !u!114 &1477076283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
+  bodyName: Ember
+  bodyType: 1
+  radius: 500
+  surfaceGravity: 4
+  initialVelocity: {x: 0, y: 0, z: -167.332}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.25, z: 0}
+  deriveMassFromSurfaceGravity: 1
+  explicitMass: 1e+9
+  participatesInNBody: 1
+  motionMode: 1
+  orbitAttractor: {fileID: 651725582}
+--- !u!54 &1477076284
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  serializedVersion: 5
+  m_Mass: 1e+9
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 1
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!135 &1477076285
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 500
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1477076286
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1477076287
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1477076288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
+  body: {fileID: 1477076283}
+  generationProfile: {fileID: 11400000, guid: 6d2813a2700548129c0c6d18e8009f6d, type: 2}
+  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  primaryRadiationSource: {fileID: 651725579}
+  surfaceNormalSampleStep: 0.004
+--- !u!114 &1477076289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
+  profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
+  terrainVisual: {fileID: 1477076281}
+  surfaceModel: {fileID: 1477076288}
+  applyInEditMode: 1
+  applyOnEnable: 1
+--- !u!1 &1487326491
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1487326492}
+  - component: {fileID: 1487326495}
+  - component: {fileID: 1487326494}
+  - component: {fileID: 1487326493}
+  m_Layer: 0
+  m_Name: Terrain Mesh
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1487326492
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487326491}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1148478147}
+  m_LocalEulerAnglesHint: {x: 0, y: -360, z: 17.844}
+--- !u!64 &1487326493
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487326491}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 0
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
+--- !u!23 &1487326494
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487326491}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 310287156d04410f92928d6675c1283c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1487326495
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487326491}
+  m_Mesh: {fileID: 0}
 --- !u!1 &1684625537
 GameObject:
   m_ObjectHideFlags: 0
@@ -1338,8 +2183,9 @@ GameObject:
   - component: {fileID: 1772746495}
   - component: {fileID: 1772746494}
   - component: {fileID: 1772746493}
+  - component: {fileID: 8800000000000000002}
   m_Layer: 0
-  m_Name: Test Planet
+  m_Name: Starting Planet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1361,6 +2207,22 @@ MonoBehaviour:
   bodyVisual: {fileID: 1772746499}
   observerCamera: {fileID: 0}
   applyInEditMode: 1
+--- !u!114 &8800000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772746492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
+  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
+  body: {fileID: 1772746501}
+  surfaceModel: {fileID: 1772746497}
+  patchSystem: {fileID: 1772746494}
 --- !u!114 &1772746494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1445,7 +2307,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1772746501}
-  generationProfile: {fileID: 11400000, guid: 1ff9db461b1b46e48af26cd43336dcae, type: 2}
+  generationProfile: {fileID: 11400000, guid: a9d263dcb6044288a2c0c264ca7a5880, type: 2}
   shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
   primaryRadiationSource: {fileID: 651725579}
   surfaceNormalSampleStep: 0.004
@@ -1507,7 +2369,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
-  definition: {fileID: 11400000, guid: 05ea708a8f4fcb64d80047baab728a2e, type: 2}
+  definition: {fileID: 11400000, guid: 3b3b9eebb8934d32b3cf27907080c8b9, type: 2}
   applyInEditMode: 1
   applyOnAwake: 1
   syncTransformScaleToRadius: 0
@@ -1523,16 +2385,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
-  bodyName: Test Planet
+  bodyName: Starting Planet
   bodyType: 1
   radius: 1600
   surfaceGravity: 9.81
-  initialVelocity: {x: 0, y: 0, z: 28.983}
+  initialVelocity: {x: 0, y: 0, z: 91.65151}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 1
+  orbitAttractor: {fileID: 651725582}
 --- !u!54 &1772746502
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1673,7 +2536,7 @@ GameObject:
   - component: {fileID: 1781217930}
   - component: {fileID: 1781217929}
   m_Layer: 0
-  m_Name: Test Moon
+  m_Name: Starting Moon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1749,7 +2612,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
-  definition: {fileID: 11400000, guid: c9716310537b1f74ba20424113e5f417, type: 2}
+  definition: {fileID: 11400000, guid: 6071a6b3071e4d16bff80d8d3442ac77, type: 2}
   applyInEditMode: 1
   applyOnAwake: 1
   syncTransformScaleToRadius: 0
@@ -1765,16 +2628,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
-  bodyName: Test Moon
+  bodyName: Starting Moon
   bodyType: 2
   radius: 120
   surfaceGravity: 1.62
-  initialVelocity: {x: 0, y: 0, z: 79.096}
+  initialVelocity: {x: 0, y: 0, z: 183.14578}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 1
+  orbitAttractor: {fileID: 1772746501}
 --- !u!54 &1781217934
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1889,7 +2753,7 @@ Transform:
   m_GameObject: {fileID: 1781217928}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10000, y: -1600, z: 0}
+  m_LocalPosition: {x: 3000, y: -1600, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2028,9 +2892,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialFrameProvider
   simulation: {fileID: 1996413352}
   environmentSources:
-  - {fileID: 1772746498}
+  - {fileID: 1772746497}
+  - {fileID: 1477076288}
+  - {fileID: 1148478146}
   surfaceSources:
   - {fileID: 1772746497}
+  - {fileID: 1477076288}
+  - {fileID: 1148478146}
 --- !u!114 &1996413351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2072,6 +2940,8 @@ MonoBehaviour:
   - {fileID: 651725582}
   - {fileID: 1772746501}
   - {fileID: 1781217933}
+  - {fileID: 1477076283}
+  - {fileID: 1148478148}
   referenceFrameVelocity: {x: 0, y: 0, z: 0}
   referenceFrameAcceleration: {x: 0, y: 0, z: 0}
 --- !u!4 &1996413353

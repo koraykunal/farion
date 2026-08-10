@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Farion.Core.Identity;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Economy;

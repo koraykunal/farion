@@ -8,7 +8,6 @@ namespace Farion.Rendering.Celestial
         [Header("Radius")]
         [Tooltip("Small absolute clearance added after Ocean Level is converted to a world radius. Keep this near zero; use Ocean Level for coastline and sea coverage.")]
         [Min(0f)]
-        [SerializeField] float radiusOffset;
 
         [Header("Color")]
         [SerializeField] Color deepColor = new(0.01f, 0.055f, 0.115f, 1f);
@@ -73,17 +72,8 @@ namespace Farion.Rendering.Celestial
         public float ReferenceLightIntensity => referenceLightIntensity;
         public float FresnelStrength => fresnelStrength;
 
-        public float GetOceanRadius(float bodyRadius, Vector2 terrainRadiusMinMax, float oceanLevel)
-        {
-            bodyRadius = Mathf.Max(0.01f, bodyRadius);
-            float minRadius = terrainRadiusMinMax.x > 0f ? terrainRadiusMinMax.x : bodyRadius;
-            float seaRadius = Mathf.Lerp(minRadius, bodyRadius, Mathf.Clamp01(oceanLevel));
-            return Mathf.Max(0.01f, seaRadius + radiusOffset);
-        }
-
         void OnValidate()
         {
-            radiusOffset = Mathf.Max(0f, radiusOffset);
             waveNormalScale = Mathf.Max(0.001f, waveNormalScale);
             waveSpeed = Mathf.Max(0f, waveSpeed);
             depthMultiplier = Mathf.Max(0f, depthMultiplier);

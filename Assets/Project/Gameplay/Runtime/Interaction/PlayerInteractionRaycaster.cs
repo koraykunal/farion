@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Farion.Core.Physics;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Commands;
 using Farion.Gameplay.Input;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Farion.Gameplay.Interaction
 {
@@ -22,7 +24,7 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] float maxDistance = 4f;
         [Min(0f)]
         [SerializeField] float castRadius = 0.35f;
-        [SerializeField] LayerMask interactionLayers = ~0;
+        [SerializeField] LayerMask interactionLayers = FarionLayers.InteractionMask;
         [SerializeField] QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Collide;
 
         [Header("Runtime")]
@@ -94,6 +96,11 @@ namespace Farion.Gameplay.Interaction
             controlLock = nextControlLock;
         }
 
+        public void SetViewReference(Transform nextViewReference)
+        {
+            viewReference = nextViewReference;
+        }
+
         public void SetCommandGateway(IGameplayCommandGateway nextCommandGateway)
         {
             commandGateway = nextCommandGateway;
@@ -113,16 +120,19 @@ namespace Farion.Gameplay.Interaction
 
             Transform view = viewReference != null ? viewReference : transform;
             Ray ray = new(view.position, view.forward);
+            PhysicsScene physicsScene = gameObject.scene.GetPhysicsScene();
             int hitCount = castRadius > 0f
-                ? Physics.SphereCastNonAlloc(
-                    ray,
+                ? physicsScene.SphereCast(
+                    ray.origin,
                     castRadius,
+                    ray.direction,
                     hits,
                     maxDistance,
                     interactionLayers,
                     triggerInteraction)
-                : Physics.RaycastNonAlloc(
-                    ray,
+                : physicsScene.Raycast(
+                    ray.origin,
+                    ray.direction,
                     hits,
                     maxDistance,
                     interactionLayers,
@@ -132,13 +142,12 @@ namespace Farion.Gameplay.Interaction
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit hit = hits[i];
-                if (hit.collider == null || IsOwnCollider(hit.collider) || hit.distance >= closestDistance)
+                if (hit.collider == null || IsOwnCollider(hit.collider))
                 {
                     continue;
                 }
 
-                IInteractable interactable = ResolveInteractable(hit.collider);
-                if (interactable == null)
+                if (hit.distance >= closestDistance)
                 {
                     continue;
                 }
@@ -148,7 +157,10 @@ namespace Farion.Gameplay.Interaction
                     view,
                     hit,
                     commandGateway);
-                if (!interactable.CanInteract(context))
+                IInteractable interactable = ResolveInteractable(
+                    hit.collider,
+                    context);
+                if (interactable == null)
                 {
                     continue;
                 }
@@ -196,7 +208,9 @@ namespace Farion.Gameplay.Interaction
             return false;
         }
 
-        IInteractable ResolveInteractable(Collider hitCollider)
+        IInteractable ResolveInteractable(
+            Collider hitCollider,
+            InteractionContext context)
         {
             Transform current = hitCollider.transform;
             while (current != null)
@@ -205,7 +219,8 @@ namespace Farion.Gameplay.Interaction
                 current.GetComponents(behaviourBuffer);
                 for (int i = 0; i < behaviourBuffer.Count; i++)
                 {
-                    if (behaviourBuffer[i] is IInteractable interactable)
+                    if (behaviourBuffer[i] is IInteractable interactable &&
+                        interactable.CanInteract(context))
                     {
                         return interactable;
                     }

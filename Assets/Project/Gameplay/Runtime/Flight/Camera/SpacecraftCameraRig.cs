@@ -1,4 +1,6 @@
+using Farion.Core.Physics;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 
 namespace Farion.Gameplay.Flight
@@ -40,7 +42,7 @@ namespace Farion.Gameplay.Flight
 
         [Header("Collision")]
         [SerializeField] bool avoidObstacles = true;
-        [SerializeField] LayerMask obstacleLayers = ~0;
+        [SerializeField] LayerMask obstacleLayers = FarionLayers.CameraObstacleMask;
         [Min(0.01f)]
         [SerializeField] float collisionRadius = 0.35f;
         [Min(0f)]
@@ -70,6 +72,8 @@ namespace Farion.Gameplay.Flight
         float cachedTargetBoundsRadius;
         bool targetBoundsDirty = true;
         Camera cachedFovCamera;
+        Vector3 lastExteriorTargetPosition;
+        bool hasExteriorTargetPosition;
         public SpacecraftPilotCameraView View => view;
 
         void OnEnable()
@@ -119,6 +123,7 @@ namespace Farion.Gameplay.Flight
             }
 
             exteriorTarget = newTarget;
+            hasExteriorTargetPosition = false;
             snapNextFrame = true;
         }
 
@@ -126,6 +131,11 @@ namespace Farion.Gameplay.Flight
         {
             cockpitTarget = newTarget;
             snapNextFrame = true;
+        }
+
+        public void SetMotor(SpacecraftMotor newMotor)
+        {
+            motor = newMotor;
         }
 
         public void SetView(SpacecraftPilotCameraView nextView)
@@ -163,6 +173,15 @@ namespace Farion.Gameplay.Flight
             ResolveMotor();
             ApplyCameraFov();
 
+            Vector3 targetPosition = exteriorTarget.position;
+            if (hasExteriorTargetPosition)
+            {
+                transform.position += targetPosition - lastExteriorTargetPosition;
+            }
+
+            lastExteriorTargetPosition = targetPosition;
+            hasExteriorTargetPosition = true;
+
             Vector3 desiredPosition = exteriorTarget.TransformPoint(GetScaledLocalOffset() + UpdateFlightOffset());
             desiredPosition = ResolveCollisionAdjustedPosition(desiredPosition);
             Vector3 viewDirection = exteriorTarget.position - desiredPosition;
@@ -183,7 +202,28 @@ namespace Farion.Gameplay.Flight
             float positionT = ResponsivenessToLerp(positionResponsiveness);
             float rotationT = ResponsivenessToLerp(rotationResponsiveness);
 
-            transform.position = Vector3.Lerp(transform.position, desiredPosition, positionT);
+            Vector3 currentOffset = transform.position - targetPosition;
+            Vector3 desiredOffset = desiredPosition - targetPosition;
+            if (currentOffset.sqrMagnitude > 0.0001f &&
+                desiredOffset.sqrMagnitude > 0.0001f)
+            {
+                Vector3 direction = Vector3.Slerp(
+                    currentOffset.normalized,
+                    desiredOffset.normalized,
+                    positionT).normalized;
+                float distance = Mathf.Lerp(
+                    currentOffset.magnitude,
+                    desiredOffset.magnitude,
+                    positionT);
+                transform.position = targetPosition + direction * distance;
+            }
+            else
+            {
+                transform.position = Vector3.Lerp(
+                    transform.position,
+                    desiredPosition,
+                    positionT);
+            }
             if (maxPositionLag > 0f)
             {
                 Vector3 lag = transform.position - desiredPosition;
@@ -212,14 +252,25 @@ namespace Farion.Gameplay.Flight
             }
 
             Vector3 direction = offset / desiredDistance;
-            int hitCount = Physics.SphereCastNonAlloc(
-                origin,
-                collisionRadius,
-                direction,
-                collisionHits,
-                desiredDistance,
-                obstacleLayers,
-                QueryTriggerInteraction.Ignore);
+            PhysicsScene physicsScene =
+                exteriorTarget.gameObject.scene.GetPhysicsScene();
+            int hitCount = physicsScene.IsValid()
+                ? physicsScene.SphereCast(
+                    origin,
+                    collisionRadius,
+                    direction,
+                    collisionHits,
+                    desiredDistance,
+                    obstacleLayers,
+                    QueryTriggerInteraction.Ignore)
+                : Physics.SphereCastNonAlloc(
+                    origin,
+                    collisionRadius,
+                    direction,
+                    collisionHits,
+                    desiredDistance,
+                    obstacleLayers,
+                    QueryTriggerInteraction.Ignore);
 
             float nearestDistance = desiredDistance;
             for (int i = 0; i < hitCount; i++)
@@ -248,8 +299,9 @@ namespace Farion.Gameplay.Flight
         bool IsExteriorTargetCollider(Collider candidate)
         {
             Transform candidateTransform = candidate.transform;
-            return candidateTransform == exteriorTarget ||
-                candidateTransform.IsChildOf(exteriorTarget);
+            Transform shipRoot = motor != null ? motor.transform : exteriorTarget;
+            return candidateTransform == shipRoot ||
+                candidateTransform.IsChildOf(shipRoot);
         }
 
         Vector3 GetScaledLocalOffset()

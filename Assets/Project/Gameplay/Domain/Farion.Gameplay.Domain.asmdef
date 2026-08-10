@@ -1,7 +1,9 @@
 {
     "name": "Farion.Gameplay.Domain",
     "rootNamespace": "Farion.Gameplay.Domain",
-    "references": [],
+    "references": [
+        "Farion.Core.Identity"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

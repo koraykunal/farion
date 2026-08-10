@@ -1,8 +1,5 @@
 using System;
-using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Processing;
-using Farion.Gameplay.Ships;
 
 namespace Farion.Gameplay.Commands
 {
@@ -40,30 +37,20 @@ namespace Farion.Gameplay.Commands
 
     public interface IGameplayCommandGateway
     {
-        ResourceHarvestResult CanHarvest(
-            ResourceNodeInteractable source,
-            IInventoryContainer destination);
+        ResourceHarvestResult CanHarvest(ResourceHarvestRequest request);
 
-        ResourceHarvestResult TryHarvest(
-            ResourceNodeInteractable source,
-            IInventoryContainer destination);
+        ResourceHarvestResult TryHarvest(ResourceHarvestRequest request);
 
-        CargoTransferResult CanLoadAssignedShuttleCargo(
-            ShuttleCargoInventory destination);
+        CargoTransferResult CanLoadAssignedShuttleCargo(CargoTransferRequest request);
 
-        CargoTransferResult TryLoadAssignedShuttleCargo(
-            ShuttleCargoInventory destination);
+        CargoTransferResult TryLoadAssignedShuttleCargo(CargoTransferRequest request);
 
-        CargoTransferResult CanUnloadAssignedShuttleCargo(
-            ShuttleCargoInventory source);
+        CargoTransferResult CanUnloadAssignedShuttleCargo(CargoTransferRequest request);
 
-        CargoTransferResult TryUnloadAssignedShuttleCargo(
-            ShuttleCargoInventory source);
+        CargoTransferResult TryUnloadAssignedShuttleCargo(CargoTransferRequest request);
 
-        FleetProcessingResult CanProcessFleetRecipe(
-            ProcessingRecipeDefinition recipe);
+        FleetProcessingResult CanProcessFleetRecipe(FleetProcessingRequest request);
 
-        FleetProcessingResult TryProcessFleetRecipe(
-            ProcessingRecipeDefinition recipe);
+        FleetProcessingResult TryProcessFleetRecipe(FleetProcessingRequest request);
     }
 }

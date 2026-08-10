@@ -11,6 +11,7 @@ namespace Farion.Gameplay.Commands
         InsufficientCapacity = 6,
         InventoryRejected = 7,
         SourceChanged = 8,
-        RollbackFailed = 9
+        RollbackFailed = 9,
+        StaleDestination = 10
     }
 }

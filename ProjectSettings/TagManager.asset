@@ -11,12 +11,12 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - CelestialSurface
+  - SpacecraftExterior
+  - SpacecraftInterior
+  - Explorer
+  - ExplorerInterior
+  - Interactable
   - 
   - 
   - 

@@ -109,22 +109,22 @@ namespace Farion.UI.MainMenu
                 return;
             }
 
-            (string key, string fallback) = action switch
+            string key = action switch
             {
-                MainMenuAction.Continue => ("main_menu.continue", "Continue"),
-                MainMenuAction.NewGame => ("main_menu.new_game", "New game"),
-                MainMenuAction.LoadGame => ("main_menu.load_game", "Load game"),
-                MainMenuAction.Settings => ("main_menu.settings", "Settings"),
-                MainMenuAction.Credits => ("main_menu.credits", "Credits"),
-                MainMenuAction.Exit => ("main_menu.exit", "Exit"),
-                MainMenuAction.Back => ("common.back", "Back"),
-                MainMenuAction.ConfirmExit => ("common.quit", "Quit"),
-                MainMenuAction.CancelExit => ("common.cancel", "Cancel"),
-                MainMenuAction.HostGame => ("main_menu.host_game", "Host game"),
-                MainMenuAction.JoinLocalhost => ("main_menu.join_localhost", "Join localhost"),
-                _ => (string.Empty, action.ToString())
+                MainMenuAction.Continue => UiTextKeys.MainMenuContinue,
+                MainMenuAction.NewGame => UiTextKeys.MainMenuNewGame,
+                MainMenuAction.LoadGame => UiTextKeys.MainMenuLoadGame,
+                MainMenuAction.Settings => UiTextKeys.MainMenuSettings,
+                MainMenuAction.Credits => UiTextKeys.MainMenuCredits,
+                MainMenuAction.Exit => UiTextKeys.MainMenuExit,
+                MainMenuAction.Back => UiTextKeys.CommonBack,
+                MainMenuAction.ConfirmExit => UiTextKeys.CommonQuit,
+                MainMenuAction.CancelExit => UiTextKeys.CommonCancel,
+                MainMenuAction.HostGame => UiTextKeys.MainMenuHostGame,
+                MainMenuAction.JoinLocalhost => UiTextKeys.MainMenuJoinLocalhost,
+                _ => string.Empty
             };
-            view.SetTitle(UiLocalization.Get(key, fallback));
+            view.SetTitle(UiLocalization.Get(key));
         }
     }
 }

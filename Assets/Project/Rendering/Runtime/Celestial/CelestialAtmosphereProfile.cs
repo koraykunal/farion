@@ -11,9 +11,6 @@ namespace Farion.Rendering.Celestial
     public sealed class CelestialAtmosphereProfile : ScriptableObject
     {
         [Header("Radius")]
-        [Range(0.01f, 2f)]
-        [SerializeField] float atmosphereScale = 0.322f;
-        [SerializeField] float radiusOffset;
 
         [Header("Sampling")]
         [SerializeField] ComputeShader opticalDepthCompute;
@@ -49,7 +46,6 @@ namespace Farion.Rendering.Celestial
         float bakedAtmosphereScale = -1f;
         float bakedDensityFalloff = -1f;
 
-        public float AtmosphereScale => atmosphereScale;
         public ComputeShader OpticalDepthCompute => opticalDepthCompute;
         public int TextureSize => textureSize;
         public int InScatteringSteps => inScatteringSteps;
@@ -63,12 +59,6 @@ namespace Farion.Rendering.Celestial
         public float DitherScale => ditherScale;
         public Texture2D BlueNoise => blueNoise;
 
-        public float GetAtmosphereRadius(float bodyRadius)
-        {
-            bodyRadius = Mathf.Max(0.01f, bodyRadius);
-            return Mathf.Max(bodyRadius + 0.001f, bodyRadius * (1f + atmosphereScale) + radiusOffset);
-        }
-
         public Vector3 GetScatteringCoefficients()
         {
             return new Vector3(
@@ -77,7 +67,7 @@ namespace Farion.Rendering.Celestial
                 Mathf.Pow(400f / Mathf.Max(1f, wavelengths.z), 4f)) * scatteringStrength;
         }
 
-        public RenderTexture GetOpticalDepthTexture()
+        public RenderTexture GetOpticalDepthTexture(float atmosphereScale)
         {
             if (opticalDepthCompute == null)
             {
@@ -157,7 +147,6 @@ namespace Farion.Rendering.Celestial
 
         void OnValidate()
         {
-            atmosphereScale = Mathf.Max(0.01f, atmosphereScale);
             textureSize = Mathf.Max(8, textureSize);
             opticalDepthSteps = Mathf.Max(2, opticalDepthSteps);
             densityFalloff = Mathf.Max(0.001f, densityFalloff);

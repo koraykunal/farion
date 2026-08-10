@@ -2,6 +2,7 @@
     "name": "Farion.Multiplayer.Runtime",
     "rootNamespace": "Farion.Multiplayer",
     "references": [
+        "Farion.Core.Identity",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Farion.Gameplay.Runtime",

@@ -1,5 +1,6 @@
+using Farion.Core.Identity;
 using System;
-using Farion.Simulation.World.Identity;
+using Farion.Simulation.World;
 
 namespace Farion.Gameplay.Resources
 {

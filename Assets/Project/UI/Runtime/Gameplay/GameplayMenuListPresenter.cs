@@ -84,7 +84,10 @@ namespace Farion.UI.Gameplay
             for (int i = 0; i < entries.Count; i++)
             {
                 MenuEntry entry = entries[i];
-                if (entry == null || !entry.Available)
+                if (entry == null ||
+                    !entry.Available ||
+                    controller != null &&
+                    !controller.IsActionAvailable(entry.Action))
                 {
                     continue;
                 }
@@ -195,21 +198,21 @@ namespace Farion.UI.Gameplay
 
         static string ResolveTitle(MenuEntry entry)
         {
-            (string key, string fallback) = entry.Action switch
+            string key = entry.Action switch
             {
-                GameplayMenuAction.Resume => ("pause.resume", entry.Title),
-                GameplayMenuAction.Inventory => ("pause.inventory", entry.Title),
-                GameplayMenuAction.Blueprints => ("pause.blueprints", entry.Title),
-                GameplayMenuAction.Journal => ("pause.journal", entry.Title),
-                GameplayMenuAction.Ship => ("pause.ship", entry.Title),
-                GameplayMenuAction.Map => ("pause.map", entry.Title),
-                GameplayMenuAction.Options => ("pause.options", entry.Title),
-                GameplayMenuAction.Save => ("pause.save", entry.Title),
-                GameplayMenuAction.ExitToMainMenu => ("pause.main_menu", entry.Title),
-                GameplayMenuAction.QuitGame => ("pause.quit", entry.Title),
-                _ => (string.Empty, entry.Title)
+                GameplayMenuAction.Resume => UiTextKeys.PauseResume,
+                GameplayMenuAction.Inventory => UiTextKeys.PauseInventory,
+                GameplayMenuAction.Blueprints => UiTextKeys.PauseBlueprints,
+                GameplayMenuAction.Journal => UiTextKeys.PauseJournal,
+                GameplayMenuAction.Ship => UiTextKeys.PauseShip,
+                GameplayMenuAction.Map => UiTextKeys.PauseMap,
+                GameplayMenuAction.Options => UiTextKeys.PauseOptions,
+                GameplayMenuAction.Save => UiTextKeys.PauseSave,
+                GameplayMenuAction.ExitToMainMenu => UiTextKeys.PauseMainMenu,
+                GameplayMenuAction.QuitGame => UiTextKeys.PauseQuit,
+                _ => string.Empty
             };
-            return UiLocalization.Get(key, fallback);
+            return UiLocalization.Get(key);
         }
 
         static bool IsSessionAction(GameplayMenuAction action)

@@ -14,15 +14,20 @@ namespace Farion.Simulation.Planetary
         [Tooltip("Planet-scale water availability used by the climate model. This is not a second sea-level value.")]
         [Range(0f, 1f)]
         [SerializeField] float waterAvailability = 0.35f;
+        [Tooltip("Physical offset applied to the computed sea-level radius.")]
+        [Min(0f)]
+        [SerializeField] float oceanRadiusOffset;
 
         public bool HasSurfaceOcean => hasSurfaceOcean;
         public float OceanLevel => Mathf.Clamp01(oceanLevel);
         public float WaterAvailability => hasSurfaceOcean ? Mathf.Clamp01(waterAvailability) : 0f;
+        public float OceanRadiusOffset => Mathf.Max(0f, oceanRadiusOffset);
 
         void OnValidate()
         {
             oceanLevel = Mathf.Clamp01(oceanLevel);
             waterAvailability = hasSurfaceOcean ? Mathf.Clamp01(waterAvailability) : 0f;
+            oceanRadiusOffset = Mathf.Max(0f, oceanRadiusOffset);
         }
     }
 }

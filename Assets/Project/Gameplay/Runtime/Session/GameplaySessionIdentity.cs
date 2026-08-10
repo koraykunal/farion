@@ -1,3 +1,4 @@
+using Farion.Core.Identity;
 using Farion.Gameplay.Domain.Identity;
 
 namespace Farion.Gameplay.Session

@@ -1,3 +1,4 @@
+using Farion.Core.Identity;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,8 +8,10 @@ using Farion.Gameplay.Input;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Spawning;
 using Farion.Multiplayer.World;
-using Farion.Multiplayer.World.Zones;
-using Farion.Simulation.World.Identity;
+using Farion.Rendering.Celestial;
+using Farion.Rendering.Lighting;
+using Farion.Simulation.World;
+using Farion.UI.Gameplay;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Scened;
@@ -26,6 +29,7 @@ namespace Farion.Multiplayer.Session
         const string DefaultStartingZoneScene = "SC_WorldZone";
         const string MainMenuScene = "SC_MainMenu";
         const float ConnectionTimeoutSeconds = 30f;
+        const float StopTimeoutSeconds = 5f;
         static readonly GeneratedEntityId StartingZoneId =
             GeneratedEntityId.FromHash(
                 StableHashUtility.Combine("zone.starting_system"));
@@ -43,11 +47,16 @@ namespace Farion.Multiplayer.Session
         bool gameplaySceneEntered;
         bool returningToMainMenu;
         bool subscribed;
+        bool ownedPlayerReady;
+        bool assignedStarterShipReady;
         Coroutine stopRoutine;
         SpacecraftCameraRig spacecraftCameraRig;
         FirstPersonCameraRig firstPersonCameraRig;
         Transform viewReference;
         PlayerControlLock controlLock;
+        GameplayUiController gameplayUi;
+        CelestialLightingRig lightingRig;
+        CelestialLodController lodController;
 
         public static MultiplayerSessionController Active { get; private set; }
 
@@ -103,6 +112,7 @@ namespace Farion.Multiplayer.Session
 
             ConfigureTransportTimeouts();
             host = true;
+            ResetReadiness();
             GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
             SetState(MultiplayerSessionState.Starting);
             if (!networkManager.ServerManager.StartConnection() ||
@@ -127,6 +137,7 @@ namespace Farion.Multiplayer.Session
 
             ConfigureTransportTimeouts();
             host = false;
+            ResetReadiness();
             GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
             SetState(MultiplayerSessionState.Starting);
             if (!networkManager.ClientManager.StartConnection(address.Trim()))
@@ -158,6 +169,24 @@ namespace Farion.Multiplayer.Session
             }
 
             stopRoutine ??= StartCoroutine(FinishStop());
+        }
+
+        public void ReturnToMainMenu()
+        {
+            if (returningToMainMenu)
+            {
+                return;
+            }
+
+            returningToMainMenu = true;
+            Stop();
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name !=
+                MainMenuScene)
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(
+                    MainMenuScene,
+                    LoadSceneMode.Single);
+            }
         }
 
         bool CanStart()
@@ -349,17 +378,24 @@ namespace Farion.Multiplayer.Session
                     spacecraftCameraRig,
                     firstPersonCameraRig,
                     viewReference,
-                    controlLock);
+                    controlLock,
+                    gameplayUi,
+                    lightingRig,
+                    lodController);
                 context.BindSession(playerSpawner, worldOriginAuthority);
             }
         }
 
         internal void NotifyOwnedPlayerReady()
         {
-            if (State == MultiplayerSessionState.Starting)
-            {
-                SetState(MultiplayerSessionState.Connected);
-            }
+            ownedPlayerReady = true;
+            TryCompleteStartup();
+        }
+
+        internal void NotifyAssignedStarterShipReady()
+        {
+            assignedStarterShipReady = true;
+            TryCompleteStartup();
         }
 
         internal void FailOwnedPlayerSetup()
@@ -378,10 +414,19 @@ namespace Farion.Multiplayer.Session
             Camera camera = FindInScene<Camera>(scene);
             viewReference = camera != null ? camera.transform : null;
             controlLock = FindInScene<PlayerControlLock>(scene);
+            gameplayUi = FindInScene<GameplayUiController>(scene);
+            gameplayUi?.SetSessionActions(
+                ReturnToMainMenu,
+                UnityEngine.Application.Quit);
+            lightingRig = FindInScene<CelestialLightingRig>(scene);
+            lodController = FindInScene<CelestialLodController>(scene);
             return spacecraftCameraRig != null &&
                 firstPersonCameraRig != null &&
                 viewReference != null &&
-                controlLock != null;
+                controlLock != null &&
+                gameplayUi != null &&
+                lightingRig != null &&
+                lodController != null;
         }
 
         void RequestStartingZone(NetworkConnection connection)
@@ -427,31 +472,26 @@ namespace Farion.Multiplayer.Session
 
         void FailAndReturnToMainMenu()
         {
-            if (returningToMainMenu)
-            {
-                return;
-            }
-
-            returningToMainMenu = true;
             SetState(MultiplayerSessionState.Failed);
-            Stop();
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name !=
-                MainMenuScene)
-            {
-                UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(
-                    MainMenuScene,
-                    LoadSceneMode.Single);
-            }
+            ReturnToMainMenu();
         }
 
         IEnumerator FinishStop()
         {
-            int frames = 0;
-            while (frames++ < 120 &&
+            float deadline = Time.realtimeSinceStartup + StopTimeoutSeconds;
+            while (Time.realtimeSinceStartup < deadline &&
                    (networkManager.ClientManager.Started ||
                     networkManager.ServerManager.Started))
             {
                 yield return null;
+            }
+
+            if (networkManager.ClientManager.Started ||
+                networkManager.ServerManager.Started)
+            {
+                Debug.LogWarning(
+                    "Network shutdown timed out; destroying the session root to force transport cleanup.",
+                    this);
             }
 
             ResetSession();
@@ -466,13 +506,33 @@ namespace Farion.Multiplayer.Session
             gameplaySceneEntered = false;
             returningToMainMenu = false;
             host = false;
+            ResetReadiness();
             zoneLoadRequests.Clear();
             spacecraftCameraRig = null;
             firstPersonCameraRig = null;
             viewReference = null;
             controlLock = null;
+            gameplayUi = null;
+            lightingRig = null;
+            lodController = null;
             worldOriginAuthority?.ResetSession();
             playerSpawner?.ResetSession();
+        }
+
+        void TryCompleteStartup()
+        {
+            if (State == MultiplayerSessionState.Starting &&
+                ownedPlayerReady &&
+                assignedStarterShipReady)
+            {
+                SetState(MultiplayerSessionState.Connected);
+            }
+        }
+
+        void ResetReadiness()
+        {
+            ownedPlayerReady = false;
+            assignedStarterShipReady = false;
         }
 
         void SetState(MultiplayerSessionState state)

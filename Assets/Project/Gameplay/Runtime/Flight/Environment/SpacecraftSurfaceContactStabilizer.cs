@@ -35,6 +35,8 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float recoveredDistance;
 
         Rigidbody cachedRigidbody;
+        ISpacecraftPhysicsBody offlinePhysicsBody;
+        bool externalSimulation;
 
         public bool StabilizingContact => stabilizingContact;
         public float CorrectedNormalSpeed => correctedNormalSpeed;
@@ -45,6 +47,7 @@ namespace Farion.Gameplay.Flight
         void Awake()
         {
             cachedRigidbody = GetComponent<Rigidbody>();
+            offlinePhysicsBody = new RigidbodySpacecraftPhysicsBody(cachedRigidbody);
             ResolveComponents();
             ConfigureRigidbody();
         }
@@ -62,12 +65,28 @@ namespace Farion.Gameplay.Flight
 
         void FixedUpdate()
         {
+            if (!externalSimulation)
+            {
+                Simulate(Time.fixedDeltaTime, offlinePhysicsBody);
+            }
+        }
+
+        public void SetExternalSimulation(bool enabled)
+        {
+            externalSimulation = enabled;
+        }
+
+        public void Simulate(float deltaTime, ISpacecraftPhysicsBody physicsBody)
+        {
             stabilizingContact = false;
             correctedNormalSpeed = 0f;
             recoveredDistance = 0f;
 
             ResolveComponents();
-            if (surfaceContactProbe == null || !surfaceContactProbe.HasContact)
+            if (physicsBody == null ||
+                deltaTime <= 0f ||
+                surfaceContactProbe == null ||
+                !surfaceContactProbe.HasContact)
             {
                 return;
             }
@@ -79,7 +98,7 @@ namespace Farion.Gameplay.Flight
             }
 
             Vector3 bodyVelocity = contact.Body != null ? contact.Body.GetVelocityAtPoint(contact.Point) : Vector3.zero;
-            Vector3 relativeVelocity = Rigidbody.linearVelocity - bodyVelocity;
+            Vector3 relativeVelocity = physicsBody.LinearVelocity - bodyVelocity;
             Vector3 normal = contact.Normal;
             float closingSpeed = Mathf.Max(0f, Vector3.Dot(relativeVelocity, -normal));
             bool canStabilize = closingSpeed <= maxCorrectedNormalSpeed &&
@@ -100,24 +119,28 @@ namespace Farion.Gameplay.Flight
             {
                 Vector3 normalVelocity = Vector3.Project(relativeVelocity, normal);
                 Vector3 tangentialVelocity = relativeVelocity - normalVelocity;
-                float damping = 1f - Mathf.Exp(-tangentialDamping * Time.fixedDeltaTime);
+                float damping = 1f - Mathf.Exp(-tangentialDamping * deltaTime);
                 relativeVelocity = normalVelocity + Vector3.Lerp(tangentialVelocity, Vector3.zero, damping);
                 stabilizingContact |= tangentialVelocity.sqrMagnitude > 0.000001f;
             }
 
-            Rigidbody.linearVelocity = bodyVelocity + relativeVelocity;
+            physicsBody.SetLinearVelocity(bodyVelocity + relativeVelocity);
 
             if (angularDamping > 0f)
             {
-                float damping = 1f - Mathf.Exp(-angularDamping * Time.fixedDeltaTime);
-                Rigidbody.angularVelocity = Vector3.Lerp(Rigidbody.angularVelocity, Vector3.zero, damping);
-                stabilizingContact |= Rigidbody.angularVelocity.sqrMagnitude > 0.000001f;
+                float damping = 1f - Mathf.Exp(-angularDamping * deltaTime);
+                Vector3 angularVelocity = Vector3.Lerp(
+                    physicsBody.AngularVelocity,
+                    Vector3.zero,
+                    damping);
+                physicsBody.SetAngularVelocity(angularVelocity);
+                stabilizingContact |= angularVelocity.sqrMagnitude > 0.000001f;
             }
 
             if (recoverSmallPenetration && contact.Separation < -penetrationSlop)
             {
                 float recovery = Mathf.Min(-contact.Separation + penetrationSlop, maxRecoveryDistance);
-                Rigidbody.MovePosition(Rigidbody.position + normal * recovery);
+                physicsBody.MovePosition(physicsBody.Position + normal * recovery);
                 recoveredDistance = recovery;
                 stabilizingContact = true;
             }

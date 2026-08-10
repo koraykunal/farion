@@ -350,7 +350,7 @@ namespace Farion.Tests.EditMode
         public void DefaultThemeProvidesDistinctInterfaceAndInstrumentFonts()
         {
             const string path =
-                "Assets/Project/Design/UI/Themes/SO_UiTheme_Default.asset";
+                "Assets/Project/Design/UI/Styling/SO_UiTheme_Default.asset";
             UiTheme theme = AssetDatabase.LoadAssetAtPath<UiTheme>(path);
 
             Assert.That(theme, Is.Not.Null);

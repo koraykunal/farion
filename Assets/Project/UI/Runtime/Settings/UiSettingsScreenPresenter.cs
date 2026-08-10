@@ -5,11 +5,11 @@ using Farion.UI.Localization;
 using Farion.UI.Navigation;
 using Farion.UI.Styling;
 using TMPro;
+using UiNavigation = UnityEngine.UI.Navigation;
 using UnityEngine;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using UnityEngine.UI;
-using UiNavigation = UnityEngine.UI.Navigation;
 
 namespace Farion.UI.Settings
 {
@@ -244,8 +244,8 @@ namespace Farion.UI.Settings
 
         void Refresh()
         {
-            SetText(titleText, "settings.title", "SETTINGS");
-            SetText(backLabelText, "common.back", "BACK");
+            SetText(titleText, UiTextKeys.SettingsTitle);
+            SetText(backLabelText, UiTextKeys.CommonBack);
 
             for (int i = 0; i < categories.Count; i++)
             {
@@ -279,96 +279,86 @@ namespace Farion.UI.Settings
             {
                 case UiSettingId.Language:
                     option.ConfigureContent(
-                        UiLocalization.Get("settings.language.title", "Language"),
-                        UiLocalization.Get(
-                            "settings.language.description",
-                            "Choose the language used by menus and system messages."),
+                        UiLocalization.Get(UiTextKeys.SettingsLanguageTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsLanguageDescription),
                         preferences.LocaleCode == UiLocalization.TurkishLocaleCode
-                            ? UiLocalization.Get("language.turkish", "Turkish")
-                            : UiLocalization.Get("language.english", "English"));
+                            ? UiLocalization.Get(UiTextKeys.LanguageTurkish)
+                            : UiLocalization.Get(UiTextKeys.LanguageEnglish));
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.UiScale:
                     option.ConfigureContent(
-                        UiLocalization.Get("settings.scale.title", "Interface scale"),
-                        UiLocalization.Get(
-                            "settings.scale.description",
-                            "Increase the size of menus and operational readouts."),
+                        UiLocalization.Get(UiTextKeys.SettingsScaleTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsScaleDescription),
                         $"{Mathf.RoundToInt(preferences.UiScale * 100f)}%");
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.ReducedMotion:
                     option.ConfigureContent(
-                        UiLocalization.Get("settings.motion.title", "Reduced motion"),
-                        UiLocalization.Get(
-                            "settings.motion.description",
-                            "Replace most interface transitions with immediate state changes."),
+                        UiLocalization.Get(UiTextKeys.SettingsMotionTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsMotionDescription),
                         ResolveBoolean(preferences.ReducedMotion));
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.Subtitles:
                     option.ConfigureContent(
-                        UiLocalization.Get("settings.subtitles.title", "Subtitles"),
-                        UiLocalization.Get(
-                            "settings.subtitles.description",
-                            "Display spoken dialogue and important radio communication."),
+                        UiLocalization.Get(UiTextKeys.SettingsSubtitlesTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsSubtitlesDescription),
                         ResolveBoolean(preferences.SubtitlesEnabled));
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.SubtitleSize:
                     option.ConfigureContent(
-                        UiLocalization.Get("settings.subtitle_size.title", "Subtitle size"),
-                        UiLocalization.Get(
-                            "settings.subtitle_size.description",
-                            "Set the reading size used by dialogue captions."),
+                        UiLocalization.Get(UiTextKeys.SettingsSubtitleSizeTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsSubtitleSizeDescription),
                         preferences.SubtitleSize == UiSubtitleSize.Large
-                            ? UiLocalization.Get("value.large", "Large")
-                            : UiLocalization.Get("value.standard", "Standard"));
+                            ? UiLocalization.Get(UiTextKeys.ValueLarge)
+                            : UiLocalization.Get(UiTextKeys.ValueStandard));
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.MasterVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Master,
-                        "settings.audio.master.title",
+                        UiTextKeys.SettingsAudioMasterTitle,
                         "Master volume",
-                        "settings.audio.master.description",
+                        UiTextKeys.SettingsAudioMasterDescription,
                         "Control the complete game mix.");
                     break;
                 case UiSettingId.MusicVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Music,
-                        "settings.audio.music.title",
+                        UiTextKeys.SettingsAudioMusicTitle,
                         "Music volume",
-                        "settings.audio.music.description",
+                        UiTextKeys.SettingsAudioMusicDescription,
                         "Control the adaptive score.");
                     break;
                 case UiSettingId.AmbienceVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Ambience,
-                        "settings.audio.ambience.title",
+                        UiTextKeys.SettingsAudioAmbienceTitle,
                         "Ambience volume",
-                        "settings.audio.ambience.description",
+                        UiTextKeys.SettingsAudioAmbienceDescription,
                         "Control space, atmosphere, and interior ambience.");
                     break;
                 case UiSettingId.SfxVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Sfx,
-                        "settings.audio.sfx.title",
+                        UiTextKeys.SettingsAudioSfxTitle,
                         "SFX volume",
-                        "settings.audio.sfx.description",
+                        UiTextKeys.SettingsAudioSfxDescription,
                         "Control spacecraft and world sound effects.");
                     break;
                 case UiSettingId.UiVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Ui,
-                        "settings.audio.ui.title",
+                        UiTextKeys.SettingsAudioUiTitle,
                         "UI volume",
-                        "settings.audio.ui.description",
+                        UiTextKeys.SettingsAudioUiDescription,
                         "Control interface navigation and feedback sounds.");
                     break;
             }
@@ -389,8 +379,8 @@ namespace Farion.UI.Settings
             }
 
             option.ConfigureContent(
-                UiLocalization.Get(titleKey, titleFallback),
-                UiLocalization.Get(descriptionKey, descriptionFallback),
+                UiLocalization.Get(titleKey),
+                UiLocalization.Get(descriptionKey),
                 $"{Mathf.RoundToInt(audioDirector.GetBusVolume(bus) * 100f)}%");
             option.SetAvailable(true);
         }
@@ -581,8 +571,8 @@ namespace Farion.UI.Settings
         string ResolveBoolean(bool value)
         {
             return value
-                ? UiLocalization.Get("value.on", "On")
-                : UiLocalization.Get("value.off", "Off");
+                ? UiLocalization.Get(UiTextKeys.ValueOn)
+                : UiLocalization.Get(UiTextKeys.ValueOff);
         }
 
         static string GetCategoryLabel(UiSettingsCategory category)
@@ -590,10 +580,10 @@ namespace Farion.UI.Settings
             return category switch
             {
                 UiSettingsCategory.Accessibility =>
-                    UiLocalization.Get("settings.subtitle", "Accessibility"),
+                    UiLocalization.Get(UiTextKeys.SettingsSubtitle),
                 UiSettingsCategory.Audio =>
-                    UiLocalization.Get("settings.section.audio", "Audio"),
-                _ => UiLocalization.Get("settings.section.interface", "Interface")
+                    UiLocalization.Get(UiTextKeys.SettingsSectionAudio),
+                _ => UiLocalization.Get(UiTextKeys.SettingsSectionInterface)
             };
         }
 
@@ -669,11 +659,11 @@ namespace Farion.UI.Settings
             }
         }
 
-        static void SetText(TMP_Text target, string key, string fallback)
+        static void SetText(TMP_Text target, string key)
         {
             if (target != null)
             {
-                target.text = UiLocalization.Get(key, fallback);
+                target.text = UiLocalization.Get(key);
             }
         }
     }

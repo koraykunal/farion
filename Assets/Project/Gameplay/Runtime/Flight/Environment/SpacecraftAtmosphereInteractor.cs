@@ -29,7 +29,9 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float dragAcceleration;
 
         Rigidbody cachedRigidbody;
+        ISpacecraftPhysicsBody offlinePhysicsBody;
         SpacecraftAtmosphereInteractionSample currentInteraction;
+        bool externalSimulation;
 
         public SpacecraftAtmosphereInteractionSample CurrentInteraction => currentInteraction;
         public Rigidbody Rigidbody =>
@@ -38,6 +40,7 @@ namespace Farion.Gameplay.Flight
         void Awake()
         {
             cachedRigidbody = GetComponent<Rigidbody>();
+            offlinePhysicsBody = new RigidbodySpacecraftPhysicsBody(cachedRigidbody);
             ResolveComponents();
         }
 
@@ -48,8 +51,26 @@ namespace Farion.Gameplay.Flight
 
         void FixedUpdate()
         {
+            if (!externalSimulation)
+            {
+                Simulate(Time.fixedDeltaTime, offlinePhysicsBody);
+            }
+        }
+
+        public void SetExternalSimulation(bool enabled)
+        {
+            externalSimulation = enabled;
+        }
+
+        public void Simulate(float deltaTime, ISpacecraftPhysicsBody physicsBody)
+        {
+            if (physicsBody == null || deltaTime <= 0f)
+            {
+                return;
+            }
+
             RefreshInteraction();
-            ApplyInteractionForce();
+            ApplyInteractionForce(physicsBody);
         }
 
         void OnDisable()
@@ -76,14 +97,16 @@ namespace Farion.Gameplay.Flight
             ApplyRuntimeState();
         }
 
-        void ApplyInteractionForce()
+        void ApplyInteractionForce(ISpacecraftPhysicsBody physicsBody)
         {
             if (!applyDrag || currentInteraction.DragAcceleration.sqrMagnitude <= 0.0001f)
             {
                 return;
             }
 
-            Rigidbody.AddForce(currentInteraction.DragAcceleration, ForceMode.Acceleration);
+            physicsBody.AddForce(
+                currentInteraction.DragAcceleration,
+                ForceMode.Acceleration);
         }
 
         void ApplyRuntimeState()

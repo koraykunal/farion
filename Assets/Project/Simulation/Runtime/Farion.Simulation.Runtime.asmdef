@@ -2,6 +2,7 @@
     "name": "Farion.Simulation.Runtime",
     "rootNamespace": "Farion.Simulation",
     "references": [
+        "Farion.Core.Identity",
         "Farion.Core.Runtime"
     ],
     "includePlatforms": [],

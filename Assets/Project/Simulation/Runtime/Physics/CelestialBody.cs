@@ -1,5 +1,5 @@
-using UnityEngine;
 using Farion.Core.Persistence;
+using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace Farion.Simulation.Physics
@@ -22,9 +22,11 @@ namespace Farion.Simulation.Physics
         [Min(0f)]
         [SerializeField] float explicitMass = 1000000000f;
         [SerializeField] bool participatesInNBody = true;
-        [SerializeField] CelestialBodyMotionMode motionMode = CelestialBodyMotionMode.DynamicNBody;
+        [SerializeField] CelestialBodyMotionMode motionMode = CelestialBodyMotionMode.KinematicOrbit;
+        [SerializeField] CelestialBody orbitAttractor;
 
         Rigidbody cachedRigidbody;
+        PersistentObjectId cachedPersistentObjectId;
         Vector3 simulatedVelocity;
         Vector3 simulatedAngularVelocity;
         Vector3 physicsReferenceFrameVelocity;
@@ -35,8 +37,13 @@ namespace Farion.Simulation.Physics
         {
             get
             {
-                return TryGetComponent(out PersistentObjectId persistentObjectId)
-                    ? persistentObjectId.Id
+                if (cachedPersistentObjectId == null)
+                {
+                    cachedPersistentObjectId = GetComponent<PersistentObjectId>();
+                }
+
+                return cachedPersistentObjectId != null
+                    ? cachedPersistentObjectId.Id
                     : string.Empty;
             }
         }
@@ -51,6 +58,7 @@ namespace Farion.Simulation.Physics
         public float Mass => mass;
         public bool ParticipatesInNBody => participatesInNBody;
         public CelestialBodyMotionMode MotionMode => motionMode;
+        public CelestialBody OrbitAttractor => orbitAttractor;
         public bool IsKinematicBody => motionMode != CelestialBodyMotionMode.DynamicNBody;
         public bool IntegratesOrbit => motionMode != CelestialBodyMotionMode.Static;
         public bool SupportsNonConvexSurfaceCollider => IsKinematicBody;
@@ -113,6 +121,10 @@ namespace Farion.Simulation.Physics
             radius = Mathf.Max(0.01f, radius);
             surfaceGravity = Mathf.Max(0f, surfaceGravity);
             explicitMass = Mathf.Max(0f, explicitMass);
+            if (orbitAttractor == this)
+            {
+                orbitAttractor = null;
+            }
 
             if (!string.IsNullOrWhiteSpace(bodyName))
             {
@@ -145,6 +157,11 @@ namespace Farion.Simulation.Physics
             simulatedVelocity = initialVelocity;
             simulatedAngularVelocity = initialAngularVelocityDegreesPerSecond * Mathf.Deg2Rad;
             physicsReferenceFrameVelocity = Vector3.zero;
+        }
+
+        public void SetOrbitAttractor(CelestialBody attractor)
+        {
+            orbitAttractor = attractor != this ? attractor : null;
         }
 
         public void RecalculateMass(float gravitationalConstant)

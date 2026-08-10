@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
-using Farion.Simulation.Physics;
+using System.Collections.Generic;
 using Farion.Simulation.Celestial;
+using Farion.Simulation.Physics;
 using UnityEngine;
 
 namespace Farion.Simulation.Planetary
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CelestialBody))]
-    public sealed class PlanetSurfaceModel : MonoBehaviour, ICelestialSurfaceProvider
+    public sealed class PlanetSurfaceModel :
+        MonoBehaviour,
+        ICelestialSurfaceProvider,
+        ICelestialEnvironmentProvider
     {
         [Header("Source")]
         [SerializeField] CelestialBody body;
@@ -25,6 +28,101 @@ namespace Farion.Simulation.Planetary
         public CelestialShapeProfile ShapeProfile => ResolveShapeProfile();
         public float SurfaceNormalSampleStep => surfaceNormalSampleStep;
         public event System.Action Changed;
+
+        const int TerrainRangeSampleCount = 512;
+        const float GoldenAngleRadians = 2.39996323f;
+
+        Vector2 terrainRadiusMinMax;
+        float terrainRangeBaseRadius = -1f;
+
+        public Vector2 TerrainRadiusMinMax => ResolveTerrainRadiusRange();
+
+        public bool TryGetEnvironment(CelestialBody body, out CelestialEnvironmentSample sample)
+        {
+            sample = default;
+            if (body == null || body != ResolveBody() || generationProfile == null)
+            {
+                return false;
+            }
+
+            float bodyRadius = Mathf.Max(0.01f, body.Radius);
+            Vector2 terrainRange = ResolveTerrainRadiusRange();
+
+            PlanetHydrosphereProfile hydrosphere = generationProfile.HydrosphereProfile;
+            bool hasOcean = hydrosphere != null && hydrosphere.HasSurfaceOcean;
+            float oceanRadius = hasOcean
+                ? PlanetEnvironmentGeometry.GetOceanRadius(
+                    bodyRadius,
+                    terrainRange,
+                    hydrosphere.OceanLevel,
+                    hydrosphere.OceanRadiusOffset)
+                : 0f;
+
+            float atmosphereBaseRadius = hasOcean ? oceanRadius : bodyRadius;
+            bool hasAtmosphere = generationProfile.HasAtmosphere;
+            float atmosphereRadius = hasAtmosphere
+                ? PlanetEnvironmentGeometry.GetAtmosphereRadius(
+                    atmosphereBaseRadius,
+                    generationProfile.AtmosphereScale,
+                    generationProfile.AtmosphereRadiusOffset)
+                : 0f;
+
+            sample = new CelestialEnvironmentSample(
+                body,
+                hasOcean,
+                oceanRadius,
+                hasAtmosphere,
+                atmosphereRadius,
+                terrainRange,
+                atmosphereBaseRadius);
+            return hasOcean || hasAtmosphere;
+        }
+
+        Vector2 ResolveTerrainRadiusRange()
+        {
+            CelestialBody body = ResolveBody();
+            float baseRadius = body != null ? Mathf.Max(0.01f, body.Radius) : 0f;
+            if (baseRadius <= 0f)
+            {
+                return Vector2.zero;
+            }
+
+            if (Mathf.Approximately(terrainRangeBaseRadius, baseRadius) &&
+                terrainRadiusMinMax.x > 0f)
+            {
+                return terrainRadiusMinMax;
+            }
+
+            CelestialShapeProfile shape = ResolveShapeProfile();
+            float min = baseRadius;
+            float max = baseRadius;
+            if (shape != null)
+            {
+                min = float.PositiveInfinity;
+                max = 0f;
+                for (int i = 0; i < TerrainRangeSampleCount; i++)
+                {
+                    float radius = shape.EvaluateRadius(
+                        baseRadius,
+                        FibonacciDirection(i, TerrainRangeSampleCount));
+                    min = Mathf.Min(min, radius);
+                    max = Mathf.Max(max, radius);
+                }
+            }
+
+            terrainRadiusMinMax = new Vector2(Mathf.Max(0.01f, min), Mathf.Max(0.01f, max));
+            terrainRangeBaseRadius = baseRadius;
+            return terrainRadiusMinMax;
+        }
+
+        static Vector3 FibonacciDirection(int index, int count)
+        {
+            float y = 1f - 2f * (index + 0.5f) / count;
+            float radius = Mathf.Sqrt(Mathf.Max(0f, 1f - y * y));
+            float angle = index * GoldenAngleRadians;
+            return new Vector3(Mathf.Cos(angle) * radius, y, Mathf.Sin(angle) * radius);
+        }
+
 
         void Awake()
         {

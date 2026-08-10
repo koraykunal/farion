@@ -116,7 +116,7 @@ MonoBehaviour:
   castRadius: 0.35
   interactionLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 2432
   triggerInteraction: 2
   hasTarget: 0
   currentPrompt: 

@@ -1,6 +1,6 @@
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Session;
@@ -8,6 +8,7 @@ using Farion.Multiplayer.Session;
 using Farion.Rendering.Celestial;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
+using Farion.Tests;
 using FishNet.Object.Prediction;
 using FishNet.Transporting;
 using NUnit.Framework;
@@ -79,6 +80,11 @@ namespace Farion.Tests.PlayMode
             Invoke(session, "NotifyOwnedPlayerReady");
             Assert.That(
                 session.State,
+                Is.EqualTo(MultiplayerSessionState.Starting));
+
+            Invoke(session, "NotifyAssignedStarterShipReady");
+            Assert.That(
+                session.State,
                 Is.EqualTo(MultiplayerSessionState.Connected));
             yield return null;
         }
@@ -104,10 +110,10 @@ namespace Farion.Tests.PlayMode
             firstPersonCameraRig.transform.SetParent(testRoot.transform);
             firstPersonCameraRig.enabled = false;
 
-            SetField(context, "runtimeRoot", runtimeRoot);
-            SetField(context, "spacecraftRigidbody", spacecraftRigidbody);
-            SetField(context, "spacecraftCameraRig", spacecraftCameraRig);
-            SetField(context, "firstPersonCameraRig", firstPersonCameraRig);
+            TestFieldAccess.SetField(context, "runtimeRoot", runtimeRoot);
+            TestFieldAccess.SetField(context, "spacecraftRigidbody", spacecraftRigidbody);
+            TestFieldAccess.SetField(context, "spacecraftCameraRig", spacecraftCameraRig);
+            TestFieldAccess.SetField(context, "firstPersonCameraRig", firstPersonCameraRig);
 
             GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
             testRoot.SetActive(true);
@@ -131,13 +137,13 @@ namespace Farion.Tests.PlayMode
             CelestialBody body = new GameObject("ReferenceBody")
                 .AddComponent<CelestialBody>();
             body.transform.SetParent(testRoot.transform);
-            SetField(body, "initialVelocity", new Vector3(0f, 0f, 28.46f));
-            SetField(body, "motionMode", CelestialBodyMotionMode.KinematicOrbit);
+            TestFieldAccess.SetField(body, "initialVelocity", new Vector3(0f, 0f, 28.46f));
+            TestFieldAccess.SetField(body, "motionMode", CelestialBodyMotionMode.KinematicOrbit);
 
             GravitySimulation simulation =
                 testRoot.AddComponent<GravitySimulation>();
-            SetField(simulation, "physicsReferenceBody", body);
-            SetField(
+            TestFieldAccess.SetField(simulation, "physicsReferenceBody", body);
+            TestFieldAccess.SetField(
                 simulation,
                 "registeredBodies",
                 new List<CelestialBody> { body });
@@ -146,8 +152,8 @@ namespace Farion.Tests.PlayMode
                 testRoot.AddComponent<GameplayRuntimeRoot>();
             MultiplayerSceneContext context =
                 testRoot.AddComponent<MultiplayerSceneContext>();
-            SetField(context, "runtimeRoot", runtimeRoot);
-            SetField(context, "gravitySimulation", simulation);
+            TestFieldAccess.SetField(context, "runtimeRoot", runtimeRoot);
+            TestFieldAccess.SetField(context, "gravitySimulation", simulation);
 
             GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
             testRoot.SetActive(true);
@@ -168,7 +174,7 @@ namespace Farion.Tests.PlayMode
                 testRoot.AddComponent<GravitySimulation>();
             MultiplayerSceneContext context =
                 testRoot.AddComponent<MultiplayerSceneContext>();
-            SetField(context, "gravitySimulation", simulation);
+            TestFieldAccess.SetField(context, "gravitySimulation", simulation);
 
             context.BindSession(null, null);
 
@@ -263,7 +269,7 @@ namespace Farion.Tests.PlayMode
             CelestialBody body = new GameObject("OceanBody")
                 .AddComponent<CelestialBody>();
             body.transform.SetParent(testRoot.transform);
-            SetField(body, "radius", 90f);
+            TestFieldAccess.SetField(body, "radius", 90f);
 
             TestOceanEnvironment environment =
                 body.gameObject.AddComponent<TestOceanEnvironment>();
@@ -274,19 +280,19 @@ namespace Farion.Tests.PlayMode
 
             GravitySimulation simulation =
                 testRoot.AddComponent<GravitySimulation>();
-            SetField(
+            TestFieldAccess.SetField(
                 simulation,
                 "registeredBodies",
                 new List<CelestialBody> { body });
 
             CelestialFrameProvider frameProvider =
                 testRoot.AddComponent<CelestialFrameProvider>();
-            SetField(frameProvider, "simulation", simulation);
-            SetField(
+            TestFieldAccess.SetField(frameProvider, "simulation", simulation);
+            TestFieldAccess.SetField(
                 frameProvider,
                 "environmentSources",
                 new List<MonoBehaviour> { environment });
-            SetField(
+            TestFieldAccess.SetField(
                 frameProvider,
                 "surfaceSources",
                 new List<MonoBehaviour> { surface });
@@ -296,8 +302,8 @@ namespace Farion.Tests.PlayMode
             Transform spawnPoint = new GameObject("Spawn_1").transform;
             spawnPoint.SetParent(testRoot.transform);
             spawnPoint.position = Vector3.up * 120f;
-            SetField(context, "celestialFrameProvider", frameProvider);
-            SetField(context, "spawnPoints", new[] { spawnPoint });
+            TestFieldAccess.SetField(context, "celestialFrameProvider", frameProvider);
+            TestFieldAccess.SetField(context, "spawnPoints", new[] { spawnPoint });
 
             testRoot.SetActive(true);
             yield return null;
@@ -305,18 +311,11 @@ namespace Farion.Tests.PlayMode
             Assert.That(
                 context.TryGetSpawnPose(0, out Vector3 position, out _),
                 Is.True);
+            float clearance = TestFieldAccess.GetField<float>(context, "surfaceClearance");
             Assert.That(position.x, Is.GreaterThan(0f));
-            Assert.That(position.magnitude, Is.GreaterThanOrEqualTo(111.08f));
+            Assert.That(position.magnitude, Is.GreaterThanOrEqualTo(110f + clearance));
         }
 
-        static void SetField<T>(object target, string fieldName, T value)
-        {
-            FieldInfo field = target.GetType().GetField(
-                fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, fieldName);
-            field.SetValue(target, value);
-        }
 
         static void Invoke(object target, string methodName, params object[] args)
         {
@@ -345,12 +344,15 @@ namespace Farion.Tests.PlayMode
             CelestialBody candidate,
             out CelestialEnvironmentSample sample)
         {
+            float bodyRadius = candidate != null ? candidate.Radius : 0f;
             sample = new CelestialEnvironmentSample(
                 candidate,
                 candidate == body,
                 oceanRadius,
                 false,
-                0f);
+                0f,
+                new Vector2(bodyRadius, bodyRadius),
+                oceanRadius > 0f ? oceanRadius : bodyRadius);
             return candidate == body;
         }
     }

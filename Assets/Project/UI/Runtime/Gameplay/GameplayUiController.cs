@@ -1,8 +1,8 @@
 using System;
 using Farion.App.Flow;
 using Farion.Gameplay.Commands;
-using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Input;
+using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.UI.Feedback;
 using Farion.UI.Foundation;
@@ -44,11 +44,45 @@ namespace Farion.UI.Gameplay
 
         InventoryContainerComponent playerInventory;
         IGameplayCommandEvents observedCommandEvents;
+        Action returnToMainMenuAction;
+        Action quitGameAction;
 
         public event Action<UiScreenId> ScreenChanged;
         public UiScreenId CurrentScreen => currentScreen;
         public bool IsUiFocused => screenRouter != null && screenRouter.HasOpenScreen;
         public GameplaySessionController SessionController => sessionController;
+
+        public void SetInteractionRaycaster(PlayerInteractionRaycaster raycaster)
+        {
+            interactionRaycaster = raycaster;
+            RefreshHud();
+        }
+
+        public void SetSessionActions(Action returnToMainMenu, Action quitGame)
+        {
+            returnToMainMenuAction = returnToMainMenu;
+            quitGameAction = quitGame;
+            GetComponentInChildren<GameplayMenuListPresenter>(true)?.Rebuild();
+        }
+
+        public bool IsActionAvailable(GameplayMenuAction action)
+        {
+            ResolveReferences();
+            if (sessionController != null)
+            {
+                return true;
+            }
+
+            return action switch
+            {
+                GameplayMenuAction.Resume => true,
+                GameplayMenuAction.Options => screenRouter != null &&
+                    screenRouter.TryGetScreen(UiScreenId.Settings, out _),
+                GameplayMenuAction.ExitToMainMenu => returnToMainMenuAction != null,
+                GameplayMenuAction.QuitGame => quitGameAction != null,
+                _ => false
+            };
+        }
 
         void Awake()
         {
@@ -182,7 +216,17 @@ namespace Farion.UI.Gameplay
                         "QUIT TO DESKTOP",
                         "Unsaved progress may be lost.",
                         "QUIT",
-                        () => sessionController?.Quit());
+                        () =>
+                        {
+                            if (quitGameAction != null)
+                            {
+                                quitGameAction();
+                            }
+                            else
+                            {
+                                sessionController?.Quit();
+                            }
+                        });
                     break;
                 case GameplayMenuAction.Blueprints:
                 case GameplayMenuAction.Journal:
@@ -235,11 +279,8 @@ namespace Farion.UI.Gameplay
             ResolveReferences();
             if (screenRouter == null)
             {
-#if UNITY_EDITOR
-                Debug.LogError(
-                    $"{nameof(GameplayUiController)} requires an explicit {nameof(UiScreenRouter)} reference.",
-                    this);
-#endif
+                SetCurrentScreen(UiScreenId.GameplayHud, notify: false);
+                RefreshHud();
                 return;
             }
 
@@ -470,6 +511,12 @@ namespace Farion.UI.Gameplay
         void BeginReturnToMainMenu()
         {
             ResolveReferences();
+            if (returnToMainMenuAction != null)
+            {
+                returnToMainMenuAction();
+                return;
+            }
+
             if (sessionController == null || loadingOverlay == null)
             {
                 ShowFeedback(

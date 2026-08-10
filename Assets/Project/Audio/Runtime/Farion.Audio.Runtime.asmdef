@@ -2,6 +2,7 @@
     "name": "Farion.Audio.Runtime",
     "rootNamespace": "Farion.Audio",
     "references": [
+        "Farion.Core.Identity",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Farion.Gameplay.Runtime",

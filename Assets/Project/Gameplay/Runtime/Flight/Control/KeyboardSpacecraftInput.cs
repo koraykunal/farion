@@ -1,5 +1,5 @@
-using UnityEngine;
 using Farion.Gameplay.Input;
+using UnityEngine;
 
 namespace Farion.Gameplay.Flight
 {

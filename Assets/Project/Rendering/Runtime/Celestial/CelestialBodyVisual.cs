@@ -1,5 +1,6 @@
-using Farion.Simulation.Physics;
+using Farion.Core.Physics;
 using Farion.Simulation.Celestial;
+using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
 using UnityEngine;
 
@@ -170,6 +171,7 @@ namespace Farion.Rendering.Celestial
         [ContextMenu("Rebuild Visual Mesh")]
         public void Rebuild()
         {
+            gameObject.layer = FarionLayers.CelestialSurface;
             RebuildInternal(previewOnly: false);
         }
 
@@ -599,7 +601,7 @@ namespace Farion.Rendering.Celestial
             child.localPosition = Vector3.zero;
             child.localRotation = Quaternion.identity;
             child.localScale = Vector3.one;
-            child.gameObject.layer = gameObject.layer;
+            child.gameObject.layer = FarionLayers.CelestialSurface;
 
             if (!child.TryGetComponent(out MeshFilter _))
             {

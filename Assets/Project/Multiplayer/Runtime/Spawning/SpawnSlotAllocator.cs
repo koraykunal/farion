@@ -14,6 +14,11 @@ namespace Farion.Multiplayer.Spawning
 
         public int Count => slotsByConnection.Count;
 
+        public bool TryGetReserved(int connectionId, out int slot)
+        {
+            return slotsByConnection.TryGetValue(connectionId, out slot);
+        }
+
         public bool TryReserve(int connectionId, out int slot)
         {
             if (slotsByConnection.TryGetValue(connectionId, out slot))

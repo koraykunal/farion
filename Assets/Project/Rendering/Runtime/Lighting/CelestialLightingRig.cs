@@ -29,6 +29,12 @@ namespace Farion.Rendering.Lighting
 
         public CelestialLightingProfile Profile => profile;
 
+        public void SetPrimarySource(CelestialLightSource source)
+        {
+            primarySource = source;
+            ApplyLighting();
+        }
+
         void OnEnable()
         {
             ApplyLighting();

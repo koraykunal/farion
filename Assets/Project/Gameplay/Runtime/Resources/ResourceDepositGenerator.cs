@@ -1,8 +1,8 @@
+using Farion.Core.Identity;
 using System.Collections.Generic;
 using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
-using Farion.Simulation.World.Generation;
-using Farion.Simulation.World.Identity;
+using Farion.Simulation.World;
 using UnityEngine;
 
 namespace Farion.Gameplay.Resources

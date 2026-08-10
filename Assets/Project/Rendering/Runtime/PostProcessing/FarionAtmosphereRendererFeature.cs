@@ -193,7 +193,10 @@ namespace Farion.Rendering.PostProcessing
                     profile.ReferenceLightIntensity,
                     0f);
 
-                RenderTexture opticalDepthTexture = profile.GetOpticalDepthTexture();
+                float atmosphereScale = effectData.SurfaceRadius > 0.0001f
+                    ? Mathf.Max(0f, effectData.AtmosphereRadius / effectData.SurfaceRadius - 1f)
+                    : 0f;
+                RenderTexture opticalDepthTexture = profile.GetOpticalDepthTexture(atmosphereScale);
                 material.SetTexture(BakedOpticalDepthId, opticalDepthTexture != null ? opticalDepthTexture : Texture2D.whiteTexture);
                 material.SetTexture(BlueNoiseId, profile.BlueNoise != null ? profile.BlueNoise : Texture2D.whiteTexture);
 

@@ -2,6 +2,14 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Flight
 {
+    public struct SpacecraftBoostState
+    {
+        public float Authority;
+        public float Charge;
+        public float RechargeDelayRemaining;
+        public bool LockedUntilReleased;
+    }
+
     sealed class SpacecraftBoostController
     {
         float authority;
@@ -63,6 +71,22 @@ namespace Farion.Gameplay.Flight
             charge = Mathf.Clamp01(initialCharge);
             rechargeDelayRemaining = 0f;
             lockedUntilReleased = false;
+        }
+
+        public SpacecraftBoostState CaptureState() => new()
+        {
+            Authority = authority,
+            Charge = charge,
+            RechargeDelayRemaining = rechargeDelayRemaining,
+            LockedUntilReleased = lockedUntilReleased
+        };
+
+        public void RestoreState(SpacecraftBoostState state)
+        {
+            authority = Mathf.Clamp01(state.Authority);
+            charge = Mathf.Clamp01(state.Charge);
+            rechargeDelayRemaining = Mathf.Max(0f, state.RechargeDelayRemaining);
+            lockedUntilReleased = state.LockedUntilReleased;
         }
     }
 }

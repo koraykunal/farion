@@ -1,5 +1,6 @@
-using System.Collections;
+using Farion.Core.Identity;
 using System.Reflection;
+using System.Collections;
 using Farion.App.Flow;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Commands;
@@ -107,29 +108,65 @@ namespace Farion.Tests.PlayMode
                 Assert.That(runtime, Is.Not.Null);
                 Assert.That(controller.Commands, Is.Not.Null);
 
-                ResourceNodeInteractable resource =
-                    Object.FindAnyObjectByType<ResourceNodeInteractable>();
+                ResourceNodeInteractable resource = FindAddressableResource();
                 if (resource == null)
                 {
-                    resource = CreateWorkflowResource();
+                    yield return StreamNearestDeposit();
+                    resource = FindAddressableResource();
                 }
 
                 Assert.That(resource, Is.Not.Null);
+                Assert.That(resource.DepositId.IsValid, Is.True);
                 Assert.That(resource.Definition, Is.Not.Null);
                 Assert.That(resource.Definition.YieldedItem, Is.Not.Null);
                 var item = resource.Definition.YieldedItem;
 
                 Assert.That(
+                    controller.Commands.CanHarvest(
+                        new ResourceHarvestRequest(
+                            resource.DepositId,
+                            PersistentEntityId.New(),
+                            runtime.LocalInventory.Revision)),
+                    Is.EqualTo(ResourceHarvestResult.UnauthorizedDestination));
+
+                Assert.That(
+                    controller.Commands.CanHarvest(
+                        new ResourceHarvestRequest(
+                            resource.DepositId,
+                            runtime.LocalInventory.ContainerId,
+                            runtime.LocalInventory.Revision + 1)),
+                    Is.EqualTo(ResourceHarvestResult.StaleDestination));
+
+                Assert.That(
+                    controller.Commands.CanHarvest(
+                        new ResourceHarvestRequest(
+                            GeneratedEntityId.None,
+                            runtime.LocalInventory.ContainerId,
+                            runtime.LocalInventory.Revision)),
+                    Is.EqualTo(ResourceHarvestResult.MissingSource));
+
+                Assert.That(
+                    controller.TryLoadAssignedShuttleCargo(
+                        new CargoTransferRequest(
+                            PersistentEntityId.New(),
+                            runtime.ShuttleBinding.Cargo.Revision)),
+                    Is.EqualTo(CargoTransferResult.UnauthorizedDestination));
+
+                Assert.That(
                     controller.Commands.TryHarvest(
-                        resource,
-                        runtime.LocalInventory),
+                        new ResourceHarvestRequest(
+                            resource.DepositId,
+                            runtime.LocalInventory.ContainerId,
+                            runtime.LocalInventory.Revision)),
                     Is.EqualTo(ResourceHarvestResult.Succeeded));
                 int harvested = runtime.LocalInventory.Count(item);
                 Assert.That(harvested, Is.GreaterThan(0));
 
                 Assert.That(
                     controller.TryLoadAssignedShuttleCargo(
-                        runtime.ShuttleBinding.Cargo),
+                        new CargoTransferRequest(
+                            runtime.ShuttleBinding.Cargo.ContainerId,
+                            runtime.ShuttleBinding.Cargo.Revision)),
                     Is.EqualTo(CargoTransferResult.Succeeded));
                 Assert.That(runtime.LocalInventory.Count(item), Is.Zero);
                 Assert.That(runtime.ShuttleBinding.Cargo.Count(item), Is.EqualTo(harvested));
@@ -219,40 +256,50 @@ namespace Farion.Tests.PlayMode
             return null;
         }
 
-        static ResourceNodeInteractable CreateWorkflowResource()
+        static IEnumerator StreamNearestDeposit()
         {
             ResourceDepositRuntimeSpawner spawner =
                 Object.FindAnyObjectByType<ResourceDepositRuntimeSpawner>();
             Assert.That(spawner, Is.Not.Null);
+            spawner.Regenerate();
+            Assert.That(spawner.Body, Is.Not.Null);
+            Assert.That(spawner.GeneratedDeposits.Count, Is.GreaterThan(0));
 
-            FieldInfo distributionField = typeof(ResourceDepositRuntimeSpawner)
-                .GetField(
-                    "resourceDistribution",
-                    BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(distributionField, Is.Not.Null);
-            ResourceDistributionProfile distribution =
-                distributionField.GetValue(spawner) as ResourceDistributionProfile;
-            Assert.That(distribution, Is.Not.Null);
-
-            ResourceNodeDefinition definition = null;
-            for (int i = 0; i < distribution.Rules.Count; i++)
+            Transform probe = new GameObject("DepositStreamingProbe").transform;
+            int attempts = Mathf.Min(6, spawner.GeneratedDeposits.Count);
+            for (int i = 0; i < attempts; i++)
             {
-                if (distribution.Rules[i]?.Resource != null)
+                ResourceDepositData deposit = spawner.GeneratedDeposits[i];
+                probe.position = spawner.Body.Position +
+                    spawner.Body.transform.TransformDirection(deposit.LocalDirection) *
+                    (spawner.Body.Radius + deposit.Altitude + 2f);
+                spawner.SetTrackingTarget(probe);
+
+                for (int wait = 0; wait < 4; wait++)
                 {
-                    definition = distribution.Rules[i].Resource;
-                    break;
+                    yield return new WaitForSeconds(0.2f);
+                    if (FindAddressableResource() != null)
+                    {
+                        yield break;
+                    }
+                }
+            }
+        }
+
+        static ResourceNodeInteractable FindAddressableResource()
+        {
+            ResourceNodeInteractable[] nodes = Object.FindObjectsByType<ResourceNodeInteractable>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                if (nodes[i] != null && nodes[i].DepositId.IsValid)
+                {
+                    return nodes[i];
                 }
             }
 
-            Assert.That(definition, Is.Not.Null);
-            ResourceNodeInteractable resource =
-                new GameObject("PlayMode Workflow Resource")
-                    .AddComponent<ResourceNodeInteractable>();
-            resource.Configure(
-                definition,
-                Mathf.Max(1, definition.AmountPerHarvest),
-                seed: 1);
-            return resource;
+            return null;
         }
 
         static void AssertLandingContact(

@@ -8,6 +8,11 @@ namespace Farion.Gameplay.Interaction
     [DisallowMultipleComponent]
     public sealed class FleetCargoUnloadInteractable : MonoBehaviour, IInteractable
     {
+
+        void Awake()
+        {
+            InteractableLayerBinding.Apply(this);
+        }
         const string DefaultPrompt = "Unload shuttle cargo";
 
         [SerializeField] ShuttleDockingBoundary dockingBoundary;
@@ -40,9 +45,9 @@ namespace Farion.Gameplay.Interaction
         {
             if (TryResolveAuthorizedCargo(
                     context.Commands,
-                    out ShuttleCargoInventory cargo))
+                    out CargoTransferRequest request))
             {
-                context.Commands.TryUnloadAssignedShuttleCargo(cargo);
+                context.Commands.TryUnloadAssignedShuttleCargo(request);
             }
         }
 
@@ -54,9 +59,9 @@ namespace Farion.Gameplay.Interaction
 
         bool TryResolveAuthorizedCargo(
             IGameplayCommandGateway commands,
-            out ShuttleCargoInventory cargo)
+            out CargoTransferRequest request)
         {
-            cargo = null;
+            request = default;
             if (commands == null || dockingBoundary == null)
             {
                 return false;
@@ -70,11 +75,18 @@ namespace Farion.Gameplay.Interaction
                 ShuttleCargoInventory candidate = shuttle != null
                     ? shuttle.Cargo
                     : null;
-                if (candidate != null &&
-                    CanAttempt(
-                        commands.CanUnloadAssignedShuttleCargo(candidate)))
+                if (candidate == null)
                 {
-                    cargo = candidate;
+                    continue;
+                }
+
+                CargoTransferRequest candidateRequest = new(
+                    candidate.ContainerId,
+                    candidate.Revision);
+                if (CanAttempt(
+                        commands.CanUnloadAssignedShuttleCargo(candidateRequest)))
+                {
+                    request = candidateRequest;
                     return true;
                 }
             }

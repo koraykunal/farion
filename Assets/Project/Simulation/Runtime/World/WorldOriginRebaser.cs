@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ namespace Farion.Simulation.World
         public int LastShiftFrame => lastShiftFrame;
         public float TrackingDistanceFromOrigin => trackingDistanceFromOrigin;
         public Transform TrackingTarget => trackingTarget;
+        public event Action<Vector3> Rebased;
 
         public WorldOriginSnapshot CaptureSnapshot()
         {
@@ -169,6 +171,7 @@ namespace Farion.Simulation.World
             shiftCount++;
             lastShiftFrame = Time.frameCount;
             trackingDistanceFromOrigin = 0f;
+            Rebased?.Invoke(originOffset);
         }
 
         public void SetTrackingTarget(Transform target)

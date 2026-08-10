@@ -1,7 +1,7 @@
 using System;
-using DG.Tweening;
 using Farion.UI.Foundation;
 using Farion.UI.Styling;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;

@@ -7,6 +7,11 @@ namespace Farion.Gameplay.Interaction
     [DisallowMultipleComponent]
     public sealed class ShuttleCargoHatchInteractable : MonoBehaviour, IInteractable
     {
+
+        void Awake()
+        {
+            InteractableLayerBinding.Apply(this);
+        }
         const string DefaultPrompt = "Load cargo";
 
         [SerializeField] ShuttleCargoInventory cargo;
@@ -31,13 +36,22 @@ namespace Farion.Gameplay.Interaction
         public bool CanInteract(InteractionContext context)
         {
             return context.Commands != null &&
+                   cargo != null &&
                    CanAttempt(
-                       context.Commands.CanLoadAssignedShuttleCargo(cargo));
+                       context.Commands.CanLoadAssignedShuttleCargo(BuildRequest()));
         }
 
         public void Interact(InteractionContext context)
         {
-            context.Commands?.TryLoadAssignedShuttleCargo(cargo);
+            if (cargo != null)
+            {
+                context.Commands?.TryLoadAssignedShuttleCargo(BuildRequest());
+            }
+        }
+
+        CargoTransferRequest BuildRequest()
+        {
+            return new CargoTransferRequest(cargo.ContainerId, cargo.Revision);
         }
 
         void ResolveCargo()

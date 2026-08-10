@@ -19,7 +19,7 @@ namespace Farion.Simulation.Physics
         [Min(0f)]
         [SerializeField] float explicitMass = 1000000000f;
         [SerializeField] bool participatesInNBody = true;
-        [SerializeField] CelestialBodyMotionMode motionMode = CelestialBodyMotionMode.DynamicNBody;
+        [SerializeField] CelestialBodyMotionMode motionMode = CelestialBodyMotionMode.KinematicOrbit;
 
         public string BodyName => bodyName;
         public CelestialBodyType BodyType => bodyType;

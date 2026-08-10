@@ -1,7 +1,9 @@
 {
     "name": "Farion.Core.Runtime",
     "rootNamespace": "Farion.Core",
-    "references": [],
+    "references": [
+        "Farion.Core.Identity"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Inventory;
+using Farion.Gameplay.Processing;
 using Farion.Gameplay.Resources;
-using UnityEngine;
 using Object = UnityEngine.Object;
+using UnityEngine;
 
 namespace Farion.Gameplay.Definitions
 {
@@ -15,9 +16,11 @@ namespace Farion.Gameplay.Definitions
     {
         [SerializeField] List<InventoryItemDefinition> inventoryItems = new();
         [SerializeField] List<ResourceNodeDefinition> resourceNodes = new();
+        [SerializeField] List<ProcessingRecipeDefinition> processingRecipes = new();
 
         Dictionary<DefinitionId, InventoryItemDefinition> inventoryItemsById;
         Dictionary<DefinitionId, ResourceNodeDefinition> resourceNodesById;
+        Dictionary<DefinitionId, ProcessingRecipeDefinition> processingRecipesById;
 
         public bool TryGetInventoryItem(
             string itemId,
@@ -57,10 +60,21 @@ namespace Farion.Gameplay.Definitions
                    resourceNodesById.TryGetValue(nodeId, out node);
         }
 
+        public bool TryGetProcessingRecipe(
+            DefinitionId recipeId,
+            out ProcessingRecipeDefinition recipe)
+        {
+            recipe = null;
+            EnsureBuilt();
+            return recipeId.IsValid &&
+                   processingRecipesById.TryGetValue(recipeId, out recipe);
+        }
+
         void OnValidate()
         {
             RemoveNulls(inventoryItems);
             RemoveNulls(resourceNodes);
+            RemoveNulls(processingRecipes);
             ClearLookupCache();
         }
 
@@ -75,6 +89,8 @@ namespace Farion.Gameplay.Definitions
                 new Dictionary<DefinitionId, InventoryItemDefinition>();
             resourceNodesById =
                 new Dictionary<DefinitionId, ResourceNodeDefinition>();
+            processingRecipesById =
+                new Dictionary<DefinitionId, ProcessingRecipeDefinition>();
 
             AddDefinitions(
                 inventoryItems,
@@ -84,12 +100,17 @@ namespace Farion.Gameplay.Definitions
                 resourceNodes,
                 resourceNodesById,
                 node => node.NodeId);
+            AddDefinitions(
+                processingRecipes,
+                processingRecipesById,
+                recipe => recipe.RecipeId);
         }
 
         void ClearLookupCache()
         {
             inventoryItemsById = null;
             resourceNodesById = null;
+            processingRecipesById = null;
         }
 
         static void AddDefinitions<T>(
