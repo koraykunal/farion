@@ -132,7 +132,9 @@ namespace Farion.Simulation.Celestial
                 unitDirection,
                 ResolveRidgeFilterRadius(angularSampleFootprint));
             float radius = Mathf.Max(0.01f, baseRadius * heightRatio);
-            return new CelestialShapeSample(radius, EvaluateShadingData(unitDirection));
+            return new CelestialShapeSample(
+                radius,
+                EvaluateShadingData(unitDirection, angularSampleFootprint));
         }
 
         float EvaluateHeightRatio(Vector3 unitDirection, float ridgeFilterRadius)
@@ -158,19 +160,19 @@ namespace Farion.Simulation.Celestial
             return Mathf.Max(0f, angularSampleFootprint) * 1.5f;
         }
 
-        Vector4 EvaluateShadingData(Vector3 unitDirection)
+        Vector4 EvaluateShadingData(Vector3 unitDirection, float sampleFootprint)
         {
-            float large = largeNoise.Sample(unitDirection, seed + 400);
-            float detailWarp = detailWarpNoise.Sample(unitDirection, seed + 500);
-            float detail = detailNoise.Sample(unitDirection + Vector3.one * detailWarp * 0.1f, seed + 600);
-            float small = smallNoise.Sample(unitDirection, seed + 700);
+            float large = largeNoise.Sample(unitDirection, seed + 400, sampleFootprint);
+            float detailWarp = detailWarpNoise.Sample(unitDirection, seed + 500, sampleFootprint);
+            float detail = detailNoise.Sample(unitDirection + Vector3.one * detailWarp * 0.1f, seed + 600, sampleFootprint);
+            float small = smallNoise.Sample(unitDirection, seed + 700, sampleFootprint);
 
             Vector3 warpOffset = new(
-                smallNoise.Sample(unitDirection + Vector3.right * 11.37f, seed + 800),
-                smallNoise.Sample(unitDirection + Vector3.up * 29.71f, seed + 900),
-                smallNoise.Sample(unitDirection + Vector3.forward * 47.13f, seed + 1000));
+                smallNoise.Sample(unitDirection + Vector3.right * 11.37f, seed + 800, sampleFootprint),
+                smallNoise.Sample(unitDirection + Vector3.up * 29.71f, seed + 900, sampleFootprint),
+                smallNoise.Sample(unitDirection + Vector3.forward * 47.13f, seed + 1000, sampleFootprint));
 
-            float warped = detailNoise.Sample(unitDirection + warpOffset * 0.1f, seed + 1100);
+            float warped = detailNoise.Sample(unitDirection + warpOffset * 0.1f, seed + 1100, sampleFootprint);
             return new Vector4(large, detail, small, warped);
         }
 
@@ -267,6 +269,52 @@ namespace Farion.Simulation.Celestial
                     Persistence,
                     noiseSeed);
                 return noise * Elevation + VerticalShift;
+            }
+
+            public float Sample(Vector3 direction, int noiseSeed, float sampleFootprint)
+            {
+                float usableOctaves = ResolveUsableOctaves(sampleFootprint);
+                int wholeOctaves = Mathf.Clamp(Mathf.FloorToInt(usableOctaves), 1, Octaves);
+                float noise = PlanetarySampling.SampleFractalSigned(
+                    direction + Offset,
+                    Scale,
+                    wholeOctaves,
+                    Lacunarity,
+                    Persistence,
+                    noiseSeed);
+
+                float fade = Mathf.Clamp01(usableOctaves - wholeOctaves);
+                if (fade > 0f && wholeOctaves < Octaves)
+                {
+                    float finer = PlanetarySampling.SampleFractalSigned(
+                        direction + Offset,
+                        Scale,
+                        wholeOctaves + 1,
+                        Lacunarity,
+                        Persistence,
+                        noiseSeed);
+                    noise = Mathf.Lerp(noise, finer, fade);
+                }
+
+                return noise * Elevation + VerticalShift;
+            }
+
+            float ResolveUsableOctaves(float sampleFootprint)
+            {
+                if (sampleFootprint <= 0f)
+                {
+                    return Octaves;
+                }
+
+                float nyquistFrequency = 1f / (2f * sampleFootprint);
+                if (Scale >= nyquistFrequency)
+                {
+                    return 1f;
+                }
+
+                float lacunarity = Mathf.Max(1.0001f, Lacunarity);
+                float octaves = 1f + Mathf.Log(nyquistFrequency / Scale) / Mathf.Log(lacunarity);
+                return Mathf.Clamp(octaves, 1f, Octaves);
             }
 
             public void Clamp()

@@ -23,7 +23,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
         _NormalStrength("Normal Strength", Range(0, 1)) = 0.5
 
         [Header(Detiling)]
-        _DetileStrength("Detile Strength", Range(0, 1)) = 0.75
+        _DetileStrength("Detile Strength", Range(0, 1)) = 0
         _DetileScale("Detile Noise Scale", Float) = 28
         _DetileRatio("Detile Second Tile Ratio", Range(0.15, 0.9)) = 0.37
         _MacroVariation("Macro Variation", Range(0, 0.6)) = 0.28

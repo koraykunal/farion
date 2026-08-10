@@ -44,7 +44,7 @@ Material:
     - _Metallic: 0
     - _DetileRatio: 0.37
     - _DetileScale: 28
-    - _DetileStrength: 0.75
+    - _DetileStrength: 0
     - _MacroScale: 12
     - _MacroVariation: 0.28
     - _NoiseScale: 10
