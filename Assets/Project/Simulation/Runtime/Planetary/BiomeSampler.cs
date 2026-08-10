@@ -9,6 +9,7 @@ namespace Farion.Simulation.Planetary
             BiomeDistributionProfile profile,
             PlanetGenerationContext context,
             PlanetClimateSample climate,
+            Vector3 localDirection,
             float altitude,
             float slopeDegrees)
         {
@@ -17,6 +18,7 @@ namespace Farion.Simulation.Planetary
                 return new BiomeSample(null, 0f);
             }
 
+            Vector2 climateWarp = profile.EvaluateClimateWarp(localDirection);
             BiomeDefinition selected = profile.FallbackBiome != null
                 && profile.FallbackBiome.IsCompatibleWith(context)
                 ? profile.FallbackBiome
@@ -36,7 +38,8 @@ namespace Farion.Simulation.Planetary
                     altitude,
                     slopeDegrees,
                     climate,
-                    profile);
+                    profile,
+                    climateWarp);
                 if (suitability > bestSuitability)
                 {
                     bestSuitability = suitability;
@@ -51,6 +54,7 @@ namespace Farion.Simulation.Planetary
             BiomeDistributionProfile profile,
             PlanetGenerationContext context,
             PlanetClimateSample climate,
+            Vector3 localDirection,
             float altitude,
             float slopeDegrees,
             List<BiomeWeight> results)
@@ -66,6 +70,7 @@ namespace Farion.Simulation.Planetary
                 return 0;
             }
 
+            Vector2 climateWarp = profile.EvaluateClimateWarp(localDirection);
             float total = 0f;
             for (int i = 0; i < profile.Rules.Count; i++)
             {
@@ -81,7 +86,8 @@ namespace Farion.Simulation.Planetary
                     altitude,
                     slopeDegrees,
                     climate,
-                    profile);
+                    profile,
+                    climateWarp);
                 if (suitability <= 0f)
                 {
                     continue;

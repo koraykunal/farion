@@ -309,6 +309,7 @@ namespace Farion.Rendering.Celestial
             surfaceModel.GenerationProfile.BiomeDistribution.SampleBiomeWeights(
                 sample.Context,
                 sample.Climate,
+                sample.LocalDirection,
                 sample.TerrainAltitude,
                 sample.Surface.SlopeAngleDegrees,
                 biomeWeights);

@@ -15,6 +15,12 @@ namespace Farion.Simulation.Planetary
         [SerializeField, Range(0f, 0.5f)] float radiationBlend = 0.08f;
         [Tooltip("1 blends factors as a geometric mean so one weak factor cannot erase a biome. Higher values sharpen toward a strict product and narrow every transition.")]
         [SerializeField, Range(0.2f, 3f)] float suitabilitySharpness = 1f;
+        [Tooltip("Low frequency offset applied to the climate a biome is judged against, so borders wander instead of tracing latitude bands and altitude contours.")]
+        [SerializeField, Range(0f, 1f)] float boundaryWarpStrength = 0.45f;
+        [SerializeField, Min(0.05f)] float boundaryWarpScale = 2.6f;
+        [SerializeField, Min(0f)] float boundaryWarpTemperatureCelsius = 7f;
+        [SerializeField, Range(0f, 0.5f)] float boundaryWarpAridity = 0.18f;
+        [SerializeField] int boundaryWarpSeed = 7717;
         [SerializeField] List<BiomeDistributionRule> rules = new();
 
         public BiomeDefinition FallbackBiome => fallbackBiome;
@@ -24,6 +30,11 @@ namespace Farion.Simulation.Planetary
         public float AridityBlend => Mathf.Clamp(aridityBlend, 0f, 0.5f);
         public float RadiationBlend => Mathf.Clamp(radiationBlend, 0f, 0.5f);
         public float SuitabilitySharpness => Mathf.Clamp(suitabilitySharpness, 0.2f, 3f);
+        public float BoundaryWarpStrength => Mathf.Clamp01(boundaryWarpStrength);
+        public float BoundaryWarpScale => Mathf.Max(0.05f, boundaryWarpScale);
+        public float BoundaryWarpTemperatureCelsius => Mathf.Max(0f, boundaryWarpTemperatureCelsius);
+        public float BoundaryWarpAridity => Mathf.Clamp(boundaryWarpAridity, 0f, 0.5f);
+        public int BoundaryWarpSeed => boundaryWarpSeed;
         public IReadOnlyList<BiomeDistributionRule> Rules => rules;
 
         void OnValidate()
@@ -39,20 +50,55 @@ namespace Farion.Simulation.Planetary
         public BiomeSample SampleBiome(
             PlanetGenerationContext context,
             PlanetClimateSample climate,
+            Vector3 localDirection,
             float altitude,
             float slopeDegrees)
         {
-            return BiomeSampler.Sample(this, context, climate, altitude, slopeDegrees);
+            return BiomeSampler.Sample(this, context, climate, localDirection, altitude, slopeDegrees);
         }
 
         public int SampleBiomeWeights(
             PlanetGenerationContext context,
             PlanetClimateSample climate,
+            Vector3 localDirection,
             float altitude,
             float slopeDegrees,
             List<BiomeWeight> results)
         {
-            return BiomeSampler.SampleWeights(this, context, climate, altitude, slopeDegrees, results);
+            return BiomeSampler.SampleWeights(
+                this,
+                context,
+                climate,
+                localDirection,
+                altitude,
+                slopeDegrees,
+                results);
+        }
+
+        public Vector2 EvaluateClimateWarp(Vector3 localDirection)
+        {
+            if (BoundaryWarpStrength <= 0f)
+            {
+                return Vector2.zero;
+            }
+
+            float temperature = PlanetarySampling.SampleFractalSigned(
+                localDirection,
+                BoundaryWarpScale,
+                2,
+                2.1f,
+                0.5f,
+                BoundaryWarpSeed);
+            float aridity = PlanetarySampling.SampleFractalSigned(
+                localDirection,
+                BoundaryWarpScale * 1.37f,
+                2,
+                2.1f,
+                0.5f,
+                BoundaryWarpSeed + 811);
+            return new Vector2(
+                temperature * BoundaryWarpTemperatureCelsius,
+                aridity * BoundaryWarpAridity) * BoundaryWarpStrength;
         }
     }
 }

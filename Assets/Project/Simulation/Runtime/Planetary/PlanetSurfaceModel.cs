@@ -231,7 +231,7 @@ namespace Farion.Simulation.Planetary
                 terrainAltitude,
                 slopeAngle);
             BiomeSample biome = generationProfile != null && generationProfile.BiomeDistribution != null
-                ? generationProfile.BiomeDistribution.SampleBiome(context, climate, terrainAltitude, slopeAngle)
+                ? generationProfile.BiomeDistribution.SampleBiome(context, climate, localDirection, terrainAltitude, slopeAngle)
                 : new BiomeSample(null, 0f);
             SurfaceMaterialSample surfaceMaterial =
                 generationProfile != null && generationProfile.SurfaceMaterialDistribution != null

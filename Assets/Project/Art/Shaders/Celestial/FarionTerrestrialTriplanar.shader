@@ -96,6 +96,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             TEXTURE2D(_NoiseTex);
             SAMPLER(sampler_NoiseTex);
             TEXTURE2D(_RockNormal);
+            SAMPLER(sampler_RockNormal);
             TEXTURE2D_ARRAY(_SurfaceBaseColorArray);
             SAMPLER(sampler_SurfaceBaseColorArray);
             TEXTURE2D_ARRAY(_SurfaceNormalArray);
@@ -746,7 +747,20 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
 
                 albedo *= lerp(1.0h, 0.68h, wetnessMask * 0.55h);
 
-                half3 rockNormalOS = FarionUnpackTriplanarNormalOS(TEXTURE2D_ARGS(_RockNormal, sampler_NoiseTex), input.positionOS, normalOS, _RockNormalScale);
+                half3 rockNormalOS = FarionUnpackTriplanarNormalOS(
+                    TEXTURE2D_ARGS(_RockNormal, sampler_RockNormal),
+                    input.positionOS,
+                    normalOS,
+                    _RockNormalScale);
+                if (_DetileStrength > 0.001h)
+                {
+                    half3 rockNormalDetile = FarionUnpackTriplanarNormalOS(
+                        TEXTURE2D_ARGS(_RockNormal, sampler_RockNormal),
+                        input.positionOS,
+                        normalOS,
+                        _RockNormalScale / max(_DetileRatio, 0.15h));
+                    rockNormalOS = normalize(lerp(rockNormalOS, rockNormalDetile, surfaceDetune));
+                }
                 if (surfaceTextureMask > 0.0h)
                 {
                     half3 surfaceNormalOS = half3(0.0h, 0.0h, 0.0h);

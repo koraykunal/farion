@@ -24,7 +24,8 @@ namespace Farion.Simulation.Planetary
             float altitude,
             float slopeDegrees,
             PlanetClimateSample climate,
-            BiomeDistributionProfile profile)
+            BiomeDistributionProfile profile,
+            Vector2 climateOffset)
         {
             if (biome == null || SelectionPriority <= 0f)
             {
@@ -41,9 +42,12 @@ namespace Farion.Simulation.Planetary
             product *= PlanetarySampling.EvaluateRange(slopeRange, slopeDegrees, profile.SlopeBlendDegrees);
             product *= PlanetarySampling.EvaluateRange(
                 temperatureRange,
-                climate.TemperatureCelsius,
+                climate.TemperatureCelsius + climateOffset.x,
                 profile.TemperatureBlendCelsius);
-            product *= PlanetarySampling.EvaluateRange(aridityRange, climate.Aridity, profile.AridityBlend);
+            product *= PlanetarySampling.EvaluateRange(
+                aridityRange,
+                Mathf.Clamp01(climate.Aridity + climateOffset.y),
+                profile.AridityBlend);
             product *= PlanetarySampling.EvaluateRange(radiationRange, climate.Radiation, profile.RadiationBlend);
             if (product <= 0f)
             {

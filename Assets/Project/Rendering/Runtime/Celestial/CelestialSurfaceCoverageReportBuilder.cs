@@ -133,6 +133,7 @@ namespace Farion.Rendering.Celestial
                 if (biomeDistribution.SampleBiomeWeights(
                         sample.Context,
                         sample.Climate,
+                        sample.LocalDirection,
                         sample.TerrainAltitude,
                         sample.Surface.SlopeAngleDegrees,
                         biomeWeights) <= 0)

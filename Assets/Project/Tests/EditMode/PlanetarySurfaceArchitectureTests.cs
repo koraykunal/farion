@@ -44,9 +44,9 @@ namespace Farion.Tests.EditMode
             PlanetGenerationContext context = PlanetGenerationContext.CreateDefault(17);
             PlanetClimateSample climate = CreateClimate(context);
 
-            BiomeSample sample = distribution.SampleBiome(context, climate, 0f, 0f);
+            BiomeSample sample = distribution.SampleBiome(context, climate, Vector3.up, 0f, 0f);
             List<BiomeWeight> weights = new();
-            int count = distribution.SampleBiomeWeights(context, climate, 0f, 0f, weights);
+            int count = distribution.SampleBiomeWeights(context, climate, Vector3.up, 0f, 0f, weights);
 
             Assert.That(sample.Biome, Is.SameAs(fallback));
             Assert.That(count, Is.EqualTo(1));
