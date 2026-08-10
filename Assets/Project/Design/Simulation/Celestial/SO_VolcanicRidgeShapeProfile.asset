@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c162fe0f9e840c4b3f6a5064484e6cd, type: 3}
+  m_Name: SO_VolcanicRidgeShapeProfile
+  m_EditorClassIdentifier:
+  seed: 8123
+  oceanDepthMultiplier: 1.6
+  oceanFloorDepth: 0.9
+  oceanFloorSmoothing: 0.35
+  coastalShelfWidth: 0.45
+  coastalShelfStrength: 0.3
+  coastalMountainFade: 0.15
+  mountainBlend: 1.5
+  continentNoise:
+    Octaves: 6
+    Lacunarity: 2
+    Persistence: 0.5
+    Scale: 1.35
+    Elevation: 1.9
+    VerticalShift: -0.15
+    Offset: {x: 3.4, y: -1.7, z: 2.9}
+  mountainMaskNoise:
+    Octaves: 4
+    Lacunarity: 1.66
+    Persistence: 0.55
+    Scale: 1.42
+    Elevation: 1
+    VerticalShift: 0.25
+    Offset: {x: -2.1, y: 4.8, z: 0.6}
+  ridgeNoise:
+    Octaves: 4
+    Lacunarity: 2.1
+    Persistence: 0.52
+    Scale: 1.9
+    Power: 2.15
+    Elevation: 5.2
+    Gain: 0.8
+    VerticalShift: 0.05
+    SpatialSmoothing: 0.03
+    Offset: {x: 1.9, y: 2.3, z: -3.6}
+  detailWarpNoise:
+    Octaves: 4
+    Lacunarity: 2
+    Persistence: 0.5
+    Scale: 2.96
+    Elevation: 9.41
+    VerticalShift: 0
+    Offset: {x: 0, y: 0, z: 0}
+  detailNoise:
+    Octaves: 4
+    Lacunarity: 2
+    Persistence: 0.5
+    Scale: 1.5
+    Elevation: 1
+    VerticalShift: 0
+    Offset: {x: 0, y: 0, z: 0}
+  largeNoise:
+    Octaves: 4
+    Lacunarity: 2
+    Persistence: 0.5
+    Scale: 1.77
+    Elevation: 1
+    VerticalShift: 0
+    Offset: {x: 0.25, y: -0.09, z: 0}
+  smallNoise:
+    Octaves: 5
+    Lacunarity: 4.13
+    Persistence: 0.65
+    Scale: 4.44
+    Elevation: 0.52
+    VerticalShift: 0
+    Offset: {x: 0, y: 0, z: 0}

@@ -1174,7 +1174,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1148478148}
   generationProfile: {fileID: 11400000, guid: dfcdb85c483641668d1217535da4ccc2, type: 2}
-  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  shapeProfile: {fileID: 11400000, guid: c93f6b21e40d4a8fb27c58e1d6094a3e, type: 2}
   primaryRadiationSource: {fileID: 651725579}
   surfaceNormalSampleStep: 0.004
 --- !u!4 &1148478147
@@ -1287,7 +1287,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 1148478148}
   surfaceModel: {fileID: 1148478146}
-  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  shapeProfile: {fileID: 11400000, guid: c93f6b21e40d4a8fb27c58e1d6094a3e, type: 2}
   surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
   meshObjectName: Terrain Mesh
   renderResolution: 57
@@ -1711,7 +1711,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 1477076283}
   surfaceModel: {fileID: 1477076288}
-  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  shapeProfile: {fileID: 11400000, guid: a71c4e08d5b34f2b9c6e1d73f0a25b48, type: 2}
   surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
   meshObjectName: Terrain Mesh
   renderResolution: 57
@@ -1884,7 +1884,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1477076283}
   generationProfile: {fileID: 11400000, guid: 6d2813a2700548129c0c6d18e8009f6d, type: 2}
-  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  shapeProfile: {fileID: 11400000, guid: a71c4e08d5b34f2b9c6e1d73f0a25b48, type: 2}
   primaryRadiationSource: {fileID: 651725579}
   surfaceNormalSampleStep: 0.004
 --- !u!114 &1477076289

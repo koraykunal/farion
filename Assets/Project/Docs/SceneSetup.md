@@ -350,7 +350,9 @@ not authored as visible child meshes by default.
 Assets created for this pass:
 
 - `Assets/Project/Design/Rendering/Celestial/SO_TerrestrialPlanetVisualProfile.asset`
-- `Assets/Project/Design/Simulation/Celestial/Shapes/SO_ContinentRidgeShapeProfile.asset`
+- `Assets/Project/Design/Simulation/Celestial/SO_ContinentRidgeShapeProfile.asset`
+- `Assets/Project/Design/Simulation/Celestial/SO_VolcanicRidgeShapeProfile.asset`
+- `Assets/Project/Design/Simulation/Celestial/SO_FrozenPlainsShapeProfile.asset`
 - `Assets/Project/Design/Rendering/Celestial/SO_TerrestrialSurfaceProfile.asset`
 - `Assets/Project/Design/Rendering/Celestial/SO_DefaultOceanProfile.asset`
 - `Assets/Project/Design/Rendering/Celestial/SO_DefaultAtmosphereProfile.asset`
@@ -382,6 +384,13 @@ Texture inputs used by `SO_TerrestrialSurfaceProfile`:
 - Snow and frozen-surface detail comes from the texture sets under
   `Assets/Project/Art/Textures/Celestial/SurfaceMaterials`, not from a material-owned
   legacy snow normal.
+
+Each planet owns its own shape profile so terrain does not repeat across the
+system: `Starting Planet` uses `SO_ContinentRidgeShapeProfile`, `Ember` uses
+`SO_VolcanicRidgeShapeProfile`, and `Rime` uses `SO_FrozenPlainsShapeProfile`.
+`PlanetaryGenerationProfile > Shape Profile` is the authority; the
+`PlanetSurfaceModel` and `CelestialBodyVisual` fields are fallbacks that the
+generation profile overrides at rebuild.
 
 The continent-ridge shape profile follows the Solar-System reference structure:
 

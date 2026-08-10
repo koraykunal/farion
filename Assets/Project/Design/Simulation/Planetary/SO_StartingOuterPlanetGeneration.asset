@@ -16,7 +16,7 @@ MonoBehaviour:
   planetType: 2
   atmosphereDensity: 0.65
   backgroundRadiation: 0.12
-  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  shapeProfile: {fileID: 11400000, guid: c93f6b21e40d4a8fb27c58e1d6094a3e, type: 2}
   climateProfile: {fileID: 11400000, guid: 60fbba4e13ed41c18c80645cc2de9730, type: 2}
   hydrosphereProfile: {fileID: 11400000, guid: ef433d39b36b4b67854bd5a431dfe761, type: 2}
   atmosphereScale: 0.21872583
