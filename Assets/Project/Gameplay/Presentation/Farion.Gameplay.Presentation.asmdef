@@ -4,7 +4,9 @@
     "references": [
         "Farion.Gameplay.Runtime",
         "Farion.Simulation.Runtime",
-        "Unity.VisualEffectGraph.Runtime"
+        "Unity.VisualEffectGraph.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

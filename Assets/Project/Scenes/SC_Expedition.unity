@@ -4180,6 +4180,8 @@ GameObject:
   - component: {fileID: 2069305679}
   - component: {fileID: 2069305682}
   - component: {fileID: 2069305683}
+  - component: {fileID: 1904455101}
+  - component: {fileID: 1904455102}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -4722,3 +4724,46 @@ SceneRoots:
   - {fileID: 920000001}
   - {fileID: 910000001}
   - {fileID: 910000012}
+--- !u!114 &1904455101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2069305677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 0}
+--- !u!114 &1904455102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2069305677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e87658ba6aed1441bf5a3dd74539798, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Presentation.Flight.FarionPostProcessRig
+  motor: {fileID: 1678406301}
+  enableBloom: 1
+  bloomThreshold: 1.05
+  bloomIntensity: 0.55
+  bloomScatter: 0.62
+  enableColorGrade: 1
+  postExposure: 0.05
+  contrast: 6
+  saturation: -4
+  referenceSpeed: 200
+  restVignette: 0.16
+  maximumVignette: 0.42
+  maximumChromaticAberration: 0.35
+  responseSharpness: 5
