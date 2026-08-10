@@ -42,6 +42,11 @@ Material:
     - _LandSmoothness: 0.2
     - _MaxFlatHeight: 0.52
     - _Metallic: 0
+    - _DetileRatio: 0.37
+    - _DetileScale: 28
+    - _DetileStrength: 0.75
+    - _MacroScale: 12
+    - _MacroVariation: 0.28
     - _NoiseScale: 10
     - _NoiseScale2: 50
     - _NormalStrength: 0.203

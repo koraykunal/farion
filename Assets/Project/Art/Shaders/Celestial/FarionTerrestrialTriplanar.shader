@@ -24,10 +24,10 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
 
         [Header(Detiling)]
         _DetileStrength("Detile Strength", Range(0, 1)) = 0.75
-        _DetileScale("Detile Noise Scale", Float) = 3.5
+        _DetileScale("Detile Noise Scale", Float) = 28
         _DetileRatio("Detile Second Tile Ratio", Range(0.15, 0.9)) = 0.37
-        _MacroVariation("Macro Variation", Range(0, 0.6)) = 0.22
-        _MacroScale("Macro Noise Scale", Float) = 1.1
+        _MacroVariation("Macro Variation", Range(0, 0.6)) = 0.28
+        _MacroScale("Macro Noise Scale", Float) = 12
 
         [Header(Blending)]
         _OceanLevel("Ocean Level", Range(0, 1)) = 1
