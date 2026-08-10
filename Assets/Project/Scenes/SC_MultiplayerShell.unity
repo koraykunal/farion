@@ -410,8 +410,8 @@ MonoBehaviour:
   collisionPadding: 0.15
   minimumTargetDistance: 1
   velocityOffsetScale: 0.008
-  accelerationOffsetScale: 0.018
-  maxFlightOffset: 0.85
+  accelerationOffsetScale: 0.06
+  maxFlightOffset: 2.5
   flightOffsetResponsiveness: 4
   fovResponsiveness: 6
   boostFovIncrease: 7

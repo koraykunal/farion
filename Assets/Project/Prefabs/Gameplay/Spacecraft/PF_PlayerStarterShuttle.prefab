@@ -808,6 +808,7 @@ GameObject:
   - component: {fileID: 3152652441471290225}
   - component: {fileID: 6649556196873618115}
   - component: {fileID: 291845060493645677}
+  - component: {fileID: 7412903356118420931}
   m_Layer: 0
   m_Name: PF_PlayerStarterShuttle
   m_TagString: Untagged
@@ -1418,6 +1419,31 @@ MonoBehaviour:
   persistentId: {fileID: 8451750196482294104}
   motor: {fileID: 3359784979145954321}
   cargo: {fileID: 6649556196873618115}
+--- !u!114 &7412903356118420931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2441852034644142768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e50c23a708ce36640a9764bc8507aaac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Presentation.Flight.SpacecraftSpeedDust
+  motor: {fileID: 3359784979145954321}
+  viewReference: {fileID: 0}
+  streakCount: 220
+  fieldRadius: 55
+  nearClearance: 4
+  fadeInSpeed: 8
+  fullOpacitySpeed: 90
+  maximumOpacity: 0.55
+  streakWidth: 0.05
+  streakLengthPerSpeed: 0.06
+  minimumStreakLength: 0.25
+  maximumStreakLength: 9
+  dustMaterial: {fileID: 2100000, guid: 8d20c7b4e1a34c6fb95207f3ad61c8e2, type: 2}
 --- !u!1 &2667502354368947228
 GameObject:
   m_ObjectHideFlags: 0

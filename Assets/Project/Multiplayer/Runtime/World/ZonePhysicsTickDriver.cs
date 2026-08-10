@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Farion.Multiplayer.Session;
 using FishNet.Managing;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,6 +12,7 @@ namespace Farion.Multiplayer.World
         [SerializeField] NetworkManager networkManager;
 
         readonly List<SimulationZoneContext> zones = new();
+        readonly List<MultiplayerSceneContext> zoneSceneContexts = new();
         bool subscribed;
 
         public int RegisteredZoneCount => zones.Count;
@@ -34,6 +36,7 @@ namespace Farion.Multiplayer.World
             }
 
             zones.Clear();
+            zoneSceneContexts.Clear();
         }
 
         public bool RegisterZone(SimulationZoneContext context)
@@ -58,17 +61,26 @@ namespace Farion.Multiplayer.World
             }
 
             zones.Add(context);
+            zoneSceneContexts.Add(MultiplayerSceneContext.FindIn(context.Scene));
             context.BindPhysicsDriver(this);
             return true;
         }
 
         public bool UnregisterZone(SimulationZoneContext context)
         {
-            if (context == null || !zones.Remove(context))
+            if (context == null)
             {
                 return false;
             }
 
+            int index = zones.IndexOf(context);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            zones.RemoveAt(index);
+            zoneSceneContexts.RemoveAt(index);
             context.UnbindPhysicsDriver(this);
             return true;
         }
@@ -91,6 +103,7 @@ namespace Farion.Multiplayer.World
                     !TryGetIsolatedPhysicsScene(context, out PhysicsScene physicsScene))
                 {
                     zones.RemoveAt(i);
+                    zoneSceneContexts.RemoveAt(i);
                     context?.UnbindPhysicsDriver(this);
                     continue;
                 }
@@ -128,7 +141,22 @@ namespace Farion.Multiplayer.World
 
         void TimeManager_OnPrePhysicsSimulation(float deltaTime)
         {
+            ApplyNetworkSimulationTime();
             SimulateRegisteredZones(deltaTime);
+        }
+
+        void ApplyNetworkSimulationTime()
+        {
+            if (networkManager?.TimeManager == null)
+            {
+                return;
+            }
+
+            double seconds = networkManager.TimeManager.Tick * networkManager.TimeManager.TickDelta;
+            for (int i = 0; i < zoneSceneContexts.Count; i++)
+            {
+                zoneSceneContexts[i]?.ApplyNetworkSimulationTime(seconds);
+            }
         }
 
         static bool TryGetIsolatedPhysicsScene(

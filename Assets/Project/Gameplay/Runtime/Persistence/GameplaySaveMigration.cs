@@ -80,6 +80,7 @@ namespace Farion.Gameplay.Persistence
 
             InventoryContainerSnapshot shuttleCargo;
             FleetKnowledgeSnapshot fleetKnowledge;
+            InventoryContainerSnapshot fleetStorage = fleetStorageDefault;
             if (source.SchemaVersion == 3 ||
                 source.SchemaVersion == 4)
             {
@@ -95,6 +96,17 @@ namespace Farion.Gameplay.Persistence
                 shuttleCargo = source.ShuttleCargo;
                 fleetKnowledge = source.FleetKnowledge;
             }
+            else if (source.SchemaVersion == 6 &&
+                     source.PayloadRevision ==
+                     GameplaySaveData.CurrentPayloadRevision &&
+                     source.ShuttleCargo != null &&
+                     source.FleetStorage != null &&
+                     source.FleetKnowledge != null)
+            {
+                shuttleCargo = source.ShuttleCargo;
+                fleetKnowledge = source.FleetKnowledge;
+                fleetStorage = source.FleetStorage;
+            }
             else
             {
                 return false;
@@ -103,7 +115,7 @@ namespace Farion.Gameplay.Persistence
             migrated = GameplaySaveData.CreateMigrated(
                 source,
                 shuttleCargo,
-                fleetStorageDefault,
+                fleetStorage,
                 fleetKnowledge);
             return true;
         }

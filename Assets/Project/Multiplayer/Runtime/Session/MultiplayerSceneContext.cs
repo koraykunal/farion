@@ -77,6 +77,11 @@ namespace Farion.Multiplayer.Session
             : GeneratedEntityId.None;
         public int SpawnPointCount => spawnPoints?.Length ?? 0;
 
+        public void ApplyNetworkSimulationTime(double seconds)
+        {
+            gravitySimulation?.SetSimulationTime(seconds);
+        }
+
         public void AttachToShiftedWorld(Transform target)
         {
             if (target != null)
@@ -555,6 +560,7 @@ namespace Farion.Multiplayer.Session
             }
 
             gravitySimulation?.SetIntegrationEnabled(false);
+            gravitySimulation?.SetExternalTimeSource(true);
             originRebaser?.SetAutomaticRebasing(false);
             for (int i = 0; i < surfacePatchSystems.Count; i++)
             {

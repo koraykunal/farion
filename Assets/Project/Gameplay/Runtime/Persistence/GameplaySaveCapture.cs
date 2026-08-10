@@ -25,8 +25,14 @@ namespace Farion.Gameplay.Persistence
         }
 
         public string SavedAtUtc { get; }
+        public double CelestialSimulationTime { get; private set; }
         public List<CelestialBodySnapshot> CelestialBodies => celestialBodies;
         public List<ResourceDepositDeltaSnapshot> ResourceDepositDeltas => resourceDepositDeltas;
+
+        public void SetCelestialSimulationTime(double seconds)
+        {
+            CelestialSimulationTime = seconds >= 0d ? seconds : 0d;
+        }
 
         public void SetPlayerInventory(PlayerInventorySnapshot snapshot)
         {
@@ -62,6 +68,7 @@ namespace Farion.Gameplay.Persistence
         {
             return new GameplaySaveData(
                 SavedAtUtc,
+                CelestialSimulationTime,
                 celestialBodies,
                 worldOrigin,
                 playerInventory,

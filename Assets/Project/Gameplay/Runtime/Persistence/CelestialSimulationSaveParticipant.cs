@@ -16,12 +16,19 @@ namespace Farion.Gameplay.Persistence
 
         public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
         {
+            capture.SetCelestialSimulationTime(context.GravitySimulation.SimulationTime);
             context.GravitySimulation.CaptureSnapshots(capture.CelestialBodies);
         }
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)
         {
-            return context.GravitySimulation.ApplySnapshots(saveData.CelestialBodies);
+            if (!context.GravitySimulation.ApplySnapshots(saveData.CelestialBodies))
+            {
+                return false;
+            }
+
+            context.GravitySimulation.SetSimulationTime(saveData.CelestialSimulationTime);
+            return true;
         }
     }
 }

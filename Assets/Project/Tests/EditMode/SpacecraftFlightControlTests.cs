@@ -555,7 +555,8 @@ namespace Farion.Tests.EditMode
                 localAngularVelocity,
                 localGravity,
                 assisted,
-                boostAuthority: 0f);
+                boostAuthority: 0f,
+                boostSurge: 0f);
         }
 
         static CelestialFrameSample AtmosphereFrame(
@@ -605,7 +606,8 @@ namespace Farion.Tests.EditMode
                 3.2f,
                 compensateGravity: true,
                 limitManualFlightEnvelope: true,
-                manualEnvelopeStart: 0.85f);
+                manualEnvelopeStart: 0.85f,
+                boostSurgeStrength: 0f);
         }
     }
 }

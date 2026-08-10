@@ -8,7 +8,8 @@ namespace Farion.Gameplay.Flight
             SpacecraftFlightControlFrame frame,
             SpacecraftFlightControlSettings settings)
         {
-            Vector3 positiveAcceleration = settings.MaxPositiveAcceleration(frame.BoostAuthority);
+            Vector3 positiveAcceleration = settings.MaxPositiveAcceleration(frame.BoostAuthority) *
+                (1f + frame.BoostSurge * settings.BoostSurgeStrength);
             Vector3 localGravityCompensation =
                 frame.FlightAssistEnabled && settings.CompensateGravity
                     ? -frame.LocalGravityAcceleration

@@ -24,7 +24,7 @@ namespace Farion.Tests.EditMode
 
         [TestCase(0)]
         [TestCase(2)]
-        [TestCase(7)]
+        [TestCase(8)]
         public void UnsupportedSaveVersionsAreRejected(int version)
         {
             Assert.That(SaveGameSchema.IsSupportedVersion(version), Is.False);
@@ -70,7 +70,7 @@ namespace Farion.Tests.EditMode
                 out GameplaySaveData current);
 
             Assert.That(migrated, Is.True);
-            Assert.That(current.SchemaVersion, Is.EqualTo(6));
+            Assert.That(current.SchemaVersion, Is.EqualTo(SaveGameSchema.CurrentVersion));
             Assert.That(current.SourceSchemaVersion, Is.EqualTo(4));
             Assert.That(current.ShuttleCargo.ContainerId,
                 Is.EqualTo("inventory.ship.starter.cargo"));

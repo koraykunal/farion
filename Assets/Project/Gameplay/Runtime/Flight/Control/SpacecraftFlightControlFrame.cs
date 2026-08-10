@@ -10,7 +10,8 @@ namespace Farion.Gameplay.Flight
             Vector3 localAngularVelocity,
             Vector3 localGravityAcceleration,
             bool flightAssistEnabled,
-            float boostAuthority)
+            float boostAuthority,
+            float boostSurge)
         {
             Command = command;
             LocalRelativeVelocity = localRelativeVelocity;
@@ -18,6 +19,7 @@ namespace Farion.Gameplay.Flight
             LocalGravityAcceleration = localGravityAcceleration;
             FlightAssistEnabled = flightAssistEnabled;
             BoostAuthority = Mathf.Clamp01(boostAuthority);
+            BoostSurge = Mathf.Clamp01(boostSurge);
         }
 
         public SpacecraftPilotCommand Command { get; }
@@ -26,5 +28,6 @@ namespace Farion.Gameplay.Flight
         public Vector3 LocalGravityAcceleration { get; }
         public bool FlightAssistEnabled { get; }
         public float BoostAuthority { get; }
+        public float BoostSurge { get; }
     }
 }

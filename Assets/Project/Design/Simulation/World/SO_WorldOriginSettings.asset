@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56180ac16a4b465d8ef7d49ecd2ca03e, type: 3}
   m_Name: SO_WorldOriginSettings
   m_EditorClassIdentifier: 
-  rebaseDistance: 1000
+  rebaseDistance: 4000
   rebaseAllAxes: 1

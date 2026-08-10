@@ -409,7 +409,8 @@ namespace Farion.Gameplay.Flight
                 localAngularVelocity,
                 localGravity,
                 flightAssistEnabled,
-                boostController.Authority);
+                boostController.Authority,
+                boostController.Surge);
             SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
                 frame,
                 ControlSettings);
@@ -503,6 +504,7 @@ namespace Farion.Gameplay.Flight
                 relativeVelocity,
                 boostController.IsActive,
                 boostController.Authority,
+                boostController.Surge,
                 boostController.Charge);
         }
 
@@ -563,7 +565,8 @@ namespace Farion.Gameplay.Flight
             3.2f,
             compensateGravity: true,
             limitManualFlightEnvelope: true,
-            manualEnvelopeStart: 0.85f);
+            manualEnvelopeStart: 0.85f,
+            boostSurgeStrength: 0.8f);
 
         static Vector3 DeadZone(Vector3 value, float deadZone)
         {

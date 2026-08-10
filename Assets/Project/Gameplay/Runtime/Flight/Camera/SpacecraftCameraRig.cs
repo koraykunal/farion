@@ -54,15 +54,24 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float velocityOffsetScale = 0.008f;
         [Min(0f)]
-        [SerializeField] float accelerationOffsetScale = 0.018f;
+        [SerializeField] float accelerationOffsetScale = 0.06f;
         [Min(0f)]
-        [SerializeField] float maxFlightOffset = 0.85f;
+        [SerializeField] float maxFlightOffset = 2.5f;
         [Min(0f)]
         [SerializeField] float flightOffsetResponsiveness = 4f;
         [Min(0f)]
         [SerializeField] float fovResponsiveness = 6f;
         [Min(0f)]
         [SerializeField] float boostFovIncrease = 7f;
+        [Tooltip("Extra field of view at the reference relative speed.")]
+        [Min(0f)]
+        [SerializeField] float speedFovIncrease = 12f;
+        [Tooltip("Relative speed at which the speed field of view reaches its full increase.")]
+        [Min(1f)]
+        [SerializeField] float speedFovReferenceSpeed = 200f;
+        [Tooltip("One-shot field of view kick applied during the boost onset surge.")]
+        [Min(0f)]
+        [SerializeField] float boostSurgeFovKick = 6f;
 
         bool snapNextFrame = true;
         float baseFieldOfView = 60f;
@@ -102,6 +111,9 @@ namespace Farion.Gameplay.Flight
             flightOffsetResponsiveness = Mathf.Max(0f, flightOffsetResponsiveness);
             fovResponsiveness = Mathf.Max(0f, fovResponsiveness);
             boostFovIncrease = Mathf.Max(0f, boostFovIncrease);
+            speedFovIncrease = Mathf.Max(0f, speedFovIncrease);
+            speedFovReferenceSpeed = Mathf.Max(1f, speedFovReferenceSpeed);
+            boostSurgeFovKick = Mathf.Max(0f, boostSurgeFovKick);
             targetBoundsDirty = true;
         }
 
@@ -464,7 +476,18 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            float targetFov = baseFieldOfView + (motor != null ? motor.Telemetry.BoostBlend * boostFovIncrease : 0f);
+            float targetFov = baseFieldOfView;
+            if (motor != null)
+            {
+                SpacecraftMovementTelemetry telemetry = motor.Telemetry;
+                float speed01 = speedFovReferenceSpeed > 0f
+                    ? Mathf.Clamp01(telemetry.RelativeSpeed / speedFovReferenceSpeed)
+                    : 0f;
+                targetFov += speed01 * speed01 * speedFovIncrease;
+                targetFov += telemetry.BoostBlend * boostFovIncrease;
+                targetFov += telemetry.BoostSurge * boostSurgeFovKick;
+            }
+
             payloadCamera.fieldOfView = Mathf.Lerp(
                 payloadCamera.fieldOfView,
                 targetFov,

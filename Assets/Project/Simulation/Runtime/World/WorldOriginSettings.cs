@@ -6,7 +6,7 @@ namespace Farion.Simulation.World
     public sealed class WorldOriginSettings : ScriptableObject
     {
         [Min(1f)]
-        [SerializeField] float rebaseDistance = 1000f;
+        [SerializeField] float rebaseDistance = 4000f;
 
         [Tooltip("When enabled, very small accumulated vertical drift can still be removed. Space gameplay should normally keep this enabled.")]
         [SerializeField] bool rebaseAllAxes = true;

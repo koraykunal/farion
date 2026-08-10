@@ -18,7 +18,8 @@ namespace Farion.Gameplay.Flight
             float brakeGain,
             bool compensateGravity,
             bool limitManualFlightEnvelope,
-            float manualEnvelopeStart)
+            float manualEnvelopeStart,
+            float boostSurgeStrength)
         {
             PositiveMaxSpeed = Abs(positiveMaxSpeed);
             BoostedPositiveMaxSpeed = Vector3.Max(
@@ -38,8 +39,10 @@ namespace Farion.Gameplay.Flight
             CompensateGravity = compensateGravity;
             LimitManualFlightEnvelope = limitManualFlightEnvelope;
             ManualEnvelopeStart = Mathf.Clamp(manualEnvelopeStart, 0.1f, 0.99f);
+            BoostSurgeStrength = Mathf.Max(0f, boostSurgeStrength);
         }
 
+        public float BoostSurgeStrength { get; }
         public Vector3 PositiveMaxSpeed { get; }
         public Vector3 BoostedPositiveMaxSpeed { get; }
         public Vector3 NegativeMaxSpeed { get; }

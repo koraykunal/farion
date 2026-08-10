@@ -15,6 +15,7 @@ namespace Farion.Gameplay.Flight
             Vector3 worldRelativeVelocity,
             bool boostActive,
             float boostBlend,
+            float boostSurge,
             float boostCharge)
         {
             AssistMode = assistMode;
@@ -27,6 +28,7 @@ namespace Farion.Gameplay.Flight
             WorldRelativeVelocity = worldRelativeVelocity;
             BoostActive = boostActive;
             BoostBlend = Mathf.Clamp01(boostBlend);
+            BoostSurge = Mathf.Clamp01(boostSurge);
             BoostCharge = Mathf.Clamp01(boostCharge);
         }
 
@@ -40,6 +42,7 @@ namespace Farion.Gameplay.Flight
         public Vector3 WorldRelativeVelocity { get; }
         public bool BoostActive { get; }
         public float BoostBlend { get; }
+        public float BoostSurge { get; }
         public float BoostCharge { get; }
 
         public float RelativeSpeed => WorldRelativeVelocity.magnitude;
@@ -56,6 +59,7 @@ namespace Farion.Gameplay.Flight
             Vector3.zero,
             boostActive: false,
             boostBlend: 0f,
+            boostSurge: 0f,
             boostCharge: 1f);
     }
 }

@@ -26,8 +26,13 @@ namespace Farion.Simulation.Physics
         [SerializeField] Vector3 referenceFrameAcceleration;
 
         readonly List<CelestialBody> simulationBodies = new();
+        readonly List<CelestialBody> analyticOrder = new();
+        double simulationTime;
+        bool externalTimeSource;
 
         public bool IntegrationEnabled { get; private set; } = true;
+        public double SimulationTime => simulationTime;
+        public bool UsesExternalTimeSource => externalTimeSource;
 
         public IReadOnlyList<CelestialBody> Bodies => simulationBodies;
         public GravitySettings Settings => settings;
@@ -43,6 +48,7 @@ namespace Farion.Simulation.Physics
         {
             RefreshBodies();
             ConfigureBodies();
+            RebuildAnalyticOrder();
 
             if (settings != null &&
                 settings.ApplyFixedTimeStepOnStart &&
@@ -54,7 +60,19 @@ namespace Farion.Simulation.Physics
 
         void FixedUpdate()
         {
-            if (!IntegrationEnabled || simulationBodies.Count == 0)
+            if (simulationBodies.Count == 0)
+            {
+                return;
+            }
+
+            if (!externalTimeSource)
+            {
+                simulationTime += UnityEngine.Time.fixedDeltaTime;
+            }
+
+            ApplyAnalyticMotion();
+
+            if (!IntegrationEnabled)
             {
                 return;
             }
@@ -88,6 +106,114 @@ namespace Farion.Simulation.Physics
                     simulationBodies.Add(body);
                 }
             }
+        }
+
+        public void SetSimulationTime(double seconds)
+        {
+            simulationTime = seconds >= 0d ? seconds : 0d;
+            if (simulationBodies.Count > 0)
+            {
+                ApplyAnalyticMotion();
+            }
+        }
+
+        public void SetExternalTimeSource(bool enabled)
+        {
+            externalTimeSource = enabled;
+        }
+
+        public void RebuildAnalyticOrder()
+        {
+            analyticOrder.Clear();
+            int guard = simulationBodies.Count + 1;
+            for (int depth = 0; depth < guard && analyticOrder.Count < simulationBodies.Count; depth++)
+            {
+                for (int i = 0; i < simulationBodies.Count; i++)
+                {
+                    CelestialBody body = simulationBodies[i];
+                    if (body == null || !body.UsesAnalyticMotion || analyticOrder.Contains(body))
+                    {
+                        continue;
+                    }
+
+                    CelestialBody attractor = body.OrbitAttractor;
+                    bool attractorReady = attractor == null ||
+                        !attractor.UsesAnalyticMotion ||
+                        analyticOrder.Contains(attractor);
+                    if (attractorReady)
+                    {
+                        analyticOrder.Add(body);
+                    }
+                }
+            }
+
+            for (int i = 0; i < analyticOrder.Count; i++)
+            {
+                CelestialBody body = analyticOrder[i];
+                CelestialBody attractor = body.OrbitAttractor;
+                body.CaptureAnalyticReference(
+                    attractor != null ? attractor.SystemPosition : body.Position,
+                    attractor != null ? attractor.SystemVelocity : Vector3.zero,
+                    GravitationalConstant);
+            }
+        }
+
+        void ApplyAnalyticMotion()
+        {
+            if (analyticOrder.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < analyticOrder.Count; i++)
+            {
+                CelestialBody body = analyticOrder[i];
+                if (body == null)
+                {
+                    continue;
+                }
+
+                CelestialBody attractor = body.OrbitAttractor;
+                body.EvaluateAnalyticMotion(
+                    simulationTime,
+                    attractor != null ? attractor.SystemPosition : body.SystemPosition,
+                    attractor != null ? attractor.SystemVelocity : Vector3.zero);
+            }
+
+            CelestialBody anchor = ResolveAnalyticAnchor();
+            if (anchor == null)
+            {
+                return;
+            }
+
+            Vector3 anchorWorld = anchor.Rigidbody != null ? anchor.Rigidbody.position : anchor.transform.position;
+            Vector3 anchorSystem = anchor.SystemPosition;
+            for (int i = 0; i < analyticOrder.Count; i++)
+            {
+                CelestialBody body = analyticOrder[i];
+                if (body == null)
+                {
+                    continue;
+                }
+
+                Vector3 worldPosition = body == anchor
+                    ? anchorWorld
+                    : anchorWorld + (body.SystemPosition - anchorSystem);
+                body.ApplyAnalyticPose(worldPosition, body.EvaluateAnalyticRotation(simulationTime));
+            }
+
+            UpdateReferenceFrameVelocity();
+        }
+
+        CelestialBody ResolveAnalyticAnchor()
+        {
+            CelestialBody referenceBody = ResolvedPhysicsReferenceBody;
+            if (referenceBody != null && referenceBody.UsesAnalyticMotion)
+            {
+                return referenceBody;
+            }
+
+            return analyticOrder.Count > 0 ? analyticOrder[0] : null;
         }
 
         public void SetIntegrationEnabled(bool enabled)
@@ -322,7 +448,7 @@ namespace Farion.Simulation.Physics
             for (int i = 0; i < simulationBodies.Count; i++)
             {
                 CelestialBody body = simulationBodies[i];
-                if (body == null || !body.ParticipatesInNBody)
+                if (body == null || !body.ParticipatesInNBody || body.UsesAnalyticMotion)
                 {
                     continue;
                 }
@@ -335,7 +461,7 @@ namespace Farion.Simulation.Physics
         {
             foreach (CelestialBody body in simulationBodies)
             {
-                if (body == null)
+                if (body == null || body.UsesAnalyticMotion)
                 {
                     continue;
                 }

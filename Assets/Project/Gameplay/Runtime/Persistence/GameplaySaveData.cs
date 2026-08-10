@@ -20,6 +20,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] int schemaVersion = CurrentSchemaVersion;
         [SerializeField] int payloadRevision;
         [SerializeField] string savedAtUtc;
+        [SerializeField] double celestialSimulationTime;
         [SerializeField] List<CelestialBodySnapshot> celestialBodies = new();
         [SerializeField] WorldOriginSnapshot worldOrigin;
         [SerializeField] PlayerInventorySnapshot playerInventory;
@@ -32,6 +33,7 @@ namespace Farion.Gameplay.Persistence
 
         public GameplaySaveData(
             string savedAtUtc,
+            double celestialSimulationTime,
             IReadOnlyList<CelestialBodySnapshot> celestialBodies,
             WorldOriginSnapshot worldOrigin,
             PlayerInventorySnapshot playerInventory,
@@ -43,6 +45,7 @@ namespace Farion.Gameplay.Persistence
             : this(
                 CurrentSchemaVersion,
                 savedAtUtc,
+                celestialSimulationTime,
                 celestialBodies,
                 worldOrigin,
                 playerInventory,
@@ -57,6 +60,7 @@ namespace Farion.Gameplay.Persistence
         GameplaySaveData(
             int sourceSchemaVersion,
             string savedAtUtc,
+            double celestialSimulationTime,
             IReadOnlyList<CelestialBodySnapshot> celestialBodies,
             WorldOriginSnapshot worldOrigin,
             PlayerInventorySnapshot playerInventory,
@@ -70,6 +74,7 @@ namespace Farion.Gameplay.Persistence
             payloadRevision = CurrentPayloadRevision;
             this.sourceSchemaVersion = sourceSchemaVersion;
             this.savedAtUtc = string.IsNullOrWhiteSpace(savedAtUtc) ? string.Empty : savedAtUtc.Trim();
+            this.celestialSimulationTime = celestialSimulationTime >= 0d ? celestialSimulationTime : 0d;
             this.celestialBodies = celestialBodies != null
                 ? new List<CelestialBodySnapshot>(celestialBodies)
                 : new List<CelestialBodySnapshot>();
@@ -89,6 +94,7 @@ namespace Farion.Gameplay.Persistence
         public int SourceSchemaVersion =>
             sourceSchemaVersion > 0 ? sourceSchemaVersion : schemaVersion;
         public string SavedAtUtc => string.IsNullOrWhiteSpace(savedAtUtc) ? string.Empty : savedAtUtc.Trim();
+        public double CelestialSimulationTime => celestialSimulationTime >= 0d ? celestialSimulationTime : 0d;
         public IReadOnlyList<CelestialBodySnapshot> CelestialBodies => celestialBodies;
         public WorldOriginSnapshot WorldOrigin => worldOrigin;
         public PlayerInventorySnapshot PlayerInventory => playerInventory;
@@ -108,6 +114,7 @@ namespace Farion.Gameplay.Persistence
             return new GameplaySaveData(
                 source.SourceSchemaVersion,
                 source.SavedAtUtc,
+                source.CelestialSimulationTime,
                 source.CelestialBodies,
                 source.WorldOrigin,
                 source.PlayerInventory,

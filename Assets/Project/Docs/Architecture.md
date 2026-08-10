@@ -249,9 +249,10 @@ repair, queue, power, or maintenance commands in the application facade.
 
 ## Persistence
 
-Schema `6` persists:
+Schema `7` persists:
 
-- celestial body snapshots;
+- the celestial simulation time, which alone determines every body pose;
+- celestial body snapshots, kept only to prove the save belongs to this system;
 - world-origin metadata;
 - player inventory;
 - assigned shuttle cargo;
@@ -260,26 +261,37 @@ Schema `6` persists:
 - Fleet Knowledge;
 - resource extraction deltas.
 
-Schemas `3` and `4` migrate to schema `6` with explicit empty shuttle-cargo,
+Schemas `3` and `4` migrate to schema `7` with explicit empty shuttle-cargo,
 Fleet-Storage, and Fleet-Knowledge defaults. Schema `5` preserves its shuttle
 cargo and Fleet Knowledge while adding the authored Fleet Storage as empty.
+Schema `6` preserves everything and starts the celestial clock at its epoch.
 The serialized JSON field for shuttle cargo remains `personalShipCargo` for
 schema compatibility; runtime code exposes it as `ShuttleCargo`.
 
 The save system uses participants composed from `GameplayRuntimeRoot`, validates
 before applying, and restores a pre-load snapshot if application fails.
 
-Capital-ship state, shuttle upgrades, and equipment are not in schema `6`. A
+Capital-ship state, shuttle upgrades, and equipment are not in schema `7`. A
 new schema is allowed only after those runtime owners exist.
 
 ## Simulation and Presentation
 
 - `GravitySimulation` is the gravity and translating-reference-frame authority.
-  It integrates with semi-implicit (symplectic) Euler at a configurable substep
-  count. That is a deliberate choice: it is cheap, stable for the bounded
-  orbits this game authors, and its slow drift is bounded by save snapshots,
-  which restore exact body state. A higher-order integrator is only warranted
-  if long unsaved sessions ever need to preserve orbital elements exactly.
+  Celestial motion is analytic, not integrated: at startup each body derives
+  Kepler `OrbitalElements` from its authored position and velocity relative to
+  its attractor, and its pose afterwards is a pure function of
+  `SimulationTime`. Spin is likewise `initialRotation` advanced by elapsed
+  time. Nothing drifts, and two peers that agree on the time agree on every
+  pose without replicating anything.
+- Offline the clock advances with `Time.fixedDeltaTime`. In multiplayer
+  `ZonePhysicsTickDriver` sets it to `Tick * TickDelta`, so a late joiner that
+  jumps straight to the shared tick lands on exactly the same pose. Saves
+  persist the clock; body snapshots only prove the save belongs to this system.
+- Bodies are positioned relative to the physics reference body, which is the
+  anchor local space is built around. That keeps analytic motion compatible
+  with world-origin rebasing without either system knowing about the other.
+- `DynamicNBody` remains the only integrated mode and is unused by authored
+  content.
 - `CelestialBody` owns runtime physical body state.
 - `PlanetSurfaceModel` owns generated surface, climate, biome, material, and
   terrain-feature sampling.

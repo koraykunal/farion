@@ -31,6 +31,15 @@ namespace Farion.Simulation.Physics
         Vector3 simulatedAngularVelocity;
         Vector3 physicsReferenceFrameVelocity;
         float mass;
+        OrbitalElements orbit;
+        bool hasOrbit;
+        Quaternion referenceRotation = Quaternion.identity;
+        Vector3 spinAxis = Vector3.up;
+        float spinDegreesPerSecond;
+        Vector3 systemPosition;
+        Vector3 systemVelocity;
+        Vector3 localOffsetAtEpoch;
+        Vector3 driftVelocity;
 
         public string BodyName => bodyName;
         public string PersistentId
@@ -62,6 +71,12 @@ namespace Farion.Simulation.Physics
         public bool IsKinematicBody => motionMode != CelestialBodyMotionMode.DynamicNBody;
         public bool IntegratesOrbit => motionMode != CelestialBodyMotionMode.Static;
         public bool SupportsNonConvexSurfaceCollider => IsKinematicBody;
+        public bool UsesAnalyticMotion => motionMode != CelestialBodyMotionMode.DynamicNBody;
+        public bool HasOrbit => hasOrbit;
+        public OrbitalElements Orbit => orbit;
+        public Vector3 SystemPosition => systemPosition;
+        public Vector3 SystemVelocity => systemVelocity;
+        public float OrbitPeriodSeconds => hasOrbit ? (float)orbit.PeriodSeconds : 0f;
         public Vector3 Position => Rigidbody.position;
 
         public Rigidbody Rigidbody
@@ -157,6 +172,105 @@ namespace Farion.Simulation.Physics
             simulatedVelocity = initialVelocity;
             simulatedAngularVelocity = initialAngularVelocityDegreesPerSecond * Mathf.Deg2Rad;
             physicsReferenceFrameVelocity = Vector3.zero;
+        }
+
+        public void CaptureAnalyticReference(Vector3 attractorSystemOrigin, Vector3 attractorSystemVelocity, float gravitationalConstant)
+        {
+            referenceRotation = Rigidbody != null ? Rigidbody.rotation : transform.rotation;
+            spinDegreesPerSecond = initialAngularVelocityDegreesPerSecond.magnitude;
+            spinAxis = spinDegreesPerSecond > 0.0001f
+                ? initialAngularVelocityDegreesPerSecond / spinDegreesPerSecond
+                : Vector3.up;
+
+            hasOrbit = false;
+            orbit = default;
+
+            CelestialBody attractor = orbitAttractor;
+            localOffsetAtEpoch = attractor != null ? Position - attractor.Position : Vector3.zero;
+            driftVelocity = motionMode == CelestialBodyMotionMode.KinematicOrbit
+                ? initialVelocity - attractorSystemVelocity
+                : Vector3.zero;
+            systemPosition = attractorSystemOrigin + localOffsetAtEpoch;
+            systemVelocity = attractorSystemVelocity + driftVelocity;
+
+            if (motionMode != CelestialBodyMotionMode.KinematicOrbit ||
+                attractor == null ||
+                gravitationalConstant <= 0f)
+            {
+                return;
+            }
+
+            double gravitationalParameter = (double)gravitationalConstant * attractor.Mass;
+            hasOrbit = OrbitalElements.TryCreate(
+                localOffsetAtEpoch,
+                driftVelocity,
+                gravitationalParameter,
+                out orbit);
+        }
+
+        public void EvaluateAnalyticMotion(double timeSeconds, Vector3 attractorSystemPosition, Vector3 attractorSystemVelocity)
+        {
+            if (hasOrbit)
+            {
+                orbit.Evaluate(timeSeconds, out Vector3 localPosition, out Vector3 localVelocity);
+                systemPosition = attractorSystemPosition + localPosition;
+                systemVelocity = attractorSystemVelocity + localVelocity;
+            }
+            else
+            {
+                systemPosition = attractorSystemPosition +
+                    localOffsetAtEpoch +
+                    driftVelocity * (float)timeSeconds;
+                systemVelocity = attractorSystemVelocity + driftVelocity;
+            }
+
+            simulatedVelocity = systemVelocity;
+        }
+
+        public Quaternion EvaluateAnalyticRotation(double timeSeconds)
+        {
+            if (spinDegreesPerSecond <= 0.0001f)
+            {
+                return referenceRotation;
+            }
+
+            double totalDegrees = spinDegreesPerSecond * timeSeconds;
+            float wrapped = (float)(totalDegrees - 360d * System.Math.Floor(totalDegrees / 360d));
+            return referenceRotation * Quaternion.AngleAxis(wrapped, spinAxis);
+        }
+
+        public void ApplyAnalyticPose(Vector3 worldPosition, Quaternion worldRotation)
+        {
+            Rigidbody body = Rigidbody;
+            if (body == null)
+            {
+                return;
+            }
+
+            bool stepped = Application.isPlaying && body.isKinematic;
+            if ((body.position - worldPosition).sqrMagnitude > 1e-10f)
+            {
+                if (stepped)
+                {
+                    body.MovePosition(worldPosition);
+                }
+                else
+                {
+                    body.position = worldPosition;
+                }
+            }
+
+            if (Quaternion.Angle(body.rotation, worldRotation) > 0.0001f)
+            {
+                if (stepped)
+                {
+                    body.MoveRotation(worldRotation);
+                }
+                else
+                {
+                    body.rotation = worldRotation;
+                }
+            }
         }
 
         public void SetOrbitAttractor(CelestialBody attractor)

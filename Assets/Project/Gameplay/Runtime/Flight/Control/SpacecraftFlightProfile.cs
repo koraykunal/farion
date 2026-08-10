@@ -62,6 +62,9 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float rotationSpoolRate = 8f;
         [Min(0f)]
         [SerializeField] float boostSpoolRate = 3.5f;
+        [Tooltip("Extra forward acceleration multiplier during the short boost onset surge.")]
+        [Min(0f)]
+        [SerializeField] float boostSurgeStrength = 0.8f;
         [Range(0f, 0.5f)]
         [SerializeField] float inputDeadZone = 0.04f;
 
@@ -103,6 +106,7 @@ namespace Farion.Gameplay.Flight
         public float TranslationSpoolRate => translationSpoolRate;
         public float RotationSpoolRate => rotationSpoolRate;
         public float BoostSpoolRate => boostSpoolRate;
+        public float BoostSurgeStrength => Mathf.Max(0f, boostSurgeStrength);
         public float InputDeadZone => inputDeadZone;
         public bool CompensateGravityInAssistedMode => compensateGravityInAssistedMode;
         public bool LimitManualFlightEnvelope => limitManualFlightEnvelope;
@@ -184,7 +188,8 @@ namespace Farion.Gameplay.Flight
                 brakeGain,
                 compensateGravityInAssistedMode,
                 limitManualFlightEnvelope,
-                manualEnvelopeStart);
+                manualEnvelopeStart,
+                boostSurgeStrength);
         }
 
         void OnValidate()
@@ -211,6 +216,7 @@ namespace Farion.Gameplay.Flight
             translationSpoolRate = Mathf.Max(0f, translationSpoolRate);
             rotationSpoolRate = Mathf.Max(0f, rotationSpoolRate);
             boostSpoolRate = Mathf.Max(0f, boostSpoolRate);
+            boostSurgeStrength = Mathf.Max(0f, boostSurgeStrength);
             inputDeadZone = Mathf.Clamp(inputDeadZone, 0f, 0.5f);
             manualEnvelopeStart = Mathf.Clamp(manualEnvelopeStart, 0.1f, 0.99f);
             boostDrainPerSecond = Mathf.Max(0f, boostDrainPerSecond);
