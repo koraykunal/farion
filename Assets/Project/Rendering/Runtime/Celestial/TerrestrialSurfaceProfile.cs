@@ -39,7 +39,7 @@ namespace Farion.Rendering.Celestial
         [Min(0.001f)]
         [SerializeField] float noiseScale2 = 50f;
         [Min(0.001f)]
-        [SerializeField] float rockNormalScale = 21f;
+        [SerializeField] float rockNormalTileSize = 10f;
         [Range(0f, 1f)]
         [SerializeField] float normalStrength = 0.5f;
 
@@ -143,7 +143,7 @@ namespace Farion.Rendering.Celestial
 
             propertyBlock.SetFloat("_NoiseScale", noiseScale);
             propertyBlock.SetFloat("_NoiseScale2", noiseScale2);
-            propertyBlock.SetFloat("_RockNormalScale", rockNormalScale);
+            propertyBlock.SetFloat("_RockNormalTileSize", rockNormalTileSize);
             propertyBlock.SetFloat("_NormalStrength", normalStrength);
             propertyBlock.SetFloat("_FlatColorBlend", flatColorBlend);
             propertyBlock.SetFloat("_FlatColorBlendNoise", flatColorBlendNoise);
@@ -174,7 +174,7 @@ namespace Farion.Rendering.Celestial
         {
             noiseScale = Mathf.Max(0.001f, noiseScale);
             noiseScale2 = Mathf.Max(0.001f, noiseScale2);
-            rockNormalScale = Mathf.Max(0.001f, rockNormalScale);
+            rockNormalTileSize = Mathf.Max(0.001f, rockNormalTileSize);
             oceanEdgeBlend = Mathf.Clamp(oceanEdgeBlend, 0.001f, 0.12f);
             shoreWetness = Mathf.Clamp01(shoreWetness);
             shoreFoamStrength = Mathf.Clamp01(shoreFoamStrength);
@@ -203,7 +203,7 @@ namespace Farion.Rendering.Celestial
             }
 
             propertyBlock.SetFloat($"{propertyPrefix}WorldTileSize", textures.WorldTileSize);
-            propertyBlock.SetFloat($"{propertyPrefix}NormalStrength", 1f);
+            propertyBlock.SetFloat($"{propertyPrefix}NormalStrength", textures.NormalStrength);
             propertyBlock.SetColor($"{propertyPrefix}EmissionTint", textures.EmissionTint);
             propertyBlock.SetFloat($"{propertyPrefix}EmissionStrength", textures.EmissionStrength);
         }

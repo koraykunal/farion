@@ -17,6 +17,8 @@ namespace Farion.Rendering.Celestial
         [FormerlySerializedAs("triplanarScale")]
         [SerializeField] float worldTileSize = 18f;
         [Range(0f, 1f)]
+        [SerializeField] float normalStrength = 1f;
+        [Range(0f, 1f)]
         [SerializeField] float heightStrength = 0.05f;
         [ColorUsage(false, true)]
         [SerializeField] Color emissionTint = Color.white;
@@ -30,6 +32,7 @@ namespace Farion.Rendering.Celestial
         public Texture2D Height => height;
         public Texture2D Emission => emission;
         public float WorldTileSize => Mathf.Max(0.001f, worldTileSize);
+        public float NormalStrength => Mathf.Clamp01(normalStrength);
         public float HeightStrength => Mathf.Clamp01(heightStrength);
         public Color EmissionTint => emissionTint;
         public float EmissionStrength => Mathf.Max(0f, emissionStrength);

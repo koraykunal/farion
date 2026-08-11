@@ -18,8 +18,6 @@ namespace Farion.Rendering.Celestial
 
         [Header("Surface Response")]
         [Range(0f, 1f)]
-        [SerializeField] float normalStrength = 0.5f;
-        [Range(0f, 1f)]
         [SerializeField] float smoothness = 0.22f;
 
         [Header("Textures")]
@@ -30,7 +28,7 @@ namespace Farion.Rendering.Celestial
         public Color FlatHigh => flatHigh;
         public Color SteepLow => steepLow;
         public Color SteepHigh => steepHigh;
-        public float NormalStrength => Mathf.Clamp01(normalStrength);
+        public float NormalStrength => textures != null ? textures.NormalStrength : 0f;
         public float Smoothness => Mathf.Clamp01(smoothness);
         public SurfaceTextureSet Textures => textures;
         public bool IsValid => material != null;

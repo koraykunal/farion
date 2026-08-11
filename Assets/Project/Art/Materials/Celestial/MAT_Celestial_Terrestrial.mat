@@ -33,6 +33,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AmbientHemisphere: 0.65
     - _BodyRadius: 1
     - _FlatColorBlend: 1.5
     - _FlatColorBlendNoise: 0.3
@@ -40,20 +41,16 @@ Material:
     - _FlatToSteepNoise: 0.026
     - _HasOcean: 1
     - _LandSmoothness: 0.2
+    - _MacroVariation: 0.15
     - _MaxFlatHeight: 0.52
     - _Metallic: 0
-    - _DetileRatio: 0.37
-    - _DetileScale: 28
-    - _DetileStrength: 0
-    - _MacroScale: 12
-    - _MacroVariation: 0.28
     - _NoiseScale: 10
     - _NoiseScale2: 50
     - _NormalStrength: 0.203
     - _OceanEdgeBlend: 0.035
     - _OceanLevel: 1
     - _OceanSmoothness: 0.75
-    - _RockNormalScale: 21
+    - _RockNormalTileSize: 10
     - _ShoreBlend: 0.089
     - _ShoreFoamStrength: 0.14
     - _ShoreHeight: 0.058
@@ -61,6 +58,9 @@ Material:
     - _SteepBandStrength: 0.5
     - _SteepBands: 8
     - _SteepnessThreshold: 0.378
+    - _StochasticTiling: 1
+    - _SurfaceTextureLevelMatch: 0.65
+    - _SurfaceWeightWarp: 0.03
     m_Colors:
     - _FlatHighA: {r: 0.19, g: 0.46, b: 0, a: 1}
     - _FlatHighB: {r: 0.19, g: 0.46, b: 0, a: 1}

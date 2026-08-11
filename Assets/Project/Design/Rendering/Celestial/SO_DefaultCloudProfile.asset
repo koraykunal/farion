@@ -15,18 +15,18 @@ MonoBehaviour:
   shapeNoise: {fileID: 11700000, guid: 70c2adccd53fd45468d11570134863c2, type: 2}
   detailNoise: {fileID: 11700000, guid: 206e9646e82f94c249cda79e716d3f1d, type: 2}
   blueNoise: {fileID: 2800000, guid: 36f118343fc974119bee3d09e2111500, type: 3}
-  layerBottom: 0.2
-  layerTop: 0.5
+  layerBottom: 0.333
+  layerTop: 0.684
   shapeScale: 1.15
   detailScale: 7.5
   shapeWeights: {x: 1, y: 0.43, z: 0.12, w: 0.03}
   detailWeights: {x: 1, y: 0.35, z: 0.15}
-  coverage: 0.573
-  densityMultiplier: 5
-  detailErosion: 0.22
+  coverage: 0.536
+  densityMultiplier: 10.2
+  detailErosion: 0.928
   lightAbsorptionThroughCloud: 0.9
-  lightAbsorptionTowardStar: 1.05
-  darknessThreshold: 0.045
+  lightAbsorptionTowardStar: 4.05
+  darknessThreshold: 0.046
   forwardScattering: 0.441
   backScattering: 0.357
   baseBrightness: 0.72

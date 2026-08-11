@@ -21,7 +21,8 @@ MonoBehaviour:
     ambientOcclusion: {fileID: 0}
     height: {fileID: 2800000, guid: 40ae7e027fbd07042aeed6cc8e5a500c, type: 3}
     emission: {fileID: 2800000, guid: befbbfc12ae75374e8145f5cfa381a59, type: 3}
-    worldTileSize: 9
+    worldTileSize: 16
+    normalStrength: 0.8
     heightStrength: 0.025
     emissionTint: {r: 1, g: 0.3, b: 0.06, a: 1}
     emissionStrength: 2.2
@@ -32,7 +33,8 @@ MonoBehaviour:
     ambientOcclusion: {fileID: 2800000, guid: 7043011545dfda9448a872b8d2aa4fe2, type: 3}
     height: {fileID: 2800000, guid: 262ea6188ed4d3f43a091446d3cdc087, type: 3}
     emission: {fileID: 0}
-    worldTileSize: 6.5
+    worldTileSize: 16
+    normalStrength: 0.55
     heightStrength: 0.025
     emissionTint: {r: 1, g: 1, b: 1, a: 1}
     emissionStrength: 0
@@ -53,10 +55,10 @@ MonoBehaviour:
   rockNormal: {fileID: 2800000, guid: 91953f100d69a394c8bc744423b684fa, type: 3}
   noiseScale: 10
   noiseScale2: 24
-  rockNormalScale: 12
+  rockNormalTileSize: 10
   normalStrength: 0.28
-  flatColorBlend: 2.4
-  flatColorBlendNoise: 0.42
+  flatColorBlend: 1.95
+  flatColorBlendNoise: 1
   shoreHeight: 0.058
   shoreBlend: 0.115
   oceanEdgeBlend: 0.04
@@ -65,6 +67,6 @@ MonoBehaviour:
   maxFlatHeight: 0.52
   steepBands: 4
   steepBandStrength: 0
-  steepnessThreshold: 0.378
-  flatToSteepBlend: 0.051
-  flatToSteepNoise: 0.015
+  steepnessThreshold: 0.232
+  flatToSteepBlend: 0.141
+  flatToSteepNoise: 0.116

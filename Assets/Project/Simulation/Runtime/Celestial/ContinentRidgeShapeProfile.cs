@@ -162,17 +162,17 @@ namespace Farion.Simulation.Celestial
 
         Vector4 EvaluateShadingData(Vector3 unitDirection, float sampleFootprint)
         {
-            float large = largeNoise.Sample(unitDirection, seed + 400, sampleFootprint);
+            float large = largeNoise.Sample01(unitDirection, seed + 400, sampleFootprint);
             float detailWarp = detailWarpNoise.Sample(unitDirection, seed + 500, sampleFootprint);
-            float detail = detailNoise.Sample(unitDirection + Vector3.one * detailWarp * 0.1f, seed + 600, sampleFootprint);
-            float small = smallNoise.Sample(unitDirection, seed + 700, sampleFootprint);
+            float detail = detailNoise.Sample01(unitDirection + Vector3.one * detailWarp * 0.1f, seed + 600, sampleFootprint);
+            float small = smallNoise.Sample01(unitDirection, seed + 700, sampleFootprint);
 
             Vector3 warpOffset = new(
                 smallNoise.Sample(unitDirection + Vector3.right * 11.37f, seed + 800, sampleFootprint),
                 smallNoise.Sample(unitDirection + Vector3.up * 29.71f, seed + 900, sampleFootprint),
                 smallNoise.Sample(unitDirection + Vector3.forward * 47.13f, seed + 1000, sampleFootprint));
 
-            float warped = detailNoise.Sample(unitDirection + warpOffset * 0.1f, seed + 1100, sampleFootprint);
+            float warped = detailNoise.Sample01(unitDirection + warpOffset * 0.1f, seed + 1100, sampleFootprint);
             return new Vector4(large, detail, small, warped);
         }
 
@@ -297,6 +297,11 @@ namespace Farion.Simulation.Celestial
                 }
 
                 return noise * Elevation + VerticalShift;
+            }
+
+            public float Sample01(Vector3 direction, int noiseSeed, float sampleFootprint)
+            {
+                return Mathf.Clamp01(Sample(direction, noiseSeed, sampleFootprint) * 0.5f + 0.5f);
             }
 
             float ResolveUsableOctaves(float sampleFootprint)

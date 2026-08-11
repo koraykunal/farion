@@ -261,6 +261,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 half3 viewDirection = -rayDirection;
                 half diffuseLighting = saturate(dot(sphereNormal, starDirection));
                 half waveDiffuseLighting = saturate(dot(waveNormal, starDirection));
+                half daylight = smoothstep(-0.15h, 0.15h, dot(sphereNormal, starDirection));
 
                 half3 oceanColor = lerp(_FarionOceanShallowColors[index].rgb, _FarionOceanDeepColors[index].rgb, depth01);
                 half3 ambient = max(_FarionAmbientColor.rgb, 0.025h);
@@ -270,9 +271,10 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 half specularPower = lerp(64.0h, 512.0h, smoothness);
                 half specular = pow(saturate(dot(waveNormal, halfDirection)), specularPower) * specularStrength;
                 specular *= cameraInsideOcean ? underwaterSpecularStrength : 1.0h;
+                specular *= daylight;
 
-                half3 waterVolumeLight = ambient + starRadiance * (0.12h + diffuseLighting * 0.55h);
-                half3 surfaceReflectionLight = ambient + starRadiance * (0.14h + waveDiffuseLighting * 0.42h);
+                half3 waterVolumeLight = ambient + starRadiance * (0.12h * daylight + diffuseLighting * 0.55h);
+                half3 surfaceReflectionLight = ambient + starRadiance * (0.14h * daylight + waveDiffuseLighting * 0.42h);
                 half3 reflectedSurface = _FarionOceanFresnelColors[index].rgb * surfaceReflectionLight
                     + _FarionOceanSpecularColors[index].rgb * starRadiance * specular * 0.25h;
 
@@ -306,7 +308,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     ? _FarionOceanUnderwaterColors[index].rgb
                     : oceanColor;
                 half3 volumeLight = cameraInsideOcean
-                    ? ambient + starRadiance * (0.04h + diffuseLighting * 0.16h)
+                    ? ambient + starRadiance * (0.04h * daylight + diffuseLighting * 0.16h)
                     : waterVolumeLight;
                 half3 transmittedWater = ApplyWaterVolume(
                     sourceColor,

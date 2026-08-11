@@ -24,7 +24,7 @@ namespace Farion.Rendering.Celestial
             float radius = surfaceProfile != null
                 ? surfaceProfile.EvaluateRadius(baseRadius, unitDirection)
                 : Mathf.Max(0.01f, baseRadius);
-            return new CelestialShapeSample(radius, new Vector4(0f, 1f, 0f, 999f));
+            return new CelestialShapeSample(radius, new Vector4(0.5f, 0.5f, 0.5f, 0.5f));
         }
 
         public static float EvaluateRadius(

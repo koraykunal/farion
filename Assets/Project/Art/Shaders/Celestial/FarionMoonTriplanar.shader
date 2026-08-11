@@ -18,6 +18,7 @@ Shader "Farion/Celestial/Moon Triplanar"
         _NormalFlatWorldTileSize("Flat Normal Tile Size (m)", Float) = 10
         _NormalSteepWorldTileSize("Steep Normal Tile Size (m)", Float) = 7.5
         _NormalStrength("Normal Strength", Range(0, 1)) = 0.35
+        _AmbientHemisphere("Ambient Hemisphere", Range(0, 1)) = 0.65
         _BiomeBlendStrength("Biome Blend Strength", Range(0, 2)) = 0.8
         _EjectaStrength("Ejecta Strength", Range(0, 2)) = 0.65
         _EjectaRayFrequency("Ejecta Ray Frequency", Float) = 36
@@ -94,6 +95,7 @@ Shader "Farion/Celestial/Moon Triplanar"
                 float _NormalFlatWorldTileSize;
                 float _NormalSteepWorldTileSize;
                 half _NormalStrength;
+                half _AmbientHemisphere;
                 half _BiomeBlendStrength;
                 half _EjectaStrength;
                 float _EjectaRayFrequency;
@@ -183,7 +185,7 @@ Shader "Farion/Celestial/Moon Triplanar"
                 return normalize(normalX * weights.x + normalY * weights.y + normalZ * weights.z);
             }
 
-            InputData BuildPbrInputData(Varyings input, half3 normalWS)
+            InputData BuildPbrInputData(Varyings input, half3 normalWS, half3 upWS)
             {
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;
@@ -194,7 +196,9 @@ Shader "Farion/Celestial/Moon Triplanar"
 #if defined(_ADDITIONAL_LIGHTS_VERTEX)
                 inputData.vertexLighting = input.vertexLighting;
 #endif
-                inputData.bakedGI = max(SampleSH(inputData.normalWS), _FarionAmbientColor.rgb);
+                half3 ambient = max(SampleSH(inputData.normalWS), _FarionAmbientColor.rgb);
+                half hemisphere = saturate(dot(inputData.normalWS, upWS) * 0.5h + 0.5h);
+                inputData.bakedGI = ambient * lerp(1.0h, lerp(0.35h, 1.25h, hemisphere), _AmbientHemisphere);
                 inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionHCS);
                 inputData.shadowMask = SAMPLE_SHADOWMASK(float2(0.0, 0.0));
                 return inputData;
@@ -263,7 +267,7 @@ Shader "Farion/Celestial/Moon Triplanar"
                     ejectaMask);
                 half surfaceOcclusion = lerp(1.0h, 0.88h, steepness);
 
-                InputData inputData = BuildPbrInputData(input, normalWS);
+                InputData inputData = BuildPbrInputData(input, normalWS, normalize(TransformObjectToWorldNormal(radialOS)));
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = saturate(albedo);
                 surfaceData.specular = half3(0.0h, 0.0h, 0.0h);
@@ -322,6 +326,19 @@ Shader "Farion/Celestial/Moon Triplanar"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "MotionVectors"
+            Tags { "LightMode" = "MotionVectors" }
+
+            ColorMask RG
+
+            HLSLPROGRAM
+            #pragma multi_compile _ LOD_FADE_CROSSFADE
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ObjectMotionVectors.hlsl"
             ENDHLSL
         }
 

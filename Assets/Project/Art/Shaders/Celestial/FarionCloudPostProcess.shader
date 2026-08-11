@@ -23,6 +23,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
         #define FARION_CLOUD_MAX_VIEW_STEPS 96
         #define FARION_CLOUD_MAX_LIGHT_STEPS 12
         #define FARION_MAX_FLOAT 3.402823466e+38
+        #define FARION_SHADOW_PENUMBRA 0.04
 
         float4 _FarionCloudSphere;
         float4 _FarionCloudRadii;
@@ -184,14 +185,24 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 + lerp(forward, backward, 0.5) * _FarionCloudPhaseParams.w;
         }
 
+        float PlanetShadow(float3 position, float3 directionToStar)
+        {
+            float3 toSample = position - _FarionCloudSphere.xyz;
+            float along = dot(toSample, directionToStar);
+            if (along >= 0.0)
+            {
+                return 1.0;
+            }
+
+            float planetRadius = _FarionCloudRadii.x;
+            float perpendicular = length(toSample - directionToStar * along);
+            return smoothstep(planetRadius - planetRadius * FARION_SHADOW_PENUMBRA, planetRadius, perpendicular);
+        }
+
         float LightTransmittance(float3 position, float3 directionToStar)
         {
-            float2 planetHit = RaySphere(
-                _FarionCloudSphere.xyz,
-                _FarionCloudRadii.x,
-                position + directionToStar * 0.001,
-                directionToStar);
-            if (planetHit.y > 0.0)
+            float shadow = PlanetShadow(position, directionToStar);
+            if (shadow <= 0.0)
             {
                 return _FarionCloudAbsorptionParams.z;
             }
@@ -215,7 +226,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 samplePosition += directionToStar * stepSize;
             }
 
-            float transmittance = exp(-totalDensity * _FarionCloudAbsorptionParams.y);
+            float transmittance = exp(-totalDensity * _FarionCloudAbsorptionParams.y) * shadow;
             return _FarionCloudAbsorptionParams.z
                 + transmittance * (1.0 - _FarionCloudAbsorptionParams.z);
         }
