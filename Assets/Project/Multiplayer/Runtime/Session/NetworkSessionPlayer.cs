@@ -34,6 +34,7 @@ namespace Farion.Multiplayer.Session
                 ? GeneratedEntityId.None
                 : new GeneratedEntityId(claimedStarterShipId.Value);
         public PlayerPossessionMode PossessionMode => possessionMode.Value;
+        internal NetworkPlayerSpawner PlayerSpawner => playerSpawner;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetLocal()

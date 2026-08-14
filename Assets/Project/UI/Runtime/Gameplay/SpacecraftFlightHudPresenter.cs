@@ -4,6 +4,7 @@ using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Navigation;
+using Farion.Gameplay.Session;
 using Farion.UI.Foundation;
 using Farion.UI.Styling;
 using TMPro;
@@ -26,7 +27,7 @@ namespace Farion.UI.Gameplay
         [SerializeField] UiTheme theme;
 
         [Header("Sources")]
-        [SerializeField] PlayerPossessionController possessionController;
+        [SerializeField] MonoBehaviour pilotContextSource;
         [SerializeField] FlightNavigationTarget navigationTarget;
         [SerializeField] Camera worldCamera;
 
@@ -50,12 +51,32 @@ namespace Farion.UI.Gameplay
         SpacecraftLandingComputer landingComputer;
         SpacecraftLandingGuidanceComputer guidanceComputer;
         SpacecraftLandingGearAnimator landingGear;
+        ILocalPilotContext pilotContext;
         float nextRefreshTime;
         bool visible;
+
+        public void SetPilotContext(ILocalPilotContext context)
+        {
+            if (pilotContext == context)
+            {
+                return;
+            }
+
+            UnsubscribePilotContext();
+            pilotContext = context;
+            if (isActiveAndEnabled)
+            {
+                SubscribePilotContext();
+            }
+
+            ResolveSources();
+            RefreshVisibility();
+        }
 
         void Awake()
         {
             ResolveTheme();
+            ResolvePilotContext();
             ResolveSources();
             ApplyTheme();
             SetVisible(false);
@@ -63,23 +84,15 @@ namespace Farion.UI.Gameplay
 
         void OnEnable()
         {
+            ResolvePilotContext();
             ResolveSources();
-            if (possessionController != null)
-            {
-                possessionController.ModeChanged -= HandlePossessionModeChanged;
-                possessionController.ModeChanged += HandlePossessionModeChanged;
-            }
-
+            SubscribePilotContext();
             RefreshVisibility();
         }
 
         void OnDisable()
         {
-            if (possessionController != null)
-            {
-                possessionController.ModeChanged -= HandlePossessionModeChanged;
-            }
-
+            UnsubscribePilotContext();
             SetVisible(false);
         }
 
@@ -88,8 +101,35 @@ namespace Farion.UI.Gameplay
             refreshRate = Mathf.Max(1f, refreshRate);
             navigationMarkerEdgePadding =
                 Mathf.Max(0f, navigationMarkerEdgePadding);
+            if (pilotContextSource != null && pilotContextSource is not ILocalPilotContext)
+            {
+                pilotContextSource = null;
+            }
+
             ResolveTheme();
             ApplyTheme();
+        }
+
+        void ResolvePilotContext()
+        {
+            pilotContext ??= pilotContextSource as ILocalPilotContext;
+        }
+
+        void SubscribePilotContext()
+        {
+            if (pilotContext != null)
+            {
+                pilotContext.ModeChanged -= HandlePossessionModeChanged;
+                pilotContext.ModeChanged += HandlePossessionModeChanged;
+            }
+        }
+
+        void UnsubscribePilotContext()
+        {
+            if (pilotContext != null)
+            {
+                pilotContext.ModeChanged -= HandlePossessionModeChanged;
+            }
         }
 
         void Update()
@@ -112,8 +152,8 @@ namespace Farion.UI.Gameplay
 
         void ResolveSources()
         {
-            SpacecraftMotor nextMotor = possessionController != null
-                ? possessionController.SpacecraftMotor
+            SpacecraftMotor nextMotor = pilotContext != null
+                ? pilotContext.PilotedSpacecraftMotor
                 : null;
             if (nextMotor == motor)
             {
@@ -378,9 +418,8 @@ namespace Farion.UI.Gameplay
         void RefreshVisibility()
         {
             SetVisible(
-                possessionController != null &&
-                possessionController.isActiveAndEnabled &&
-                possessionController.IsPilotingSpacecraft &&
+                pilotContext != null &&
+                pilotContext.CurrentMode == PlayerPossessionMode.Spacecraft &&
                 motor != null);
         }
 

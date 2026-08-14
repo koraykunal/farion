@@ -12,6 +12,7 @@ namespace Farion.Gameplay.Commands
         InventoryRejected = 7,
         SourceChanged = 8,
         RollbackFailed = 9,
-        StaleDestination = 10
+        StaleDestination = 10,
+        Pending = 11
     }
 }

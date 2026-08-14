@@ -12,6 +12,7 @@
         "Farion.Audio.Runtime",
         "Farion.UI.Runtime",
         "Farion.Multiplayer.Runtime",
+        "FishNet.Runtime",
         "Unity.InputSystem",
         "Farion.Tests.Support"
     ],

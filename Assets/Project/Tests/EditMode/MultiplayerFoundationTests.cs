@@ -1,5 +1,6 @@
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Session;
+using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.Spawning;
 using Farion.Multiplayer.World;
@@ -28,6 +29,19 @@ namespace Farion.Tests.EditMode
             Assert.That(
                 GameplaySessionModeRequest.ConsumeOrDefault(),
                 Is.EqualTo(GameplaySessionMode.Offline));
+        }
+
+        [Test]
+        public void SessionModeCanBeInspectedWithoutConsumingIt()
+        {
+            GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
+
+            Assert.That(
+                GameplaySessionModeRequest.RequestedOrDefault,
+                Is.EqualTo(GameplaySessionMode.Multiplayer));
+            Assert.That(
+                GameplaySessionModeRequest.ConsumeOrDefault(),
+                Is.EqualTo(GameplaySessionMode.Multiplayer));
         }
 
         [Test]
@@ -163,6 +177,34 @@ namespace Farion.Tests.EditMode
                 Is.True);
             Assert.That(request.Mode, Is.EqualTo(MultiplayerLaunchMode.Client));
             Assert.That(request.Address, Is.EqualTo("10.0.0.5"));
+        }
+
+        [TestCase(1UL, "explorer.net.1")]
+        [TestCase(42UL, "explorer.net.42")]
+        public void NetworkExplorerIdentityIsUniquePerSessionPlayer(
+            ulong sessionPlayerId,
+            string expected)
+        {
+            Assert.That(
+                NetworkExplorerController.BuildPersistentId(sessionPlayerId),
+                Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void HarvestDistanceIncludesBoundaryAndRejectsBeyondIt()
+        {
+            Assert.That(
+                NetworkGameplayCommands.IsWithinHarvestDistance(
+                    Vector3.zero,
+                    Vector3.forward * 6f,
+                    6f),
+                Is.True);
+            Assert.That(
+                NetworkGameplayCommands.IsWithinHarvestDistance(
+                    Vector3.zero,
+                    Vector3.forward * 6.01f,
+                    6f),
+                Is.False);
         }
     }
 }

@@ -729,7 +729,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                     half textureLuminance = max(dot(surfaceBaseColor, half3(0.2126h, 0.7152h, 0.0722h)), 0.05h);
                     half levelMatch = pow(landLuminance / textureLuminance, _SurfaceTextureLevelMatch);
                     half3 surfaceTexturedColor = saturate(surfaceBaseColor * levelMatch);
-                    landColor = lerp(landColor, surfaceTexturedColor, surfaceTextureMask * 0.65h);
+                    landColor = lerp(landColor, surfaceTexturedColor, surfaceTextureMask * 0.92h);
                 }
 
                 if (surfaceHeightWeight > 0.0001h)
@@ -853,7 +853,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 }
                 smoothness = lerp(smoothness, 1.0h - lavaRoughness, lavaMask);
                 smoothness = lerp(smoothness, 1.0h - snowRoughness, snowMask);
-                smoothness = lerp(smoothness, max(smoothness, 0.72h), wetnessMask * 0.65h);
+                smoothness = lerp(smoothness, max(smoothness, 0.48h), wetnessMask * 0.65h);
 
                 if (surfaceEmissionWeight > 0.0001h)
                 {

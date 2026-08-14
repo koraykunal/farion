@@ -7,7 +7,7 @@ namespace Farion.App.Flow
     [CreateAssetMenu(menuName = "Farion/Application/Game Flow Settings", fileName = "SO_GameFlowSettings")]
     public sealed class GameFlowSettings : ScriptableObject
     {
-        const string DefaultGameplaySceneName = "SC_Expedition";
+        const string DefaultGameplaySceneName = "SC_GameplayShell";
         const string DefaultMainMenuSceneName = "SC_MainMenu";
 
         [Header("Scenes")]

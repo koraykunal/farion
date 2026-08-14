@@ -1,8 +1,10 @@
+using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
+using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Session;
 using Farion.Rendering.Celestial;
@@ -29,7 +31,7 @@ namespace Farion.Tests.PlayMode
             GameplaySessionModeRequest.Cancel();
             if (testRoot != null)
             {
-                Object.Destroy(testRoot);
+                UnityEngine.Object.Destroy(testRoot);
                 yield return null;
             }
         }
@@ -239,7 +241,7 @@ namespace Farion.Tests.PlayMode
             Assert.That(player.parent, Is.SameAs(testRoot.transform));
             Assert.That(player.localPosition.magnitude, Is.LessThan(3000f));
 
-            Object.Destroy(player.gameObject);
+            UnityEngine.Object.Destroy(player.gameObject);
             yield return null;
         }
 

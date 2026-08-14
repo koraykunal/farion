@@ -130,6 +130,19 @@ namespace Farion.Rendering.Lighting
             RenderSettings.ambientMode = profile.AmbientMode;
             RenderSettings.ambientLight = profile.AmbientLight;
 
+            if (profile.ReflectionCubemap != null)
+            {
+                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                RenderSettings.customReflectionTexture = profile.ReflectionCubemap;
+            }
+            else
+            {
+                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+                RenderSettings.customReflectionTexture = null;
+            }
+
+            RenderSettings.reflectionIntensity = profile.ReflectionIntensity;
+
             if (profile.DisableFog)
             {
                 RenderSettings.fog = false;

@@ -9,10 +9,7 @@ EditorBuildSettings:
     path: Assets/Project/Scenes/SC_MainMenu.unity
     guid: cb69da1998642724cbfcc3e460266fda
   - enabled: 1
-    path: Assets/Project/Scenes/SC_Expedition.unity
-    guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
-    path: Assets/Project/Scenes/SC_MultiplayerShell.unity
+    path: Assets/Project/Scenes/SC_GameplayShell.unity
     guid: 5cbd96187b795314c91beae82ffc5d9a
   - enabled: 1
     path: Assets/Project/Scenes/SC_WorldZone.unity

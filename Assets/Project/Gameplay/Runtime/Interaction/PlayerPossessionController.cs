@@ -18,7 +18,8 @@ namespace Farion.Gameplay.Interaction
     [DisallowMultipleComponent]
     public sealed class PlayerPossessionController :
         MonoBehaviour,
-        ICelestialSurfaceCollisionObserver
+        ICelestialSurfaceCollisionObserver,
+        ILocalPilotContext
     {
         [Header("Mode")]
         [SerializeField] PlayerPossessionMode initialMode = PlayerPossessionMode.Spacecraft;
@@ -93,6 +94,7 @@ namespace Farion.Gameplay.Interaction
                 return spacecraftMotor;
             }
         }
+        public SpacecraftMotor PilotedSpacecraftMotor => SpacecraftMotor;
         public PlayerInteractionRaycaster ExplorerInteractionRaycaster
         {
             get
@@ -160,6 +162,18 @@ namespace Farion.Gameplay.Interaction
         }
 
         public bool HasPersistentTargets => HasPersistentExplorerTarget && HasPersistentSpacecraftTarget;
+
+        public void BindPresentation(
+            SpacecraftCameraRig spacecraftCamera,
+            FirstPersonCameraRig firstPersonCamera,
+            PlayerControlLock sharedControlLock)
+        {
+            spacecraftCameraRig = spacecraftCamera;
+            firstPersonCameraRig = firstPersonCamera;
+            controlLock = sharedControlLock;
+            ApplyMode(currentMode, PlayerPossessionTransitionRequest.Bootstrap);
+        }
+
         public string ExplorerPersistentId
         {
             get
@@ -528,19 +542,9 @@ namespace Farion.Gameplay.Interaction
 
         void BindPossessionContextReceivers()
         {
-            if (spacecraftRoot == null)
+            if (spacecraftRoot != null)
             {
-                return;
-            }
-
-            MonoBehaviour[] behaviours =
-                spacecraftRoot.GetComponentsInChildren<MonoBehaviour>(true);
-            for (int i = 0; i < behaviours.Length; i++)
-            {
-                if (behaviours[i] is IPlayerPossessionContextReceiver receiver)
-                {
-                    receiver.SetPossessionController(this);
-                }
+                LocalPilotContextBinding.Apply(spacecraftRoot, this);
             }
         }
 

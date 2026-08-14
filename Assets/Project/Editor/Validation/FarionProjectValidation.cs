@@ -48,7 +48,7 @@ namespace Farion.Editor.Validation
     public sealed partial class FarionProjectValidator : IPreprocessBuildWithReport
     {
         const string MultiplayerPresentationScenePath =
-            FarionAssetPaths.MultiplayerShellScene;
+            FarionAssetPaths.GameplayShellScene;
         const string WorldZoneScenePath =
             FarionAssetPaths.WorldZoneScene;
 
@@ -459,7 +459,11 @@ namespace Farion.Editor.Validation
             FarionValidationReport report)
         {
             SerializedObject serialized = new(controller);
-            ValidateRequiredReference(scenePath, controller, "controlLock", report);
+            if (scenePath != WorldZoneScenePath)
+            {
+                ValidateRequiredReference(scenePath, controller, "controlLock", report);
+            }
+
             Transform spacecraftRoot =
                 serialized.FindProperty("spacecraftRoot")?.objectReferenceValue as Transform;
             if (spacecraftRoot == null)

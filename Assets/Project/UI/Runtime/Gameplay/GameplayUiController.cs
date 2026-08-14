@@ -58,6 +58,19 @@ namespace Farion.UI.Gameplay
             RefreshHud();
         }
 
+        public void BindSession(
+            GameplaySessionController controller,
+            PlayerInteractionRaycaster raycaster)
+        {
+            UnbindItemAcquisitionFeedback();
+            sessionController = controller;
+            interactionRaycaster = raycaster;
+            playerInventory = null;
+            ResolveReferences();
+            BindItemAcquisitionFeedback();
+            InitializeNavigation();
+        }
+
         public void SetSessionActions(Action returnToMainMenu, Action quitGame)
         {
             returnToMainMenuAction = returnToMainMenu;

@@ -1,4 +1,5 @@
 using Farion.Core.Physics;
+using Farion.Core.Persistence;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Interaction;
@@ -32,6 +33,7 @@ namespace Farion.Multiplayer.Player
 
         readonly PredictionRigidbody predictionRigidbody = new();
         readonly SyncVar<bool> possessionActive = new(true);
+        readonly SyncVar<ulong> sessionPlayerId = new();
         PredictionRigidbodyFirstPersonPhysicsBody physicsBody;
         Rigidbody body;
         CapsuleCollider capsule;
@@ -46,6 +48,21 @@ namespace Farion.Multiplayer.Player
         public KeyboardFirstPersonInput Input => input;
         public PlayerInteractionRaycaster InteractionRaycaster =>
             interactionRaycaster;
+        public ulong SessionPlayerId => sessionPlayerId.Value;
+
+        internal void InitializeIdentity(ulong value)
+        {
+            if (value == 0UL)
+            {
+                return;
+            }
+
+            sessionPlayerId.Value = value;
+            ApplyPersistentIdentity();
+        }
+
+        internal static string BuildPersistentId(ulong value) =>
+            value == 0UL ? string.Empty : $"explorer.net.{value}";
 
         void Awake()
         {
@@ -90,6 +107,7 @@ namespace Farion.Multiplayer.Player
 
         public override void OnStartClient()
         {
+            ApplyPersistentIdentity();
             sceneContext = MultiplayerSceneContext.FindIn(gameObject.scene);
             if (sceneContext != null)
             {
@@ -317,6 +335,15 @@ namespace Farion.Multiplayer.Player
                 {
                     ownerHiddenRenderers[i].enabled = visible;
                 }
+            }
+        }
+
+        void ApplyPersistentIdentity()
+        {
+            string persistentId = BuildPersistentId(sessionPlayerId.Value);
+            if (!string.IsNullOrEmpty(persistentId))
+            {
+                GetComponent<PersistentObjectId>()?.SetId(persistentId);
             }
         }
 

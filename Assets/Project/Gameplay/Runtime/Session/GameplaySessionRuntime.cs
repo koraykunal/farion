@@ -25,8 +25,7 @@ namespace Farion.Gameplay.Session
         public FleetRuntime Fleet => Bindings.Fleet;
         public FleetKnowledgeRuntime FleetKnowledge => Bindings.FleetKnowledge;
         public FleetStorageInventory FleetStorage => Bindings.FleetStorage;
-        public ShuttleRuntimeBinding ShuttleBinding =>
-            Bindings.AssignedShuttle;
+        public ShuttleRuntimeBinding ShuttleBinding => Bindings.AssignedShuttle;
         public static bool TryCreate(
             string localPlayerId,
             GameplayRuntimeBindings bindings,

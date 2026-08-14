@@ -52,6 +52,11 @@ namespace Farion.Gameplay.Presentation.Flight
         ChromaticAberration chromaticAberration;
         float responseBlend;
 
+        public void SetMotor(SpacecraftMotor value)
+        {
+            motor = value;
+        }
+
         void OnValidate()
         {
             motor ??= GetComponentInParent<SpacecraftMotor>();

@@ -44,6 +44,13 @@ namespace Farion.Rendering.Lighting
         [SerializeField] float ambientIntensity = 1f;
         [SerializeField] bool disableFog = true;
 
+        [Header("Environment Reflection")]
+        [Tooltip("Specular environment for metals. The star dome skybox reflects near black, "
+            + "which collapses every metallic surface to a flat unlit tone.")]
+        [SerializeField] Cubemap reflectionCubemap;
+        [Range(0f, 2f)]
+        [SerializeField] float reflectionIntensity = 1f;
+
         [Header("Camera Defaults")]
         [SerializeField] bool applyCameraDefaults = true;
         [SerializeField] CameraClearFlags cameraClearFlags = CameraClearFlags.Skybox;
@@ -68,6 +75,8 @@ namespace Farion.Rendering.Lighting
         public AmbientMode AmbientMode => ambientMode;
         public Color AmbientLight => ambientLight * ambientIntensity;
         public bool DisableFog => disableFog;
+        public Cubemap ReflectionCubemap => reflectionCubemap;
+        public float ReflectionIntensity => Mathf.Max(0f, reflectionIntensity);
         public bool ApplyCameraDefaults => applyCameraDefaults;
         public CameraClearFlags CameraClearFlags => cameraClearFlags;
         public Color CameraBackground => cameraBackground;

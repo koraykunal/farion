@@ -1,6 +1,6 @@
-# SC_Expedition Setup
+# Gameplay Scene Setup
 
-Use `Assets/Project/Scenes/SC_Expedition.unity` as the first authored scene.
+Use `Assets/Project/Scenes/SC_GameplayShell.unity` as the gameplay entry scene; it loads `SC_WorldZone` additively.
 Do not use a scene builder.
 
 ## Scene Hierarchy
@@ -626,7 +626,7 @@ lowering exposure. The star dome does not own nebula rendering.
 ### Volumetric Nebula
 
 `Bodies/NebulaVolume` owns the single world-space nebula in
-`SC_Expedition`. `FarionNebulaRendererFeature` raymarches only inside that
+`SC_GameplayShell` + `SC_WorldZone`. `FarionNebulaRendererFeature` raymarches only inside that
 sphere, stops at scene depth, and is wired through `PC_Renderer.asset`.
 
 The density model uses the supplied Shadertoy spiral-wave volume. `Structure
@@ -644,7 +644,7 @@ The scene must have exactly one `GlobalVolume` under `Lighting`:
 1. Create or select `GlobalVolume`.
 2. Enable `Is Global`.
 3. Create/assign a scene Volume Profile under
-   `Assets/Project/Scenes/SC_Expedition`.
+   `Assets/Project/Scenes/SC_GameplayShell`.
 4. Add these overrides:
    - `Bloom`: enabled, low threshold, moderate intensity for the star material.
    - `Tonemapping`: `ACES`.
@@ -775,9 +775,14 @@ For a camera:
 5. Keep obstacle avoidance enabled. The camera ignores colliders under its
    spacecraft target and sphere-casts against the configured obstacle layers.
 
-`SC_Expedition` includes the production flight HUD presenter under
+`SC_GameplayShell` includes the production flight HUD presenter under
 `GameplayCanvas/HudRoot/SpacecraftFlightHud`. It is visible only while the
 player is piloting and reads existing flight/landing telemetry.
+
+`SpacecraftFlightHudPresenter > Pilot Context Source` takes any component that
+implements `ILocalPilotContext`. Offline, that is `Player Possession` from `SC_WorldZone`.
+In multiplayer it is assigned at runtime by
+`MultiplayerSceneContext`; do not serialize a cross-scene reference there.
 
 ### Starter Shuttle Production Rig Gate
 
@@ -1291,3 +1296,40 @@ Tune `SO_PlayerStarterShuttleLandingProfile` only after confirming the sample
 values make sense in Play Mode. Its touchdown altitude includes the current
 starter-shuttle gear clearance; a different hull must own a separate landing
 profile rather than silently reusing this geometry-dependent value.
+
+## Multiplayer Scene Pair
+
+Multiplayer is `SC_GameplayShell` loaded as the global scene plus
+`SC_WorldZone` loaded per connection. The split is an ownership rule, not a
+convenience.
+
+`SC_GameplayShell` owns presentation only:
+
+- `CameraRig/Camera` with `SpacecraftCameraRig`, `FirstPersonCameraRig`,
+  `StudioListener`, a camera-local `Volume`, and `FarionPostProcessRig`.
+- `Lighting` with the single `Directional Light`, `CelestialLightingRig`,
+  `StarDomeController`, `CelestialLodController`, `CelestialOrbitLineRenderer`,
+  and `GlobalVolume`.
+- `MultiplayerGameplayCanvas` with the UI composition, `HudRoot`, and the
+  `UI_SpacecraftFlightHud` instance.
+- `MultiplayerPresentation` with `PlayerControlLock`.
+
+`SC_WorldZone` owns world content only: `SimulationZoneContext`,
+`GravitySimulation`, `CelestialFrameProvider`, `WorldOriginRebaser`, the
+celestial bodies, resource streamers, spawn points, and the four starter-ship
+formations. It must not contain a camera, an audio listener, a `Light`, or a
+`CelestialLightingRig`; project validation rejects each of those.
+
+`GameplaySceneShellController` owns the shell references. Offline it loads and
+binds `SC_WorldZone`; multiplayer hands the same controller to
+`MultiplayerSceneContext.BindPresentation`, which assigns the camera to the LOD
+controller and every `CelestialSurfacePatchSystem`, the simulation to the orbit
+lines, the star light source to the lighting rig, and itself to the flight HUD
+as the pilot context. Leave those fields empty in the authored scenes; do not
+serialize a cross-scene reference to work around the runtime binding.
+
+Multiplayer piloting controls match single player. `C` toggles exterior and
+cockpit view through `MultiplayerSceneContext`, `F` leaves the pilot seat, and
+`G` requests a landing-gear toggle from the server. The network starter ship
+disables `SpacecraftLandingGearAnimator > Allow Manual Toggle` on purpose: gear
+state is a server-owned SyncVar so every peer agrees on gear colliders.

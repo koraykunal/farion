@@ -24,18 +24,9 @@ namespace Farion.Tests.PlayMode
         const string UnloadWorkflowSlot = "playmode-unload-workflow";
 
         [UnityTest]
-        public IEnumerator ExpeditionSupportsExitAndReenterPilotLoop()
+        public IEnumerator GameplayShellSupportsExitAndReenterPilotLoop()
         {
-            AsyncOperation load = SceneManager.LoadSceneAsync(
-                "SC_Expedition",
-                LoadSceneMode.Single);
-            Assert.That(load, Is.Not.Null);
-            while (!load.isDone)
-            {
-                yield return null;
-            }
-
-            yield return null;
+            yield return LoadGameplayShell();
 
             PlayerPossessionController controller =
                 Object.FindAnyObjectByType<PlayerPossessionController>();
@@ -83,23 +74,14 @@ namespace Farion.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator ExpeditionCompletesHarvestUnloadAndSaveLoadWorkflow()
+        public IEnumerator GameplayShellCompletesHarvestUnloadAndSaveLoadWorkflow()
         {
             SaveGameFileService.DeleteSlot(UnloadWorkflowSlot);
             SaveGameStartupRequest.RequestNewGame();
 
             try
             {
-                AsyncOperation load = SceneManager.LoadSceneAsync(
-                    "SC_Expedition",
-                    LoadSceneMode.Single);
-                Assert.That(load, Is.Not.Null);
-                while (!load.isDone)
-                {
-                    yield return null;
-                }
-
-                yield return null;
+                yield return LoadGameplayShell();
 
                 GameplaySessionController controller =
                     Object.FindAnyObjectByType<GameplaySessionController>();
@@ -256,14 +238,48 @@ namespace Farion.Tests.PlayMode
             return null;
         }
 
+        static IEnumerator LoadGameplayShell()
+        {
+            AsyncOperation load = SceneManager.LoadSceneAsync(
+                "SC_GameplayShell",
+                LoadSceneMode.Single);
+            Assert.That(load, Is.Not.Null);
+            while (!load.isDone)
+            {
+                yield return null;
+            }
+
+            for (int frame = 0;
+                 frame < 300 && !SceneManager.GetSceneByName("SC_WorldZone").isLoaded;
+                 frame++)
+            {
+                yield return null;
+            }
+
+            Assert.That(
+                SceneManager.GetSceneByName("SC_WorldZone").isLoaded,
+                Is.True,
+                "Gameplay shell did not load SC_WorldZone.");
+            yield return null;
+        }
+
         static IEnumerator StreamNearestDeposit()
         {
-            ResourceDepositRuntimeSpawner spawner =
-                Object.FindAnyObjectByType<ResourceDepositRuntimeSpawner>();
-            Assert.That(spawner, Is.Not.Null);
-            spawner.Regenerate();
-            Assert.That(spawner.Body, Is.Not.Null);
-            Assert.That(spawner.GeneratedDeposits.Count, Is.GreaterThan(0));
+            ResourceDepositRuntimeSpawner spawner = null;
+            ResourceDepositRuntimeSpawner[] spawners =
+                Object.FindObjectsByType<ResourceDepositRuntimeSpawner>(
+                    FindObjectsInactive.Exclude);
+            for (int i = 0; i < spawners.Length; i++)
+            {
+                spawners[i].Regenerate();
+                if (spawners[i].Body != null && spawners[i].GeneratedDeposits.Count > 0)
+                {
+                    spawner = spawners[i];
+                    break;
+                }
+            }
+
+            Assert.That(spawner, Is.Not.Null, "No world-zone resource spawner generated deposits.");
 
             Transform probe = new GameObject("DepositStreamingProbe").transform;
             int attempts = Mathf.Min(6, spawner.GeneratedDeposits.Count);
@@ -289,8 +305,7 @@ namespace Farion.Tests.PlayMode
         static ResourceNodeInteractable FindAddressableResource()
         {
             ResourceNodeInteractable[] nodes = Object.FindObjectsByType<ResourceNodeInteractable>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
+                FindObjectsInactive.Exclude);
             for (int i = 0; i < nodes.Length; i++)
             {
                 if (nodes[i] != null && nodes[i].DepositId.IsValid)

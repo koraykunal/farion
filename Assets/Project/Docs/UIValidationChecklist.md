@@ -69,7 +69,7 @@ Open `Assets/Project/Scenes/SC_MainMenu.unity`, clear Console, and enter Play Mo
 
 ## Gameplay
 
-Open `Assets/Project/Scenes/SC_Expedition.unity`, clear Console, and enter
+Open `Assets/Project/Scenes/SC_GameplayShell.unity`, clear Console, and enter
 Play Mode.
 
 - HUD is visible and does not lock ship or explorer input.

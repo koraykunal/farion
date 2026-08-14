@@ -304,13 +304,16 @@ new schema is allowed only after those runtime owners exist.
 - Multiplayer uses a separate one-shot session mode. Offline save, inventory,
   possession, shuttle control, and commands remain inactive during that mode;
   the server owns player spawning, movement reconciliation, and origin shifts.
-- Multiplayer composition is `SC_MultiplayerShell` for local presentation plus
+- Gameplay composition is `SC_GameplayShell` for local presentation plus
   one shared `SC_WorldZone` connection scene with isolated 3D physics. The
   current origin authority is intentionally single-zone; loading a different
   zone is rejected until origin state and broadcasts are keyed by zone id.
-- Starter ships currently provide server-spawned parked identities and authored
-  formations only. Network boarding, possession, ship movement authority, and
-  replicated flight are not implemented.
+- Starter ships are server-spawned into authored formations and stay unowned
+  until claimed. Claiming transfers ownership, boarding moves the explorer
+  through `OnFoot -> ShipInterior -> Spacecraft`, and flight is predicted and
+  reconciled from the owner's input. Landing gear is a server-owned SyncVar
+  rather than a predicted input, because gear colliders must agree on every
+  peer; the network ship therefore disables its local manual toggle.
 - `PlanetSurfaceModel` is the environment authority. It owns terrain radius
   range, ocean radius, and atmosphere extent, computed from simulation profiles
   alone, and publishes them through `ICelestialEnvironmentProvider`. Rendering
@@ -322,6 +325,19 @@ new schema is allowed only after those runtime owners exist.
   `WorldFocusTracking` owns the origin-rebase and resource-streaming target.
   Offline possession and the multiplayer scene context both call the same
   owners instead of each duplicating the rules.
+- `ILocalPilotContext` is the single answer to what the local player controls
+  and from which viewpoint. `PlayerPossessionController` implements it offline
+  and `MultiplayerSceneContext` implements it online; the flight HUD, ship audio
+  perspective, and pilot camera view read only that contract.
+  `LocalPilotContextBinding` injects it into `ILocalPilotContextReceiver`
+  components under the controlled actor, so no owner serializes a cross-scene
+  reference and no second presentation path exists.
+- `SC_GameplayShell` owns every presentation service: the camera, both camera
+  rigs, `PlayerControlLock`, UI composition, flight HUD, post-process rig, star
+  dome, LOD controller, orbit lines, and the scene's single directional light and
+  `CelestialLightingRig`. `SC_WorldZone` owns world content only and receives
+  those owners through `GameplaySceneShellController`. A second light or
+  lighting rig in the zone scene fails validation.
 - Multiplayer freezes celestial integration and automatic origin rebasing on
   purpose: every peer must agree on body state, and frozen bodies agree
   trivially. Enabling integration requires a replicated or provably

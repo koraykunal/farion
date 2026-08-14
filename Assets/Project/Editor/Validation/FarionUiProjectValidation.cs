@@ -50,7 +50,7 @@ namespace Farion.Editor.Validation
             FarionAssetPaths.UiFlightHudPrefab;
         const string UiPrefabFolder = FarionAssetPaths.UiPrefabRoot;
         const string MultiplayerPresentationScenePath =
-            FarionAssetPaths.MultiplayerShellScene;
+            FarionAssetPaths.GameplayShellScene;
         const string MenuButtonFramePath =
             FarionAssetPaths.UiMenuButtonFrameTexture;
         const string LegacyFontPath =

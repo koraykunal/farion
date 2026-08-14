@@ -24,8 +24,11 @@ using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.Spawning;
 using Farion.Multiplayer.World;
+using Farion.Rendering.Celestial;
+using Farion.Rendering.Lighting;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
+using Farion.UI.Gameplay;
 using FMODUnity;
 using FishNet.Component.Observing;
 using FishNet.Component.Transforming.Beta;
@@ -41,6 +44,8 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
 namespace Farion.Editor.Validation
@@ -65,6 +70,32 @@ namespace Farion.Editor.Validation
             {
                 report.AddError(
                     $"{scenePath}: a simulation zone must not duplicate global audio ownership.");
+            }
+
+            if (FindSceneComponents<Light>(scene)
+                    .Any(light => light.type == LightType.Directional) ||
+                FindSceneComponents<CelestialLightingRig>(scene).Length > 0)
+            {
+                report.AddError(
+                    $"{scenePath}: a simulation zone must not duplicate global lighting ownership.");
+            }
+
+            if (FindSceneComponents<Camera>(scene).Length > 0 ||
+                FindSceneComponents<GameplayUiController>(scene).Length > 0 ||
+                FindSceneComponents<PlayerControlLock>(scene).Length > 0 ||
+                FindSceneComponents<EventSystem>(scene).Length > 0 ||
+                FindSceneComponents<Volume>(scene).Length > 0)
+            {
+                report.AddError(
+                    $"{scenePath}: a simulation zone must not duplicate gameplay presentation ownership.");
+            }
+
+            GameplayRuntimeRoot[] runtimeRoots =
+                FindSceneComponents<GameplayRuntimeRoot>(scene);
+            if (runtimeRoots.Length != 1)
+            {
+                report.AddError(
+                    $"{scenePath}: expected one GameplayRuntimeRoot, found {runtimeRoots.Length}.");
             }
 
             MultiplayerSceneContext[] contexts =
@@ -112,14 +143,36 @@ namespace Farion.Editor.Validation
             string scenePath,
             FarionValidationReport report)
         {
-            if (FindSceneComponents<Camera>(scene).Length != 1 ||
+            GameplaySceneShellController[] shells =
+                FindSceneComponents<GameplaySceneShellController>(scene);
+            if (shells.Length != 1 ||
+                FindSceneComponents<Camera>(scene).Length != 1 ||
                 FindSceneComponents<FirstPersonCameraRig>(scene).Length != 1 ||
                 FindSceneComponents<SpacecraftCameraRig>(scene).Length != 1 ||
-                FindSceneComponents<PlayerControlLock>(scene).Length != 1)
+                FindSceneComponents<PlayerControlLock>(scene).Length != 1 ||
+                FindSceneComponents<GameplayUiController>(scene).Length != 1 ||
+                FindSceneComponents<CelestialLightingRig>(scene).Length != 1 ||
+                FindSceneComponents<CelestialLodController>(scene).Length != 1)
             {
                 report.AddError(
-                    $"{scenePath}: multiplayer presentation requires exactly one " +
-                    "Camera, FirstPersonCameraRig, SpacecraftCameraRig, and PlayerControlLock.");
+                    $"{scenePath}: gameplay presentation requires exactly one shell controller, " +
+                    "Camera, camera rigs, PlayerControlLock, GameplayUiController, " +
+                    "CelestialLightingRig, and CelestialLodController.");
+            }
+            else if (!shells[0].IsValid ||
+                     new SerializedObject(shells[0])
+                         .FindProperty("worldSceneName")?.stringValue != "SC_WorldZone")
+            {
+                report.AddError(
+                    $"{scenePath}: gameplay shell bindings or world-scene routing are incomplete.");
+            }
+
+            if (FindSceneComponents<SpacecraftFlightHudPresenter>(scene).Length != 1 ||
+                FindSceneComponents<FarionPostProcessRig>(scene).Length != 1)
+            {
+                report.AddError(
+                    $"{scenePath}: gameplay presentation requires exactly one " +
+                    "SpacecraftFlightHudPresenter and FarionPostProcessRig.");
             }
 
             if (FindSceneComponents<CelestialBody>(scene).Length > 0 ||
@@ -127,7 +180,7 @@ namespace Farion.Editor.Validation
                 FindSceneComponents<GameplayRuntimeRoot>(scene).Length > 0)
             {
                 report.AddError(
-                    $"{scenePath}: multiplayer presentation must not own world simulation or offline gameplay state.");
+                    $"{scenePath}: gameplay presentation must not own world simulation or offline gameplay state.");
             }
         }
 
@@ -216,7 +269,7 @@ namespace Farion.Editor.Validation
                 if (controllerSerialized.FindProperty("zoneCoordinator")
                         ?.objectReferenceValue != zoneCoordinator ||
                     controllerSerialized.FindProperty("presentationSceneName")
-                        ?.stringValue != "SC_MultiplayerShell" ||
+                        ?.stringValue != "SC_GameplayShell" ||
                     controllerSerialized.FindProperty("startingZoneSceneName")
                         ?.stringValue != "SC_WorldZone")
                 {
@@ -267,6 +320,13 @@ namespace Farion.Editor.Validation
                 report.AddError($"{playerPath}: predicted network explorer composition is invalid.");
             }
 
+            if (player.GetComponent<PersistentObjectId>() == null ||
+                player.GetComponentInChildren<PlayerInventory>(true) == null)
+            {
+                report.AddError(
+                    $"{playerPath}: network explorer prefab must carry PersistentObjectId and PlayerInventory.");
+            }
+
             NetworkObject sessionPlayerObject =
                 sessionPlayer.GetComponent<NetworkObject>();
             NetworkSessionPlayer networkSessionPlayer =
@@ -280,6 +340,25 @@ namespace Farion.Editor.Validation
             {
                 report.AddError(
                     $"{sessionPlayerPath}: global session identity composition is invalid.");
+            }
+
+            NetworkGameplayCommands networkGameplayCommands =
+                sessionPlayer.GetComponent<NetworkGameplayCommands>();
+            if (networkGameplayCommands == null ||
+                sessionPlayerObject == null ||
+                sessionPlayerObject.NetworkBehaviours == null ||
+                !sessionPlayerObject.NetworkBehaviours.Contains(
+                    networkGameplayCommands))
+            {
+                report.AddError(
+                    $"{sessionPlayerPath}: NetworkGameplayCommands component is missing.");
+            }
+            else if (new SerializedObject(networkGameplayCommands)
+                         .FindProperty("maximumHarvestDistance")
+                         ?.floatValue <= 0f)
+            {
+                report.AddError(
+                    $"{sessionPlayerPath}: network harvest distance must be positive.");
             }
 
             NetworkObject starterShipObject =

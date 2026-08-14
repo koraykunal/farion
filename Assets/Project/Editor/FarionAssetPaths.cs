@@ -6,7 +6,7 @@ namespace Farion.Editor
         public const string UiPrefabRoot = "Assets/Project/Prefabs/UI";
 
         public const string WorldZoneScene = "Assets/Project/Scenes/SC_WorldZone.unity";
-        public const string MultiplayerShellScene = "Assets/Project/Scenes/SC_MultiplayerShell.unity";
+        public const string GameplayShellScene = "Assets/Project/Scenes/SC_GameplayShell.unity";
 
         public const string NetworkSessionRootPrefab =
             "Assets/Project/Resources/Multiplayer/PF_NetworkSessionRoot.prefab";

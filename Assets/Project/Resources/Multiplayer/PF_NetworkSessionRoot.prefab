@@ -132,7 +132,7 @@ MonoBehaviour:
   playerSpawner: {fileID: 4048371549262804779}
   worldOriginAuthority: {fileID: 2836211278628195314}
   zoneCoordinator: {fileID: 7090663307120114388}
-  presentationSceneName: SC_MultiplayerShell
+  presentationSceneName: SC_GameplayShell
   startingZoneSceneName: SC_WorldZone
 --- !u!114 &4048371549262804779
 MonoBehaviour:

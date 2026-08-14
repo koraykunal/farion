@@ -86,6 +86,7 @@ GameObject:
   - component: {fileID: 1038668910325224647}
   - component: {fileID: 4696739717027959432}
   - component: {fileID: 9200000000000000001}
+  - component: {fileID: 9200000000000000002}
   m_Layer: 5
   m_Name: UI_SpacecraftFlightHud
   m_TagString: Untagged
@@ -129,6 +130,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Settings.UiSafeAreaFitter
   target: {fileID: 1038668910325224647}
   minimumPadding: {x: 32, y: 32}
+--- !u!114 &9200000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 240308224641177112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e1c9a6b73d84f2a8c5e07b1d9f3a2c6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.HudDisplayRenderer
+  displayMaterial: {fileID: 2100000, guid: 2b8f6ad4c1734e0a9d5c83f1b7e02594, type: 2}
+  resolutionScale: 1
 --- !u!114 &4696739717027959432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -142,7 +157,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.Gameplay.SpacecraftFlightHudPresenter
   theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
-  possessionController: {fileID: 0}
+  pilotContextSource: {fileID: 0}
   navigationTarget: {fileID: 0}
   worldCamera: {fileID: 0}
   navigationText: {fileID: 3472754705598330756}
@@ -640,7 +655,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

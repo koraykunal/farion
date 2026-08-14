@@ -68,6 +68,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7246138248365821139}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8804159228472226319}
+    - targetCorrespondingSourceObject: {fileID: 460954153009189411, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5868878620423726060}
     - targetCorrespondingSourceObject: {fileID: 3821590133421603000, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6508252084040059505}
@@ -75,6 +81,11 @@ PrefabInstance:
 --- !u!4 &1587842498773394760 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8099207095619332059, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5953655971601681444 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3814739279682014903, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
   m_PrefabInstance: {fileID: 7381135520629162643}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &6009504344761039403 stripped
@@ -92,7 +103,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 453481867b26f7c43b5bf38802a5f50e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Component.Transforming.Beta.NetworkTickSmoother
   _componentIndexCache: 1
   _addedNetworkObject: {fileID: 2325502369699534513}
@@ -125,7 +136,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
 --- !u!1 &6920533967313834160 stripped
 GameObject:
@@ -142,7 +153,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
   mouseSensitivity: 2.5
   gamepadLookDegreesPerSecond: 150
@@ -157,7 +168,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
@@ -216,7 +227,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27a86fd7a79b4e549aef6ae3f80b5aac, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Player.NetworkExplorerController
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 2325502369699534513}
@@ -227,16 +238,6 @@ MonoBehaviour:
   interactionRaycaster: {fileID: 7246138248365821139}
   ownerHiddenRenderers:
   - {fileID: 8144684682209624723}
---- !u!23 &8144684682209624723 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 1686796207704571904, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
-  m_PrefabInstance: {fileID: 7381135520629162643}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &7246138248365821140 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3814739279682014903, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
-  m_PrefabInstance: {fileID: 7381135520629162643}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &7246138248365821139
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -251,7 +252,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
   inputSource: {fileID: 1409566100695945647}
   controlLock: {fileID: 0}
-  viewReference: {fileID: 7246138248365821140}
+  viewReference: {fileID: 5953655971601681444}
   maxDistance: 6
   castRadius: 0.35
   interactionLayers:
@@ -261,3 +262,36 @@ MonoBehaviour:
   hasTarget: 0
   currentPrompt:
   currentTargetTransform: {fileID: 0}
+--- !u!114 &8804159228472226319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920533967313834160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
+  persistentId:
+--- !u!114 &5868878620423726060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6920533967313834160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
+  fallbackContainerId: inventory.local
+  slotCapacity: 12
+  stacks: []
+--- !u!23 &8144684682209624723 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1686796207704571904, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}

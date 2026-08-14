@@ -1,6 +1,7 @@
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Session;
 using Farion.Simulation.Celestial;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ namespace Farion.Audio.Spacecraft
 {
     [DefaultExecutionOrder(315)]
     [DisallowMultipleComponent]
-    public sealed class ShipAudioTelemetryProvider : MonoBehaviour, IPlayerPossessionContextReceiver
+    public sealed class ShipAudioTelemetryProvider : MonoBehaviour, ILocalPilotContextReceiver
     {
         [Header("Tuning")]
         [SerializeField] SpacecraftAudioTuningProfile tuningProfile;
@@ -19,7 +20,7 @@ namespace Farion.Audio.Spacecraft
         [SerializeField] SpacecraftSurfaceContactProbe surfaceContactProbe;
         [SerializeField] SpacecraftOceanInteractor oceanInteractor;
         [SerializeField] SpacecraftAtmosphereInteractor atmosphereInteractor;
-        [SerializeField] PlayerPossessionController possessionController;
+        [SerializeField] MonoBehaviour pilotContextSource;
 
         [Header("Runtime Debug")]
         [SerializeField, Range(0f, 1f)] float debugEngineLoad;
@@ -32,12 +33,13 @@ namespace Farion.Audio.Spacecraft
         ShipAudioTelemetry telemetry = ShipAudioTelemetry.Silent;
         float lastContactTime = float.NegativeInfinity;
         float impactEnvelope;
+        ILocalPilotContext pilotContext;
 
         public ShipAudioTelemetry Telemetry => telemetry;
 
-        public void SetPossessionController(PlayerPossessionController controller)
+        public void SetPilotContext(ILocalPilotContext context)
         {
-            possessionController = controller;
+            pilotContext = context;
         }
 
         void Reset()
@@ -47,11 +49,17 @@ namespace Farion.Audio.Spacecraft
 
         void Awake()
         {
+            AutoAssignSources();
             RefreshTelemetry();
         }
 
         void OnValidate()
         {
+            if (pilotContextSource != null && pilotContextSource is not ILocalPilotContext)
+            {
+                pilotContextSource = null;
+            }
+
             AutoAssignSources();
         }
 
@@ -123,7 +131,8 @@ namespace Farion.Audio.Spacecraft
             surfaceContactProbe ??= GetComponentInParent<SpacecraftSurfaceContactProbe>();
             oceanInteractor ??= GetComponentInParent<SpacecraftOceanInteractor>();
             atmosphereInteractor ??= GetComponentInParent<SpacecraftAtmosphereInteractor>();
-            possessionController ??= GetComponentInParent<PlayerPossessionController>();
+            pilotContextSource ??= GetComponentInParent<PlayerPossessionController>();
+            pilotContext ??= pilotContextSource as ILocalPilotContext;
         }
 
         float CalculateMainThrustDemand(SpacecraftThrusterCommand thrusters)
@@ -182,14 +191,14 @@ namespace Farion.Audio.Spacecraft
 
         SpacecraftAudioPerspective ResolvePerspective()
         {
-            if (possessionController == null)
+            if (pilotContext == null)
             {
                 return SpacecraftAudioPerspective.Exterior;
             }
 
-            return possessionController.CurrentMode switch
+            return pilotContext.CurrentMode switch
             {
-                PlayerPossessionMode.Spacecraft => possessionController.CurrentPilotCameraView == SpacecraftPilotCameraView.Cockpit
+                PlayerPossessionMode.Spacecraft => pilotContext.CurrentPilotCameraView == SpacecraftPilotCameraView.Cockpit
                     ? SpacecraftAudioPerspective.Cockpit
                     : SpacecraftAudioPerspective.Exterior,
                 PlayerPossessionMode.ShipInterior => SpacecraftAudioPerspective.ShipInterior,

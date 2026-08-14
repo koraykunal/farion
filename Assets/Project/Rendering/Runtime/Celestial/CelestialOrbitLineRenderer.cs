@@ -50,6 +50,17 @@ namespace Farion.Rendering.Celestial
             }
         }
 
+        public void SetSimulation(GravitySimulation value)
+        {
+            if (simulation == value)
+            {
+                return;
+            }
+
+            simulation = value;
+            RefreshOrbitLines();
+        }
+
         void OnEnable()
         {
             RefreshOrbitLines();

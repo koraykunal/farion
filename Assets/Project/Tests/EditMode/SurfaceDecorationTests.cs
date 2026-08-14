@@ -138,7 +138,6 @@ namespace Farion.Tests.EditMode
             }
         }
 
-        [TestCase("Assets/Project/Scenes/SC_Expedition.unity")]
         [TestCase("Assets/Project/Scenes/SC_WorldZone.unity")]
         public void TargetScene_HasConfiguredVisualOnlySurfaceDecorationRenderer(string scenePath)
         {

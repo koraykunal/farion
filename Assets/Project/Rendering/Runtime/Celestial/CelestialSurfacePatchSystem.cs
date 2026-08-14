@@ -103,6 +103,17 @@ namespace Farion.Rendering.Celestial
         public int LastTransitionCommitFrame => lastTransitionCommitFrame;
         public Camera TargetCamera => ResolveCamera();
 
+        public void SetCamera(Camera camera)
+        {
+            if (targetCamera == camera)
+            {
+                return;
+            }
+
+            targetCamera = camera;
+            forceRefresh = true;
+        }
+
         public void SetCollisionObserverSource(MonoBehaviour source)
         {
             collisionObserverSource = source;

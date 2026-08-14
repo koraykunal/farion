@@ -59,7 +59,7 @@ Material:
     - _SteepBands: 8
     - _SteepnessThreshold: 0.378
     - _StochasticTiling: 1
-    - _SurfaceTextureLevelMatch: 0.65
+    - _SurfaceTextureLevelMatch: 0.25
     - _SurfaceWeightWarp: 0.03
     m_Colors:
     - _FlatHighA: {r: 0.19, g: 0.46, b: 0, a: 1}

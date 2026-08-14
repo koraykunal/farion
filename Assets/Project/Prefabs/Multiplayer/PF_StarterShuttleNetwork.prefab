@@ -20,6 +20,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4332399351985421442, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: allowManualToggle
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -152,7 +156,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584151866813889545
+  _initializedTimestamp: -8584149302390852424
 --- !u!114 &3078003891906690678
 MonoBehaviour:
   m_ObjectHideFlags: 0

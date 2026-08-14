@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4154016048901632648}
   - component: {fileID: 137434322254670392}
   - component: {fileID: 4394547470963768641}
+  - component: {fileID: 5698268374119013463}
   m_Layer: 0
   m_Name: PF_NetworkSessionPlayer
   m_TagString: Untagged
@@ -43,7 +44,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: FishNet.Runtime::FishNet.Object.NetworkObject
   _localLevelOfDetailCalculationType: 0
   _useLevelOfDetail: 0
@@ -80,6 +81,7 @@ MonoBehaviour:
   <PredictedOwner>k__BackingField: {fileID: 0}
   NetworkBehaviours:
   - {fileID: 4394547470963768641}
+  - {fileID: 5698268374119013463}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -101,8 +103,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0891238fe955435e95758e674bcc293d, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Session.NetworkSessionPlayer
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 137434322254670392}
   _networkObjectCache: {fileID: 137434322254670392}
+--- !u!114 &5698268374119013463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2312988675889428998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9926d4f6812db43871e6dd5b3f3e97, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Session.NetworkGameplayCommands
+  _componentIndexCache: 1
+  _addedNetworkObject: {fileID: 137434322254670392}
+  _networkObjectCache: {fileID: 137434322254670392}
+  maximumHarvestDistance: 6

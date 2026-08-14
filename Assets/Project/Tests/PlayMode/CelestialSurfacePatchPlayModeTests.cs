@@ -10,10 +10,10 @@ namespace Farion.Tests.PlayMode
     public sealed class CelestialSurfacePatchPlayModeTests
     {
         [UnityTest]
-        public IEnumerator ExpeditionHandsCollisionOffWithoutAnAuthorityGap()
+        public IEnumerator GameplayShellHandsCollisionOffWithoutAnAuthorityGap()
         {
             AsyncOperation load = SceneManager.LoadSceneAsync(
-                "SC_Expedition",
+                "SC_GameplayShell",
                 LoadSceneMode.Single);
             Assert.That(load, Is.Not.Null);
             while (!load.isDone)
@@ -21,6 +21,14 @@ namespace Farion.Tests.PlayMode
                 yield return null;
             }
 
+            for (int frame = 0;
+                 frame < 300 && !SceneManager.GetSceneByName("SC_WorldZone").isLoaded;
+                 frame++)
+            {
+                yield return null;
+            }
+
+            Assert.That(SceneManager.GetSceneByName("SC_WorldZone").isLoaded, Is.True);
             yield return null;
 
             CelestialSurfacePatchSystem patchSystem =
@@ -51,11 +59,20 @@ namespace Farion.Tests.PlayMode
             float outerRadius = bodyVisual.HasRenderRadiusRange
                 ? bodyVisual.RenderRadiusMinMax.y
                 : bodyVisual.Body.Radius;
-            camera.transform.position =
+            Vector3 farPosition =
                 patchSystem.transform.position +
                 surfaceDirection * (outerRadius + bodyVisual.Body.Radius * 1.1f);
-            yield return null;
-            yield return null;
+            camera.transform.position = farPosition;
+            collisionObserver.position = farPosition;
+            collisionObserver.linearVelocity =
+                bodyVisual.Body.GetVelocityAtPoint(farPosition);
+            for (int frame = 0;
+                 frame < 60 &&
+                 (patchSystem.SurfaceModeActive || patchSystem.PatchTransitionPending);
+                 frame++)
+            {
+                yield return null;
+            }
 
             Assert.That(patchSystem.SurfaceModeActive, Is.False);
             Assert.That(patchSystem.PatchTransitionPending, Is.False);
@@ -215,6 +232,7 @@ namespace Farion.Tests.PlayMode
 
         static void DisableCameraDrivers(Camera camera)
         {
+            camera.enabled = false;
             MonoBehaviour[] behaviours = camera.GetComponents<MonoBehaviour>();
             for (int i = 0; i < behaviours.Length; i++)
             {

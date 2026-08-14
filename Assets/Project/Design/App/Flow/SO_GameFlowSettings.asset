@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SO_GameFlowSettings
   m_EditorClassIdentifier: 
   mainMenuSceneName: SC_MainMenu
-  newGameSceneName: SC_Expedition
-  continueSceneName: SC_Expedition
-  loadGameSceneName: SC_Expedition
+  newGameSceneName: SC_GameplayShell
+  continueSceneName: SC_GameplayShell
+  loadGameSceneName: SC_GameplayShell

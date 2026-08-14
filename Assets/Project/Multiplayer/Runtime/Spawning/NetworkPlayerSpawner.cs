@@ -1,6 +1,7 @@
 using Farion.Core.Identity;
 using System.Collections.Generic;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.World;
@@ -35,6 +36,42 @@ namespace Farion.Multiplayer.Spawning
 
         public int SpawnedPlayerCount => players.Count;
         public int SessionPlayerCount => sessionPlayers.Count;
+
+        internal bool TryGetSpawnedExplorer(
+            NetworkSessionPlayer player,
+            out NetworkExplorerController explorer)
+        {
+            explorer = null;
+            if (player == null ||
+                player.Owner == null ||
+                !players.TryGetValue(
+                    player.Owner.ClientId,
+                    out NetworkObject playerObject) ||
+                playerObject == null)
+            {
+                return false;
+            }
+
+            explorer = playerObject.GetComponent<NetworkExplorerController>();
+            return explorer != null;
+        }
+
+        internal bool TryGetRuntimeBindings(out GameplayRuntimeBindings bindings)
+        {
+            bindings = null;
+            // ponytail: single active zone context assumed (matches current
+            // one-zone-scene validation); revisit if multi-zone hosting lands.
+            foreach (MultiplayerSceneContext context in contexts.Values)
+            {
+                if (context != null && context.RuntimeRoot != null)
+                {
+                    bindings = context.RuntimeRoot.Bindings;
+                    break;
+                }
+            }
+
+            return bindings != null;
+        }
 
         void Awake()
         {
@@ -169,8 +206,15 @@ namespace Farion.Multiplayer.Spawning
 
             originAuthority?.SendCurrentOrigin(connection);
             NetworkObject player = Instantiate(playerPrefab, position, rotation);
-            player.GetComponent<NetworkExplorerController>()
-                ?.BindScene(sceneContext.CelestialFrameProvider, originAuthority);
+            NetworkExplorerController explorer =
+                player.GetComponent<NetworkExplorerController>();
+            NetworkSessionPlayer sessionPlayer =
+                sessionPlayers[connection.ClientId]
+                    .GetComponent<NetworkSessionPlayer>();
+            explorer?.InitializeIdentity(sessionPlayer.SessionPlayerId);
+            explorer?.BindScene(
+                sceneContext.CelestialFrameProvider,
+                originAuthority);
             networkManager.ServerManager.Spawn(
                 player,
                 connection,

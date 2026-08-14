@@ -32,6 +32,8 @@ MonoBehaviour:
   ambientLight: {r: 0.018, g: 0.021, b: 0.028, a: 1}
   ambientIntensity: 1
   disableFog: 1
+  reflectionCubemap: {fileID: 8900000, guid: 63ae189e87ad4724892912873ed88bfb, type: 3}
+  reflectionIntensity: 0.4
   applyCameraDefaults: 1
   cameraClearFlags: 1
   cameraBackground: {r: 0, g: 0, b: 0, a: 1}

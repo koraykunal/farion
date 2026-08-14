@@ -6,6 +6,8 @@
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Farion.Gameplay.Runtime",
+        "Farion.Gameplay.Presentation",
+        "Farion.Rendering.Runtime",
         "Farion.App.Runtime",
         "Farion.Audio.Runtime",
         "UnityEngine.UI",

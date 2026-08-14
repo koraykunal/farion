@@ -2,14 +2,9 @@ using Farion.Core.Identity;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Farion.Gameplay.Character;
-using Farion.Gameplay.Flight;
-using Farion.Gameplay.Input;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Spawning;
 using Farion.Multiplayer.World;
-using Farion.Rendering.Celestial;
-using Farion.Rendering.Lighting;
 using Farion.Simulation.World;
 using Farion.UI.Gameplay;
 using FishNet.Connection;
@@ -25,7 +20,7 @@ namespace Farion.Multiplayer.Session
     [RequireComponent(typeof(NetworkManager))]
     public sealed class MultiplayerSessionController : MonoBehaviour
     {
-        const string DefaultPresentationScene = "SC_MultiplayerShell";
+        const string DefaultPresentationScene = "SC_GameplayShell";
         const string DefaultStartingZoneScene = "SC_WorldZone";
         const string MainMenuScene = "SC_MainMenu";
         const float ConnectionTimeoutSeconds = 30f;
@@ -50,13 +45,7 @@ namespace Farion.Multiplayer.Session
         bool ownedPlayerReady;
         bool assignedStarterShipReady;
         Coroutine stopRoutine;
-        SpacecraftCameraRig spacecraftCameraRig;
-        FirstPersonCameraRig firstPersonCameraRig;
-        Transform viewReference;
-        PlayerControlLock controlLock;
-        GameplayUiController gameplayUi;
-        CelestialLightingRig lightingRig;
-        CelestialLodController lodController;
+        GameplaySceneShellController presentation;
 
         public static MultiplayerSessionController Active { get; private set; }
 
@@ -374,14 +363,7 @@ namespace Farion.Multiplayer.Session
                     return;
                 }
 
-                context.BindPresentation(
-                    spacecraftCameraRig,
-                    firstPersonCameraRig,
-                    viewReference,
-                    controlLock,
-                    gameplayUi,
-                    lightingRig,
-                    lodController);
+                context.BindPresentation(presentation);
                 context.BindSession(playerSpawner, worldOriginAuthority);
             }
         }
@@ -409,24 +391,16 @@ namespace Farion.Multiplayer.Session
 
         bool ResolvePresentation(Scene scene)
         {
-            spacecraftCameraRig = FindInScene<SpacecraftCameraRig>(scene);
-            firstPersonCameraRig = FindInScene<FirstPersonCameraRig>(scene);
-            Camera camera = FindInScene<Camera>(scene);
-            viewReference = camera != null ? camera.transform : null;
-            controlLock = FindInScene<PlayerControlLock>(scene);
-            gameplayUi = FindInScene<GameplayUiController>(scene);
-            gameplayUi?.SetSessionActions(
+            presentation = FindInScene<GameplaySceneShellController>(scene);
+            if (presentation == null)
+            {
+                return false;
+            }
+
+            presentation.GameplayUi?.SetSessionActions(
                 ReturnToMainMenu,
                 UnityEngine.Application.Quit);
-            lightingRig = FindInScene<CelestialLightingRig>(scene);
-            lodController = FindInScene<CelestialLodController>(scene);
-            return spacecraftCameraRig != null &&
-                firstPersonCameraRig != null &&
-                viewReference != null &&
-                controlLock != null &&
-                gameplayUi != null &&
-                lightingRig != null &&
-                lodController != null;
+            return presentation.IsValid;
         }
 
         void RequestStartingZone(NetworkConnection connection)
@@ -508,13 +482,7 @@ namespace Farion.Multiplayer.Session
             host = false;
             ResetReadiness();
             zoneLoadRequests.Clear();
-            spacecraftCameraRig = null;
-            firstPersonCameraRig = null;
-            viewReference = null;
-            controlLock = null;
-            gameplayUi = null;
-            lightingRig = null;
-            lodController = null;
+            presentation = null;
             worldOriginAuthority?.ResetSession();
             playerSpawner?.ResetSession();
         }
@@ -543,6 +511,9 @@ namespace Farion.Multiplayer.Session
             }
 
             State = state;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[Farion Multiplayer] Session state: {state}.");
+#endif
             StateChanged?.Invoke(state);
         }
     }

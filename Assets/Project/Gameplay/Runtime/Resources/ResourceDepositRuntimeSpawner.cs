@@ -201,6 +201,65 @@ namespace Farion.Gameplay.Resources
                    spawned.Node.TryGetComponent(out node);
         }
 
+        public bool TryGetDepositPosition(
+            GeneratedEntityId depositId,
+            out Vector3 position)
+        {
+            position = default;
+            return TryFindDeposit(depositId, out ResourceDepositData deposit) &&
+                TryResolveDepositPose(deposit, out position, out _);
+        }
+
+        public bool TryGetOrCreateSpawnedNode(
+            GeneratedEntityId depositId,
+            out ResourceNodeInteractable node)
+        {
+            if (TryGetSpawnedNode(depositId, out node))
+            {
+                return true;
+            }
+
+            node = null;
+            if (!TryFindDeposit(depositId, out ResourceDepositData deposit) ||
+                depositDeltaStore.CalculateRemainingQuantity(deposit) <= 0 ||
+                !TryResolveDepositPose(
+                    deposit,
+                    out Vector3 position,
+                    out Quaternion rotation) ||
+                !CreateNodeObject(deposit, position, rotation, out GameObject nodeObject) ||
+                !nodeObject.TryGetComponent(out node))
+            {
+                return false;
+            }
+
+            spawnedNodes[depositId] = new SpawnedDepositNode(deposit, nodeObject);
+            spawnedNodeCount = spawnedNodes.Count;
+            return true;
+        }
+
+        public bool ApplyAuthoritativeDelta(
+            GeneratedEntityId depositId,
+            int extractedAmount)
+        {
+            if (extractedAmount <= 0 ||
+                !TryFindDeposit(depositId, out ResourceDepositData deposit))
+            {
+                return false;
+            }
+
+            depositDeltaStore.ApplySnapshot(
+                new ResourceDepositDeltaSnapshot(
+                    depositId,
+                    Mathf.Min(extractedAmount, deposit.InitialReserve)));
+            if (TryGetSpawnedNode(depositId, out ResourceNodeInteractable node))
+            {
+                node.RefreshRuntimeState();
+            }
+
+            trackedDepositDeltaCount = depositDeltaStore.Count;
+            return true;
+        }
+
         [ContextMenu("Clear Resource Nodes")]
         public void ClearSpawned()
         {
@@ -275,6 +334,25 @@ namespace Farion.Gameplay.Resources
                     currentIdByLegacyId[deposit.LegacyDepositId] = deposit.DepositId;
                 }
             }
+        }
+
+        bool TryFindDeposit(
+            GeneratedEntityId depositId,
+            out ResourceDepositData deposit)
+        {
+            // ponytail: generated deposit counts are small enough for a linear
+            // lookup; add an id index only if profiling shows this hot.
+            for (int i = 0; i < deposits.Count; i++)
+            {
+                if (deposits[i].DepositId == depositId)
+                {
+                    deposit = deposits[i];
+                    return true;
+                }
+            }
+
+            deposit = default;
+            return false;
         }
 
         GeneratedEntityId ResolveSnapshotDepositId(GeneratedEntityId snapshotId, bool useLegacyIds)

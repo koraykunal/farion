@@ -26,6 +26,9 @@ namespace Farion.Gameplay.Session
             requestedMode = GameplaySessionMode.Offline;
         }
 
+        public static GameplaySessionMode RequestedOrDefault =>
+            pending ? requestedMode : GameplaySessionMode.Offline;
+
         public static GameplaySessionMode ConsumeOrDefault()
         {
             if (!pending)

@@ -6,8 +6,10 @@
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
         "Farion.Gameplay.Runtime",
+        "Farion.Gameplay.Presentation",
         "Farion.Rendering.Runtime",
         "Farion.UI.Runtime",
+        "Farion.App.Runtime",
         "FishNet.Runtime"
     ],
     "includePlatforms": [],

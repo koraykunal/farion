@@ -29,8 +29,8 @@ MonoBehaviour:
       height: {fileID: 2800000, guid: 2088881ba7f42074ea98ebe44b026571, type: 3}
       emission: {fileID: 0}
       worldTileSize: 8
-      normalStrength: 0.65
-      heightStrength: 0.035
+      normalStrength: 0.95
+      heightStrength: 0.1
       emissionTint: {r: 1, g: 1, b: 1, a: 1}
       emissionStrength: 0
   - material: {fileID: 11400000, guid: 0b7baed533854d3682e5415e9672f11b, type: 2}
@@ -47,8 +47,8 @@ MonoBehaviour:
       height: {fileID: 2800000, guid: aac628e219ffdd44f97c892f2a735aec, type: 3}
       emission: {fileID: 0}
       worldTileSize: 10
-      normalStrength: 0.48
-      heightStrength: 0.025
+      normalStrength: 1
+      heightStrength: 0.12
       emissionTint: {r: 1, g: 1, b: 1, a: 1}
       emissionStrength: 0
   - material: {fileID: 11400000, guid: 140bd8707b6b4a189c2881ffc5995501, type: 2}
@@ -65,8 +65,8 @@ MonoBehaviour:
       height: {fileID: 2800000, guid: 4e43d3634e6d46b40b39795daf8ca8ef, type: 3}
       emission: {fileID: 0}
       worldTileSize: 7
-      normalStrength: 0.38
-      heightStrength: 0.018
+      normalStrength: 0.9
+      heightStrength: 0.08
       emissionTint: {r: 1, g: 1, b: 1, a: 1}
       emissionStrength: 0
   - material: {fileID: 11400000, guid: 07de2b90bab8418ba5797722b640bf8f, type: 2}
@@ -83,8 +83,8 @@ MonoBehaviour:
       height: {fileID: 2800000, guid: 1729fad6090d09a4bbb22048b6d5d4a5, type: 3}
       emission: {fileID: 0}
       worldTileSize: 5
-      normalStrength: 0.45
-      heightStrength: 0.03
+      normalStrength: 0.95
+      heightStrength: 0.1
       emissionTint: {r: 1, g: 1, b: 1, a: 1}
       emissionStrength: 0
   - material: {fileID: 11400000, guid: 48cf3484ce45491bbd95106be576a427, type: 2}
@@ -101,7 +101,7 @@ MonoBehaviour:
       height: {fileID: 2800000, guid: a6327a23c141a304b89417d073dcdfb9, type: 3}
       emission: {fileID: 0}
       worldTileSize: 6.5
-      normalStrength: 0.38
-      heightStrength: 0.03
+      normalStrength: 0.85
+      heightStrength: 0.09
       emissionTint: {r: 1, g: 1, b: 1, a: 1}
       emissionStrength: 0

@@ -130,6 +130,7 @@ namespace Farion.Multiplayer.Spawning
         readonly SyncVar<byte> formationSlot = new();
         readonly SyncVar<ulong> claimedBySessionPlayerId = new();
         readonly SyncVar<bool> piloted = new();
+        readonly SyncVar<bool> landingGearDeployed = new();
 
         [Min(0.1f)]
         [SerializeField] float maximumClaimDistance = 6f;
@@ -144,6 +145,7 @@ namespace Farion.Multiplayer.Spawning
         SpacecraftOceanInteractor oceanInteractor;
         SpacecraftSurfaceContactProbe surfaceContactProbe;
         SpacecraftSurfaceContactStabilizer surfaceContactStabilizer;
+        SpacecraftLandingGearAnimator landingGear;
         Rigidbody body;
         Rigidbody pilotBody;
         readonly PredictionRigidbody predictionRigidbody = new();
@@ -183,11 +185,13 @@ namespace Farion.Multiplayer.Spawning
             surfaceContactProbe = GetComponent<SpacecraftSurfaceContactProbe>();
             surfaceContactStabilizer =
                 GetComponent<SpacecraftSurfaceContactStabilizer>();
+            landingGear = GetComponent<SpacecraftLandingGearAnimator>();
             body = GetComponent<Rigidbody>();
             predictionRigidbody.Initialize(body);
             physicsBody = new PredictionRigidbodySpacecraftPhysicsBody(
                 predictionRigidbody);
             piloted.OnChange += OnPilotedChanged;
+            landingGearDeployed.OnChange += OnLandingGearDeployedChanged;
         }
 
         void Update()
@@ -219,12 +223,40 @@ namespace Farion.Multiplayer.Spawning
                 }
             }
 
-            if (localPiloting &&
-                boardingInput != null &&
-                boardingInput.CurrentInput.ExitVehicle)
+            if (!localPiloting || boardingInput == null)
+            {
+                return;
+            }
+
+            BoardingInputState boarding = boardingInput.CurrentInput;
+            if (boarding.TogglePilotCamera)
+            {
+                sceneContext?.TogglePilotCameraView();
+            }
+
+            if (input != null && input.CurrentInput.ToggleLandingGear)
+            {
+                RequestToggleLandingGear();
+            }
+
+            if (boarding.ExitVehicle)
             {
                 NetworkSessionPlayer.Local?.RequestExitStarterShip(EntityId);
             }
+        }
+
+        [ServerRpc]
+        void RequestToggleLandingGear()
+        {
+            if (IsPiloted)
+            {
+                landingGearDeployed.Value = !landingGearDeployed.Value;
+            }
+        }
+
+        void OnLandingGearDeployedChanged(bool previous, bool next, bool asServer)
+        {
+            landingGear?.SetCommandedDeployed(next);
         }
 
         protected override void OnValidate()
@@ -247,6 +279,8 @@ namespace Farion.Multiplayer.Spawning
 
             entityId.Value = id.Value;
             formationSlot.Value = (byte)slot;
+            landingGearDeployed.Value =
+                landingGear != null && landingGear.IsCommandedDeployed;
             ApplyPersistentId();
         }
 
@@ -268,6 +302,7 @@ namespace Farion.Multiplayer.Spawning
                 input.enabled = false;
             }
 
+            landingGear?.SetCommandedDeployed(landingGearDeployed.Value);
             ApplyPilotedState(IsPiloted);
         }
 
