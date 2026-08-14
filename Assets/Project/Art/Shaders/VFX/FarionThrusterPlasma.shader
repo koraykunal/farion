@@ -14,6 +14,11 @@ Shader "Farion/VFX/Thruster Plasma"
         _FlowSpeed("Flow Speed", Range(0, 12)) = 3
         _EdgeSoftness("Edge Softness", Range(0.01, 1)) = 0.3
         _DiamondFrequency("Diamond Frequency", Range(1, 16)) = 5
+        _DiamondSpacingGrowth("Diamond Spacing Growth", Range(0.35, 1)) = 0.68
+        _DiamondDamping("Diamond Damping", Range(0, 6)) = 2.4
+        _TurbulenceGrowth("Turbulence Growth", Range(0, 1)) = 0.8
+        _EddyGrowth("Eddy Growth", Range(0, 4)) = 1.6
+        _SoftFadeDistance("Soft Fade Distance", Range(0, 4)) = 0.6
         [Enum(Core Glow,0,Inner Plasma,1,Outer Plasma,2,Shock Diamonds,3)]
         _LayerMode("Layer Mode", Float) = 1
         [HideInInspector] _Throttle("Throttle", Range(0, 1)) = 0
@@ -21,6 +26,10 @@ Shader "Farion/VFX/Thruster Plasma"
         [HideInInspector] _Heat("Heat", Range(0, 1)) = 0
         [HideInInspector] _Damage("Damage", Range(0, 1)) = 0
         [HideInInspector] _LayerSeed("Layer Seed", Range(0, 1)) = 0
+        [HideInInspector] _AtmosphereDensity("Atmosphere Density", Range(0, 1)) = 1
+        [HideInInspector] _SpeedBlend("Speed Blend", Range(0, 1)) = 0
+        [HideInInspector] _Flare("Ignition Flare", Range(0, 1)) = 0
+        [HideInInspector] _BellExpansion("Bell Expansion", Range(0, 2)) = 0
     }
 
     SubShader
@@ -48,6 +57,7 @@ Shader "Farion/VFX/Thruster Plasma"
             #pragma fragment Fragment
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _IdleColor;
@@ -62,12 +72,21 @@ Shader "Farion/VFX/Thruster Plasma"
                 half _FlowSpeed;
                 half _EdgeSoftness;
                 half _DiamondFrequency;
+                half _DiamondSpacingGrowth;
+                half _DiamondDamping;
+                half _TurbulenceGrowth;
+                half _EddyGrowth;
+                half _SoftFadeDistance;
                 half _LayerMode;
                 half _Throttle;
                 half _Boost;
                 half _Heat;
                 half _Damage;
                 half _LayerSeed;
+                half _AtmosphereDensity;
+                half _SpeedBlend;
+                half _Flare;
+                half _BellExpansion;
             CBUFFER_END
 
             struct Attributes
@@ -89,7 +108,11 @@ Shader "Farion/VFX/Thruster Plasma"
             Varyings Vertex(Attributes input)
             {
                 Varyings output;
-                VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                float3 shapedOS = input.positionOS.xyz;
+                float bellAxial = saturate(shapedOS.z);
+                shapedOS.xy *= 1.0 + _BellExpansion * bellAxial * bellAxial;
+
+                VertexPositionInputs positionInputs = GetVertexPositionInputs(shapedOS);
                 output.positionHCS = positionInputs.positionCS;
                 output.positionWS = positionInputs.positionWS;
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
@@ -150,14 +173,18 @@ Shader "Farion/VFX/Thruster Plasma"
                 float axial = saturate(input.positionOS.z);
                 float radial = length(input.positionOS.xy);
                 float time = _Time.y;
+
+                float eddyScale = 1.0 / (1.0 + axial * _EddyGrowth);
                 float3 noisePosition = float3(
-                    input.positionOS.xy * _NoiseScale,
+                    input.positionOS.xy * _NoiseScale * eddyScale,
                     axial * _NoiseStretch - time * _FlowSpeed + _LayerSeed * 17.0);
-                float noise = Fbm(noisePosition);
+                float turbulence = lerp(1.0 - _TurbulenceGrowth, 1.0, pow(axial, 0.75));
+                float noise = lerp(0.5, Fbm(noisePosition), turbulence);
                 float pulse = 0.96 + sin(time * 19.0 + _LayerSeed * 31.0) * 0.04;
 
                 float startFade = smoothstep(0.0, 0.035, axial);
-                float endFade = 1.0 - smoothstep(0.68, 1.0, axial);
+                float tailStart = lerp(0.68, 0.86, _SpeedBlend);
+                float endFade = 1.0 - smoothstep(tailStart, 1.0, axial);
                 float edge = 1.0 - smoothstep(1.0 - _EdgeSoftness, 1.0, radial);
                 float viewFresnel = 1.0 - saturate(dot(
                     normalize(input.normalWS),
@@ -185,17 +212,35 @@ Shader "Farion/VFX/Thruster Plasma"
                 }
                 else
                 {
-                    float phase = frac(axial * _DiamondFrequency - time * 0.32);
-                    float diamond = 1.0 - smoothstep(0.09, 0.34, abs(phase - 0.5));
+                    float nodeAxis = pow(axial, _DiamondSpacingGrowth) * _DiamondFrequency;
+                    float breathing = sin(time * 21.0 + _LayerSeed * 31.0) * 0.018;
+                    float phase = frac(nodeAxis + breathing);
+                    float offset = abs(phase - 0.5);
+                    float diamond = 1.0 - smoothstep(0.09, 0.34, offset);
                     float diamondShape = 1.0 - smoothstep(
                         0.16,
                         0.7,
-                        abs(radial - abs(phase - 0.5) * 1.45));
-                    mask = diamond * diamondShape * startFade * endFade;
+                        abs(radial - offset * 1.45));
+                    float damping = exp(-axial * _DiamondDamping);
+                    mask = diamond * diamondShape * startFade * endFade * damping;
                     mask *= lerp(0.55, 1.1, noise);
                 }
 
-                half intensity = _Intensity * lerp(0.45h, 1.25h, _Throttle) * lerp(1.0h, 1.6h, _Boost);
+                float pressureFalloff = lerp(lerp(1.0, 0.72, axial), 1.0, _AtmosphereDensity);
+                mask *= pressureFalloff;
+
+                if (_SoftFadeDistance > 0.0)
+                {
+                    float2 screenUv = GetNormalizedScreenSpaceUV(input.positionHCS);
+                    float sceneDepth = LinearEyeDepth(SampleSceneDepth(screenUv), _ZBufferParams);
+                    float fragmentDepth = -TransformWorldToView(input.positionWS).z;
+                    mask *= saturate((sceneDepth - fragmentDepth) / _SoftFadeDistance);
+                }
+
+                half intensity = _Intensity *
+                    lerp(0.45h, 1.25h, _Throttle) *
+                    lerp(1.0h, 1.6h, _Boost) *
+                    (1.0h + _Flare * 1.4h);
                 half3 emission = ResolveColor() * intensity * mask * _Opacity;
                 return half4(emission, mask * _Opacity);
             }

@@ -47,6 +47,8 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] float aerodynamicHeatContribution = 1f;
         [Min(1f)]
         [SerializeField] float heatReferenceSpeed = 260f;
+        [Min(0.01f)]
+        [SerializeField] float groundEffectAltitude = 45f;
         [SerializeField] bool suppressAtmosphereVfxUnderwater = true;
 
         [Header("Nozzles")]
@@ -57,6 +59,7 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField, Range(0f, 1f)] float debugBoost;
         [SerializeField, Range(0f, 1f)] float debugHeat;
         [SerializeField, Range(0f, 1f)] float debugAtmosphereDensity;
+        [SerializeField, Range(0f, 1f)] float debugGroundProximity;
         [SerializeField] Vector3 debugLocalLinearAcceleration;
 
         float throttle;
@@ -98,6 +101,7 @@ namespace Farion.Gameplay.Presentation.Flight
             speedHeatContribution = Mathf.Clamp01(speedHeatContribution);
             aerodynamicHeatContribution = Mathf.Clamp01(aerodynamicHeatContribution);
             heatReferenceSpeed = Mathf.Max(1f, heatReferenceSpeed);
+            groundEffectAltitude = Mathf.Max(0.01f, groundEffectAltitude);
             AutoAssignReferences();
             InitializeNozzles();
         }
@@ -124,7 +128,8 @@ namespace Farion.Gameplay.Presentation.Flight
                 target.LocalRotation,
                 target.LocalLinearAcceleration,
                 target.LocalAngularAcceleration,
-                target.Thrusters);
+                target.Thrusters,
+                target.GroundProximity);
 
             ApplyNozzles(deltaTime);
             ApplyDebug(CurrentFrame);
@@ -198,7 +203,8 @@ namespace Farion.Gameplay.Presentation.Flight
                 movement.Command.Rotation,
                 movement.LocalLinearAcceleration,
                 movement.LocalAngularAcceleration,
-                thrusters);
+                thrusters,
+                SampleGroundProximity());
         }
 
         void ApplyNozzles(float deltaTime)
@@ -220,7 +226,30 @@ namespace Farion.Gameplay.Presentation.Flight
             debugBoost = frame.Boost;
             debugHeat = frame.Heat;
             debugAtmosphereDensity = frame.AtmosphereDensity;
+            debugGroundProximity = frame.GroundProximity;
             debugLocalLinearAcceleration = frame.LocalLinearAcceleration;
+        }
+
+        float SampleGroundProximity()
+        {
+            if (celestialProbe == null || !celestialProbe.HasSample)
+            {
+                return 0f;
+            }
+
+            return CalculateGroundProximity(
+                celestialProbe.CurrentSample.SurfaceAltitude,
+                groundEffectAltitude);
+        }
+
+        internal static float CalculateGroundProximity(float surfaceAltitude, float referenceAltitude)
+        {
+            if (float.IsNaN(surfaceAltitude) || float.IsInfinity(surfaceAltitude))
+            {
+                return 0f;
+            }
+
+            return 1f - Mathf.Clamp01(surfaceAltitude / Mathf.Max(0.01f, referenceAltitude));
         }
 
         float SampleAtmosphereDensity()

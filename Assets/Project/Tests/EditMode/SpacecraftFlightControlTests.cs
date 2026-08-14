@@ -149,6 +149,54 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void GroundProximityRisesOnlyNearAMeasuredSurface()
+        {
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateGroundProximity(0f, 40f),
+                Is.EqualTo(1f).Within(0.001f));
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateGroundProximity(20f, 40f),
+                Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateGroundProximity(400f, 40f),
+                Is.Zero);
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateGroundProximity(float.PositiveInfinity, 40f),
+                Is.Zero);
+            Assert.That(
+                SpacecraftThrusterVfxController.CalculateGroundProximity(float.NaN, 40f),
+                Is.Zero);
+        }
+
+        [Test]
+        public void IgnitionFlareSpikesOnThrottleRiseAndDecaysAfterwards()
+        {
+            float flare = SpacecraftThrusterNozzleVfx.AdvanceIgnitionFlare(
+                currentFlare: 0f,
+                loadDelta: 0.4f,
+                deltaTime: 0.02f,
+                gain: 0.32f,
+                decay: 4.5f);
+            Assert.That(flare, Is.GreaterThan(0.5f));
+
+            float steady = SpacecraftThrusterNozzleVfx.AdvanceIgnitionFlare(
+                currentFlare: flare,
+                loadDelta: 0f,
+                deltaTime: 0.02f,
+                gain: 0.32f,
+                decay: 4.5f);
+            Assert.That(steady, Is.LessThan(flare));
+
+            float released = SpacecraftThrusterNozzleVfx.AdvanceIgnitionFlare(
+                currentFlare: 0.05f,
+                loadDelta: -0.4f,
+                deltaTime: 0.02f,
+                gain: 0.32f,
+                decay: 4.5f);
+            Assert.That(released, Is.Zero);
+        }
+
+        [Test]
         public void RearMainVfxIgnoresTranslationThatDoesNotProduceForwardExhaust()
         {
             SpacecraftThrusterCommand reverse = new(

@@ -15,7 +15,8 @@ namespace Farion.Gameplay.Presentation.Flight
             Vector3 localRotation,
             Vector3 localLinearAcceleration,
             Vector3 localAngularAcceleration,
-            SpacecraftThrusterCommand thrusters)
+            SpacecraftThrusterCommand thrusters,
+            float groundProximity = 0f)
         {
             Throttle = Mathf.Clamp01(throttle);
             Boost = Mathf.Clamp01(boost);
@@ -27,6 +28,7 @@ namespace Farion.Gameplay.Presentation.Flight
             LocalLinearAcceleration = localLinearAcceleration;
             LocalAngularAcceleration = localAngularAcceleration;
             Thrusters = thrusters;
+            GroundProximity = Mathf.Clamp01(groundProximity);
         }
 
         public float Throttle { get; }
@@ -39,8 +41,10 @@ namespace Farion.Gameplay.Presentation.Flight
         public Vector3 LocalLinearAcceleration { get; }
         public Vector3 LocalAngularAcceleration { get; }
         public SpacecraftThrusterCommand Thrusters { get; }
+        public float GroundProximity { get; }
 
         public bool InAtmosphere => AtmosphereDensity > 0.001f;
+        public bool NearGround => GroundProximity > 0.001f;
 
         public static SpacecraftThrusterVfxFrame Idle => new(
             0f,

@@ -124,3 +124,9 @@ InitTestScene*.unity*
 /FMODProject/**/.cache/
 /FMODProject/**/.user/
 /FMODProject/FarionAudio/Fmod Futuristic Fighter Engine Template/
+
+# Regenerable bake pipeline output (ArtSource/Tools/bake_for_unity.py)
+/ArtSource/**/BakedForUnity/
+/ArtSource/**/BakeTest/
+/ArtSource/**/materials_dump.json
+/ArtSource/**/flat_materials_measured.json

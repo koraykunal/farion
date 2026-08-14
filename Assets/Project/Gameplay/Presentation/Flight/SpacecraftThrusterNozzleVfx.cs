@@ -17,8 +17,16 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] Transform steeringRoot;
         [Min(0f)]
         [SerializeField] float response = 14f;
+        [Min(0f)]
+        [SerializeField] float releaseResponse = 6f;
         [Range(0f, 1f)]
         [SerializeField] float minimumVisibleLoad = 0.03f;
+
+        [Header("Ignition Transient")]
+        [Min(0f)]
+        [SerializeField] float ignitionFlareGain = 0.32f;
+        [Min(0.01f)]
+        [SerializeField] float ignitionFlareDecay = 4.5f;
 
         [Header("Directional Load")]
         [Min(0f)]
@@ -56,6 +64,10 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] float smokeAtmosphereThreshold = 0.02f;
         [Range(0f, 1f)]
         [SerializeField] float sparksBoostThreshold = 0.7f;
+        [Min(0f)]
+        [SerializeField] float groundDustGain = 2.4f;
+        [Range(0f, 1f)]
+        [SerializeField] float groundDustFloor = 0.35f;
 
         [Header("VFX Graph Tuning")]
         [SerializeField] ThrusterGraphTuning sparksGraphTuning = ThrusterGraphTuning.Sparks();
@@ -72,19 +84,34 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] Color idleLightColor = new Color(0.18f, 0.85f, 1f, 1f);
         [SerializeField] Color boostLightColor = new Color(0.76f, 0.9f, 1f, 1f);
 
+        [Header("Nozzle Heat Glow")]
+        [SerializeField] Renderer[] heatGlowRenderers = Array.Empty<Renderer>();
+        [ColorUsage(false, true)]
+        [SerializeField] Color heatGlowColor = new Color(2.6f, 0.42f, 0.06f, 1f);
+        [Range(0.1f, 6f)]
+        [SerializeField] float heatGlowPower = 2.2f;
+        [Min(0f)]
+        [SerializeField] float heatGlowResponse = 1.6f;
+
         [Header("Runtime Debug")]
         [SerializeField, Range(0f, 1f)] float debugNozzleLoad;
         [SerializeField, Range(-1f, 1f)] float debugSideLoad;
+        [SerializeField, Range(0f, 1f)] float debugIgnitionFlare;
+        [SerializeField, Range(0f, 1f)] float debugHeatGlow;
         [SerializeField] Vector3 debugSteeringEuler;
 
         Quaternion initialSteeringRotation = Quaternion.identity;
         Vector3 currentSteeringEuler;
         float currentNozzleLoad;
         float currentSideLoad;
+        float currentIgnitionFlare;
+        float currentHeatGlow;
+        MaterialPropertyBlock heatGlowProperties;
         bool initialized;
 
         public float NozzleLoad => currentNozzleLoad;
         public float SideLoad => currentSideLoad;
+        public float IgnitionFlare => currentIgnitionFlare;
 
         void Reset()
         {
@@ -123,6 +150,31 @@ namespace Farion.Gameplay.Presentation.Flight
             outerPlasma?.ClearRuntimeState();
             shockDiamonds?.ClearRuntimeState();
             distortion?.ClearRuntimeState();
+            currentIgnitionFlare = 0f;
+            currentHeatGlow = 0f;
+            ClearHeatGlow();
+        }
+
+        void ClearHeatGlow()
+        {
+            if (heatGlowRenderers == null || heatGlowRenderers.Length == 0)
+            {
+                return;
+            }
+
+            heatGlowProperties ??= new MaterialPropertyBlock();
+            for (int i = 0; i < heatGlowRenderers.Length; i++)
+            {
+                Renderer target = heatGlowRenderers[i];
+                if (target == null)
+                {
+                    continue;
+                }
+
+                target.GetPropertyBlock(heatGlowProperties);
+                heatGlowProperties.SetColor(HeatGlowIds.EmissionColor, Color.black);
+                target.SetPropertyBlock(heatGlowProperties);
+            }
         }
 
         public void ApplyFrame(SpacecraftThrusterVfxFrame frame, float deltaTime)
@@ -144,24 +196,57 @@ namespace Farion.Gameplay.Presentation.Flight
                 targetNozzleLoad = Mathf.Max(targetNozzleLoad, minimumVisibleLoad);
             }
 
-            currentNozzleLoad = Smooth(currentNozzleLoad, targetNozzleLoad, response, clampedDeltaTime);
+            float previousNozzleLoad = currentNozzleLoad;
+            float loadResponse = targetNozzleLoad >= currentNozzleLoad ? response : releaseResponse;
+            currentNozzleLoad = Smooth(currentNozzleLoad, targetNozzleLoad, loadResponse, clampedDeltaTime);
             currentSideLoad = Smooth(currentSideLoad, targetSideLoad, response, clampedDeltaTime);
             if (currentNozzleLoad < 0.0001f)
             {
                 currentNozzleLoad = 0f;
             }
 
+            UpdateIgnitionFlare(previousNozzleLoad, clampedDeltaTime);
             ApplySteering(frame, clampedDeltaTime);
             ApplyMeshLayers(frame, clampedDeltaTime);
             ApplyGraphs(frame, clampedDeltaTime);
             ApplyLight(frame);
+            ApplyHeatGlow(frame, clampedDeltaTime);
             ApplyDebug();
+        }
+
+        void UpdateIgnitionFlare(float previousNozzleLoad, float deltaTime)
+        {
+            currentIgnitionFlare = AdvanceIgnitionFlare(
+                currentIgnitionFlare,
+                currentNozzleLoad - previousNozzleLoad,
+                deltaTime,
+                ignitionFlareGain,
+                ignitionFlareDecay);
+        }
+
+        internal static float AdvanceIgnitionFlare(
+            float currentFlare,
+            float loadDelta,
+            float deltaTime,
+            float gain,
+            float decay)
+        {
+            float decayed = Mathf.Max(0f, currentFlare - decay * Mathf.Max(0f, deltaTime));
+            if (deltaTime <= 0f || loadDelta <= 0f)
+            {
+                return decayed;
+            }
+
+            return Mathf.Clamp01(Mathf.Max(decayed, loadDelta / deltaTime * gain));
         }
 
         void Validate()
         {
             sideSign = Mathf.Clamp(sideSign, -1f, 1f);
             response = Mathf.Max(0f, response);
+            releaseResponse = Mathf.Max(0f, releaseResponse);
+            ignitionFlareGain = Mathf.Max(0f, ignitionFlareGain);
+            ignitionFlareDecay = Mathf.Max(0.01f, ignitionFlareDecay);
             minimumVisibleLoad = Mathf.Clamp01(minimumVisibleLoad);
             lateralLoadResponse = Mathf.Max(0f, lateralLoadResponse);
             yawLoadResponse = Mathf.Max(0f, yawLoadResponse);
@@ -173,6 +258,10 @@ namespace Farion.Gameplay.Presentation.Flight
             steeringResponse = Mathf.Max(0f, steeringResponse);
             smokeAtmosphereThreshold = Mathf.Clamp01(smokeAtmosphereThreshold);
             sparksBoostThreshold = Mathf.Clamp01(sparksBoostThreshold);
+            groundDustGain = Mathf.Max(0f, groundDustGain);
+            groundDustFloor = Mathf.Clamp01(groundDustFloor);
+            heatGlowPower = Mathf.Clamp(heatGlowPower, 0.1f, 6f);
+            heatGlowResponse = Mathf.Max(0f, heatGlowResponse);
             sparksGraphTuning?.Validate();
             smokeGraphTuning?.Validate();
             maxLightIntensity = Mathf.Max(0f, maxLightIntensity);
@@ -259,14 +348,15 @@ namespace Farion.Gameplay.Presentation.Flight
 
         void ApplyMeshLayers(SpacecraftThrusterVfxFrame frame, float deltaTime)
         {
-            coreGlow?.ApplyFrame(frame, currentNozzleLoad, deltaTime);
-            innerPlasma?.ApplyFrame(frame, currentNozzleLoad, deltaTime);
-            outerPlasma?.ApplyFrame(frame, currentNozzleLoad, deltaTime);
+            coreGlow?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
+            innerPlasma?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
+            outerPlasma?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
             shockDiamonds?.ApplyFrame(
                 frame,
-                currentNozzleLoad * Mathf.Lerp(0.35f, 1f, frame.Boost),
+                currentNozzleLoad * Mathf.Clamp01(frame.AtmosphereDensity * 1.6f),
+                currentIgnitionFlare,
                 deltaTime);
-            distortion?.ApplyFrame(frame, currentNozzleLoad, deltaTime);
+            distortion?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
         }
 
         void ApplyGraphs(SpacecraftThrusterVfxFrame frame, float deltaTime)
@@ -282,9 +372,14 @@ namespace Farion.Gameplay.Presentation.Flight
                 shouldPlay: sparksLoad > 0.001f,
                 deltaTime);
 
-            float smokeLoad = frame.AtmosphereDensity > smokeAtmosphereThreshold
-                ? Mathf.Clamp01(currentNozzleLoad * frame.AtmosphereDensity)
+            float exhaustMedium = frame.AtmosphereDensity > smokeAtmosphereThreshold
+                ? frame.AtmosphereDensity
                 : 0f;
+            float groundDust = frame.GroundProximity *
+                Mathf.Lerp(groundDustFloor, 1f, frame.AtmosphereDensity) *
+                groundDustGain;
+            float smokeLoad = Mathf.Clamp01(
+                currentNozzleLoad * (exhaustMedium + groundDust));
             ApplyGraph(
                 smokeGraph,
                 smokeGraphTuning,
@@ -316,6 +411,7 @@ namespace Farion.Gameplay.Presentation.Flight
             SetFloat(graph, VfxIds.Boost, frame.Boost);
             SetFloat(graph, VfxIds.Heat, frame.Heat);
             SetFloat(graph, VfxIds.AtmosphereDensity, frame.AtmosphereDensity);
+            SetFloat(graph, VfxIds.GroundProximity, frame.GroundProximity);
             SetFloat(graph, VfxIds.RelativeSpeed, frame.RelativeSpeed);
             SetVector3(graph, VfxIds.LocalTranslation, frame.LocalTranslation);
             SetVector3(graph, VfxIds.LocalRotation, frame.LocalRotation);
@@ -340,12 +436,42 @@ namespace Farion.Gameplay.Presentation.Flight
             thrusterLight.intensity = maxLightIntensity * lightLoad * Mathf.Lerp(1f, 1.35f, frame.Boost);
             thrusterLight.range = maxLightRange * Mathf.Lerp(0.35f, 1f, lightLoad);
             thrusterLight.color = Color.Lerp(idleLightColor, boostLightColor, Mathf.Clamp01(frame.Boost + lightLoad * 0.35f));
+            thrusterLight.intensity *= 1f + currentIgnitionFlare * 0.9f;
+        }
+
+        void ApplyHeatGlow(SpacecraftThrusterVfxFrame frame, float deltaTime)
+        {
+            if (heatGlowRenderers == null || heatGlowRenderers.Length == 0)
+            {
+                return;
+            }
+
+            float soak = Mathf.Clamp01(
+                Mathf.Max(frame.Heat, currentNozzleLoad * 0.55f + frame.Boost * 0.45f));
+            currentHeatGlow = Smooth(currentHeatGlow, soak, heatGlowResponse, deltaTime);
+
+            heatGlowProperties ??= new MaterialPropertyBlock();
+            Color emission = heatGlowColor * Mathf.Pow(currentHeatGlow, heatGlowPower);
+            for (int i = 0; i < heatGlowRenderers.Length; i++)
+            {
+                Renderer target = heatGlowRenderers[i];
+                if (target == null)
+                {
+                    continue;
+                }
+
+                target.GetPropertyBlock(heatGlowProperties);
+                heatGlowProperties.SetColor(HeatGlowIds.EmissionColor, emission);
+                target.SetPropertyBlock(heatGlowProperties);
+            }
         }
 
         void ApplyDebug()
         {
             debugNozzleLoad = currentNozzleLoad;
             debugSideLoad = currentSideLoad;
+            debugIgnitionFlare = currentIgnitionFlare;
+            debugHeatGlow = currentHeatGlow;
             debugSteeringEuler = currentSteeringEuler;
         }
 
@@ -509,6 +635,11 @@ namespace Farion.Gameplay.Presentation.Flight
             }
         }
 
+        static class HeatGlowIds
+        {
+            public static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
+        }
+
         static class VfxIds
         {
             public static readonly int Throttle = Shader.PropertyToID("Throttle");
@@ -518,6 +649,7 @@ namespace Farion.Gameplay.Presentation.Flight
             public static readonly int Boost = Shader.PropertyToID("Boost");
             public static readonly int Heat = Shader.PropertyToID("Heat");
             public static readonly int AtmosphereDensity = Shader.PropertyToID("AtmosphereDensity");
+            public static readonly int GroundProximity = Shader.PropertyToID("GroundProximity");
             public static readonly int RelativeSpeed = Shader.PropertyToID("RelativeSpeed");
             public static readonly int LocalTranslation = Shader.PropertyToID("LocalTranslation");
             public static readonly int LocalRotation = Shader.PropertyToID("LocalRotation");

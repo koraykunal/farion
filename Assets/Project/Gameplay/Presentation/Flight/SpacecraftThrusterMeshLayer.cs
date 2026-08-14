@@ -37,6 +37,18 @@ namespace Farion.Gameplay.Presentation.Flight
         [Min(0f)]
         [SerializeField] float response = 16f;
 
+        [Header("Nozzle Expansion")]
+        [Min(1f)]
+        [SerializeField] float vacuumLengthScale = 1.22f;
+        [Min(1f)]
+        [SerializeField] float vacuumRadiusScale = 1.28f;
+        [Range(0f, 2f)]
+        [SerializeField] float vacuumBellExpansion = 0.55f;
+        [Min(1f)]
+        [SerializeField] float speedReference = 320f;
+        [Range(0f, 1f)]
+        [SerializeField] float speedStretch = 0.16f;
+
         [Header("Editor Preview")]
         [Range(0f, 1f)]
         [SerializeField] float previewLoad = 0.65f;
@@ -85,6 +97,11 @@ namespace Farion.Gameplay.Presentation.Flight
             idleVisibility = Mathf.Clamp01(idleVisibility);
             opacity = Mathf.Clamp01(opacity);
             response = Mathf.Max(0f, response);
+            vacuumLengthScale = Mathf.Max(1f, vacuumLengthScale);
+            vacuumRadiusScale = Mathf.Max(1f, vacuumRadiusScale);
+            vacuumBellExpansion = Mathf.Clamp(vacuumBellExpansion, 0f, 2f);
+            speedReference = Mathf.Max(1f, speedReference);
+            speedStretch = Mathf.Clamp01(speedStretch);
             previewLoad = Mathf.Clamp01(previewLoad);
             previewBoost = Mathf.Clamp01(previewBoost);
 
@@ -123,6 +140,7 @@ namespace Farion.Gameplay.Presentation.Flight
         public void ApplyFrame(
             SpacecraftThrusterVfxFrame frame,
             float nozzleLoad,
+            float ignitionFlare,
             float deltaTime)
         {
             ResolveComponents();
@@ -143,7 +161,10 @@ namespace Farion.Gameplay.Presentation.Flight
             ApplyPresentation(
                 currentVisibility,
                 frame.Boost,
-                frame.Heat);
+                frame.Heat,
+                frame.AtmosphereDensity,
+                Mathf.Clamp01(frame.RelativeSpeed / speedReference),
+                Mathf.Clamp01(ignitionFlare));
         }
 
         public void ClearRuntimeState()
@@ -183,10 +204,22 @@ namespace Farion.Gameplay.Presentation.Flight
         void ApplyPreview()
         {
             currentVisibility = Mathf.Max(idleVisibility, previewLoad);
-            ApplyPresentation(currentVisibility, previewBoost, heat: 0.15f);
+            ApplyPresentation(
+                currentVisibility,
+                previewBoost,
+                heat: 0.15f,
+                atmosphereDensity: 0.6f,
+                speedBlend: 0f,
+                ignitionFlare: 0f);
         }
 
-        void ApplyPresentation(float visibility, float boost, float heat)
+        void ApplyPresentation(
+            float visibility,
+            float boost,
+            float heat,
+            float atmosphereDensity,
+            float speedBlend,
+            float ignitionFlare)
         {
             if (meshRenderer == null)
             {
@@ -200,16 +233,33 @@ namespace Farion.Gameplay.Presentation.Flight
                 return;
             }
 
+            float ambientPressure = Mathf.Clamp01(atmosphereDensity);
+            float vacuumBlend = 1f - ambientPressure;
             float shapedLoad = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(visibility));
             float boostStretch = Mathf.Lerp(1f, 1.28f, Mathf.Clamp01(boost));
-            float length = Mathf.Lerp(minimumLength, maximumLength, shapedLoad) * boostStretch;
+            float pressureStretch = Mathf.Lerp(1f, vacuumLengthScale, vacuumBlend);
+            float speedTrail = 1f + Mathf.Clamp01(speedBlend) * speedStretch;
+            float flareStretch = 1f + Mathf.Clamp01(ignitionFlare) * 0.35f;
+            float length = Mathf.Lerp(minimumLength, maximumLength, shapedLoad) *
+                boostStretch *
+                pressureStretch *
+                speedTrail *
+                flareStretch;
+
             float layerSeed = ResolveRuntimeSeed();
             float radialPulse = Application.isPlaying
                 ? 1f + Mathf.Sin((Time.realtimeSinceStartup + layerSeed * 13f) * 17f) * 0.018f
                 : 1f;
-            float layerRadius = radius * Mathf.Lerp(0.82f, 1.08f, shapedLoad) * radialPulse;
+            bool isCoreGlow = layerKind == SpacecraftThrusterMeshLayerKind.CoreGlow;
+            float pressureRadius = isCoreGlow
+                ? 1f
+                : Mathf.Lerp(1f, vacuumRadiusScale, vacuumBlend);
+            float layerRadius = radius *
+                Mathf.Lerp(0.82f, 1.08f, shapedLoad) *
+                radialPulse *
+                pressureRadius;
 
-            transform.localScale = layerKind == SpacecraftThrusterMeshLayerKind.CoreGlow
+            transform.localScale = isCoreGlow
                 ? new Vector3(layerRadius, layerRadius, Mathf.Max(0.01f, length))
                 : new Vector3(layerRadius, layerRadius, length);
 
@@ -219,6 +269,12 @@ namespace Farion.Gameplay.Presentation.Flight
             properties.SetFloat(ShaderIds.Heat, Mathf.Clamp01(heat));
             properties.SetFloat(ShaderIds.Opacity, opacity * shapedLoad);
             properties.SetFloat(ShaderIds.LayerSeed, layerSeed);
+            properties.SetFloat(ShaderIds.AtmosphereDensity, ambientPressure);
+            properties.SetFloat(ShaderIds.SpeedBlend, Mathf.Clamp01(speedBlend));
+            properties.SetFloat(ShaderIds.Flare, Mathf.Clamp01(ignitionFlare));
+            properties.SetFloat(
+                ShaderIds.BellExpansion,
+                isCoreGlow ? 0f : vacuumBellExpansion * vacuumBlend * shapedLoad);
             meshRenderer.SetPropertyBlock(properties);
         }
 
@@ -391,7 +447,7 @@ namespace Farion.Gameplay.Presentation.Flight
                 normals = normals,
                 uv = uv,
                 triangles = triangles,
-                bounds = new Bounds(new Vector3(0f, 0f, 0.5f), new Vector3(2.4f, 2.4f, 1.2f))
+                bounds = new Bounds(new Vector3(0f, 0f, 0.5f), new Vector3(6.4f, 6.4f, 1.2f))
             };
             coneMesh.UploadMeshData(markNoLongerReadable: true);
             return coneMesh;
@@ -404,6 +460,10 @@ namespace Farion.Gameplay.Presentation.Flight
             public static readonly int Heat = Shader.PropertyToID("_Heat");
             public static readonly int Opacity = Shader.PropertyToID("_Opacity");
             public static readonly int LayerSeed = Shader.PropertyToID("_LayerSeed");
+            public static readonly int AtmosphereDensity = Shader.PropertyToID("_AtmosphereDensity");
+            public static readonly int SpeedBlend = Shader.PropertyToID("_SpeedBlend");
+            public static readonly int Flare = Shader.PropertyToID("_Flare");
+            public static readonly int BellExpansion = Shader.PropertyToID("_BellExpansion");
         }
     }
 }

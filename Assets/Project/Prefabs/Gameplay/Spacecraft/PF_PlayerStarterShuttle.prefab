@@ -55,7 +55,10 @@ MonoBehaviour:
   sideSign: 1
   steeringRoot: {fileID: 8926889536318064163}
   response: 14
+  releaseResponse: 6
   minimumVisibleLoad: 0.03
+  ignitionFlareGain: 0.32
+  ignitionFlareDecay: 4.5
   lateralLoadResponse: 0.18
   yawLoadResponse: 0.14
   rollLoadResponse: 0.1
@@ -75,6 +78,8 @@ MonoBehaviour:
   smokeGraph: {fileID: 4194912803908319750}
   smokeAtmosphereThreshold: 0.02
   sparksBoostThreshold: 0.7
+  groundDustGain: 2.4
+  groundDustFloor: 0.35
   sparksGraphTuning:
     spawnRate: 34
     burstCount: 0
@@ -101,8 +106,14 @@ MonoBehaviour:
   lightPower: 1.7
   idleLightColor: {r: 0.18, g: 0.85, b: 1, a: 1}
   boostLightColor: {r: 0.76, g: 0.9, b: 1, a: 1}
+  heatGlowRenderers: []
+  heatGlowColor: {r: 2.6, g: 0.42, b: 0.06, a: 1}
+  heatGlowPower: 2.2
+  heatGlowResponse: 1.6
   debugNozzleLoad: 0
   debugSideLoad: 0
+  debugIgnitionFlare: 0
+  debugHeatGlow: 0
   debugSteeringEuler: {x: 0, y: 0, z: 0}
 --- !u!1 &108178223098463990
 GameObject:
@@ -133,7 +144,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5839121, y: 0.5839121, z: 0.0672129}
+  m_LocalScale: {x: 0.5839121, y: 0.5839121, z: 0.07312764}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1970649407067824572}
@@ -215,6 +226,11 @@ MonoBehaviour:
   idleVisibility: 0.08
   opacity: 1
   response: 22
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &323517753605145686
@@ -1321,7 +1337,7 @@ MonoBehaviour:
   surfaceContactProbe: {fileID: 4585842710350534113}
   oceanInteractor: {fileID: 789528504066411760}
   atmosphereInteractor: {fileID: 4839201847601284471}
-  possessionController: {fileID: 0}
+  pilotContextSource: {fileID: 0}
   debugEngineLoad: 0
   debugMainThrustDemand: 0
   debugWeightedAccelerationLoad: 0
@@ -1732,7 +1748,10 @@ MonoBehaviour:
   sideSign: -1
   steeringRoot: {fileID: 1970649407067824572}
   response: 14
+  releaseResponse: 6
   minimumVisibleLoad: 0.03
+  ignitionFlareGain: 0.32
+  ignitionFlareDecay: 4.5
   lateralLoadResponse: 0.18
   yawLoadResponse: 0.14
   rollLoadResponse: 0.1
@@ -1752,6 +1771,8 @@ MonoBehaviour:
   smokeGraph: {fileID: 8822466765166501663}
   smokeAtmosphereThreshold: 0.02
   sparksBoostThreshold: 0.7
+  groundDustGain: 2.4
+  groundDustFloor: 0.35
   sparksGraphTuning:
     spawnRate: 34
     burstCount: 0
@@ -1778,8 +1799,14 @@ MonoBehaviour:
   lightPower: 1.7
   idleLightColor: {r: 0.18, g: 0.85, b: 1, a: 1}
   boostLightColor: {r: 0.76, g: 0.9, b: 1, a: 1}
+  heatGlowRenderers: []
+  heatGlowColor: {r: 2.6, g: 0.42, b: 0.06, a: 1}
+  heatGlowPower: 2.2
+  heatGlowResponse: 1.6
   debugNozzleLoad: 0
   debugSideLoad: 0
+  debugIgnitionFlare: 0
+  debugHeatGlow: 0
   debugSteeringEuler: {x: 0, y: 0, z: 0}
 --- !u!1 &3782451695967674794
 GameObject:
@@ -2027,7 +2054,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5033725, y: 0.5033725, z: 4.425999}
+  m_LocalScale: {x: 0.5597502, y: 0.5597502, z: 4.8154874}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1970649407067824572}
@@ -2109,6 +2136,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.48
   response: 15
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &4217302515682443511
@@ -2140,7 +2172,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8859356, y: 0.8859356, z: 5.3534575}
+  m_LocalScale: {x: 0.98516035, y: 0.98516035, z: 5.824562}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8926889536318064163}
@@ -2222,6 +2254,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.34
   response: 10
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &4457010908172445110
@@ -2321,7 +2358,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.42283288, y: 0.42283288, z: 3.6951535}
+  m_LocalScale: {x: 0.47019017, y: 0.47019017, z: 4.020327}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1970649407067824572}
@@ -2403,6 +2440,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.92
   response: 18
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &4743946206159632449
@@ -2732,7 +2774,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.8859356, y: 0.8859356, z: 5.3534575}
+  m_LocalScale: {x: 0.98516035, y: 0.98516035, z: 5.824562}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1970649407067824572}
@@ -2814,6 +2856,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.34
   response: 10
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &5661320470488126624
@@ -2845,7 +2892,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.42283288, y: 0.42283288, z: 3.6951535}
+  m_LocalScale: {x: 0.47019017, y: 0.47019017, z: 4.020327}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8926889536318064163}
@@ -2927,6 +2974,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.92
   response: 18
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &5733091492271050922
@@ -2992,6 +3044,7 @@ MonoBehaviour:
   speedHeatContribution: 0.08
   aerodynamicHeatContribution: 1
   heatReferenceSpeed: 260
+  groundEffectAltitude: 45
   suppressAtmosphereVfxUnderwater: 1
   nozzles:
   - {fileID: 8607803184205426112}
@@ -3000,6 +3053,7 @@ MonoBehaviour:
   debugBoost: 0
   debugHeat: 0
   debugAtmosphereDensity: 0
+  debugGroundProximity: 0
   debugLocalLinearAcceleration: {x: 0, y: 0, z: 0}
 --- !u!1 &5857933438477915038
 GameObject:
@@ -3369,7 +3423,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.6845866, y: 0.6845866, z: 4.786974}
+  m_LocalScale: {x: 0.7612603, y: 0.7612603, z: 5.208228}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8926889536318064163}
@@ -3451,6 +3505,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.42
   response: 13
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &7421629419028566609
@@ -3482,7 +3541,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5839121, y: 0.5839121, z: 0.0672129}
+  m_LocalScale: {x: 0.5839121, y: 0.5839121, z: 0.07312764}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8926889536318064163}
@@ -3564,6 +3623,11 @@ MonoBehaviour:
   idleVisibility: 0.08
   opacity: 1
   response: 22
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &8061572453732183919
@@ -3665,7 +3729,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.6845866, y: 0.6845866, z: 4.786974}
+  m_LocalScale: {x: 0.7612603, y: 0.7612603, z: 5.208228}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1970649407067824572}
@@ -3747,6 +3811,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.42
   response: 13
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &8574702655607481281
@@ -3846,7 +3915,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5033725, y: 0.5033725, z: 4.425999}
+  m_LocalScale: {x: 0.5597502, y: 0.5597502, z: 4.8154874}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 8926889536318064163}
@@ -3928,6 +3997,11 @@ MonoBehaviour:
   idleVisibility: 0
   opacity: 0.48
   response: 15
+  vacuumLengthScale: 1.22
+  vacuumRadiusScale: 1.28
+  vacuumBellExpansion: 0.55
+  speedReference: 320
+  speedStretch: 0.16
   previewLoad: 0.65
   previewBoost: 0.15
 --- !u!1 &8845474225334844337
