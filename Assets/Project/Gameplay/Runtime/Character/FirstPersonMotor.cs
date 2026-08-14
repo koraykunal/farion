@@ -19,7 +19,7 @@ namespace Farion.Gameplay.Character
         [SerializeField] FirstPersonMotorProfile profile;
 
         [Header("Input")]
-        [SerializeField] MonoBehaviour inputSource;
+        [SerializeField] KeyboardFirstPersonInput inputSource;
 
         [Header("View")]
         [SerializeField] Transform viewReference;
@@ -45,7 +45,7 @@ namespace Farion.Gameplay.Character
         CapsuleCollider cachedCapsule;
         CelestialActorProbe actorProbe;
         RigidbodyFirstPersonPhysicsBody offlinePhysicsBody;
-        IFirstPersonInputSource resolvedInput;
+        KeyboardFirstPersonInput resolvedInput;
         FirstPersonInputState currentInput;
         bool jumpQueued;
         bool previousJumpHeld;
@@ -81,10 +81,6 @@ namespace Farion.Gameplay.Character
 
         void OnValidate()
         {
-            if (inputSource != null && inputSource is not IFirstPersonInputSource)
-            {
-                inputSource = null;
-            }
         }
 
         void Update()
@@ -171,10 +167,10 @@ namespace Farion.Gameplay.Character
             physicsBody.Commit();
         }
 
-        public void SetInputSource(IFirstPersonInputSource source)
+        public void SetInputSource(KeyboardFirstPersonInput source)
         {
             resolvedInput = source;
-            inputSource = source as MonoBehaviour;
+            inputSource = source;
         }
 
         public void SetViewReference(Transform reference)
@@ -289,13 +285,13 @@ namespace Farion.Gameplay.Character
 
         void ResolveInputSource()
         {
-            if (inputSource is IFirstPersonInputSource explicitSource)
+            if (inputSource != null)
             {
-                resolvedInput = explicitSource;
+                resolvedInput = inputSource;
                 return;
             }
 
-            resolvedInput ??= GetComponent<IFirstPersonInputSource>();
+            resolvedInput ??= GetComponent<KeyboardFirstPersonInput>();
         }
 
         void RefreshGrounding(

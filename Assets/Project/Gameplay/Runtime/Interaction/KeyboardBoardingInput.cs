@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Farion.Gameplay.Interaction
 {
     [DisallowMultipleComponent]
-    public sealed class KeyboardBoardingInput : MonoBehaviour, IBoardingInputSource
+    public sealed class KeyboardBoardingInput : MonoBehaviour
     {
         public BoardingInputState CurrentInput { get; private set; }
 

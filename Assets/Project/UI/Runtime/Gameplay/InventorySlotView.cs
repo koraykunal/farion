@@ -32,6 +32,8 @@ namespace Farion.UI.Gameplay
         bool current;
         bool hasItem;
 
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+
         public event Action<InventorySlotView> Focused;
         public event Action<InventorySlotView> ContextRequested;
         public event Action<InventorySlotView> PrimaryClicked;
@@ -164,13 +166,9 @@ namespace Farion.UI.Gameplay
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
 
-            if (theme == null)
-            {
-                return;
-            }
 
             SetFont(nameText, theme.InterfaceMediumFont, FontWeight.Medium);
             SetFont(detailText, theme.InterfaceFont, FontWeight.Regular);
@@ -182,24 +180,12 @@ namespace Farion.UI.Gameplay
             bool focused = IsInteractable() && focusState.IsFocused;
             bool emphasized = focused || current;
 
-            Color panelNormal = theme != null
-                ? theme.ButtonSurface
-                : new Color(0.024f, 0.037f, 0.052f, 0.78f);
-            Color panelFocused = theme != null
-                ? theme.ButtonSurfaceHighlighted
-                : new Color(0.055f, 0.086f, 0.118f, 0.94f);
-            Color primary = theme != null
-                ? theme.PrimaryText
-                : new Color(0.88f, 0.91f, 0.93f, 1f);
-            Color secondary = theme != null
-                ? theme.SecondaryText
-                : new Color(0.54f, 0.6f, 0.65f, 0.9f);
-            Color supporting = theme != null
-                ? theme.SupportingText
-                : new Color(0.68f, 0.76f, 0.81f, 1f);
-            Color focus = theme != null
-                ? theme.Focus
-                : new Color(0.56f, 0.68f, 0.76f, 1f);
+            Color panelNormal = Theme.ButtonSurface;
+            Color panelFocused = Theme.ButtonSurfaceHighlighted;
+            Color primary = Theme.PrimaryText;
+            Color secondary = Theme.SecondaryText;
+            Color supporting = Theme.SupportingText;
+            Color focus = Theme.Focus;
 
             if (background != null)
             {

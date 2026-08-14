@@ -16,9 +16,6 @@ namespace Farion.UI.Gameplay
     [DisallowMultipleComponent]
     public sealed class SpacecraftFlightHudPresenter : MonoBehaviour
     {
-        static readonly Color FallbackNominalColor = new(0.52f, 0.94f, 0.9f, 0.96f);
-        static readonly Color FallbackCautionColor = new(1f, 0.72f, 0.24f, 0.98f);
-        static readonly Color FallbackCriticalColor = new(1f, 0.26f, 0.2f, 1f);
         static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
         const string SectionLabelOpen = "<size=72%><alpha=#96>";
         const string SectionLabelClose = "</alpha></size>";
@@ -54,6 +51,8 @@ namespace Farion.UI.Gameplay
         ILocalPilotContext pilotContext;
         float nextRefreshTime;
         bool visible;
+
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
 
         public void SetPilotContext(ILocalPilotContext context)
         {
@@ -447,26 +446,22 @@ namespace Farion.UI.Gameplay
             }
 
             UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-            theme = root != null ? root.Theme : null;
+            theme = UiTheme.Resolve(root != null ? root.Theme : null);
         }
 
         void ApplyTheme()
         {
             if (navigationText != null)
             {
-                navigationText.color = theme != null
-                    ? theme.PrimaryText
-                    : ResolveNominalColor();
+                navigationText.color = Theme.PrimaryText;
             }
 
             if (navigationMarkerText != null)
             {
-                navigationMarkerText.color = theme != null
-                    ? theme.Focus
-                    : ResolveNominalColor();
+                navigationMarkerText.color = Theme.Focus;
             }
 
-            graphics?.ApplyTheme(theme);
+            graphics?.ApplyTheme(Theme);
 
             if (Application.isPlaying)
             {
@@ -476,10 +471,6 @@ namespace Farion.UI.Gameplay
 
         void ApplyTypography()
         {
-            if (theme == null)
-            {
-                return;
-            }
 
             ApplyFont(navigationText, theme.InstrumentFont, 2f, 2f);
             ApplyFont(navigationMarkerText, theme.InstrumentFont, 2f, 0f);
@@ -506,17 +497,17 @@ namespace Farion.UI.Gameplay
 
         Color ResolveNominalColor()
         {
-            return theme != null ? theme.Nominal : FallbackNominalColor;
+            return Theme.Nominal;
         }
 
         Color ResolveCautionColor()
         {
-            return theme != null ? theme.Caution : FallbackCautionColor;
+            return Theme.Caution;
         }
 
         Color ResolveCriticalColor()
         {
-            return theme != null ? theme.Critical : FallbackCriticalColor;
+            return Theme.Critical;
         }
 
         void SetMarkerActive(bool active)

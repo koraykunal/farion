@@ -71,6 +71,8 @@ namespace Farion.UI.Feedback
         readonly Queue<Message> messages = new();
         Coroutine routine;
 
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+
         public event Action<string, UiFeedbackSeverity> MessageShown;
         public bool IsPresenting => routine != null;
         public bool IncludesSeverityLabel => includeSeverityLabel;
@@ -190,16 +192,8 @@ namespace Farion.UI.Feedback
                 MessageShown?.Invoke(message.Text, message.Severity);
 
                 bool shouldAnimate = animate && !IsReducedMotionEnabled();
-                float enterDuration = shouldAnimate && theme != null
-                    ? theme.StateEnterDuration
-                    : shouldAnimate
-                        ? 0.16f
-                        : 0f;
-                float exitDuration = shouldAnimate && theme != null
-                    ? theme.StateExitDuration
-                    : shouldAnimate
-                        ? 0.1f
-                        : 0f;
+                float enterDuration = shouldAnimate ? Theme.StateEnterDuration : 0f;
+                float exitDuration = shouldAnimate ? Theme.StateExitDuration : 0f;
 
                 yield return Fade(0f, 1f, enterDuration);
                 yield return new WaitForSecondsRealtime(message.Duration);
@@ -251,23 +245,12 @@ namespace Farion.UI.Feedback
 
         Color ResolveSeverityColor(UiFeedbackSeverity severity)
         {
-            if (theme == null)
-            {
-                return severity switch
-                {
-                    UiFeedbackSeverity.Success => new Color(0.78f, 0.9f, 0.7f, 0.95f),
-                    UiFeedbackSeverity.Caution => new Color(1f, 0.72f, 0.24f, 0.98f),
-                    UiFeedbackSeverity.Error => new Color(1f, 0.26f, 0.2f, 1f),
-                    _ => new Color(0.68f, 0.76f, 0.81f, 1f)
-                };
-            }
-
             return severity switch
             {
-                UiFeedbackSeverity.Success => theme.Nominal,
-                UiFeedbackSeverity.Caution => theme.Caution,
-                UiFeedbackSeverity.Error => theme.Critical,
-                _ => theme.SupportingText
+                UiFeedbackSeverity.Success => Theme.Nominal,
+                UiFeedbackSeverity.Caution => Theme.Caution,
+                UiFeedbackSeverity.Error => Theme.Critical,
+                _ => Theme.SupportingText
             };
         }
 
@@ -353,7 +336,7 @@ namespace Farion.UI.Feedback
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
         }
 

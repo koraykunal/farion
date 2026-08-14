@@ -1,5 +1,6 @@
 ﻿<Solution>
   <Project Path="FishNet.Runtime.csproj" />
+  <Project Path="Farion.Core.Runtime.csproj" />
   <Project Path="FishNet.Codegen.Cecil.csproj" />
   <Project Path="Farion.Gameplay.Runtime.csproj" />
   <Project Path="Farion.Multiplayer.Runtime.csproj" />
@@ -16,7 +17,6 @@
   <Project Path="FMODUnityEditor.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
   <Project Path="FMODUnity.csproj" />
-  <Project Path="Farion.Core.Runtime.csproj" />
   <Project Path="FMODUnityHaptics.csproj" />
   <Project Path="Farion.Gameplay.Domain.csproj" />
   <Project Path="FMODUnityResonance.csproj" />

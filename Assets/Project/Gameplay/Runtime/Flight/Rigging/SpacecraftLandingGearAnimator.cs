@@ -14,7 +14,7 @@ namespace Farion.Gameplay.Flight
         [SerializeField] CelestialActorProbe celestialProbe;
         [SerializeField] SpacecraftSurfaceContactProbe surfaceContactProbe;
         [SerializeField] SpacecraftRampController rampController;
-        [SerializeField] MonoBehaviour inputSource;
+        [SerializeField] KeyboardSpacecraftInput inputSource;
 
         [Header("Deployment")]
         [SerializeField] bool landingGearStartsDeployed = true;
@@ -43,7 +43,7 @@ namespace Farion.Gameplay.Flight
         [Range(0f, 1f)]
         [SerializeField] float deployedAmount;
 
-        ISpacecraftInputSource resolvedInput;
+        KeyboardSpacecraftInput resolvedInput;
         bool commandedDeployed;
         bool deployDecision;
         float decisionTimer;
@@ -108,14 +108,14 @@ namespace Farion.Gameplay.Flight
             motor ??= GetComponent<SpacecraftMotor>();
             celestialProbe ??= GetComponent<CelestialActorProbe>();
             surfaceContactProbe ??= GetComponent<SpacecraftSurfaceContactProbe>();
-            if (inputSource is ISpacecraftInputSource explicitInput)
+            if (inputSource != null)
             {
-                resolvedInput = explicitInput;
+                resolvedInput = inputSource;
             }
             else
             {
-                resolvedInput ??= GetComponent<ISpacecraftInputSource>();
-                inputSource = resolvedInput as MonoBehaviour;
+                resolvedInput ??= GetComponent<KeyboardSpacecraftInput>();
+                inputSource = resolvedInput;
             }
 
             if (landingGearColliders == null || landingGearColliders.Length == 0)

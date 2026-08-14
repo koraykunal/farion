@@ -302,56 +302,6 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void ReentryVfxActivatesFromHeatAndKeepsPressureSecondary()
-        {
-            float belowThreshold = SpacecraftReentryVfxController.CalculateTargetIntensity(
-                heatLoad: 0.03f,
-                dynamicPressureLoad: 0.07f,
-                heatThreshold: 0.04f,
-                dynamicPressureThreshold: 0.08f,
-                pressureContribution: 0.45f);
-            float heatDriven = SpacecraftReentryVfxController.CalculateTargetIntensity(
-                heatLoad: 0.52f,
-                dynamicPressureLoad: 0.54f,
-                heatThreshold: 0.04f,
-                dynamicPressureThreshold: 0.08f,
-                pressureContribution: 0.45f);
-            float maximumHeat = SpacecraftReentryVfxController.CalculateTargetIntensity(
-                heatLoad: 1f,
-                dynamicPressureLoad: 0f,
-                heatThreshold: 0.04f,
-                dynamicPressureThreshold: 0.08f,
-                pressureContribution: 0.45f);
-
-            Assert.That(belowThreshold, Is.Zero);
-            Assert.That(heatDriven, Is.EqualTo(0.5f).Within(0.0001f));
-            Assert.That(maximumHeat, Is.EqualTo(1f));
-        }
-
-        [Test]
-        public void ReentryVfxUsesTheLeadingHullFaceForEveryTravelDirection()
-        {
-            Vector3 hullHalfExtents = new(6.8f, 3.2f, 10.5f);
-
-            float forward = SpacecraftReentryVfxController.CalculateLeadingDistance(
-                Vector3.forward,
-                hullHalfExtents,
-                standoff: 0.75f);
-            float sideways = SpacecraftReentryVfxController.CalculateLeadingDistance(
-                Vector3.right,
-                hullHalfExtents,
-                standoff: 0.75f);
-            float backward = SpacecraftReentryVfxController.CalculateLeadingDistance(
-                Vector3.back,
-                hullHalfExtents,
-                standoff: 0.75f);
-
-            Assert.That(forward, Is.EqualTo(11.25f).Within(0.0001f));
-            Assert.That(sideways, Is.EqualTo(7.55f).Within(0.0001f));
-            Assert.That(backward, Is.EqualTo(forward).Within(0.0001f));
-        }
-
-        [Test]
         public void BoostAudioTransitionFiresOnlyOnStateEdges()
         {
             Assert.That(

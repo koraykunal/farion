@@ -15,7 +15,7 @@ namespace Farion.Gameplay.Interaction
         const int MaxHits = 12;
 
         [Header("Input")]
-        [SerializeField] MonoBehaviour inputSource;
+        [SerializeField] KeyboardFirstPersonInput inputSource;
         [SerializeField] PlayerControlLock controlLock;
 
         [Header("Raycast")]
@@ -34,7 +34,7 @@ namespace Farion.Gameplay.Interaction
 
         readonly RaycastHit[] hits = new RaycastHit[MaxHits];
         readonly List<MonoBehaviour> behaviourBuffer = new(8);
-        IFirstPersonInputSource resolvedInput;
+        KeyboardFirstPersonInput resolvedInput;
         Collider[] ownColliders;
         IGameplayCommandGateway commandGateway;
         IInteractable currentInteractable;
@@ -54,10 +54,6 @@ namespace Farion.Gameplay.Interaction
         {
             maxDistance = Mathf.Max(0.1f, maxDistance);
             castRadius = Mathf.Max(0f, castRadius);
-            if (inputSource != null && inputSource is not IFirstPersonInputSource)
-            {
-                inputSource = null;
-            }
         }
 
         void OnDisable()
@@ -176,13 +172,13 @@ namespace Farion.Gameplay.Interaction
 
         void ResolveInputSource()
         {
-            if (inputSource is IFirstPersonInputSource explicitSource)
+            if (inputSource != null)
             {
-                resolvedInput = explicitSource;
+                resolvedInput = inputSource;
                 return;
             }
 
-            resolvedInput ??= GetComponent<IFirstPersonInputSource>();
+            resolvedInput ??= GetComponent<KeyboardFirstPersonInput>();
         }
 
         bool IsGameplayInputLocked()

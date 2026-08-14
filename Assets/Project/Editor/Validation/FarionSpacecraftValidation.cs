@@ -114,17 +114,6 @@ namespace Farion.Editor.Validation
                 ValidateRequiredReference(scenePath, atmosphereInteractor, "celestialProbe", report);
             }
 
-            SpacecraftReentryVfxController reentryVfx =
-                RequireSpacecraftComponent<SpacecraftReentryVfxController>(
-                    scenePath,
-                    motor,
-                    report);
-            if (reentryVfx != null)
-            {
-                ValidateRequiredReference(scenePath, reentryVfx, "atmosphereInteractor", report);
-                ValidateRequiredReference(scenePath, reentryVfx, "material", report);
-            }
-
             SpacecraftLandingGearAnimator landingGear =
                 RequireSpacecraftComponent<SpacecraftLandingGearAnimator>(scenePath, motor, report);
             if (landingGear != null)

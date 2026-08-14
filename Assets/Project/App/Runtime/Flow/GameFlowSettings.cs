@@ -1,3 +1,4 @@
+using Farion.Core.Identity;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -12,32 +13,21 @@ namespace Farion.App.Flow
 
         [Header("Scenes")]
         [SerializeField] string mainMenuSceneName = DefaultMainMenuSceneName;
-        [SerializeField] string newGameSceneName = DefaultGameplaySceneName;
-        [SerializeField] string continueSceneName = DefaultGameplaySceneName;
-        [SerializeField] string loadGameSceneName = DefaultGameplaySceneName;
+        [SerializeField] string gameplaySceneName = DefaultGameplaySceneName;
 
-        public string MainMenuSceneName => NormalizeSceneName(mainMenuSceneName);
-        public string NewGameSceneName => NormalizeSceneName(newGameSceneName);
-        public string ContinueSceneName => NormalizeSceneName(continueSceneName);
-        public string LoadGameSceneName => NormalizeSceneName(loadGameSceneName);
+        public string MainMenuSceneName => IdentifierText.Normalize(mainMenuSceneName);
+        public string GameplaySceneName => IdentifierText.Normalize(gameplaySceneName);
 
         void OnValidate()
         {
             mainMenuSceneName = EnsureSceneName(mainMenuSceneName, DefaultMainMenuSceneName);
-            newGameSceneName = EnsureSceneName(newGameSceneName, DefaultGameplaySceneName);
-            continueSceneName = EnsureSceneName(continueSceneName, DefaultGameplaySceneName);
-            loadGameSceneName = EnsureSceneName(loadGameSceneName, DefaultGameplaySceneName);
+            gameplaySceneName = EnsureSceneName(gameplaySceneName, DefaultGameplaySceneName);
         }
 
         static string EnsureSceneName(string sceneName, string defaultSceneName)
         {
-            string normalizedSceneName = NormalizeSceneName(sceneName);
+            string normalizedSceneName = IdentifierText.Normalize(sceneName);
             return string.IsNullOrEmpty(normalizedSceneName) ? defaultSceneName : normalizedSceneName;
-        }
-
-        static string NormalizeSceneName(string sceneName)
-        {
-            return string.IsNullOrWhiteSpace(sceneName) ? string.Empty : sceneName.Trim();
         }
     }
 }

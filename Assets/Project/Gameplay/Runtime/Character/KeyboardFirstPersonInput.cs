@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Farion.Gameplay.Character
 {
     [DisallowMultipleComponent]
-    public sealed class KeyboardFirstPersonInput : MonoBehaviour, IFirstPersonInputSource
+    public sealed class KeyboardFirstPersonInput : MonoBehaviour
     {
         [Header("Look")]
         [Min(0f)]

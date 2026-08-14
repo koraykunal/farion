@@ -30,6 +30,8 @@ namespace Farion.UI.Settings
         bool current;
         UiPointerFocusState focusState;
 
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+
         public event Action<UiSettingsCategoryView> Chosen;
 
         public UiSettingsCategory Category => category;
@@ -148,10 +150,10 @@ namespace Farion.UI.Settings
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
 
-            if (labelText != null && theme != null && theme.InterfaceMediumFont != null)
+            if (labelText != null && Theme.InterfaceMediumFont != null)
             {
                 labelText.font = theme.InterfaceMediumFont;
                 labelText.fontWeight = FontWeight.Medium;
@@ -163,21 +165,11 @@ namespace Farion.UI.Settings
             bool available = IsInteractable();
             bool focused = available && focusState.IsFocused;
 
-            Color normalSurface = theme != null
-                ? theme.ButtonSurface
-                : new Color(0.035f, 0.052f, 0.072f, 0.72f);
-            Color raisedSurface = theme != null
-                ? theme.ButtonSurfaceHighlighted
-                : new Color(0.07f, 0.11f, 0.15f, 0.92f);
-            Color primary = theme != null
-                ? theme.PrimaryText
-                : new Color(0.88f, 0.91f, 0.93f, 1f);
-            Color secondary = theme != null
-                ? theme.SecondaryText
-                : new Color(0.54f, 0.6f, 0.65f, 0.9f);
-            Color focus = theme != null
-                ? theme.Focus
-                : new Color(0.56f, 0.68f, 0.76f, 1f);
+            Color normalSurface = Theme.ButtonSurface;
+            Color raisedSurface = Theme.ButtonSurfaceHighlighted;
+            Color primary = Theme.PrimaryText;
+            Color secondary = Theme.SecondaryText;
+            Color focus = Theme.Focus;
 
             if (background != null)
             {

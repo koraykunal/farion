@@ -33,6 +33,8 @@ namespace Farion.UI.SaveLoad
         UiPointerFocusState focusState;
         bool current;
 
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+
         public event Action<UiSaveSlotView> Focused;
         public event Action<UiSaveSlotView> Submitted;
         public SaveGameSlotSummary Summary { get; private set; }
@@ -143,13 +145,9 @@ namespace Farion.UI.SaveLoad
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
 
-            if (theme == null)
-            {
-                return;
-            }
 
             SetFont(indexText, theme.InstrumentFont, FontWeight.Medium);
             SetFont(titleText, theme.InterfaceMediumFont, FontWeight.Medium);
@@ -161,24 +159,12 @@ namespace Farion.UI.SaveLoad
         {
             bool focused = IsInteractable() && focusState.IsFocused;
             bool emphasized = IsInteractable() && (current || focused);
-            Color normalSurface = theme != null
-                ? theme.ButtonSurface
-                : new Color(0.024f, 0.037f, 0.052f, 0.82f);
-            Color focusedSurface = theme != null
-                ? theme.ButtonSurfaceHighlighted
-                : new Color(0.055f, 0.086f, 0.118f, 0.96f);
-            Color primary = theme != null
-                ? theme.PrimaryText
-                : new Color(0.88f, 0.91f, 0.93f, 1f);
-            Color secondary = theme != null
-                ? theme.SecondaryText
-                : new Color(0.54f, 0.6f, 0.65f, 0.9f);
-            Color supporting = theme != null
-                ? theme.SupportingText
-                : new Color(0.68f, 0.76f, 0.81f, 1f);
-            Color focus = theme != null
-                ? theme.Focus
-                : new Color(0.56f, 0.68f, 0.76f, 1f);
+            Color normalSurface = Theme.ButtonSurface;
+            Color focusedSurface = Theme.ButtonSurfaceHighlighted;
+            Color primary = Theme.PrimaryText;
+            Color secondary = Theme.SecondaryText;
+            Color supporting = Theme.SupportingText;
+            Color focus = Theme.Focus;
 
             if (background != null)
             {
@@ -236,21 +222,13 @@ namespace Farion.UI.SaveLoad
 
         Color ResolveStateColor(bool focused)
         {
-            Color secondary = theme != null
-                ? theme.SecondaryText
-                : new Color(0.54f, 0.6f, 0.65f, 0.9f);
-            Color supporting = theme != null
-                ? theme.SupportingText
-                : new Color(0.68f, 0.76f, 0.81f, 1f);
+            Color secondary = Theme.SecondaryText;
+            Color supporting = Theme.SupportingText;
 
             return Summary.State switch
             {
-                SaveGameSlotState.Unsupported => theme != null
-                    ? theme.Caution
-                    : new Color(1f, 0.72f, 0.24f, 0.98f),
-                SaveGameSlotState.Invalid => theme != null
-                    ? theme.Critical
-                    : new Color(1f, 0.26f, 0.2f, 1f),
+                SaveGameSlotState.Unsupported => Theme.Caution,
+                SaveGameSlotState.Invalid => Theme.Critical,
                 _ => focused ? supporting : secondary
             };
         }

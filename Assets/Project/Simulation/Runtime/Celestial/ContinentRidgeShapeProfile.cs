@@ -1,4 +1,5 @@
 using Farion.Simulation.Planetary;
+using Farion.Core;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -140,7 +141,7 @@ namespace Farion.Simulation.Celestial
         float EvaluateHeightRatio(Vector3 unitDirection, float ridgeFilterRadius)
         {
             float continentShape = continentNoise.Sample(unitDirection, seed + 100);
-            continentShape = SmoothMax(continentShape, -oceanFloorDepth, oceanFloorSmoothing);
+            continentShape = FarionMath.SmoothMax(continentShape, -oceanFloorDepth, oceanFloorSmoothing);
             float coastProximity = CalculateCoastProximity(continentShape);
 
             if (continentShape < 0f)
@@ -225,27 +226,6 @@ namespace Farion.Simulation.Celestial
                 startHeight - blendDistance * 0.5f,
                 startHeight + blendDistance * 0.5f,
                 height));
-        }
-
-        static float SmoothMax(float a, float b, float k)
-        {
-            if (k <= 0f)
-            {
-                return Mathf.Max(a, b);
-            }
-
-            return -SmoothMin(-a, -b, k);
-        }
-
-        static float SmoothMin(float a, float b, float k)
-        {
-            if (k <= 0f)
-            {
-                return Mathf.Min(a, b);
-            }
-
-            float h = Mathf.Clamp01((b - a + k) / (2f * k));
-            return a * h + b * (1f - h) - k * h * (1f - h);
         }
 
         [System.Serializable]

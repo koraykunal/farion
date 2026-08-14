@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Farion.Core.Identity;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
@@ -21,7 +22,7 @@ namespace Farion.Gameplay.Persistence
 
         public GameplaySaveCapture(string savedAtUtc)
         {
-            SavedAtUtc = string.IsNullOrWhiteSpace(savedAtUtc) ? string.Empty : savedAtUtc.Trim();
+            SavedAtUtc = IdentifierText.Normalize(savedAtUtc);
         }
 
         public string SavedAtUtc { get; }

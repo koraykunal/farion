@@ -505,8 +505,8 @@ namespace Farion.Rendering.Celestial
             propertyBlock.Clear();
 
             if (surfaceProfile is TerrestrialSurfaceProfile terrestrialSurface
-                && TryGetComponent(out ICelestialOceanLevelProvider oceanLevelProvider)
-                && oceanLevelProvider.TryGetOceanLevel(out float oceanLevel))
+                && TryGetComponent(out TerrestrialPlanetVisual terrestrialVisual)
+                && terrestrialVisual.TryGetOceanLevel(out float oceanLevel))
             {
                 terrestrialSurface.ApplyMaterialProperties(propertyBlock, Body.Radius, renderRadiusMinMax, oceanLevel);
             }

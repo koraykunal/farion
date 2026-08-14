@@ -1,4 +1,5 @@
 using System;
+using Farion.Core;
 using UnityEngine;
 
 namespace Farion.Simulation.Celestial
@@ -263,8 +264,8 @@ namespace Farion.Simulation.Celestial
             float rimX = Mathf.Min(x - 1f - rimWidth, 0f);
             float rim = rimSteepness * rimX * rimX;
 
-            float craterShape = SmoothMax(cavity, crater.FloorHeight, crater.Smoothness);
-            craterShape = SmoothMin(craterShape, rim, crater.Smoothness);
+            float craterShape = FarionMath.SmoothMax(cavity, crater.FloorHeight, crater.Smoothness);
+            craterShape = FarionMath.SmoothMin(craterShape, rim, crater.Smoothness);
             return craterShape * crater.Radius;
         }
 
@@ -381,27 +382,6 @@ namespace Farion.Simulation.Celestial
             cachedEjectaCraters = null;
             cachedBiomePoints = null;
             NotifyChanged();
-        }
-
-        static float SmoothMin(float a, float b, float k)
-        {
-            if (k <= 0f)
-            {
-                return Mathf.Min(a, b);
-            }
-
-            float h = Mathf.Clamp01((b - a + k) / (2f * k));
-            return a * h + b * (1f - h) - k * h * (1f - h);
-        }
-
-        static float SmoothMax(float a, float b, float k)
-        {
-            if (k <= 0f)
-            {
-                return Mathf.Max(a, b);
-            }
-
-            return -SmoothMin(-a, -b, k);
         }
 
         static float FractalNoise(

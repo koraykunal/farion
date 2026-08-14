@@ -1622,7 +1622,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuController
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
-  saveGameAvailability: {fileID: 1354690715}
   uiSystemRoot: {fileID: 1506823812}
   screenRouter: {fileID: 1506823814}
   feedbackService: {fileID: 0}
@@ -1804,7 +1803,6 @@ GameObject:
   - component: {fileID: 1354690714}
   - component: {fileID: 1354690713}
   - component: {fileID: 1354690712}
-  - component: {fileID: 1354690715}
   m_Layer: 0
   m_Name: MainCanvas
   m_TagString: Untagged
@@ -1902,18 +1900,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!114 &1354690715
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1354690710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7c0227bf94c4fe79973a60a02fa55f7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.LocalSaveGameAvailabilityProvider
 --- !u!1001 &1401736744
 PrefabInstance:
   m_ObjectHideFlags: 0

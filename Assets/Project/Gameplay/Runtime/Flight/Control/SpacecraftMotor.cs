@@ -70,7 +70,7 @@ namespace Farion.Gameplay.Flight
         const float DefaultInputDeadZone = 0.04f;
 
         [Header("Input")]
-        [SerializeField] MonoBehaviour inputSource;
+        [SerializeField] KeyboardSpacecraftInput inputSource;
 
         [Header("Flight Model")]
         [SerializeField] SpacecraftFlightProfile flightProfile;
@@ -93,7 +93,7 @@ namespace Farion.Gameplay.Flight
 
         Rigidbody cachedRigidbody;
         RigidbodySpacecraftPhysicsBody offlinePhysicsBody;
-        ISpacecraftInputSource resolvedInput;
+        KeyboardSpacecraftInput resolvedInput;
         SpacecraftInputState currentInput;
         SpacecraftPilotCommand requestedCommand = SpacecraftPilotCommand.None;
         SpacecraftPilotCommand currentCommand = SpacecraftPilotCommand.None;
@@ -151,10 +151,6 @@ namespace Farion.Gameplay.Flight
         void OnValidate()
         {
             lookInputLimit = Mathf.Clamp(lookInputLimit, 0.1f, 4f);
-            if (inputSource != null && inputSource is not ISpacecraftInputSource)
-            {
-                inputSource = null;
-            }
 
             ResolveContactProbe();
             ResolveCelestialProbe();
@@ -254,10 +250,10 @@ namespace Farion.Gameplay.Flight
             boostController.RestoreState(state.Boost);
         }
 
-        public void SetInputSource(ISpacecraftInputSource source)
+        public void SetInputSource(KeyboardSpacecraftInput source)
         {
             resolvedInput = source;
-            inputSource = source as MonoBehaviour;
+            inputSource = source;
         }
 
         public void SetSimulation(GravitySimulation source)
@@ -306,13 +302,13 @@ namespace Farion.Gameplay.Flight
 
         void ResolveInputSource()
         {
-            if (inputSource is ISpacecraftInputSource explicitSource)
+            if (inputSource != null)
             {
-                resolvedInput = explicitSource;
+                resolvedInput = inputSource;
                 return;
             }
 
-            resolvedInput ??= GetComponent<ISpacecraftInputSource>();
+            resolvedInput ??= GetComponent<KeyboardSpacecraftInput>();
         }
 
         void ResolveContactProbe()

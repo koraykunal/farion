@@ -33,6 +33,8 @@ namespace Farion.UI.Settings
         string displayDescription = string.Empty;
         string displayValue = string.Empty;
 
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+
         public event Action<UiSettingsOptionView, int> AdjustmentRequested;
         public event Action<UiSettingsOptionView> Focused;
 
@@ -179,16 +181,16 @@ namespace Farion.UI.Settings
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
 
-            if (titleText != null && theme != null && theme.InterfaceMediumFont != null)
+            if (titleText != null && Theme.InterfaceMediumFont != null)
             {
                 titleText.font = theme.InterfaceMediumFont;
                 titleText.fontWeight = FontWeight.Medium;
             }
 
-            if (valueText != null && theme != null && theme.InstrumentFont != null)
+            if (valueText != null && Theme.InstrumentFont != null)
             {
                 valueText.font = theme.InstrumentFont;
                 valueText.fontWeight = FontWeight.Medium;
@@ -200,21 +202,11 @@ namespace Farion.UI.Settings
             bool available = IsInteractable();
             bool focused = available && focusState.IsFocused;
 
-            Color panelNormal = theme != null
-                ? theme.ButtonSurface
-                : new Color(0.035f, 0.052f, 0.072f, 0.72f);
-            Color panelFocused = theme != null
-                ? theme.ButtonSurfaceHighlighted
-                : new Color(0.07f, 0.11f, 0.15f, 0.92f);
-            Color primary = theme != null
-                ? theme.PrimaryText
-                : new Color(0.88f, 0.91f, 0.93f, 1f);
-            Color supporting = theme != null
-                ? theme.SupportingText
-                : new Color(0.68f, 0.76f, 0.81f, 1f);
-            Color focus = theme != null
-                ? theme.Focus
-                : new Color(0.56f, 0.68f, 0.76f, 1f);
+            Color panelNormal = Theme.ButtonSurface;
+            Color panelFocused = Theme.ButtonSurfaceHighlighted;
+            Color primary = Theme.PrimaryText;
+            Color supporting = Theme.SupportingText;
+            Color focus = Theme.Focus;
 
             if (!available)
             {

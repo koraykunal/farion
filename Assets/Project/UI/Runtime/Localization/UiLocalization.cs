@@ -13,9 +13,6 @@ namespace Farion.UI.Localization
         public const string TurkishLocaleCode = "tr";
 
         static readonly HashSet<string> missingEntryKeys = new(StringComparer.Ordinal);
-        static StringTable cachedTable;
-        static Locale cachedLocale;
-        static bool localeChangeHooked;
 
         public static IReadOnlyCollection<string> MissingEntryKeys => missingEntryKeys;
 
@@ -26,15 +23,12 @@ namespace Farion.UI.Localization
                 return string.Empty;
             }
 
-            StringTable table = ResolveTable();
-            StringTableEntry entry = table?.GetEntry(entryKey);
-            if (entry == null)
-            {
-                missingEntryKeys.Add(entryKey);
-                return entryKey;
-            }
+            // StringDatabase caches the resolved table and invalidates it on locale change.
+            StringTable table = LocalizationSettings.HasSettings
+                ? LocalizationSettings.StringDatabase.GetTable(TableName)
+                : null;
 
-            string value = entry.GetLocalizedString();
+            string value = table?.GetEntry(entryKey)?.GetLocalizedString();
             if (string.IsNullOrWhiteSpace(value))
             {
                 missingEntryKeys.Add(entryKey);
@@ -71,48 +65,6 @@ namespace Farion.UI.Localization
                 StringComparison.OrdinalIgnoreCase)
                 ? TurkishLocaleCode
                 : EnglishLocaleCode;
-        }
-
-        static StringTable ResolveTable()
-        {
-            if (!LocalizationSettings.HasSettings)
-            {
-                return null;
-            }
-
-            HookLocaleChange();
-
-            Locale locale = LocalizationSettings.SelectedLocale;
-            if (locale == null)
-            {
-                return null;
-            }
-
-            if (cachedTable != null && ReferenceEquals(cachedLocale, locale))
-            {
-                return cachedTable;
-            }
-
-            cachedTable = LocalizationSettings.StringDatabase.GetTable(TableName, locale);
-            cachedLocale = locale;
-            return cachedTable;
-        }
-
-        static void HookLocaleChange()
-        {
-            if (localeChangeHooked)
-            {
-                return;
-            }
-
-            LocalizationSettings.SelectedLocaleChanged += OnSelectedLocaleChanged;
-            localeChangeHooked = true;
-        }
-
-        static void OnSelectedLocaleChanged(Locale locale)
-        {
-            cachedTable = null;
-            cachedLocale = null;
         }
     }
 }

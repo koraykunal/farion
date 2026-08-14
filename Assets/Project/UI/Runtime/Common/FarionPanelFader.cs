@@ -15,29 +15,29 @@ namespace Farion.UI.Common
         [SerializeField] RectTransform motionRoot;
 
         [Header("Motion")]
-        [SerializeField, Min(0f)] float showDuration = 0.16f;
-        [SerializeField, Min(0f)] float hideDuration = 0.1f;
         [SerializeField] Ease showEase = Ease.OutQuart;
         [SerializeField] Ease hideEase = Ease.OutCubic;
-        [SerializeField] Vector2 hiddenOffset = new(-24f, 0f);
         [SerializeField] bool fadeOnly;
 
         bool capturedPosition;
         Vector2 shownPosition;
         Sequence sequence;
 
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+
         public bool FadeOnly => fadeOnly;
+
+        // Durations and offset are theme-owned; nothing here is per-instance authored.
+        Vector2 HiddenOffset => Theme.PanelHiddenOffset;
 
         void Reset()
         {
             ResolveReferences();
-            ApplyTheme();
         }
 
         void Awake()
         {
             ResolveReferences();
-            ApplyTheme();
             CapturePosition();
         }
 
@@ -50,7 +50,6 @@ namespace Farion.UI.Common
         public void SetVisible(bool visible, bool animated)
         {
             ResolveReferences();
-            ApplyTheme();
             CapturePosition();
 
             if (!animated || !Application.isPlaying || IsReducedMotionEnabled())
@@ -74,9 +73,9 @@ namespace Farion.UI.Common
                 return;
             }
 
-            float duration = visible ? showDuration : hideDuration;
+            float duration = visible ? Theme.StateEnterDuration : Theme.StateExitDuration;
             Ease ease = visible ? showEase : hideEase;
-            Vector2 targetPosition = visible ? shownPosition : shownPosition + hiddenOffset;
+            Vector2 targetPosition = visible ? shownPosition : shownPosition + HiddenOffset;
 
             canvasGroup.interactable = visible;
             canvasGroup.blocksRaycasts = visible;
@@ -122,7 +121,7 @@ namespace Farion.UI.Common
 
             if (!fadeOnly && motionRoot != null)
             {
-                motionRoot.anchoredPosition = visible ? shownPosition : shownPosition + hiddenOffset;
+                motionRoot.anchoredPosition = visible ? shownPosition : shownPosition + HiddenOffset;
             }
         }
 
@@ -141,20 +140,8 @@ namespace Farion.UI.Common
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
-        }
-
-        void ApplyTheme()
-        {
-            if (theme == null)
-            {
-                return;
-            }
-
-            showDuration = theme.StateEnterDuration;
-            hideDuration = theme.StateExitDuration;
-            hiddenOffset = theme.PanelHiddenOffset;
         }
 
         void CapturePosition()

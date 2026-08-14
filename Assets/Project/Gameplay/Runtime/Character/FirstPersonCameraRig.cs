@@ -8,7 +8,7 @@ namespace Farion.Gameplay.Character
     {
         [Header("Target")]
         [SerializeField] FirstPersonMotor target;
-        [SerializeField] MonoBehaviour inputSource;
+        [SerializeField] KeyboardFirstPersonInput inputSource;
 
         [Header("View")]
         [Min(0f)]
@@ -22,7 +22,7 @@ namespace Farion.Gameplay.Character
         [Min(0f)]
         [SerializeField] float snapDistance = 4f;
 
-        IFirstPersonInputSource resolvedInput;
+        KeyboardFirstPersonInput resolvedInput;
         float pitch;
         bool snapNextFrame = true;
 
@@ -39,10 +39,6 @@ namespace Farion.Gameplay.Character
             positionResponsiveness = Mathf.Max(0f, positionResponsiveness);
             rotationResponsiveness = Mathf.Max(0f, rotationResponsiveness);
             snapDistance = Mathf.Max(0f, snapDistance);
-            if (inputSource != null && inputSource is not IFirstPersonInputSource)
-            {
-                inputSource = null;
-            }
         }
 
         void LateUpdate()
@@ -95,23 +91,23 @@ namespace Farion.Gameplay.Character
             snapNextFrame = true;
         }
 
-        public void SetInputSource(IFirstPersonInputSource source)
+        public void SetInputSource(KeyboardFirstPersonInput source)
         {
             resolvedInput = source;
-            inputSource = source as MonoBehaviour;
+            inputSource = source;
         }
 
         void ResolveInputSource()
         {
-            if (inputSource is IFirstPersonInputSource explicitSource)
+            if (inputSource != null)
             {
-                resolvedInput = explicitSource;
+                resolvedInput = inputSource;
                 return;
             }
 
             if (target != null)
             {
-                resolvedInput ??= target.GetComponent<IFirstPersonInputSource>();
+                resolvedInput ??= target.GetComponent<KeyboardFirstPersonInput>();
             }
         }
 

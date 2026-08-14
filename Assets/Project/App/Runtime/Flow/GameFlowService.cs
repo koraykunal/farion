@@ -1,3 +1,4 @@
+using Farion.Core.Identity;
 using Farion.Core.Persistence;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,7 +12,7 @@ namespace Farion.App.Flow
             SaveGameStartupMode startupMode,
             string requestedSlotName = null)
         {
-            string normalizedSceneName = NormalizeSceneName(sceneName);
+            string normalizedSceneName = IdentifierText.Normalize(sceneName);
             if (!CanLoadScene(normalizedSceneName))
             {
                 return null;
@@ -30,24 +31,12 @@ namespace Farion.App.Flow
             return SceneManager.LoadSceneAsync(normalizedSceneName, LoadSceneMode.Single);
         }
 
-        public static AsyncOperation LoadMainMenuAsync(GameFlowSettings settings)
-        {
-            return settings != null
-                ? LoadSceneAsync(settings.MainMenuSceneName)
-                : null;
-        }
-
         public static AsyncOperation LoadSceneAsync(string sceneName)
         {
-            string normalizedSceneName = NormalizeSceneName(sceneName);
+            string normalizedSceneName = IdentifierText.Normalize(sceneName);
             return CanLoadScene(normalizedSceneName)
                 ? SceneManager.LoadSceneAsync(normalizedSceneName, LoadSceneMode.Single)
                 : null;
-        }
-
-        public static void Quit()
-        {
-            UnityEngine.Application.Quit();
         }
 
         static bool CanLoadScene(string sceneName)
@@ -60,11 +49,6 @@ namespace Farion.App.Flow
 
             Debug.LogError($"Cannot load scene '{sceneName}'. Add it to the active build profile.");
             return false;
-        }
-
-        static string NormalizeSceneName(string sceneName)
-        {
-            return string.IsNullOrWhiteSpace(sceneName) ? string.Empty : sceneName.Trim();
         }
     }
 }

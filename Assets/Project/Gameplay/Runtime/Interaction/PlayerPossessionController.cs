@@ -27,7 +27,7 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] bool applyInitialModeOnAwake = true;
 
         [Header("Input")]
-        [SerializeField] MonoBehaviour boardingInputSource;
+        [SerializeField] KeyboardBoardingInput boardingInputSource;
         [SerializeField] PlayerControlLock controlLock;
 
         [Header("Spacecraft")]
@@ -76,7 +76,7 @@ namespace Farion.Gameplay.Interaction
         [SerializeField] List<ResourceDepositRuntimeSpawner> resourceStreamers = new();
         [SerializeField] bool updateResourceStreamingTarget = true;
 
-        IBoardingInputSource resolvedBoardingInput;
+        KeyboardBoardingInput resolvedBoardingInput;
         CelestialActorProbe spacecraftCelestialProbe;
         CelestialActorProbe explorerCelestialProbe;
         readonly ShipInteriorExitGate shipInteriorExitGate = new();
@@ -270,10 +270,6 @@ namespace Farion.Gameplay.Interaction
         void OnValidate()
         {
             exitPoseClearance = Mathf.Max(0f, exitPoseClearance);
-            if (boardingInputSource != null && boardingInputSource is not IBoardingInputSource)
-            {
-                boardingInputSource = null;
-            }
             exteriorTransitionDistance = Mathf.Max(0.1f, exteriorTransitionDistance);
             exteriorTransitionCooldownSeconds = Mathf.Max(0f, exteriorTransitionCooldownSeconds);
             exteriorTransitionProgressDistance = Mathf.Max(0f, exteriorTransitionProgressDistance);
@@ -550,13 +546,13 @@ namespace Farion.Gameplay.Interaction
 
         void ResolveInputSource()
         {
-            if (boardingInputSource is IBoardingInputSource explicitSource)
+            if (boardingInputSource != null)
             {
-                resolvedBoardingInput = explicitSource;
+                resolvedBoardingInput = boardingInputSource;
                 return;
             }
 
-            resolvedBoardingInput ??= GetComponent<IBoardingInputSource>();
+            resolvedBoardingInput ??= GetComponent<KeyboardBoardingInput>();
         }
 
         Transform GetSpacecraftTrackingTarget()

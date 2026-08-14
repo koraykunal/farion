@@ -86,11 +86,8 @@ MonoBehaviour:
   theme: {fileID: 11400000, guid: 7b634c3ba9ab48b09acc63a1037f7fec, type: 2}
   canvasGroup: {fileID: 100004}
   motionRoot: {fileID: 100001}
-  showDuration: 0.16
-  hideDuration: 0.1
   showEase: 12
   hideEase: 9
-  hiddenOffset: {x: -24, y: 0}
 --- !u!225 &100004
 CanvasGroup:
   m_ObjectHideFlags: 0

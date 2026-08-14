@@ -203,15 +203,11 @@ namespace Farion.UI.Loading
                 screenRouter = root != null ? root.ScreenRouter : null;
             }
 
-            theme ??= root != null ? root.Theme : null;
+            theme = UiTheme.Resolve(theme != null ? theme : root != null ? root.Theme : null);
         }
 
         void ApplyTypography()
         {
-            if (theme == null)
-            {
-                return;
-            }
 
             SetFont(systemLabelText, theme.InstrumentFont, FontWeight.Medium);
             SetFont(titleText, theme.InterfaceMediumFont, FontWeight.Medium);

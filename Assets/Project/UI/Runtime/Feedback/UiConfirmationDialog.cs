@@ -117,15 +117,11 @@ namespace Farion.UI.Feedback
                 router = root != null ? root.ScreenRouter : null;
             }
 
-            theme ??= root != null ? root.Theme : null;
+            theme = UiTheme.Resolve(theme != null ? theme : root != null ? root.Theme : null);
         }
 
         void ApplyTypography()
         {
-            if (theme == null)
-            {
-                return;
-            }
 
             SetFont(titleText, theme.InterfaceMediumFont, FontWeight.Medium);
             SetFont(bodyText, theme.InterfaceFont, FontWeight.Regular);

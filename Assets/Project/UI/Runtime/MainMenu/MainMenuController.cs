@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Farion.App.Flow;
 using Farion.Core.Persistence;
 using Farion.UI.Feedback;
@@ -15,7 +16,6 @@ namespace Farion.UI.MainMenu
     {
         [Header("Scene Flow")]
         [SerializeField] GameFlowSettings flowSettings;
-        [SerializeField] SaveGameAvailabilityProvider saveGameAvailability;
 
         [Header("UI Foundation")]
         [SerializeField] UiSystemRoot uiSystemRoot;
@@ -29,10 +29,24 @@ namespace Farion.UI.MainMenu
         [SerializeField] MainMenuButton continueButton;
         [SerializeField] MainMenuButton loadGameButton;
 
-        public bool HasSaveGame => saveGameAvailability != null && saveGameAvailability.HasSaveGame;
-        public bool HasAnySaveData =>
-            saveGameAvailability != null &&
-            saveGameAvailability.HasAnySaveData;
+        public bool HasSaveGame => SaveGameSlotService.TryGetMostRecentLoadable(out _);
+
+        public bool HasAnySaveData
+        {
+            get
+            {
+                IReadOnlyList<SaveGameSlotSummary> summaries = SaveGameSlotService.GetPlayerSlotSummaries();
+                for (int i = 0; i < summaries.Count; i++)
+                {
+                    if (summaries[i].HasData)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
 
         public event Action<MainMenuAction> CoopActionRequested;
 
@@ -68,11 +82,11 @@ namespace Farion.UI.MainMenu
                 case MainMenuAction.Continue:
                     if (HasSaveGame)
                     {
-                        StartGameplayLoad(ResolveContinueSceneName(), SaveGameStartupMode.LoadGame, ResolveSaveSlotName());
+                        StartGameplayLoad(ResolveGameplaySceneName(), SaveGameStartupMode.LoadGame, ResolveSaveSlotName());
                     }
                     break;
                 case MainMenuAction.NewGame:
-                    StartGameplayLoad(ResolveNewGameSceneName(), SaveGameStartupMode.NewGame);
+                    StartGameplayLoad(ResolveGameplaySceneName(), SaveGameStartupMode.NewGame);
                     break;
                 case MainMenuAction.LoadGame:
                     if (HasAnySaveData)
@@ -99,7 +113,7 @@ namespace Farion.UI.MainMenu
                     }
                     break;
                 case MainMenuAction.ConfirmExit:
-                    GameFlowService.Quit();
+                    Application.Quit();
                     break;
                 case MainMenuAction.HostGame:
                 case MainMenuAction.JoinLocalhost:
@@ -147,11 +161,6 @@ namespace Farion.UI.MainMenu
 
         void ResolveReferences()
         {
-            if (saveGameAvailability == null)
-            {
-                saveGameAvailability = GetComponent<SaveGameAvailabilityProvider>();
-            }
-
             uiSystemRoot ??= UiCompositionScope.FindSystemRoot(this);
             uiSystemRoot ??= GetComponentInChildren<UiSystemRoot>(true);
             if (uiSystemRoot != null)
@@ -177,7 +186,7 @@ namespace Farion.UI.MainMenu
             if (saveLoadScreen != null &&
                 saveLoadScreen.OpenForLoad(
                     slotName => StartGameplayLoad(
-                        ResolveLoadGameSceneName(),
+                        ResolveGameplaySceneName(),
                         SaveGameStartupMode.LoadGame,
                         slotName),
                     ResolveSaveSlotName()))
@@ -203,24 +212,16 @@ namespace Farion.UI.MainMenu
             }
         }
 
-        string ResolveNewGameSceneName()
+        string ResolveGameplaySceneName()
         {
-            return flowSettings != null ? flowSettings.NewGameSceneName : string.Empty;
-        }
-
-        string ResolveContinueSceneName()
-        {
-            return flowSettings != null ? flowSettings.ContinueSceneName : string.Empty;
-        }
-
-        string ResolveLoadGameSceneName()
-        {
-            return flowSettings != null ? flowSettings.LoadGameSceneName : string.Empty;
+            return flowSettings != null ? flowSettings.GameplaySceneName : string.Empty;
         }
 
         string ResolveSaveSlotName()
         {
-            return saveGameAvailability != null ? saveGameAvailability.SlotName : SaveGameSlotCatalog.DefaultSlotName;
+            return SaveGameSlotService.TryGetMostRecentLoadable(out SaveGameSlotSummary summary)
+                ? summary.SlotName
+                : SaveGameSlotCatalog.DefaultSlotName;
         }
 
         void RequestExitConfirmation()
@@ -231,7 +232,7 @@ namespace Farion.UI.MainMenu
                     "QUIT TO DESKTOP",
                     "Any unsaved progress will be lost.",
                     "QUIT",
-                    GameFlowService.Quit))
+                    Application.Quit))
             {
                 return;
             }

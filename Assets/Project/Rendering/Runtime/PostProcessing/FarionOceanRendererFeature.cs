@@ -15,7 +15,7 @@ namespace Farion.Rendering.PostProcessing
 
         [SerializeField] Shader oceanShader;
         // Resolve the exterior ocean before transparent VFX so the full-screen
-        // composite cannot overwrite particles, trails, or reentry plasma.
+        // composite cannot overwrite particles or trails.
         [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
         [SerializeField] RenderPassEvent underwaterRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing + 2;
         [Range(1, MaxOceanBodies)]
@@ -33,7 +33,7 @@ namespace Farion.Rendering.PostProcessing
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (renderingData.cameraData.isPreviewCamera || !CelestialOceanEffectRegistry.HasSources)
+            if (renderingData.cameraData.isPreviewCamera || !CelestialEffectRegistry.HasSources)
             {
                 return;
             }
@@ -44,7 +44,7 @@ namespace Farion.Rendering.PostProcessing
                 return;
             }
 
-            oceanPass.renderPassEvent = CelestialOceanEffectRegistry.IsCameraInsideOcean(renderingData.cameraData.camera)
+            oceanPass.renderPassEvent = CelestialEffectRegistry.IsCameraInsideOcean(renderingData.cameraData.camera)
                 ? underwaterRenderPassEvent
                 : renderPassEvent;
             oceanPass.Setup(material, maxRenderedBodies);
@@ -152,7 +152,7 @@ namespace Farion.Rendering.PostProcessing
                 }
 
                 UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-                CelestialOceanEffectRegistry.Collect(cameraData.camera, OceanEffects);
+                CelestialEffectRegistry.CollectOcean(cameraData.camera, OceanEffects);
                 int effectCount = Mathf.Min(OceanEffects.Count, maxRenderedBodies);
                 if (effectCount == 0)
                 {

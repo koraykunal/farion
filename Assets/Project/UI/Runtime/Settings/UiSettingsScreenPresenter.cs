@@ -636,11 +636,7 @@ namespace Farion.UI.Settings
 
         void ApplyTypography()
         {
-            UiTheme theme = systemRoot != null ? systemRoot.Theme : null;
-            if (theme == null)
-            {
-                return;
-            }
+            UiTheme theme = UiTheme.Resolve(systemRoot != null ? systemRoot.Theme : null);
 
             SetFont(titleText, theme.InterfaceFont, FontWeight.Regular);
             SetFont(categoryTitleText, theme.InterfaceMediumFont, FontWeight.Medium);

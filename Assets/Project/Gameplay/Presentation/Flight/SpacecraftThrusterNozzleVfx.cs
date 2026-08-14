@@ -1,5 +1,6 @@
 using System;
 using Farion.Gameplay.Flight;
+using Farion.Core;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.VFX;
@@ -198,8 +199,8 @@ namespace Farion.Gameplay.Presentation.Flight
 
             float previousNozzleLoad = currentNozzleLoad;
             float loadResponse = targetNozzleLoad >= currentNozzleLoad ? response : releaseResponse;
-            currentNozzleLoad = Smooth(currentNozzleLoad, targetNozzleLoad, loadResponse, clampedDeltaTime);
-            currentSideLoad = Smooth(currentSideLoad, targetSideLoad, response, clampedDeltaTime);
+            currentNozzleLoad = FarionMath.Smooth(currentNozzleLoad, targetNozzleLoad, loadResponse, clampedDeltaTime);
+            currentSideLoad = FarionMath.Smooth(currentSideLoad, targetSideLoad, response, clampedDeltaTime);
             if (currentNozzleLoad < 0.0001f)
             {
                 currentNozzleLoad = 0f;
@@ -448,7 +449,7 @@ namespace Farion.Gameplay.Presentation.Flight
 
             float soak = Mathf.Clamp01(
                 Mathf.Max(frame.Heat, currentNozzleLoad * 0.55f + frame.Boost * 0.45f));
-            currentHeatGlow = Smooth(currentHeatGlow, soak, heatGlowResponse, deltaTime);
+            currentHeatGlow = FarionMath.Smooth(currentHeatGlow, soak, heatGlowResponse, deltaTime);
 
             heatGlowProperties ??= new MaterialPropertyBlock();
             Color emission = heatGlowColor * Mathf.Pow(currentHeatGlow, heatGlowPower);
@@ -473,12 +474,6 @@ namespace Farion.Gameplay.Presentation.Flight
             debugIgnitionFlare = currentIgnitionFlare;
             debugHeatGlow = currentHeatGlow;
             debugSteeringEuler = currentSteeringEuler;
-        }
-
-        static float Smooth(float current, float target, float response, float deltaTime)
-        {
-            float responseT = response <= 0f ? 1f : 1f - Mathf.Exp(-response * deltaTime);
-            return Mathf.Lerp(current, target, responseT);
         }
 
         static void SetFloat(VisualEffect graph, int id, float value)

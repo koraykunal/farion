@@ -1,4 +1,5 @@
 using System;
+using Farion.Core.Identity;
 using System.Collections.Generic;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Fleet;
@@ -73,7 +74,7 @@ namespace Farion.Gameplay.Persistence
             schemaVersion = CurrentSchemaVersion;
             payloadRevision = CurrentPayloadRevision;
             this.sourceSchemaVersion = sourceSchemaVersion;
-            this.savedAtUtc = string.IsNullOrWhiteSpace(savedAtUtc) ? string.Empty : savedAtUtc.Trim();
+            this.savedAtUtc = IdentifierText.Normalize(savedAtUtc);
             this.celestialSimulationTime = celestialSimulationTime >= 0d ? celestialSimulationTime : 0d;
             this.celestialBodies = celestialBodies != null
                 ? new List<CelestialBodySnapshot>(celestialBodies)
@@ -93,7 +94,7 @@ namespace Farion.Gameplay.Persistence
         public int PayloadRevision => payloadRevision;
         public int SourceSchemaVersion =>
             sourceSchemaVersion > 0 ? sourceSchemaVersion : schemaVersion;
-        public string SavedAtUtc => string.IsNullOrWhiteSpace(savedAtUtc) ? string.Empty : savedAtUtc.Trim();
+        public string SavedAtUtc => IdentifierText.Normalize(savedAtUtc);
         public double CelestialSimulationTime => celestialSimulationTime >= 0d ? celestialSimulationTime : 0d;
         public IReadOnlyList<CelestialBodySnapshot> CelestialBodies => celestialBodies;
         public WorldOriginSnapshot WorldOrigin => worldOrigin;

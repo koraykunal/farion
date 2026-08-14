@@ -30,7 +30,7 @@ namespace Farion.Rendering.PostProcessing
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (renderingData.cameraData.isPreviewCamera || !CelestialAtmosphereEffectRegistry.HasSources)
+            if (renderingData.cameraData.isPreviewCamera || !CelestialEffectRegistry.HasSources)
             {
                 return;
             }
@@ -134,7 +134,7 @@ namespace Farion.Rendering.PostProcessing
                 }
 
                 UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-                CelestialAtmosphereEffectRegistry.Collect(cameraData.camera, AtmosphereEffects);
+                CelestialEffectRegistry.CollectAtmosphere(cameraData.camera, AtmosphereEffects);
                 int effectCount = Mathf.Min(AtmosphereEffects.Count, maxRenderedBodies);
                 if (effectCount == 0)
                 {

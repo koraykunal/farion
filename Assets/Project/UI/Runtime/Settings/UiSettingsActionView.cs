@@ -27,6 +27,8 @@ namespace Farion.UI.Settings
 
         UiPointerFocusState focusState;
 
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+
         void Awake()
         {
             ResolveReferences();
@@ -93,10 +95,10 @@ namespace Farion.UI.Settings
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
 
-            if (labelText != null && theme != null && theme.InterfaceMediumFont != null)
+            if (labelText != null && Theme.InterfaceMediumFont != null)
             {
                 labelText.font = theme.InterfaceMediumFont;
                 labelText.fontWeight = FontWeight.Medium;
@@ -108,24 +110,12 @@ namespace Farion.UI.Settings
             bool available = button == null || button.interactable;
             bool focused = available && focusState.IsFocused;
 
-            Color normalSurface = theme != null
-                ? theme.ButtonSurface
-                : new Color(0.024f, 0.037f, 0.052f, 0.72f);
-            Color raisedSurface = theme != null
-                ? theme.ButtonSurfaceHighlighted
-                : new Color(0.055f, 0.086f, 0.118f, 0.92f);
-            Color primary = theme != null
-                ? theme.PrimaryText
-                : new Color(0.88f, 0.91f, 0.93f, 1f);
-            Color secondary = theme != null
-                ? theme.SecondaryText
-                : new Color(0.54f, 0.6f, 0.65f, 0.9f);
-            Color focus = theme != null
-                ? theme.Focus
-                : new Color(0.56f, 0.68f, 0.76f, 1f);
-            Color critical = theme != null
-                ? theme.Critical
-                : new Color(1f, 0.26f, 0.2f, 1f);
+            Color normalSurface = Theme.ButtonSurface;
+            Color raisedSurface = Theme.ButtonSurfaceHighlighted;
+            Color primary = Theme.PrimaryText;
+            Color secondary = Theme.SecondaryText;
+            Color focus = Theme.Focus;
+            Color critical = Theme.Critical;
 
             if (background != null)
             {

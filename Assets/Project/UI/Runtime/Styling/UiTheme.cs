@@ -36,6 +36,8 @@ namespace Farion.UI.Styling
         [SerializeField] float stateExitDuration = 0.1f;
         [SerializeField] Vector2 panelHiddenOffset = new(-24f, 0f);
 
+        static UiTheme defaults;
+
         public Color VoidSurface => voidSurface;
         public Color RaisedSurface => raisedSurface;
         public Color ButtonSurface => buttonSurface;
@@ -55,11 +57,32 @@ namespace Farion.UI.Styling
         public float StateExitDuration => Mathf.Max(0f, stateExitDuration);
         public Vector2 PanelHiddenOffset => panelHiddenOffset;
 
+        /// <summary>
+        /// Never-null theme so views can read colors without per-call fallbacks.
+        /// The field initializers above are the shipped palette, so a scene that
+        /// forgot to assign a theme asset still renders in the right colors.
+        /// </summary>
+        public static UiTheme Resolve(UiTheme theme)
+        {
+            if (theme != null)
+            {
+                return theme;
+            }
+
+            if (defaults == null)
+            {
+                defaults = CreateInstance<UiTheme>();
+                defaults.name = "UiTheme (defaults)";
+                defaults.hideFlags = HideFlags.HideAndDontSave;
+            }
+
+            return defaults;
+        }
+
         void OnValidate()
         {
             stateEnterDuration = Mathf.Max(0f, stateEnterDuration);
             stateExitDuration = Mathf.Max(0f, stateExitDuration);
         }
-
     }
 }

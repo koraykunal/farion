@@ -718,12 +718,8 @@ After the gravity actor test works, create the player starter spacecraft:
 28. Add `SpacecraftOrbitComputer`.
 29. Assign the same `CelestialActorProbe` to `Celestial Probe`.
 30. Assign `Simulation > GravitySimulation` to `Simulation`.
-31. Add `SpacecraftEntryCorridorComputer`.
-32. Assign `Assets/Project/Design/Gameplay/Flight/SO_DefaultEntryCorridorProfile.asset`
-    to `Profile`.
-33. Assign the same `CelestialActorProbe` and `SpacecraftOrbitComputer`.
-34. Read `SpacecraftLandingGuidanceComputer`, `SpacecraftLandingComputer`,
-    `SpacecraftOrbitComputer`, `SpacecraftEntryCorridorComputer`,
+31. Read `SpacecraftLandingGuidanceComputer`, `SpacecraftLandingComputer`,
+    `SpacecraftOrbitComputer`,
     `CelestialActorProbe`, `SpacecraftSurfaceContactProbe`, and
     `SpacecraftOceanInteractor` directly in the Inspector while tuning. The
     product-facing HUD should consume those components later; do not add a
@@ -906,18 +902,7 @@ Then check `SpacecraftOrbitComputer > Runtime Orbit`:
 - `Flight Path Angle` is negative while descending, positive while climbing, and
   near zero while moving mostly along the horizon.
 
-Then check `SpacecraftEntryCorridorComputer > Runtime Entry Corridor`:
-
-- `SafeEntry` means the current speed, entry angle, and periapsis are inside the
-  active profile limits.
-- `ShallowEntry` means the trajectory is too close to horizontal and may skip
-  the atmosphere.
-- `SteepEntry` or `Impacting` means periapsis/angle should be corrected before
-  descent.
-- `Overspeed` means the ship should slow down before committing to atmosphere
-  entry.
-
-Landing, orbit, entry, and ocean telemetry are currently inspected from the
+Landing, orbit, and ocean telemetry are currently inspected from the
 ship components. Surface these values through the gameplay HUD only after the
 resource/inventory/crafting loop is readable.
 

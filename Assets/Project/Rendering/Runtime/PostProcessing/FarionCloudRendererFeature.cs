@@ -27,7 +27,7 @@ namespace Farion.Rendering.PostProcessing
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (renderingData.cameraData.isPreviewCamera || !CelestialCloudEffectRegistry.HasSources)
+            if (renderingData.cameraData.isPreviewCamera || !CelestialEffectRegistry.HasSources)
             {
                 return;
             }
@@ -118,7 +118,7 @@ namespace Farion.Rendering.PostProcessing
                 }
 
                 UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-                if (!CelestialCloudEffectRegistry.TryGetClosest(cameraData.camera, out CelestialCloudEffectData effectData))
+                if (!CelestialEffectRegistry.TryGetClosestCloud(cameraData.camera, out CelestialCloudEffectData effectData))
                 {
                     return;
                 }

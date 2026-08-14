@@ -2,6 +2,7 @@ using System;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Simulation.Celestial;
+using Farion.Core;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -111,12 +112,12 @@ namespace Farion.Gameplay.Presentation.Flight
             SpacecraftThrusterVfxFrame target = BuildTargetFrame();
             float deltaTime = Time.deltaTime;
 
-            throttle = Smooth(throttle, target.Throttle, throttleResponse, deltaTime);
-            boost = Smooth(boost, target.Boost, boostResponse, deltaTime);
-            atmosphereDensity = Smooth(atmosphereDensity, target.AtmosphereDensity, atmosphereResponse, deltaTime);
+            throttle = FarionMath.Smooth(throttle, target.Throttle, throttleResponse, deltaTime);
+            boost = FarionMath.Smooth(boost, target.Boost, boostResponse, deltaTime);
+            atmosphereDensity = FarionMath.Smooth(atmosphereDensity, target.AtmosphereDensity, atmosphereResponse, deltaTime);
 
             float heatResponse = target.Heat >= heat ? heatRiseResponse : heatFallResponse;
-            heat = Smooth(heat, target.Heat, heatResponse, deltaTime);
+            heat = FarionMath.Smooth(heat, target.Heat, heatResponse, deltaTime);
 
             CurrentFrame = new SpacecraftThrusterVfxFrame(
                 throttle,
@@ -304,10 +305,5 @@ namespace Farion.Gameplay.Presentation.Flight
             return Mathf.Clamp01(forwardAcceleration / Mathf.Max(0.01f, referenceAcceleration));
         }
 
-        static float Smooth(float current, float target, float response, float deltaTime)
-        {
-            float responseT = response <= 0f ? 1f : 1f - Mathf.Exp(-response * Mathf.Max(0f, deltaTime));
-            return Mathf.Lerp(current, target, responseT);
-        }
     }
 }

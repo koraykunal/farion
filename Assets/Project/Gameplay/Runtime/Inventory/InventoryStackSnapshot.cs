@@ -1,4 +1,5 @@
 using System;
+using Farion.Core.Identity;
 using UnityEngine;
 
 namespace Farion.Gameplay.Inventory
@@ -11,11 +12,11 @@ namespace Farion.Gameplay.Inventory
 
         public InventoryStackSnapshot(string itemId, int quantity)
         {
-            this.itemId = string.IsNullOrWhiteSpace(itemId) ? string.Empty : itemId.Trim();
+            this.itemId = IdentifierText.Normalize(itemId);
             this.quantity = Mathf.Max(0, quantity);
         }
 
-        public string ItemId => string.IsNullOrWhiteSpace(itemId) ? string.Empty : itemId.Trim();
+        public string ItemId => IdentifierText.Normalize(itemId);
         public int Quantity => Mathf.Max(0, quantity);
         public bool IsValid => !string.IsNullOrEmpty(ItemId) && Quantity > 0;
     }

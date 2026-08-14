@@ -51,7 +51,7 @@ namespace Farion.Editor
         public const string StarVisualProfile =
             "Assets/Project/Design/Rendering/Celestial/SO_TestStarVisualProfile.asset";
         public const string PlanetaryGenerationProfile =
-            "Assets/Project/Design/Simulation/Planetary/SO_TestPlanetaryGeneration.asset";
+            "Assets/Project/Design/Simulation/Planetary/SO_StartingTemperateGeneration.asset";
 
         public const string ItemIconFolder = "Assets/Project/Art/UI/Icons/Items/";
         public const string CelestialMoonTextureFolder = "Assets/Project/Art/Textures/Celestial/Moon/";

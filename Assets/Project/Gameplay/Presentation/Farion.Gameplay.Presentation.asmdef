@@ -2,6 +2,7 @@
     "name": "Farion.Gameplay.Presentation",
     "rootNamespace": "Farion.Gameplay.Presentation",
     "references": [
+        "Farion.Core.Runtime",
         "Farion.Gameplay.Runtime",
         "Farion.Simulation.Runtime",
         "Unity.VisualEffectGraph.Runtime",

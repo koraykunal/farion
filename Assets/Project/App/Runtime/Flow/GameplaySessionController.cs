@@ -76,12 +76,14 @@ namespace Farion.App.Flow
 
         public AsyncOperation ExitToMainMenuAsync()
         {
-            return GameFlowService.LoadMainMenuAsync(flowSettings);
+            return flowSettings != null
+                ? GameFlowService.LoadSceneAsync(flowSettings.MainMenuSceneName)
+                : null;
         }
 
         public void Quit()
         {
-            GameFlowService.Quit();
+            Application.Quit();
         }
 
         void Awake()

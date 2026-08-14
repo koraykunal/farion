@@ -1,4 +1,5 @@
 using Farion.Gameplay.Flight;
+using Farion.Core;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting.APIUpdating;
@@ -152,7 +153,7 @@ namespace Farion.Gameplay.Presentation.Flight
                 targetVisibility *= Mathf.Lerp(0.35f, 1f, Mathf.Clamp01(frame.Heat + frame.Boost));
             }
 
-            currentVisibility = Smooth(
+            currentVisibility = FarionMath.Smooth(
                 currentVisibility,
                 targetVisibility,
                 response,
@@ -339,14 +340,6 @@ namespace Farion.Gameplay.Presentation.Flight
                     response = 10f;
                     break;
             }
-        }
-
-        static float Smooth(float current, float target, float responseRate, float deltaTime)
-        {
-            float responseT = responseRate <= 0f
-                ? 1f
-                : 1f - Mathf.Exp(-responseRate * deltaTime);
-            return Mathf.Lerp(current, target, responseT);
         }
 
         static Mesh GetDiscMesh()

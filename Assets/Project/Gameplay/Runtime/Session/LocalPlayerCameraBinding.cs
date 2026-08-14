@@ -10,7 +10,7 @@ namespace Farion.Gameplay.Session
             FirstPersonCameraRig firstPersonRig,
             SpacecraftCameraRig spacecraftRig,
             FirstPersonMotor motor,
-            IFirstPersonInputSource input)
+            KeyboardFirstPersonInput input)
         {
             if (spacecraftRig != null)
             {

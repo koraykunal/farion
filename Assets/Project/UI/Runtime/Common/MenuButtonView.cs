@@ -42,20 +42,9 @@ namespace Farion.UI.Common
         [SerializeField] Vector2 contentSizeWithIcon = new(-96f, 0f);
         [SerializeField] Vector2 contentSizeWithoutIcon = new(-52f, 0f);
 
-        [Header("Colors")]
-        [SerializeField] Color normalPanel = new(0.024f, 0.037f, 0.052f, 0.72f);
-        [SerializeField] Color highlightedPanel = new(0.055f, 0.086f, 0.118f, 0.92f);
-        [SerializeField] Color normalTitle = new(0.54f, 0.6f, 0.65f, 0.9f);
-        [SerializeField] Color highlightedTitle = new(0.88f, 0.91f, 0.93f, 1f);
-        [SerializeField] Color normalSubtitle = new(0.54f, 0.6f, 0.65f, 0.9f);
-        [SerializeField] Color highlightedSubtitle = new(0.68f, 0.76f, 0.81f, 1f);
-        [SerializeField] Color accentColor = new(0.56f, 0.68f, 0.76f, 1f);
-
         [Header("Motion")]
         [SerializeField] Vector2 normalContentOffset;
         [SerializeField] Vector2 highlightedContentOffset;
-        [SerializeField, Min(0.01f)] float hoverInDuration = 0.16f;
-        [SerializeField, Min(0.01f)] float hoverOutDuration = 0.1f;
         [SerializeField] Ease hoverInEase = Ease.OutQuart;
         [SerializeField] Ease hoverOutEase = Ease.OutCubic;
         [SerializeField] Vector3 normalIconScale = Vector3.one;
@@ -69,6 +58,16 @@ namespace Farion.UI.Common
         bool currentHighlighted;
         bool currentInteractable;
         Sequence visualTween;
+
+        // Colors and durations come from the theme; nothing here is per-instance authored.
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
+        Color NormalPanel => Theme.ButtonSurface;
+        Color HighlightedPanel => Theme.ButtonSurfaceHighlighted;
+        Color NormalTitle => Theme.SecondaryText;
+        Color HighlightedTitle => Theme.PrimaryText;
+        Color NormalSubtitle => Theme.SecondaryText;
+        Color HighlightedSubtitle => Theme.SupportingText;
+        Color AccentColor => destructive ? Theme.Critical : Theme.Focus;
 
         public event Action Clicked;
         public bool Available => available;
@@ -200,36 +199,21 @@ namespace Farion.UI.Common
             if (theme == null)
             {
                 UiSystemRoot root = UiCompositionScope.FindSystemRoot(this);
-                theme = root != null ? root.Theme : null;
+                theme = UiTheme.Resolve(root != null ? root.Theme : null);
             }
         }
 
         void ApplyTheme()
         {
-            if (theme == null)
+            if (titleText != null && Theme.InterfaceMediumFont != null)
             {
-                return;
-            }
-
-            normalPanel = theme.ButtonSurface;
-            highlightedPanel = theme.ButtonSurfaceHighlighted;
-            normalTitle = theme.SecondaryText;
-            highlightedTitle = theme.PrimaryText;
-            normalSubtitle = theme.SecondaryText;
-            highlightedSubtitle = theme.SupportingText;
-            accentColor = destructive ? theme.Critical : theme.Focus;
-            hoverInDuration = theme.StateEnterDuration;
-            hoverOutDuration = theme.StateExitDuration;
-
-            if (titleText != null && theme.InterfaceMediumFont != null)
-            {
-                titleText.font = theme.InterfaceMediumFont;
+                titleText.font = Theme.InterfaceMediumFont;
                 titleText.fontWeight = FontWeight.Medium;
             }
 
-            if (subtitleText != null && theme.InterfaceFont != null)
+            if (subtitleText != null && Theme.InterfaceFont != null)
             {
-                subtitleText.font = theme.InterfaceFont;
+                subtitleText.font = Theme.InterfaceFont;
                 subtitleText.fontWeight = FontWeight.Regular;
             }
         }
@@ -286,7 +270,7 @@ namespace Farion.UI.Common
 
             visualTween?.Kill();
 
-            float duration = highlighted ? hoverInDuration : hoverOutDuration;
+            float duration = highlighted ? Theme.StateEnterDuration : Theme.StateExitDuration;
             Ease ease = highlighted ? hoverInEase : hoverOutEase;
             visualTween = DOTween.Sequence()
                 .SetUpdate(true)
@@ -313,22 +297,22 @@ namespace Farion.UI.Common
         {
             if (panelBackground != null)
             {
-                panelBackground.color = WithAlpha(normalPanel, normalPanel.a * 0.45f);
+                panelBackground.color = WithAlpha(NormalPanel, NormalPanel.a * 0.45f);
             }
 
             if (titleText != null)
             {
-                titleText.color = WithAlpha(normalTitle, 0.35f);
+                titleText.color = WithAlpha(NormalTitle, 0.35f);
             }
 
             if (subtitleText != null)
             {
-                subtitleText.color = WithAlpha(normalSubtitle, 0.25f);
+                subtitleText.color = WithAlpha(NormalSubtitle, 0.25f);
             }
 
             if (iconImage != null)
             {
-                iconImage.color = WithAlpha(accentColor, 0.3f);
+                iconImage.color = WithAlpha(AccentColor, 0.3f);
             }
 
             SetAccentVisible(accentBar, false);
@@ -341,24 +325,24 @@ namespace Farion.UI.Common
 
             if (panelBackground != null)
             {
-                panelBackground.color = Color.Lerp(normalPanel, highlightedPanel, visualAmount);
+                panelBackground.color = Color.Lerp(NormalPanel, HighlightedPanel, visualAmount);
                 panelBackground.raycastTarget = false;
             }
 
             if (titleText != null)
             {
-                titleText.color = Color.Lerp(normalTitle, highlightedTitle, visualAmount);
+                titleText.color = Color.Lerp(NormalTitle, HighlightedTitle, visualAmount);
             }
 
             if (subtitleText != null)
             {
-                subtitleText.color = Color.Lerp(normalSubtitle, highlightedSubtitle, visualAmount);
+                subtitleText.color = Color.Lerp(NormalSubtitle, HighlightedSubtitle, visualAmount);
             }
 
             if (iconImage != null)
             {
-                float iconAlpha = Mathf.Lerp(0.72f, accentColor.a, visualAmount);
-                iconImage.color = WithAlpha(accentColor, iconAlpha);
+                float iconAlpha = Mathf.Lerp(0.72f, AccentColor.a, visualAmount);
+                iconImage.color = WithAlpha(AccentColor, iconAlpha);
                 iconImage.rectTransform.localScale = Vector3.Lerp(normalIconScale, highlightedIconScale, visualAmount);
             }
 
@@ -378,7 +362,7 @@ namespace Farion.UI.Common
                 return;
             }
 
-            image.color = WithAlpha(accentColor, accentColor.a * Mathf.Clamp01(amount));
+            image.color = WithAlpha(AccentColor, AccentColor.a * Mathf.Clamp01(amount));
             image.raycastTarget = false;
         }
 

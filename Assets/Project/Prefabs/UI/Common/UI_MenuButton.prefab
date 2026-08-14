@@ -710,17 +710,8 @@ MonoBehaviour:
   contentOffsetWithoutIcon: {x: 32, y: 0}
   contentSizeWithIcon: {x: -96, y: 0}
   contentSizeWithoutIcon: {x: -52, y: 0}
-  normalPanel: {r: 0.024, g: 0.037, b: 0.052, a: 0.72}
-  highlightedPanel: {r: 0.055, g: 0.086, b: 0.118, a: 0.92}
-  normalTitle: {r: 0.54, g: 0.6, b: 0.65, a: 0.9}
-  highlightedTitle: {r: 0.88, g: 0.91, b: 0.93, a: 1}
-  normalSubtitle: {r: 0.54, g: 0.6, b: 0.65, a: 0.9}
-  highlightedSubtitle: {r: 0.68, g: 0.76, b: 0.81, a: 1}
-  accentColor: {r: 0.56, g: 0.68, b: 0.76, a: 1}
   normalContentOffset: {x: 0, y: 0}
   highlightedContentOffset: {x: 0, y: 0}
-  hoverInDuration: 0.16
-  hoverOutDuration: 0.1
   hoverInEase: 12
   hoverOutEase: 9
   normalIconScale: {x: 1, y: 1, z: 1}

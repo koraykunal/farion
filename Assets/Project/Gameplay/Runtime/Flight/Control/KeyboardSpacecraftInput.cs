@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Farion.Gameplay.Flight
 {
     [DisallowMultipleComponent]
-    public sealed class KeyboardSpacecraftInput : MonoBehaviour, ISpacecraftInputSource
+    public sealed class KeyboardSpacecraftInput : MonoBehaviour
     {
         [Header("Rotation")]
         [SerializeField] float mouseSensitivity = 1f;

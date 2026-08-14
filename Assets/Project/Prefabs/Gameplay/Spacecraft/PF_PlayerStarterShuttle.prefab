@@ -812,11 +812,9 @@ GameObject:
   - component: {fileID: 4585842710350534113}
   - component: {fileID: 6501905175917809113}
   - component: {fileID: 836844623863410767}
-  - component: {fileID: 7523989001948969203}
   - component: {fileID: 5218897094659780235}
   - component: {fileID: 789528504066411760}
   - component: {fileID: 4839201847601284471}
-  - component: {fileID: 6248301947601284471}
   - component: {fileID: 7591439062830295501}
   - component: {fileID: 4332399351985421442}
   - component: {fileID: 8451750196482294104}
@@ -1047,29 +1045,6 @@ MonoBehaviour:
   apoapsisAltitude: 0
   orbitalPeriod: 0
   flightPathAngleDegrees: 0
---- !u!114 &7523989001948969203
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2441852034644142768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8e4fd1632db4568852d274ee485d9c6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftEntryCorridorComputer
-  profile: {fileID: 11400000, guid: 5ab8cbaac43a4c039ec41796693eb5d6, type: 2}
-  celestialProbe: {fileID: 7190813019005924918}
-  orbitComputer: {fileID: 836844623863410767}
-  state: 0
-  advisory: NO FRAME
-  entryAngleDegrees: 0
-  speedToEscapeRatio: 0
-  speedToCircularRatio: 0
-  periapsisAltitude: 0
-  atmosphereDepth: 0
-  normalizedRisk: 0
 --- !u!114 &5218897094659780235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1141,37 +1116,6 @@ MonoBehaviour:
   heatingRate: 0
   heatLoad: 0
   dragAcceleration: 0
---- !u!114 &6248301947601284471
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2441852034644142768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4aee0e6153894bf0a138e60cefe749c4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Flight.SpacecraftReentryVfxController
-  atmosphereInteractor: {fileID: 4839201847601284471}
-  material: {fileID: 2100000, guid: 6f4ccb189ac647f78caa175c138c814d, type: 2}
-  response: 6
-  activationHeatLoad: 0.04
-  activationDynamicPressureLoad: 0.08
-  dynamicPressureContribution: 0.45
-  hullCenter: {x: 0, y: 0, z: 0}
-  hullHalfExtents: {x: 6.8, y: 3.2, z: 10.5}
-  shockStandoff: 0.75
-  plasmaRadius: 7
-  plasmaVerticalScale: 0.65
-  plasmaTailLength: 2.5
-  plasmaOpacity: 0.85
-  shockRadius: 8.5
-  shockVerticalScale: 0.72
-  shockTailLength: 8
-  shockOpacity: 0.3
-  currentIntensity: 0
-  currentFlowDirection: {x: 0, y: 0, z: 0}
 --- !u!114 &7591439062830295501
 MonoBehaviour:
   m_ObjectHideFlags: 0

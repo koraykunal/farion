@@ -14,12 +14,7 @@ namespace Farion.Rendering.Celestial
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CelestialBody))]
     [RequireComponent(typeof(CelestialBodyVisual))]
-    public sealed class TerrestrialPlanetVisual :
-        MonoBehaviour,
-        ICelestialOceanLevelProvider,
-        ICelestialOceanEffectSource,
-        ICelestialAtmosphereEffectSource,
-        ICelestialCloudEffectSource
+    public sealed class TerrestrialPlanetVisual : MonoBehaviour
     {
         [Header("Profile")]
         [SerializeField] TerrestrialPlanetVisualProfile profile;
@@ -43,9 +38,7 @@ namespace Farion.Rendering.Celestial
         {
             ResolveComponents();
             SyncProfileSubscription();
-            CelestialOceanEffectRegistry.Register(this);
-            CelestialAtmosphereEffectRegistry.Register(this);
-            CelestialCloudEffectRegistry.Register(this);
+            CelestialEffectRegistry.Register(this);
 
             if (applyOnEnable)
             {
@@ -66,9 +59,7 @@ namespace Farion.Rendering.Celestial
 
         void OnDisable()
         {
-            CelestialOceanEffectRegistry.Unregister(this);
-            CelestialAtmosphereEffectRegistry.Unregister(this);
-            CelestialCloudEffectRegistry.Unregister(this);
+            CelestialEffectRegistry.Unregister(this);
             UnsubscribeFromProfile();
         }
 

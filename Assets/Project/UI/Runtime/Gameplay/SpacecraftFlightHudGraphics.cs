@@ -40,6 +40,8 @@ namespace Farion.UI.Gameplay
         [SerializeField] float landingSpeedRange = 20f;
 
         UiTheme theme;
+
+        UiTheme Theme => theme = UiTheme.Resolve(theme);
         float targetBoostCharge = 1f;
         float displayedBoostCharge = 1f;
         float targetBoostBlend;
@@ -58,29 +60,25 @@ namespace Farion.UI.Gameplay
 
         public void ApplyTheme(UiTheme value)
         {
-            theme = value;
-            if (theme == null)
-            {
-                return;
-            }
+            theme = UiTheme.Resolve(value);
 
-            SetFont(speedValueText, theme.InstrumentFont);
-            SetFont(speedUnitText, theme.InstrumentFont);
-            SetFont(assistValueText, theme.InstrumentFont);
-            SetFont(boostValueText, theme.InstrumentFont);
-            SetTextColor(speedValueText, theme.PrimaryText);
-            SetTextColor(speedUnitText, theme.SupportingText);
-            SetTextColor(boostValueText, theme.PrimaryText);
+            SetFont(speedValueText, Theme.InstrumentFont);
+            SetFont(speedUnitText, Theme.InstrumentFont);
+            SetFont(assistValueText, Theme.InstrumentFont);
+            SetFont(boostValueText, Theme.InstrumentFont);
+            SetTextColor(speedValueText, Theme.PrimaryText);
+            SetTextColor(speedUnitText, Theme.SupportingText);
+            SetTextColor(boostValueText, Theme.PrimaryText);
 
             SetColor(panelFrameImage, Color.white, 0.9f);
-            SetColor(boostFrameImage, theme.Focus, 0.68f);
-            SetColor(boostIndicatorImage, theme.Focus, 0.42f);
-            SetColor(boostArcFillImage, theme.Focus, 0.88f);
-            SetColor(boostArcGlowImage, theme.Focus, 0.14f);
-            SetColor(speedRailFillImage, theme.Focus, 0.76f);
-            SetColor(assistFrameImage, theme.Focus, 0.72f);
-            SetColor(navigationArrowImage, theme.Focus, 0.94f);
-            SetColor(navigationArrowGlowImage, theme.Focus, 0.32f);
+            SetColor(boostFrameImage, Theme.Focus, 0.68f);
+            SetColor(boostIndicatorImage, Theme.Focus, 0.42f);
+            SetColor(boostArcFillImage, Theme.Focus, 0.88f);
+            SetColor(boostArcGlowImage, Theme.Focus, 0.14f);
+            SetColor(speedRailFillImage, Theme.Focus, 0.76f);
+            SetColor(assistFrameImage, Theme.Focus, 0.72f);
+            SetColor(navigationArrowImage, Theme.Focus, 0.94f);
+            SetColor(navigationArrowGlowImage, Theme.Focus, 0.32f);
             ApplySignalColors();
         }
 
@@ -202,14 +200,10 @@ namespace Farion.UI.Gameplay
 
         void ApplySignalColors()
         {
-            if (theme == null)
-            {
-                return;
-            }
 
             Color signal = Color.Lerp(
-                theme.SupportingText,
-                theme.Focus,
+                Theme.SupportingText,
+                Theme.Focus,
                 targetBoostBlend);
             signal.a = boostActive ? 1f : 0.88f;
             SetTextColor(boostValueText, signal);
@@ -217,8 +211,8 @@ namespace Farion.UI.Gameplay
 
             Color assist = assistValueText != null &&
                 assistValueText.text == "ON"
-                    ? theme.Nominal
-                    : theme.SupportingText;
+                    ? Theme.Nominal
+                    : Theme.SupportingText;
             SetTextColor(assistValueText, assist);
         }
 
