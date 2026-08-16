@@ -1,3 +1,4 @@
+using Farion.Simulation.Celestial;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -19,6 +20,10 @@ namespace Farion.Rendering.Lighting
         [Header("Scene Light")]
         [SerializeField] Light mainDirectionalLight;
         [SerializeField] bool syncLightPositionToSource;
+
+        [Header("Planetshine")]
+        [SerializeField] Light planetshineLight;
+        [SerializeField] CelestialFrameProvider frameProvider;
 
         [Header("Camera")]
         [SerializeField] Camera sceneCamera;
@@ -85,6 +90,7 @@ namespace Farion.Rendering.Lighting
                 ApplyDirectionalLight(state, directionalLight);
             }
 
+            ApplyPlanetshine(state, focus);
             CelestialLightingGlobals.Apply(profile, state);
             ApplyRenderSettings(directionalLight);
             ApplyCameraDefaults();
@@ -113,6 +119,57 @@ namespace Farion.Rendering.Lighting
             directionalLight.shadowAngle = profile.DirectionalShadowAngle;
 #endif
             directionalLight.bounceIntensity = profile.BounceIntensity;
+        }
+
+        void ApplyPlanetshine(CelestialLightingState state, Transform focus)
+        {
+            if (planetshineLight == null)
+            {
+                return;
+            }
+
+            if (!profile.EnablePlanetshine
+                || frameProvider == null
+                || focus == null
+                || !frameProvider.TrySample(focus.position, Vector3.zero, out CelestialFrameSample sample)
+                || !sample.HasBody)
+            {
+                planetshineLight.enabled = false;
+                return;
+            }
+
+            Vector3 bodyToFocus = focus.position - sample.BodyPosition;
+            float centerDistance = bodyToFocus.magnitude;
+            if (centerDistance <= 0.0001f)
+            {
+                planetshineLight.enabled = false;
+                return;
+            }
+
+            Vector3 outwardDirection = bodyToFocus / centerDistance;
+            float starFacing = Vector3.Dot(outwardDirection, state.DirectionToStar);
+            float intensity = profile.EvaluatePlanetshineIntensity(
+                sample.BodyRadius,
+                centerDistance,
+                starFacing,
+                state.Intensity);
+
+            if (intensity <= 0.0001f)
+            {
+                planetshineLight.enabled = false;
+                return;
+            }
+
+            planetshineLight.enabled = true;
+            planetshineLight.type = LightType.Directional;
+            planetshineLight.transform.rotation = Quaternion.LookRotation(
+                outwardDirection,
+                ResolveStableUp(outwardDirection));
+            planetshineLight.color = profile.PlanetshineColor;
+            planetshineLight.useColorTemperature = false;
+            planetshineLight.intensity = intensity;
+            planetshineLight.shadows = profile.PlanetshineShadows;
+            planetshineLight.bounceIntensity = 0f;
         }
 
         void ApplyRenderSettings(Light directionalLight)
@@ -226,6 +283,11 @@ namespace Farion.Rendering.Lighting
                 sceneCamera = Camera.main != null
                     ? Camera.main
                     : FindAnyObjectByType<Camera>(FindObjectsInactive.Exclude);
+            }
+
+            if (frameProvider == null)
+            {
+                frameProvider = FindAnyObjectByType<CelestialFrameProvider>(FindObjectsInactive.Exclude);
             }
         }
 

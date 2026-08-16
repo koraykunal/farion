@@ -10,26 +10,12 @@ namespace Farion.Gameplay.Presentation.Flight
     [RequireComponent(typeof(Volume))]
     public sealed class FarionPostProcessRig : MonoBehaviour
     {
+        const float ResponseVolumePriority = 100f;
+
         [Header("Source")]
         [SerializeField] SpacecraftMotor motor;
-
-        [Header("Bloom")]
-        [SerializeField] bool enableBloom = true;
-        [Min(0f)]
-        [SerializeField] float bloomThreshold = 1.05f;
-        [Min(0f)]
-        [SerializeField] float bloomIntensity = 0.55f;
-        [Range(0f, 1f)]
-        [SerializeField] float bloomScatter = 0.62f;
-
-        [Header("Grade")]
-        [SerializeField] bool enableColorGrade = true;
-        [Range(-2f, 2f)]
-        [SerializeField] float postExposure = 0.05f;
-        [Range(-100f, 100f)]
-        [SerializeField] float contrast = 6f;
-        [Range(-100f, 100f)]
-        [SerializeField] float saturation = -4f;
+        [Tooltip("Optional. Lets atmospheric entry drive the same response as raw speed.")]
+        [SerializeField] SpacecraftAtmosphereInteractor atmosphereInteractor;
 
         [Header("Speed Response")]
         [Min(1f)]
@@ -40,21 +26,26 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] float maximumVignette = 0.42f;
         [Range(0f, 1f)]
         [SerializeField] float maximumChromaticAberration = 0.35f;
+        [Range(0f, 1f)]
+        [SerializeField] float maximumMotionBlur = 0.3f;
+        [Range(0f, 2f)]
+        [SerializeField] float reentryResponse = 1.15f;
         [Min(0f)]
         [SerializeField] float responseSharpness = 5f;
 
         Volume volume;
         VolumeProfile profile;
-        Bloom bloom;
-        ColorAdjustments colorAdjustments;
-        Tonemapping tonemapping;
         Vignette vignette;
         ChromaticAberration chromaticAberration;
+        MotionBlur motionBlur;
         float responseBlend;
 
         public void SetMotor(SpacecraftMotor value)
         {
             motor = value;
+            atmosphereInteractor = value != null
+                ? value.GetComponentInChildren<SpacecraftAtmosphereInteractor>()
+                : null;
         }
 
         void OnValidate()
@@ -67,7 +58,7 @@ namespace Farion.Gameplay.Presentation.Flight
         {
             volume = GetComponent<Volume>();
             volume.isGlobal = true;
-            volume.priority = 0f;
+            volume.priority = ResponseVolumePriority;
             BuildProfile();
             ApplyStaticSettings();
         }
@@ -96,6 +87,13 @@ namespace Farion.Gameplay.Presentation.Flight
                 target = Mathf.Max(speed01 * speed01, telemetry.BoostBlend * 0.7f);
             }
 
+            if (atmosphereInteractor != null)
+            {
+                target = Mathf.Max(
+                    target,
+                    atmosphereInteractor.CurrentInteraction.AerodynamicStress * reentryResponse);
+            }
+
             responseBlend = Mathf.Lerp(
                 responseBlend,
                 target,
@@ -103,6 +101,7 @@ namespace Farion.Gameplay.Presentation.Flight
 
             vignette.intensity.value = Mathf.Lerp(restVignette, maximumVignette, responseBlend);
             chromaticAberration.intensity.value = maximumChromaticAberration * responseBlend;
+            motionBlur.intensity.value = maximumMotionBlur * responseBlend;
         }
 
         void BuildProfile()
@@ -113,38 +112,29 @@ namespace Farion.Gameplay.Presentation.Flight
             }
 
             profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            profile.name = "Farion Runtime Post Process";
+            profile.name = "Farion Flight Response Post Process";
             profile.hideFlags = HideFlags.HideAndDontSave;
 
-            bloom = profile.Add<Bloom>(true);
-            colorAdjustments = profile.Add<ColorAdjustments>(true);
-            tonemapping = profile.Add<Tonemapping>(true);
             vignette = profile.Add<Vignette>(true);
             chromaticAberration = profile.Add<ChromaticAberration>(true);
+            motionBlur = profile.Add<MotionBlur>(true);
             volume.sharedProfile = profile;
         }
 
         void ApplyStaticSettings()
         {
-            bloom.active = enableBloom;
-            bloom.threshold.Override(bloomThreshold);
-            bloom.intensity.Override(bloomIntensity);
-            bloom.scatter.Override(bloomScatter);
-
-            colorAdjustments.active = enableColorGrade;
-            colorAdjustments.postExposure.Override(postExposure);
-            colorAdjustments.contrast.Override(contrast);
-            colorAdjustments.saturation.Override(saturation);
-
-            tonemapping.active = true;
-            tonemapping.mode.Override(TonemappingMode.ACES);
-
             vignette.active = true;
             vignette.intensity.Override(restVignette);
             vignette.smoothness.Override(0.45f);
 
             chromaticAberration.active = true;
             chromaticAberration.intensity.Override(0f);
+
+            motionBlur.active = true;
+            motionBlur.mode.Override(MotionBlurMode.CameraAndObjects);
+            motionBlur.quality.Override(MotionBlurQuality.High);
+            motionBlur.intensity.Override(0f);
+            motionBlur.clamp.Override(0.05f);
         }
     }
 }

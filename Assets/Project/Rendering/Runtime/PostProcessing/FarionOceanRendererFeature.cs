@@ -17,7 +17,7 @@ namespace Farion.Rendering.PostProcessing
         // Resolve the exterior ocean before transparent VFX so the full-screen
         // composite cannot overwrite particles or trails.
         [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
-        [SerializeField] RenderPassEvent underwaterRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing + 2;
+        [SerializeField] RenderPassEvent underwaterRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing - 2;
         [Range(1, MaxOceanBodies)]
         [SerializeField] int maxRenderedBodies = MaxOceanBodies;
 

@@ -1,0 +1,135 @@
+#pragma kernel ClearHistogram
+#pragma kernel BuildHistogram
+#pragma kernel ResolveExposure
+
+#define FARION_HISTOGRAM_BINS 256
+#define FARION_HISTOGRAM_THREADS 16
+
+RWStructuredBuffer<uint> _FarionHistogram;
+RWStructuredBuffer<float> _FarionExposure;
+Texture2D<float4> _FarionExposureSource;
+
+uint2 _FarionSourceSize;
+float4 _FarionLuminanceRange;
+float4 _FarionAdaptation;
+float4 _FarionExposureLimits;
+
+groupshared uint FarionLocalHistogram[FARION_HISTOGRAM_BINS];
+
+uint LuminanceToBin(float luminance)
+{
+    if (luminance < max(_FarionExposureLimits.w, 1e-5))
+    {
+        return 0;
+    }
+
+    float logLuminance = saturate(
+        (log2(luminance) - _FarionLuminanceRange.x) * _FarionLuminanceRange.y);
+    return (uint)(logLuminance * 254.0 + 1.0);
+}
+
+float BinToLogLuminance(uint bin)
+{
+    float normalized = (bin - 1.0) / 254.0;
+    return _FarionLuminanceRange.x + normalized * _FarionLuminanceRange.z;
+}
+
+[numthreads(FARION_HISTOGRAM_BINS, 1, 1)]
+void ClearHistogram(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < FARION_HISTOGRAM_BINS)
+    {
+        _FarionHistogram[id.x] = 0;
+    }
+}
+
+[numthreads(FARION_HISTOGRAM_THREADS, FARION_HISTOGRAM_THREADS, 1)]
+void BuildHistogram(uint3 id : SV_DispatchThreadID, uint groupIndex : SV_GroupIndex)
+{
+    FarionLocalHistogram[groupIndex] = 0;
+    GroupMemoryBarrierWithGroupSync();
+
+    if (id.x < _FarionSourceSize.x && id.y < _FarionSourceSize.y)
+    {
+        float3 color = _FarionExposureSource[id.xy].rgb;
+        float luminance = dot(color, float3(0.2126, 0.7152, 0.0722));
+        InterlockedAdd(FarionLocalHistogram[LuminanceToBin(luminance)], 1u);
+    }
+
+    GroupMemoryBarrierWithGroupSync();
+
+    uint localCount = FarionLocalHistogram[groupIndex];
+    if (localCount > 0u)
+    {
+        InterlockedAdd(_FarionHistogram[groupIndex], localCount);
+    }
+}
+
+[numthreads(1, 1, 1)]
+void ResolveExposure(uint3 id : SV_DispatchThreadID)
+{
+    uint total = 0u;
+    uint bin;
+
+    for (bin = 1u; bin < FARION_HISTOGRAM_BINS; bin++)
+    {
+        total += _FarionHistogram[bin];
+    }
+
+    if (total == 0u)
+    {
+        return;
+    }
+
+    uint lowBound = (uint)(total * _FarionAdaptation.z);
+    uint highBound = (uint)(total * _FarionAdaptation.w);
+    highBound = max(highBound, lowBound + 1u);
+
+    float weightedLogSum = 0.0;
+    uint accepted = 0u;
+    uint running = 0u;
+
+    for (bin = 1u; bin < FARION_HISTOGRAM_BINS; bin++)
+    {
+        uint count = _FarionHistogram[bin];
+        if (count == 0u)
+        {
+            continue;
+        }
+
+        uint binStart = running;
+        running += count;
+
+        uint lower = max(binStart, lowBound);
+        uint upper = min(running, highBound);
+        if (upper > lower)
+        {
+            uint used = upper - lower;
+            weightedLogSum += BinToLogLuminance(bin) * used;
+            accepted += used;
+        }
+    }
+
+    float averageLogLuminance = accepted > 0u
+        ? weightedLogSum / accepted
+        : _FarionLuminanceRange.x;
+    float averageLuminance = max(exp2(averageLogLuminance), 1e-4);
+
+    float targetExposure = clamp(
+        _FarionExposureLimits.x / averageLuminance,
+        _FarionExposureLimits.y,
+        _FarionExposureLimits.z);
+
+    float previous = _FarionExposure[0];
+    if (previous <= 0.0)
+    {
+        _FarionExposure[0] = targetExposure;
+        return;
+    }
+
+    float speed = targetExposure > previous
+        ? _FarionAdaptation.x
+        : _FarionAdaptation.y;
+    float blend = saturate(1.0 - exp(-speed * _FarionLuminanceRange.w));
+    _FarionExposure[0] = lerp(previous, targetExposure, blend);
+}

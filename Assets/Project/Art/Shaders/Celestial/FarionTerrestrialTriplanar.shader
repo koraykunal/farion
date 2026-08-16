@@ -46,6 +46,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
         _FlatToSteepNoise("Flat To Steep Noise", Range(0, 0.2)) = 0.026
 
         [Header(Surface)]
+        _SpecularAntialiasing("Specular Antialiasing", Range(0, 1)) = 0.6
         _AmbientHemisphere("Ambient Hemisphere", Range(0, 1)) = 0.65
         _Metallic("Metallic", Range(0, 1)) = 0
         _LandSmoothness("Land Smoothness", Range(0, 1)) = 0.2
@@ -151,6 +152,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half _MacroVariation;
                 half _SurfaceTextureLevelMatch;
                 half _SurfaceWeightWarp;
+                half _SpecularAntialiasing;
                 half _AmbientHemisphere;
                 half _Metallic;
                 half _LandSmoothness;
@@ -854,6 +856,14 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 smoothness = lerp(smoothness, 1.0h - lavaRoughness, lavaMask);
                 smoothness = lerp(smoothness, 1.0h - snowRoughness, snowMask);
                 smoothness = lerp(smoothness, max(smoothness, 0.48h), wetnessMask * 0.65h);
+                if (_SpecularAntialiasing > 0.0h)
+                {
+                    smoothness = GeometricNormalFiltering(
+                        smoothness,
+                        normalWS,
+                        _SpecularAntialiasing * 0.5h,
+                        0.25h);
+                }
 
                 if (surfaceEmissionWeight > 0.0001h)
                 {

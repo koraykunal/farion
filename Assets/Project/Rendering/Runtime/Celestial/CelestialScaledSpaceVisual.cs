@@ -131,7 +131,7 @@ namespace Farion.Rendering.Celestial
             proxyRenderer.receiveShadows = false;
             proxyRenderer.lightProbeUsage = LightProbeUsage.Off;
             proxyRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
-            proxyRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+            proxyRenderer.motionVectorGenerationMode = MotionVectorGenerationMode.Object;
         }
 
         void SetScaledState(bool enabled)

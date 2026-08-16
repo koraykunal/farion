@@ -58,5 +58,9 @@ namespace Farion.Editor
         public const string CelestialOceanTextureFolder = "Assets/Project/Art/Textures/Celestial/Ocean/";
         public const string CelestialSurfaceMaterialTextureFolder =
             "Assets/Project/Art/Textures/Celestial/SurfaceMaterials/";
+        public const string SurfaceFloraModelFolder =
+            "Assets/Project/Art/Models/Environment/SurfaceFlora/";
+        public const string SurfaceFloraTextureFolder =
+            "Assets/Project/Art/Textures/Environment/SurfaceFlora/";
     }
 }

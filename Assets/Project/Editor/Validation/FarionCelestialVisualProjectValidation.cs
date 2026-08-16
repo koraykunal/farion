@@ -181,9 +181,9 @@ namespace Farion.Editor.Validation
             int cloudEvent =
                 (int)RenderPassEvent.BeforeRenderingTransparents + 1;
             int atmosphereEvent =
-                (int)RenderPassEvent.BeforeRenderingPostProcessing + 1;
+                (int)RenderPassEvent.BeforeRenderingPostProcessing - 3;
             int underwaterEvent =
-                (int)RenderPassEvent.BeforeRenderingPostProcessing + 2;
+                (int)RenderPassEvent.BeforeRenderingPostProcessing - 2;
             ValidateIntegerProperty(
                 serializedOcean,
                 "renderPassEvent",

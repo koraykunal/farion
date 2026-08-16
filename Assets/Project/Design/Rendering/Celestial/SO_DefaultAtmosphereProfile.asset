@@ -19,7 +19,7 @@ MonoBehaviour:
   densityFalloff: 4.3
   wavelengths: {x: 700, y: 530, z: 460}
   scatteringStrength: 21.23
-  intensity: 0.78
+  intensity: 0.9
   referenceLightIntensity: 1.1
   ditherStrength: 1
   ditherScale: 3.89

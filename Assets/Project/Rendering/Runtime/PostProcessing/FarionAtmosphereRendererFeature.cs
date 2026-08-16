@@ -14,7 +14,7 @@ namespace Farion.Rendering.PostProcessing
         const int MaxAtmosphereBodies = 8;
 
         [SerializeField] Shader atmosphereShader;
-        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing + 1;
+        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing - 3;
         [Range(1, MaxAtmosphereBodies)]
         [SerializeField] int maxRenderedBodies = MaxAtmosphereBodies;
 
@@ -82,6 +82,9 @@ namespace Farion.Rendering.PostProcessing
             static readonly int ScatteringCoefficientsId = Shader.PropertyToID("_FarionAtmosphereScatteringCoefficients");
             static readonly int OpticalParamsId = Shader.PropertyToID("_FarionAtmosphereOpticalParams");
             static readonly int SampleParamsId = Shader.PropertyToID("_FarionAtmosphereSampleParams");
+            static readonly int MieParamsId = Shader.PropertyToID("_FarionAtmosphereMieParams");
+            static readonly int OzoneCoefficientsId = Shader.PropertyToID("_FarionAtmosphereOzoneCoefficients");
+            static readonly int OzoneShapeId = Shader.PropertyToID("_FarionAtmosphereOzoneShape");
             static readonly int BakedOpticalDepthId = Shader.PropertyToID("_FarionAtmosphereBakedOpticalDepth");
             static readonly int BlueNoiseId = Shader.PropertyToID("_FarionAtmosphereBlueNoise");
 
@@ -92,6 +95,9 @@ namespace Farion.Rendering.PostProcessing
             static readonly Vector4[] ScatteringCoefficients = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] OpticalParams = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] SampleParams = new Vector4[MaxAtmosphereBodies];
+            static readonly Vector4[] MieParams = new Vector4[MaxAtmosphereBodies];
+            static readonly Vector4[] OzoneCoefficients = new Vector4[MaxAtmosphereBodies];
+            static readonly Vector4[] OzoneShape = new Vector4[MaxAtmosphereBodies];
 
             readonly List<Material> materialPool = new();
             Material templateMaterial;
@@ -142,22 +148,50 @@ namespace Farion.Rendering.PostProcessing
                 }
 
                 TextureHandle source = resourceData.activeColorTexture;
-                for (int i = 0; i < effectCount; i++)
+                int passIndex = 0;
+                int start = 0;
+                while (start < effectCount)
                 {
-                    Material effectMaterial = GetEffectMaterial(i);
-                    ApplyMaterialProperties(AtmosphereEffects[i], effectMaterial);
+                    int groupCount = 1;
+                    while (start + groupCount < effectCount
+                        && groupCount < MaxAtmosphereBodies
+                        && SharesBakeKey(AtmosphereEffects[start], AtmosphereEffects[start + groupCount]))
+                    {
+                        groupCount++;
+                    }
+
+                    Material effectMaterial = GetEffectMaterial(passIndex);
+                    ApplyMaterialProperties(start, groupCount, effectMaterial);
 
                     TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-                    destinationDesc.name = $"Farion Atmosphere Post Process {i}";
+                    destinationDesc.name = $"Farion Atmosphere Post Process {passIndex}";
                     destinationDesc.clearBuffer = false;
                     TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
                     RenderGraphUtils.BlitMaterialParameters parameters = new(source, destination, effectMaterial, 0);
-                    renderGraph.AddBlitPass(parameters, passName: $"Farion Atmosphere Post Process {i}");
+                    renderGraph.AddBlitPass(parameters, passName: $"Farion Atmosphere Post Process {passIndex}");
                     source = destination;
+
+                    start += groupCount;
+                    passIndex++;
                 }
 
                 resourceData.cameraColor = source;
+            }
+
+            static float AtmosphereScaleOf(CelestialAtmosphereEffectData effectData)
+            {
+                return effectData.SurfaceRadius > 0.0001f
+                    ? Mathf.Max(0f, effectData.AtmosphereRadius / effectData.SurfaceRadius - 1f)
+                    : 0f;
+            }
+
+            static bool SharesBakeKey(CelestialAtmosphereEffectData a, CelestialAtmosphereEffectData b)
+            {
+                return ReferenceEquals(a.Profile, b.Profile)
+                    && CelestialAtmosphereProfile.SharesOpticalDepthScale(
+                        AtmosphereScaleOf(a),
+                        AtmosphereScaleOf(b));
             }
 
             Material GetEffectMaterial(int index)
@@ -172,41 +206,59 @@ namespace Farion.Rendering.PostProcessing
                 return materialPool[index];
             }
 
-            void ApplyMaterialProperties(CelestialAtmosphereEffectData effectData, Material material)
+            void ApplyMaterialProperties(int start, int count, Material material)
             {
-                CelestialAtmosphereProfile profile = effectData.Profile;
-                Vector3 center = effectData.Center;
+                CelestialAtmosphereProfile profile = AtmosphereEffects[start].Profile;
                 Vector3 scattering = profile.GetScatteringCoefficients();
+                Vector3 ozone = profile.GetOzoneCoefficients();
 
-                AtmosphereSpheres[0] = new Vector4(center.x, center.y, center.z, effectData.AtmosphereRadius);
-                PlanetSpheres[0] = new Vector4(center.x, center.y, center.z, effectData.SurfaceRadius);
-                SurfaceRadii[0] = new Vector4(effectData.SurfaceRadius, 0f, 0f, 0f);
-                ScatteringCoefficients[0] = new Vector4(scattering.x, scattering.y, scattering.z, 0f);
-                OpticalParams[0] = new Vector4(
-                    profile.DensityFalloff,
-                    profile.Intensity,
-                    profile.DitherStrength,
-                    profile.DitherScale);
-                SampleParams[0] = new Vector4(
-                    profile.InScatteringSteps,
-                    profile.OpticalDepthSteps,
-                    profile.ReferenceLightIntensity,
-                    0f);
+                for (int i = 0; i < count; i++)
+                {
+                    CelestialAtmosphereEffectData effectData = AtmosphereEffects[start + i];
+                    Vector3 center = effectData.Center;
 
-                float atmosphereScale = effectData.SurfaceRadius > 0.0001f
-                    ? Mathf.Max(0f, effectData.AtmosphereRadius / effectData.SurfaceRadius - 1f)
-                    : 0f;
-                RenderTexture opticalDepthTexture = profile.GetOpticalDepthTexture(atmosphereScale);
+                    AtmosphereSpheres[i] = new Vector4(center.x, center.y, center.z, effectData.AtmosphereRadius);
+                    PlanetSpheres[i] = new Vector4(center.x, center.y, center.z, effectData.SurfaceRadius);
+                    SurfaceRadii[i] = new Vector4(effectData.SurfaceRadius, 0f, 0f, 0f);
+                    ScatteringCoefficients[i] = new Vector4(scattering.x, scattering.y, scattering.z, 0f);
+                    OpticalParams[i] = new Vector4(
+                        profile.DensityFalloff,
+                        profile.Intensity,
+                        profile.DitherStrength,
+                        profile.DitherScale);
+                    SampleParams[i] = new Vector4(
+                        profile.InScatteringSteps,
+                        profile.OpticalDepthSteps,
+                        profile.ReferenceLightIntensity,
+                        0f);
+                    MieParams[i] = new Vector4(
+                        profile.MieScatteringStrength,
+                        profile.MieAnisotropy,
+                        profile.MieExtinctionRatio,
+                        profile.MieDensityFalloff);
+                    OzoneCoefficients[i] = new Vector4(ozone.x, ozone.y, ozone.z, 0f);
+                    OzoneShape[i] = new Vector4(
+                        profile.OzonePeakHeight,
+                        profile.OzoneBandWidth,
+                        0f,
+                        0f);
+                }
+
+                RenderTexture opticalDepthTexture = profile.GetOpticalDepthTexture(
+                    AtmosphereScaleOf(AtmosphereEffects[start]));
                 material.SetTexture(BakedOpticalDepthId, opticalDepthTexture != null ? opticalDepthTexture : Texture2D.whiteTexture);
                 material.SetTexture(BlueNoiseId, profile.BlueNoise != null ? profile.BlueNoise : Texture2D.whiteTexture);
 
-                material.SetInt(EffectCountId, 1);
+                material.SetInt(EffectCountId, count);
                 material.SetVectorArray(AtmosphereSpheresId, AtmosphereSpheres);
                 material.SetVectorArray(PlanetSpheresId, PlanetSpheres);
                 material.SetVectorArray(SurfaceRadiiId, SurfaceRadii);
                 material.SetVectorArray(ScatteringCoefficientsId, ScatteringCoefficients);
                 material.SetVectorArray(OpticalParamsId, OpticalParams);
                 material.SetVectorArray(SampleParamsId, SampleParams);
+                material.SetVectorArray(MieParamsId, MieParams);
+                material.SetVectorArray(OzoneCoefficientsId, OzoneCoefficients);
+                material.SetVectorArray(OzoneShapeId, OzoneShape);
             }
         }
     }

@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.TestTools.Utils;
 using UnityEngine.SceneManagement;
 
 namespace Farion.Tests.EditMode
@@ -13,7 +14,7 @@ namespace Farion.Tests.EditMode
     public sealed class SurfaceDecorationTests
     {
         const string ProfilePath =
-            "Assets/Project/Design/Rendering/Celestial/SO_SurfaceDecoration_StartingTemperate.asset";
+            "Assets/Project/Design/Rendering/Celestial/SO_SurfaceDecoration_Terrestrial.asset";
 
         [Test]
         public void SurfaceCellPlacement_IsDeterministicAndSeeded()
@@ -33,12 +34,26 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void StartingTemperateProfile_HasValidInstancedVariantsAndUniqueRuleIds()
+        public void PlacementUp_BlendsFromLocalGravityToTerrainNormal()
+        {
+            Vector3 radialUp = Vector3.right;
+            Vector3 surfaceNormal = new Vector3(1f, 1f, 0f).normalized;
+
+            Assert.That(
+                SurfaceDecorationPlacement.ResolvePlacementUp(radialUp, surfaceNormal, 0f),
+                Is.EqualTo(radialUp).Using(Vector3EqualityComparer.Instance));
+            Assert.That(
+                SurfaceDecorationPlacement.ResolvePlacementUp(radialUp, surfaceNormal, 1f),
+                Is.EqualTo(surfaceNormal).Using(Vector3EqualityComparer.Instance));
+        }
+
+        [Test]
+        public void TerrestrialProfile_HasValidInstancedVariantsAndUniqueRuleIds()
         {
             SurfaceDecorationProfile profile =
                 AssetDatabase.LoadAssetAtPath<SurfaceDecorationProfile>(ProfilePath);
             Assert.That(profile, Is.Not.Null);
-            Assert.That(profile.Rules.Count, Is.EqualTo(3));
+            Assert.That(profile.Rules.Count, Is.EqualTo(8));
             Assert.That(profile.MaximumCandidateEvaluationsPerFrame, Is.LessThanOrEqualTo(64));
             Assert.That(profile.CandidateEvaluationBudgetMilliseconds, Is.LessThanOrEqualTo(1f));
             Assert.That(SurfaceDecorationRenderer.ShouldSuspendPlacement(0f, 0f, profile), Is.False);
@@ -50,6 +65,7 @@ namespace Farion.Tests.EditMode
                 Is.True);
 
             System.Collections.Generic.HashSet<string> ids = new();
+            int tobyGroundCoverRuleCount = 0;
             foreach (SurfaceDecorationRule rule in profile.Rules)
             {
                 Assert.That(rule, Is.Not.Null);
@@ -76,10 +92,61 @@ namespace Farion.Tests.EditMode
                         Assert.That(
                             variant.Materials[1].shader.name,
                             Is.EqualTo("Universal Render Pipeline/Lit"));
-                        Assert.That(variant.Materials[1].GetFloat("_Cull"), Is.EqualTo(2f));
+                        Assert.That(variant.Materials[1].GetFloat("_Cull"), Is.EqualTo(0f));
+                        Assert.That(variant.Materials[1].doubleSidedGI, Is.True);
+                        Assert.That(variant.Materials[1].GetColor("_BaseColor").maxColorComponent, Is.LessThanOrEqualTo(1f));
+                    }
+
+                    if (rule.StableId == "surfaceflora.boulder01")
+                    {
+                        Assert.That(
+                            variant.NearMesh.bounds.size.magnitude * variant.BaseScale,
+                            Is.GreaterThan(10f));
+                    }
+
+                    if (rule.StableId is "surfaceflora.temperateflowers" or "surfaceflora.temperategrass")
+                    {
+                        tobyGroundCoverRuleCount++;
+                        Assert.That(
+                            AssetDatabase.GetAssetPath(variant.NearMesh),
+                            Does.StartWith("Assets/Toby Fredson/The Toby Foliage Engine/"));
+                        Assert.That(
+                            variant.Materials[0].shader.name,
+                            Is.EqualTo("Toby Fredson/The Toby Foliage Engine/(TTFE) Grass Foliage (Mobile)"));
                     }
                 }
             }
+
+            Assert.That(tobyGroundCoverRuleCount, Is.EqualTo(2));
+
+            SurfaceDecorationRule birch = profile.Rules[0];
+            Assert.That(
+                birch.AllowsBiome(AssetDatabase.LoadAssetAtPath<BiomeDefinition>(
+                    "Assets/Project/Design/Simulation/Planetary/SO_Biome_Temperate.asset")),
+                Is.True);
+            Assert.That(
+                birch.AllowsBiome(AssetDatabase.LoadAssetAtPath<BiomeDefinition>(
+                    "Assets/Project/Design/Simulation/Planetary/SO_Biome_BasaltDesert.asset")),
+                Is.False);
+        }
+
+        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Temperate/fir_tree_01_4k.fbx")]
+        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Temperate/pine_tree_01_4k.fbx")]
+        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Frozen/crystalline_iceplant_4k.fbx")]
+        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Rocks/boulder_01_4k.fbx")]
+        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Rocks/rock_09_4k.fbx")]
+        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Arid/dead_quiver_branch_01_4k.fbx")]
+        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Arid/othonna_cerarioides_4k.fbx")]
+        public void NewSurfaceFloraModels_UseStaticRuntimeImportSettings(string path)
+        {
+            ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
+            Assert.That(importer, Is.Not.Null);
+            Assert.That(importer.importAnimation, Is.False);
+            Assert.That(importer.importBlendShapes, Is.False);
+            Assert.That(importer.importCameras, Is.False);
+            Assert.That(importer.importLights, Is.False);
+            Assert.That(importer.materialImportMode, Is.EqualTo(ModelImporterMaterialImportMode.None));
+            Assert.That(importer.isReadable, Is.False);
         }
 
         [Test]
@@ -146,18 +213,17 @@ namespace Farion.Tests.EditMode
             {
                 SurfaceDecorationRenderer[] renderers =
                     Object.FindObjectsByType<SurfaceDecorationRenderer>(FindObjectsInactive.Include);
-                SurfaceDecorationRenderer renderer = null;
+                System.Collections.Generic.HashSet<string> decoratedBodies = new();
                 foreach (SurfaceDecorationRenderer candidate in renderers)
                 {
                     if (candidate.gameObject.scene == scene)
                     {
-                        renderer = candidate;
-                        break;
+                        Assert.That(candidate.Profile, Is.Not.Null);
+                        decoratedBodies.Add(candidate.gameObject.name);
                     }
                 }
 
-                Assert.That(renderer, Is.Not.Null);
-                Assert.That(renderer.Profile, Is.Not.Null);
+                Assert.That(decoratedBodies, Is.EquivalentTo(new[] { "Starting Planet", "Rime", "Ember" }));
             }
             finally
             {
@@ -206,13 +272,25 @@ namespace Farion.Tests.EditMode
                     }
                 }
 
+                int suitableRuleCount = 0;
                 foreach (SurfaceDecorationRule rule in renderer.Profile.Rules)
                 {
-                    Assert.That(
-                        rule.EvaluateSuitability(sample, sample.Biome.Suitability, hasOcean, oceanRadius),
-                        Is.GreaterThan(0f),
-                        rule.DisplayName);
+                    if (!rule.AllowsBiome(sample.Biome.Biome))
+                    {
+                        continue;
+                    }
+
+                    if (rule.EvaluateSuitability(sample, sample.Biome.Suitability, hasOcean, oceanRadius) > 0f)
+                    {
+                        suitableRuleCount++;
+                    }
                 }
+
+                Assert.That(
+                    suitableRuleCount,
+                    Is.GreaterThan(0),
+                    "The starting landing area must support at least one decoration rule. "
+                    + "Rules tuned for other climates may legitimately score zero here.");
             }
             finally
             {

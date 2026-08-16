@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 namespace Farion.Rendering.Celestial
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(CelestialBody), typeof(PlanetSurfaceModel), typeof(CelestialSurfacePatchSystem))]
+    [RequireComponent(typeof(CelestialBody), typeof(PlanetSurfaceModel))]
     public sealed class SurfaceDecorationRenderer : MonoBehaviour
     {
         const int MaximumInstancesPerDraw = 511;
@@ -110,9 +110,9 @@ namespace Farion.Rendering.Celestial
 
         bool CanRender(out Camera camera)
         {
-            camera = patchSystem != null ? patchSystem.TargetCamera : null;
-            if (profile == null || body == null || surfaceModel == null || patchSystem == null ||
-                !patchSystem.SurfaceModeActive || camera == null)
+            camera = patchSystem != null ? patchSystem.TargetCamera : Camera.main;
+            if (profile == null || body == null || surfaceModel == null || camera == null ||
+                (patchSystem != null && !patchSystem.SurfaceModeActive))
             {
                 return false;
             }
@@ -281,10 +281,13 @@ namespace Farion.Rendering.Celestial
 
             SurfaceDecorationVariant variant = rule.Variants[variantIndex];
             Vector3 normalLocal = transform.InverseTransformDirection(sample.Surface.Normal).normalized;
-            Quaternion alignment = Quaternion.FromToRotation(Vector3.up, normalLocal);
-            alignment = Quaternion.Slerp(Quaternion.identity, alignment, rule.NormalAlignment);
+            Vector3 placementUp = SurfaceDecorationPlacement.ResolvePlacementUp(
+                direction,
+                normalLocal,
+                rule.NormalAlignment);
+            Quaternion alignment = Quaternion.FromToRotation(Vector3.up, placementUp);
             float yaw = SurfaceDecorationPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 4) * 360f;
-            Quaternion rotation = Quaternion.AngleAxis(yaw, normalLocal) * alignment *
+            Quaternion rotation = Quaternion.AngleAxis(yaw, placementUp) * alignment *
                 Quaternion.Euler(variant.RotationOffset);
             Vector2 scaleRange = rule.UniformScaleRange;
             float scale = Mathf.Lerp(
@@ -515,7 +518,7 @@ namespace Farion.Rendering.Celestial
             previousCameraLocalPosition = cameraLocalPosition;
             hasPreviousCameraPosition = true;
 
-            Rigidbody observer = patchSystem.CollisionObserverRigidbody;
+            Rigidbody observer = patchSystem != null ? patchSystem.CollisionObserverRigidbody : null;
             if (observer == null)
             {
                 return cameraSpeed;

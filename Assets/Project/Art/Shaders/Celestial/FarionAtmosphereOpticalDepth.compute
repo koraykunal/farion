@@ -5,6 +5,9 @@ int textureSize;
 int numOutScatteringSteps;
 float atmosphereRadius;
 float densityFalloff;
+float mieDensityFalloff;
+float ozonePeakHeight;
+float ozoneBandWidth;
 
 #define PI 3.14159265358979323846
 #define FARION_MAX_FLOAT 3.402823466e+38
@@ -31,21 +34,28 @@ float2 RaySphere(float3 centre, float radius, float3 rayOrigin, float3 rayDirect
     return float2(dstToSphere, dstOutSphere - dstToSphere);
 }
 
-float DensityAtPoint(float2 densitySamplePoint)
+float3 DensityAtPoint(float2 densitySamplePoint)
 {
     float planetRadius = 1.0;
     float2 planetCentre = 0.0;
     float heightAboveSurface = length(densitySamplePoint - planetCentre) - planetRadius;
     float height01 = saturate(heightAboveSurface / max(atmosphereRadius - planetRadius, 0.0001));
-    return exp(-height01 * densityFalloff) * (1.0 - height01);
+
+    float rayleigh = exp(-height01 * densityFalloff) * (1.0 - height01);
+    float mie = exp(-height01 * mieDensityFalloff) * (1.0 - height01);
+
+    float ozoneOffset = (height01 - ozonePeakHeight) / max(ozoneBandWidth, 0.0001);
+    float ozone = exp(-ozoneOffset * ozoneOffset) * (1.0 - height01);
+
+    return float3(rayleigh, mie, ozone);
 }
 
-float OpticalDepth(float2 rayOrigin, float2 rayDirection, float rayLength)
+float3 OpticalDepth(float2 rayOrigin, float2 rayDirection, float rayLength)
 {
     int numOpticalDepthPoints = numOutScatteringSteps;
     float2 densitySamplePoint = rayOrigin;
     float stepSize = rayLength / (numOpticalDepthPoints - 1);
-    float opticalDepth = 0.0;
+    float3 opticalDepth = 0.0;
 
     for (int i = 0; i < numOpticalDepthPoints; i++)
     {
@@ -75,10 +85,10 @@ void CSMain(uint2 id : SV_DispatchThreadID)
     float2 inPoint = float2(0.0, lerp(planetRadius, atmosphereRadius, height01));
     float rayLength = RaySphere(0.0, atmosphereRadius, float3(inPoint, 0.0), float3(direction, 0.0)).y;
 
-    float outScattering = OpticalDepth(
+    float3 outScattering = OpticalDepth(
         inPoint + direction * 0.0001,
         direction,
         max(rayLength - 0.0002, 0.0));
 
-    Result[id.xy] = float4(outScattering, outScattering, outScattering, 1.0);
+    Result[id.xy] = float4(outScattering, 1.0);
 }

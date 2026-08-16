@@ -26,13 +26,25 @@ Material:
     m_Ints: []
     m_Floats:
     - _Exposure: 1
+    - _MilkyWayDustStrength: 0.7
+    - _MilkyWayIntensity: 0.85
+    - _MilkyWayScale: 5.5
+    - _MilkyWayStarBoost: 2.6
+    - _MilkyWayWidth: 0.19
     - _Seed: 19
     - _StarBrightness: 1.8
+    - _StarColorSaturation: 0.65
     - _StarDensity: 0.10547505
+    - _StarMagnitudeFalloff: 3.5
     - _StarScale: 260
     - _StarSize: 0.045
+    - _StarTemperatureBias: 1.6
+    - _StarTemperatureMax: 15000
+    - _StarTemperatureMin: 3200
     m_Colors:
     - _BaseColor: {r: 0.0015, g: 0.0018, b: 0.0024, a: 1}
+    - _GalacticNormal: {r: 0.33964354, g: 0.8690879, b: 0.3596226, a: 0}
+    - _MilkyWayColor: {r: 0.42, g: 0.46, b: 0.62, a: 1}
     - _StarColorA: {r: 0.9, g: 0.94, b: 1, a: 1}
     - _StarColorB: {r: 1, g: 0.78, b: 0.55, a: 1}
     - _ZenithColor: {r: 0.004, g: 0.005, b: 0.007, a: 1}

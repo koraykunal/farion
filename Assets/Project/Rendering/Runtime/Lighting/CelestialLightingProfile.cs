@@ -36,6 +36,17 @@ namespace Farion.Rendering.Lighting
         [Min(0f)]
         [SerializeField] float bounceIntensity;
 
+        [Header("Planetshine")]
+        [Tooltip("Second light carrying sunlight bounced off the nearby body. Without it a ship flying low over a lit planet stays as dark underneath as it is in deep space.")]
+        [SerializeField] bool enablePlanetshine = true;
+        [SerializeField] Color planetshineColor = new(0.62f, 0.68f, 0.78f, 1f);
+        [Min(0f)]
+        [SerializeField] float planetshineIntensity = 0.85f;
+        [Tooltip("Fraction of the star's light the surface reflects back.")]
+        [Range(0f, 1f)]
+        [SerializeField] float planetshineAlbedo = 0.35f;
+        [SerializeField] LightShadows planetshineShadows = LightShadows.None;
+
         [Header("Space Ambient")]
         [SerializeField] bool applyRenderSettings = true;
         [SerializeField] AmbientMode ambientMode = AmbientMode.Flat;
@@ -71,7 +82,29 @@ namespace Farion.Rendering.Lighting
         public float ShadowNearPlane => shadowNearPlane;
         public float DirectionalShadowAngle => directionalShadowAngle;
         public float BounceIntensity => bounceIntensity;
+        public bool EnablePlanetshine => enablePlanetshine;
+        public Color PlanetshineColor => planetshineColor;
+        public float PlanetshineIntensity => planetshineIntensity;
+        public float PlanetshineAlbedo => planetshineAlbedo;
+        public LightShadows PlanetshineShadows => planetshineShadows;
         public bool ApplyRenderSettings => applyRenderSettings;
+
+        public float EvaluatePlanetshineIntensity(
+            float bodyRadius,
+            float centerDistance,
+            float starFacing,
+            float starIntensity)
+        {
+            if (!enablePlanetshine || bodyRadius <= 0.0001f || centerDistance <= bodyRadius)
+            {
+                return 0f;
+            }
+
+            float radiusRatio = bodyRadius / centerDistance;
+            float coverage = radiusRatio * radiusRatio;
+            float phase = Mathf.Clamp01(starFacing * 0.5f + 0.5f);
+            return planetshineIntensity * planetshineAlbedo * coverage * phase * starIntensity;
+        }
         public AmbientMode AmbientMode => ambientMode;
         public Color AmbientLight => ambientLight * ambientIntensity;
         public bool DisableFog => disableFog;
@@ -101,6 +134,8 @@ namespace Farion.Rendering.Lighting
         void OnValidate()
         {
             colorTemperature = Mathf.Max(1000f, colorTemperature);
+            planetshineIntensity = Mathf.Max(0f, planetshineIntensity);
+            planetshineAlbedo = Mathf.Clamp01(planetshineAlbedo);
             referenceDistance = Mathf.Max(0.001f, referenceDistance);
             referenceIntensity = Mathf.Max(0f, referenceIntensity);
             minimumFalloffDistance = Mathf.Max(0.001f, minimumFalloffDistance);

@@ -73,7 +73,8 @@ namespace Farion.Rendering.Celestial
 
         [Header("Transform")]
         [SerializeField] Vector2 uniformScaleRange = new(0.85f, 1.15f);
-        [SerializeField, Range(0f, 1f)] float normalAlignment = 1f;
+        [SerializeField, Range(0f, 1f), Tooltip("0 follows local gravity; 1 follows the terrain normal.")]
+        float normalAlignment = 1f;
         [SerializeField, Min(0f)] float surfaceOffset = 0.03f;
 
         [Header("Streaming")]

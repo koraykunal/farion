@@ -110,6 +110,28 @@ namespace Farion.Rendering.Celestial
                     noise));
         }
 
+        public static Vector3 ResolvePlacementUp(
+            Vector3 radialUp,
+            Vector3 surfaceNormal,
+            float normalAlignment)
+        {
+            float alignment = Mathf.Clamp01(normalAlignment);
+            if (alignment <= 0f)
+            {
+                return radialUp.normalized;
+            }
+
+            if (alignment >= 1f)
+            {
+                return surfaceNormal.normalized;
+            }
+
+            return Vector3.Slerp(
+                radialUp.normalized,
+                surfaceNormal.normalized,
+                alignment).normalized;
+        }
+
         static uint Mix(uint hash, int value)
         {
             unchecked

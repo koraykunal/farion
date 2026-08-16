@@ -1,5 +1,32 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8748646975046459128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6761a9bb117014f4d82a64098a0791f6, type: 3}
+  m_Name: Farion Auto Exposure
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.PostProcessing.FarionAutoExposureRendererFeature
+  m_Active: 1
+  exposureCompute: {fileID: 7200000, guid: af11166098650eb4ba81665e466eddc8, type: 3}
+  applyShader: {fileID: 4800000, guid: bac297e49921e524ea1672f72461beab, type: 3}
+  renderPassEvent: 549
+  meteringThreshold: 0.02
+  minimumLogLuminance: -6
+  maximumLogLuminance: 6
+  lowerPercentile: 0.3
+  upperPercentile: 0.95
+  exposureStrength: 0.6
+  keyValue: 0.18
+  brightenSpeed: 3.5
+  darkenSpeed: 0.9
+  minimumExposure: 0.5
+  maximumExposure: 2.2
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11,7 +38,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: de640fe3d0db1804a85f9fc8f5cadab6, type: 3}
   m_Name: PC_Renderer
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   debugShaders:
     debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7, type: 3}
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
@@ -30,9 +57,9 @@ MonoBehaviour:
   - {fileID: 5314801846109725472}
   - {fileID: 7269641300817094431}
   - {fileID: 7833122117494664109}
-  m_RendererFeatureMap: 95893d5d48926a39aea88538cab3265520e3f5b81ef8c1491f27b6333ff4e264ad6b866f10d7b46c
+  - {fileID: -8748646975046459128}
+  m_RendererFeatureMap: 95893d5d48926a39aea88538cab3265520e3f5b81ef8c1491f27b6333ff4e264ad6b866f10d7b46c08610fb3ed8f9686
   m_UseNativeRenderPass: 1
-  xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 3
   m_PrepassLayerMask:
@@ -59,6 +86,37 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
+--- !u!114 &4137280047192836501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc947aea1f54845864d141f6d5cf4f9, type: 3}
+  m_Name: Farion Volumetric Nebula
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  nebulaShader: {fileID: 4800000, guid: d633019c6f484b66beb38144c214b887, type: 3}
+  renderPassEvent: 400
+--- !u!114 &5314801846109725472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d7d63d5210347d5a799e4a04e601ba6, type: 3}
+  m_Name: Farion Cloud Post Process
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  cloudShader: {fileID: 4800000, guid: 29e59039c9de432bbc5118ddab9feef7, type: 3}
+  renderPassEvent: 451
+  downsample: 2
 --- !u!114 &6135789223451928750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70,11 +128,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8de7aff95db44cb9843d28674900971f, type: 3}
   m_Name: Farion Ocean Post Process
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   m_Active: 1
   oceanShader: {fileID: 4800000, guid: 86cfac2266f04b0d82407a33f6497378, type: 3}
   renderPassEvent: 450
-  underwaterRenderPassEvent: 552
+  underwaterRenderPassEvent: 548
   maxRenderedBodies: 8
 --- !u!114 &7269641300817094431
 MonoBehaviour:
@@ -90,24 +148,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   atmosphereShader: {fileID: 4800000, guid: c27a7f10dfea4fd1936ef3a3bcdfa4b3, type: 3}
-  renderPassEvent: 551
+  renderPassEvent: 547
   maxRenderedBodies: 8
---- !u!114 &5314801846109725472
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d7d63d5210347d5a799e4a04e601ba6, type: 3}
-  m_Name: Farion Cloud Post Process
-  m_EditorClassIdentifier:
-  m_Active: 1
-  cloudShader: {fileID: 4800000, guid: 29e59039c9de432bbc5118ddab9feef7, type: 3}
-  renderPassEvent: 451
-  downsample: 2
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -134,18 +176,3 @@ MonoBehaviour:
     BlurQuality: 0
     Falloff: 100
     SampleCount: -1
---- !u!114 &4137280047192836501
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: efc947aea1f54845864d141f6d5cf4f9, type: 3}
-  m_Name: Farion Volumetric Nebula
-  m_EditorClassIdentifier:
-  m_Active: 1
-  nebulaShader: {fileID: 4800000, guid: d633019c6f484b66beb38144c214b887, type: 3}
-  renderPassEvent: 400

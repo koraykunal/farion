@@ -1154,6 +1154,7 @@ GameObject:
   - component: {fileID: 1148478152}
   - component: {fileID: 1148478151}
   - component: {fileID: 1148478149}
+  - component: {fileID: 8800000000000000003}
   m_Layer: 6
   m_Name: Rime
   m_TagString: Untagged
@@ -1623,6 +1624,7 @@ GameObject:
   - component: {fileID: 1477076280}
   - component: {fileID: 1477076279}
   - component: {fileID: 1477076277}
+  - component: {fileID: 8800000000000000004}
   m_Layer: 6
   m_Name: Ember
   m_TagString: Untagged
@@ -3111,6 +3113,38 @@ MonoBehaviour:
   body: {fileID: 1772746501}
   surfaceModel: {fileID: 1772746497}
   patchSystem: {fileID: 1772746494}
+--- !u!114 &8800000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
+  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
+  body: {fileID: 1148478148}
+  surfaceModel: {fileID: 1148478146}
+  patchSystem: {fileID: 0}
+--- !u!114 &8800000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
+  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
+  body: {fileID: 1477076283}
+  surfaceModel: {fileID: 1477076288}
+  patchSystem: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

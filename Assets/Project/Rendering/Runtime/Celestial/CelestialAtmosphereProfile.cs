@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
@@ -25,10 +26,35 @@ namespace Farion.Rendering.Celestial
         [Min(0.001f)]
         [SerializeField] float densityFalloff = 4.3f;
 
-        [Header("Scattering")]
+        [Header("Rayleigh Scattering")]
         [SerializeField] Vector3 wavelengths = new(700f, 530f, 460f);
         [Min(0f)]
         [SerializeField] float scatteringStrength = 21.23f;
+
+        [Header("Mie Scattering")]
+        [Tooltip("Aerosol haze. Drives the warm forward-scattering halo around the star at sunrise and sunset.")]
+        [Min(0f)]
+        [SerializeField] float mieScatteringStrength = 1.2f;
+        [Tooltip("Forward bias of the Henyey-Greenstein phase. Higher values tighten the halo around the star.")]
+        [Range(0f, 0.95f)]
+        [SerializeField] float mieAnisotropy = 0.76f;
+        [Tooltip("Extinction relative to scattering. Aerosols absorb slightly more than they scatter.")]
+        [Min(0f)]
+        [SerializeField] float mieExtinctionRatio = 1.1f;
+        [Tooltip("Aerosols sit far lower than the Rayleigh column, so this falloff is much steeper.")]
+        [Min(0.001f)]
+        [SerializeField] float mieDensityFalloff = 18f;
+
+        [Header("Ozone Absorption")]
+        [Tooltip("Absorbs green and red at grazing angles, which is what turns twilight deep blue.")]
+        [Min(0f)]
+        [SerializeField] float ozoneStrength = 1.5f;
+        [Range(0f, 1f)]
+        [SerializeField] float ozonePeakHeight = 0.25f;
+        [Range(0.01f, 1f)]
+        [SerializeField] float ozoneBandWidth = 0.15f;
+
+        [Header("Exposure")]
         [Min(0f)]
         [SerializeField] float intensity = 1f;
         [Min(0.001f)]
@@ -39,12 +65,11 @@ namespace Farion.Rendering.Celestial
         [SerializeField] float ditherScale = 3.89f;
         [SerializeField] Texture2D blueNoise;
 
-        RenderTexture opticalDepthTexture;
+        const int MaxOpticalDepthBakes = 8;
+        const float OpticalDepthScaleTolerance = 1e-4f;
+
+        readonly List<OpticalDepthBake> opticalDepthBakes = new();
         bool opticalDepthDirty = true;
-        int bakedTextureSize;
-        int bakedOpticalDepthSteps;
-        float bakedAtmosphereScale = -1f;
-        float bakedDensityFalloff = -1f;
 
         public ComputeShader OpticalDepthCompute => opticalDepthCompute;
         public int TextureSize => textureSize;
@@ -53,11 +78,20 @@ namespace Farion.Rendering.Celestial
         public float DensityFalloff => densityFalloff;
         public Vector3 Wavelengths => wavelengths;
         public float ScatteringStrength => scatteringStrength;
+        public float MieScatteringStrength => mieScatteringStrength;
+        public float MieAnisotropy => mieAnisotropy;
+        public float MieExtinctionRatio => mieExtinctionRatio;
+        public float MieDensityFalloff => mieDensityFalloff;
+        public float OzoneStrength => ozoneStrength;
+        public float OzonePeakHeight => ozonePeakHeight;
+        public float OzoneBandWidth => ozoneBandWidth;
         public float Intensity => intensity;
         public float ReferenceLightIntensity => referenceLightIntensity;
         public float DitherStrength => ditherStrength;
         public float DitherScale => ditherScale;
         public Texture2D BlueNoise => blueNoise;
+
+        static readonly Vector3 OzoneAbsorptionShape = new(0.346f, 1f, 0.045f);
 
         public Vector3 GetScatteringCoefficients()
         {
@@ -67,6 +101,11 @@ namespace Farion.Rendering.Celestial
                 Mathf.Pow(400f / Mathf.Max(1f, wavelengths.z), 4f)) * scatteringStrength;
         }
 
+        public Vector3 GetOzoneCoefficients()
+        {
+            return OzoneAbsorptionShape * ozoneStrength;
+        }
+
         public RenderTexture GetOpticalDepthTexture(float atmosphereScale)
         {
             if (opticalDepthCompute == null)
@@ -74,63 +113,142 @@ namespace Farion.Rendering.Celestial
                 return null;
             }
 
+            OpticalDepthBake bake = ResolveBake(atmosphereScale);
             if (!CanDispatchCompute())
             {
-                return opticalDepthTexture;
+                return bake.Texture;
             }
 
             int safeTextureSize = Mathf.Max(8, textureSize);
-            bool recreateTexture = opticalDepthTexture == null
-                || !opticalDepthTexture.IsCreated()
-                || opticalDepthTexture.width != safeTextureSize
-                || opticalDepthTexture.height != safeTextureSize
-                || opticalDepthTexture.graphicsFormat != GraphicsFormat.R16G16B16A16_SFloat;
-
-            if (recreateTexture)
+            if (bake.Texture == null
+                || !bake.Texture.IsCreated()
+                || bake.Texture.width != safeTextureSize
+                || bake.Texture.height != safeTextureSize
+                || bake.Texture.graphicsFormat != GraphicsFormat.R16G16B16A16_SFloat)
             {
-                if (opticalDepthTexture != null)
-                {
-                    opticalDepthTexture.Release();
-                }
-
-                opticalDepthTexture = new RenderTexture(safeTextureSize, safeTextureSize, 0)
+                bake.ReleaseTexture();
+                bake.Texture = new RenderTexture(safeTextureSize, safeTextureSize, 0)
                 {
                     graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
                     enableRandomWrite = true,
                     autoGenerateMips = false,
                     filterMode = FilterMode.Bilinear,
                     wrapMode = TextureWrapMode.Clamp,
-                    name = $"{name} Optical Depth"
+                    name = $"{name} Optical Depth {atmosphereScale:F4}"
                 };
-                opticalDepthTexture.Create();
-                opticalDepthDirty = true;
+                bake.Texture.Create();
+                bake.Dirty = true;
             }
 
-            bool bakeSettingsChanged = bakedTextureSize != safeTextureSize
-                || bakedOpticalDepthSteps != opticalDepthSteps
-                || !Mathf.Approximately(bakedAtmosphereScale, atmosphereScale)
-                || !Mathf.Approximately(bakedDensityFalloff, densityFalloff);
+            bool bakeSettingsChanged = bake.TextureSize != safeTextureSize
+                || bake.Steps != opticalDepthSteps
+                || !Mathf.Approximately(bake.DensityFalloff, densityFalloff)
+                || !Mathf.Approximately(bake.MieDensityFalloff, mieDensityFalloff)
+                || !Mathf.Approximately(bake.OzonePeakHeight, ozonePeakHeight)
+                || !Mathf.Approximately(bake.OzoneBandWidth, ozoneBandWidth);
 
-            if (opticalDepthDirty || bakeSettingsChanged)
+            if (opticalDepthDirty || bake.Dirty || bakeSettingsChanged)
             {
                 int kernelIndex = opticalDepthCompute.FindKernel("CSMain");
-                opticalDepthCompute.SetTexture(kernelIndex, "Result", opticalDepthTexture);
+                opticalDepthCompute.SetTexture(kernelIndex, "Result", bake.Texture);
                 opticalDepthCompute.SetInt("textureSize", safeTextureSize);
                 opticalDepthCompute.SetInt("numOutScatteringSteps", opticalDepthSteps);
                 opticalDepthCompute.SetFloat("atmosphereRadius", 1f + atmosphereScale);
                 opticalDepthCompute.SetFloat("densityFalloff", densityFalloff);
+                opticalDepthCompute.SetFloat("mieDensityFalloff", mieDensityFalloff);
+                opticalDepthCompute.SetFloat("ozonePeakHeight", ozonePeakHeight);
+                opticalDepthCompute.SetFloat("ozoneBandWidth", ozoneBandWidth);
                 opticalDepthCompute.GetKernelThreadGroupSizes(kernelIndex, out uint threadGroupSizeX, out uint threadGroupSizeY, out _);
                 int threadGroupsX = Mathf.CeilToInt(safeTextureSize / (float)threadGroupSizeX);
                 int threadGroupsY = Mathf.CeilToInt(safeTextureSize / (float)threadGroupSizeY);
                 opticalDepthCompute.Dispatch(kernelIndex, threadGroupsX, threadGroupsY, 1);
-                opticalDepthDirty = false;
-                bakedTextureSize = safeTextureSize;
-                bakedOpticalDepthSteps = opticalDepthSteps;
-                bakedAtmosphereScale = atmosphereScale;
-                bakedDensityFalloff = densityFalloff;
+
+                bake.Dirty = false;
+                bake.TextureSize = safeTextureSize;
+                bake.Steps = opticalDepthSteps;
+                bake.DensityFalloff = densityFalloff;
+                bake.MieDensityFalloff = mieDensityFalloff;
+                bake.OzonePeakHeight = ozonePeakHeight;
+                bake.OzoneBandWidth = ozoneBandWidth;
             }
 
-            return opticalDepthTexture;
+            if (opticalDepthDirty)
+            {
+                for (int i = 0; i < opticalDepthBakes.Count; i++)
+                {
+                    if (opticalDepthBakes[i] != bake)
+                    {
+                        opticalDepthBakes[i].Dirty = true;
+                    }
+                }
+
+                opticalDepthDirty = false;
+            }
+
+            return bake.Texture;
+        }
+
+        public static bool SharesOpticalDepthScale(float left, float right)
+        {
+            return Mathf.Abs(left - right) < OpticalDepthScaleTolerance;
+        }
+
+        OpticalDepthBake ResolveBake(float atmosphereScale)
+        {
+            for (int i = 0; i < opticalDepthBakes.Count; i++)
+            {
+                if (SharesOpticalDepthScale(opticalDepthBakes[i].AtmosphereScale, atmosphereScale))
+                {
+                    return opticalDepthBakes[i];
+                }
+            }
+
+            if (opticalDepthBakes.Count >= MaxOpticalDepthBakes)
+            {
+                OpticalDepthBake recycled = opticalDepthBakes[0];
+                opticalDepthBakes.RemoveAt(0);
+                recycled.AtmosphereScale = atmosphereScale;
+                recycled.Dirty = true;
+                opticalDepthBakes.Add(recycled);
+                return recycled;
+            }
+
+            OpticalDepthBake created = new() { AtmosphereScale = atmosphereScale, Dirty = true };
+            opticalDepthBakes.Add(created);
+            return created;
+        }
+
+        sealed class OpticalDepthBake
+        {
+            public float AtmosphereScale;
+            public RenderTexture Texture;
+            public bool Dirty = true;
+            public int TextureSize = -1;
+            public int Steps = -1;
+            public float DensityFalloff = -1f;
+            public float MieDensityFalloff = -1f;
+            public float OzonePeakHeight = -1f;
+            public float OzoneBandWidth = -1f;
+
+            public void ReleaseTexture()
+            {
+                if (Texture == null)
+                {
+                    return;
+                }
+
+                Texture.Release();
+                if (Application.isPlaying)
+                {
+                    Destroy(Texture);
+                }
+                else
+                {
+                    DestroyImmediate(Texture);
+                }
+
+                Texture = null;
+            }
         }
 
         static bool CanDispatchCompute()
@@ -151,6 +269,13 @@ namespace Farion.Rendering.Celestial
             opticalDepthSteps = Mathf.Max(2, opticalDepthSteps);
             densityFalloff = Mathf.Max(0.001f, densityFalloff);
             scatteringStrength = Mathf.Max(0f, scatteringStrength);
+            mieScatteringStrength = Mathf.Max(0f, mieScatteringStrength);
+            mieAnisotropy = Mathf.Clamp(mieAnisotropy, 0f, 0.95f);
+            mieExtinctionRatio = Mathf.Max(0f, mieExtinctionRatio);
+            mieDensityFalloff = Mathf.Max(0.001f, mieDensityFalloff);
+            ozoneStrength = Mathf.Max(0f, ozoneStrength);
+            ozonePeakHeight = Mathf.Clamp01(ozonePeakHeight);
+            ozoneBandWidth = Mathf.Clamp(ozoneBandWidth, 0.01f, 1f);
             intensity = Mathf.Max(0f, intensity);
             referenceLightIntensity = Mathf.Max(0.001f, referenceLightIntensity);
             ditherStrength = Mathf.Max(0f, ditherStrength);
@@ -163,22 +288,12 @@ namespace Farion.Rendering.Celestial
 
         void OnDisable()
         {
-            if (opticalDepthTexture == null)
+            for (int i = 0; i < opticalDepthBakes.Count; i++)
             {
-                return;
+                opticalDepthBakes[i].ReleaseTexture();
             }
 
-            opticalDepthTexture.Release();
-            if (Application.isPlaying)
-            {
-                Destroy(opticalDepthTexture);
-            }
-            else
-            {
-                DestroyImmediate(opticalDepthTexture);
-            }
-
-            opticalDepthTexture = null;
+            opticalDepthBakes.Clear();
             opticalDepthDirty = true;
         }
     }

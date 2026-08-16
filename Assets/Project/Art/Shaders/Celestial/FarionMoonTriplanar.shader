@@ -27,6 +27,7 @@ Shader "Farion/Celestial/Moon Triplanar"
         [Header(Surface)]
         _Metallic("Metallic", Range(0, 1)) = 0
         _Smoothness("Smoothness", Range(0, 1)) = 0.35
+        _SpecularAntialiasing("Specular Antialiasing", Range(0, 1)) = 0.6
         _EjectaSmoothness("Ejecta Smoothness", Range(0, 1)) = 0.12
         _BodyRadius("Body Radius", Float) = 1
         _RadiusMinMax("Radius Min Max", Vector) = (1, 1, 0, 0)
@@ -88,6 +89,7 @@ Shader "Farion/Celestial/Moon Triplanar"
                 half _SteepColorStrength;
                 half _Metallic;
                 half _Smoothness;
+                half _SpecularAntialiasing;
                 half _EjectaSmoothness;
                 float _BodyRadius;
                 float4 _RadiusMinMax;
@@ -265,6 +267,14 @@ Shader "Farion/Celestial/Moon Triplanar"
                     saturate(_Smoothness * lerp(1.0h, 0.72h, steepness)),
                     saturate(_EjectaSmoothness),
                     ejectaMask);
+                if (_SpecularAntialiasing > 0.0h)
+                {
+                    surfaceSmoothness = GeometricNormalFiltering(
+                        surfaceSmoothness,
+                        normalWS,
+                        _SpecularAntialiasing * 0.5h,
+                        0.25h);
+                }
                 half surfaceOcclusion = lerp(1.0h, 0.88h, steepness);
 
                 InputData inputData = BuildPbrInputData(input, normalWS, normalize(TransformObjectToWorldNormal(radialOS)));
