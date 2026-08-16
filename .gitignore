@@ -130,3 +130,7 @@ InitTestScene*.unity*
 /ArtSource/**/BakeTest/
 /ArtSource/**/materials_dump.json
 /ArtSource/**/flat_materials_measured.json
+
+# Third-party Asset Store packages, reinstalled from the store rather than tracked
+/Assets/Toby Fredson/
+/Assets/Toby Fredson.meta
