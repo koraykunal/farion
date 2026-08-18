@@ -40,7 +40,6 @@ MonoBehaviour:
     emissionStrength: 0
   metallic: 0
   landSmoothness: 0.125
-  oceanSmoothness: 0.851
   oceanLow: {r: 0.015, g: 0.08, b: 0.16, a: 1}
   oceanHigh: {r: 0.05, g: 0.32, b: 0.48, a: 1}
   shoreLow: {r: 0.54, g: 0.48, b: 0.36, a: 1}
@@ -63,7 +62,6 @@ MonoBehaviour:
   shoreBlend: 0.115
   oceanEdgeBlend: 0.04
   shoreWetness: 0.42
-  shoreFoamStrength: 0.16
   maxFlatHeight: 0.52
   steepBands: 4
   steepBandStrength: 0

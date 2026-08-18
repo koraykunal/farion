@@ -14,10 +14,10 @@ namespace Farion.Rendering.PostProcessing
         const int MaxOceanBodies = 8;
 
         [SerializeField] Shader oceanShader;
-        // Resolve the exterior ocean before transparent VFX so the full-screen
-        // composite cannot overwrite particles or trails.
+        // Resolve the opaque world before transparent VFX so the full-screen
+        // ocean volume cannot overwrite particles or trails.
         [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
-        [SerializeField] RenderPassEvent underwaterRenderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing - 2;
+        [SerializeField] RenderPassEvent underwaterRenderPassEvent = RenderPassEvent.BeforeRenderingTransparents + 3;
         [Range(1, MaxOceanBodies)]
         [SerializeField] int maxRenderedBodies = MaxOceanBodies;
 
@@ -81,35 +81,31 @@ namespace Farion.Rendering.PostProcessing
 
         sealed class OceanPass : ScriptableRenderPass
         {
-            static readonly int EffectCountId = Shader.PropertyToID("_FarionOceanEffectCount");
-            static readonly int OceanSpheresId = Shader.PropertyToID("_FarionOceanSpheres");
-            static readonly int PlanetSpheresId = Shader.PropertyToID("_FarionPlanetSpheres");
-            static readonly int OceanDeepColorsId = Shader.PropertyToID("_FarionOceanDeepColors");
-            static readonly int OceanShallowColorsId = Shader.PropertyToID("_FarionOceanShallowColors");
-            static readonly int OceanFresnelColorsId = Shader.PropertyToID("_FarionOceanFresnelColors");
-            static readonly int OceanSpecularColorsId = Shader.PropertyToID("_FarionOceanSpecularColors");
-            static readonly int OceanUnderwaterColorsId = Shader.PropertyToID("_FarionOceanUnderwaterColors");
+            static readonly int OceanSphereId = Shader.PropertyToID("_FarionOceanSphere");
+            static readonly int PlanetSphereId = Shader.PropertyToID("_FarionPlanetSphere");
+            static readonly int OceanDeepColorId = Shader.PropertyToID("_FarionOceanDeepColor");
+            static readonly int OceanShallowColorId = Shader.PropertyToID("_FarionOceanShallowColor");
+            static readonly int OceanFresnelColorId = Shader.PropertyToID("_FarionOceanFresnelColor");
+            static readonly int OceanHorizonColorId = Shader.PropertyToID("_FarionOceanHorizonColor");
+            static readonly int OceanSpecularColorId = Shader.PropertyToID("_FarionOceanSpecularColor");
+            static readonly int OceanUnderwaterColorId = Shader.PropertyToID("_FarionOceanUnderwaterColor");
+            static readonly int OceanFoamColorId = Shader.PropertyToID("_FarionOceanFoamColor");
             static readonly int OceanOpticalParamsId = Shader.PropertyToID("_FarionOceanOpticalParams");
-            static readonly int OceanUnderwaterParamsId = Shader.PropertyToID("_FarionOceanUnderwaterParams");
+            static readonly int OceanUnderwaterOpticsId = Shader.PropertyToID("_FarionOceanUnderwaterOptics");
             static readonly int OceanWaveParamsId = Shader.PropertyToID("_FarionOceanWaveParams");
+            static readonly int OceanSwellPhasesId = Shader.PropertyToID("_FarionOceanSwellPhases");
+            static readonly int OceanSwellShapeId = Shader.PropertyToID("_FarionOceanSwellShape");
+            static readonly int OceanWorldToLocalId = Shader.PropertyToID("_FarionOceanWorldToLocal");
+            static readonly int OceanCameraInsideId = Shader.PropertyToID("_FarionOceanCameraInside");
             static readonly int OceanLightingParamsId = Shader.PropertyToID("_FarionOceanLightingParams");
-            static readonly int OceanExposureParamsId = Shader.PropertyToID("_FarionOceanExposureParams");
             static readonly int OceanWaveNormalAId = Shader.PropertyToID("_FarionOceanWaveNormalA");
             static readonly int OceanWaveNormalBId = Shader.PropertyToID("_FarionOceanWaveNormalB");
+            static readonly int AtmosphereParamsId = Shader.PropertyToID("_FarionOceanAtmosphereParams");
+            static readonly int AtmosphereRayleighId = Shader.PropertyToID("_FarionOceanAtmosphereRayleigh");
+            static readonly int AtmosphereOzoneId = Shader.PropertyToID("_FarionOceanAtmosphereOzone");
+            static readonly int AtmosphereOpticalDepthId = Shader.PropertyToID("_FarionOceanAtmosphereOpticalDepth");
 
             static readonly List<CelestialOceanEffectData> OceanEffects = new();
-            static readonly Vector4[] OceanSpheres = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] PlanetSpheres = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] DeepColors = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] ShallowColors = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] FresnelColors = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] SpecularColors = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] UnderwaterColors = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] OpticalParams = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] UnderwaterParams = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] WaveParams = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] LightingParams = new Vector4[MaxOceanBodies];
-            static readonly Vector4[] ExposureParams = new Vector4[MaxOceanBodies];
 
             readonly List<Material> materialPool = new();
             Material templateMaterial;
@@ -160,10 +156,11 @@ namespace Farion.Rendering.PostProcessing
                 }
 
                 TextureHandle source = resourceData.activeColorTexture;
+                Vector3 cameraPosition = cameraData.camera.transform.position;
                 for (int i = 0; i < effectCount; i++)
                 {
                     Material effectMaterial = GetEffectMaterial(i);
-                    ApplyMaterialProperties(OceanEffects[i], effectMaterial);
+                    ApplyMaterialProperties(OceanEffects[i], cameraPosition, effectMaterial);
 
                     TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
                     destinationDesc.name = $"Farion Ocean Post Process {i}";
@@ -190,47 +187,90 @@ namespace Farion.Rendering.PostProcessing
                 return materialPool[index];
             }
 
-            void ApplyMaterialProperties(CelestialOceanEffectData effectData, Material material)
+            static void ApplyMaterialProperties(
+                CelestialOceanEffectData effectData,
+                Vector3 cameraPosition,
+                Material material)
             {
                 CelestialOceanProfile profile = effectData.Profile;
                 Vector3 center = effectData.Center;
 
-                OceanSpheres[0] = new Vector4(center.x, center.y, center.z, effectData.OceanRadius);
-                PlanetSpheres[0] = new Vector4(center.x, center.y, center.z, effectData.BodyRadius);
-                DeepColors[0] = profile.DeepColor;
-                ShallowColors[0] = profile.ShallowColor;
-                FresnelColors[0] = profile.FresnelColor;
-                SpecularColors[0] = profile.SpecularColor;
-                UnderwaterColors[0] = profile.UnderwaterColor;
-                OpticalParams[0] = new Vector4(profile.DepthMultiplier, profile.AlphaMultiplier, 0f, 0f);
-                UnderwaterParams[0] = new Vector4(
-                    profile.UnderwaterDensity,
-                    profile.UnderwaterSurfaceStrength,
-                    profile.UnderwaterSpecularStrength,
-                    0f);
-                WaveParams[0] = new Vector4(profile.WaveNormalScale, profile.WaveSpeed, profile.WaveStrength, 0f);
-                LightingParams[0] = new Vector4(
-                    profile.Smoothness,
-                    profile.SpecularStrength,
-                    profile.FresnelStrength,
-                    0f);
-                ExposureParams[0] = new Vector4(profile.ReferenceLightIntensity, 0f, 0f, 0f);
-
                 material.SetTexture(OceanWaveNormalAId, profile.WaveNormalA != null ? profile.WaveNormalA : Texture2D.normalTexture);
                 material.SetTexture(OceanWaveNormalBId, profile.WaveNormalB != null ? profile.WaveNormalB : Texture2D.normalTexture);
-                material.SetInt(EffectCountId, 1);
-                material.SetVectorArray(OceanSpheresId, OceanSpheres);
-                material.SetVectorArray(PlanetSpheresId, PlanetSpheres);
-                material.SetVectorArray(OceanDeepColorsId, DeepColors);
-                material.SetVectorArray(OceanShallowColorsId, ShallowColors);
-                material.SetVectorArray(OceanFresnelColorsId, FresnelColors);
-                material.SetVectorArray(OceanSpecularColorsId, SpecularColors);
-                material.SetVectorArray(OceanUnderwaterColorsId, UnderwaterColors);
-                material.SetVectorArray(OceanOpticalParamsId, OpticalParams);
-                material.SetVectorArray(OceanUnderwaterParamsId, UnderwaterParams);
-                material.SetVectorArray(OceanWaveParamsId, WaveParams);
-                material.SetVectorArray(OceanLightingParamsId, LightingParams);
-                material.SetVectorArray(OceanExposureParamsId, ExposureParams);
+                material.SetVector(OceanSphereId, new Vector4(center.x, center.y, center.z, effectData.OceanRadius));
+                material.SetVector(PlanetSphereId, new Vector4(center.x, center.y, center.z, effectData.BodyRadius));
+                material.SetColor(OceanDeepColorId, profile.DeepColor);
+                material.SetColor(OceanShallowColorId, profile.ShallowColor);
+                material.SetColor(OceanFresnelColorId, profile.FresnelColor);
+                material.SetColor(OceanHorizonColorId, profile.HorizonColor);
+                material.SetColor(OceanSpecularColorId, profile.SpecularColor);
+                material.SetColor(OceanUnderwaterColorId, profile.UnderwaterColor);
+                material.SetColor(OceanFoamColorId, profile.FoamColor);
+                material.SetVector(
+                    OceanOpticalParamsId,
+                    new Vector4(
+                        profile.DepthMultiplier,
+                        profile.AlphaMultiplier,
+                        0f,
+                        profile.ReferenceLightIntensity));
+                Vector3 underwaterExtinction = profile.UnderwaterExtinctionCoefficients;
+                material.SetVector(
+                    OceanUnderwaterOpticsId,
+                    new Vector4(
+                        underwaterExtinction.x,
+                        underwaterExtinction.y,
+                        underwaterExtinction.z,
+                        profile.UnderwaterSpecularStrength));
+                material.SetVector(
+                    OceanWaveParamsId,
+                    new Vector4(profile.DetailNormalScale, profile.WaveSpeed, profile.WaveStrength, 0f));
+                Vector3 phases = effectData.WavePhases;
+                material.SetVector(OceanSwellPhasesId, new Vector4(phases.x, phases.y, phases.z, 0f));
+                material.SetVector(
+                    OceanSwellShapeId,
+                    new Vector4(
+                        effectData.WaveAmplitude,
+                        effectData.WaveLength,
+                        profile.FoamWidth,
+                        profile.FoamStrength));
+                material.SetMatrix(OceanWorldToLocalId, effectData.WorldToLocalRotation);
+                material.SetFloat(OceanCameraInsideId, effectData.IsPointUnderwater(cameraPosition) ? 1f : 0f);
+                material.SetVector(
+                    OceanLightingParamsId,
+                    new Vector4(
+                        profile.Smoothness,
+                        profile.SpecularStrength,
+                        profile.IndexOfRefraction,
+                        profile.ScatterStrength));
+                ApplyAtmosphereProperties(effectData, material);
+            }
+
+            static void ApplyAtmosphereProperties(CelestialOceanEffectData effectData, Material material)
+            {
+                CelestialAtmosphereProfile profile = effectData.AtmosphereProfile;
+                if (profile == null || effectData.AtmosphereRadius <= effectData.OceanRadius)
+                {
+                    material.SetVector(AtmosphereParamsId, Vector4.zero);
+                    material.SetVector(AtmosphereRayleighId, Vector4.zero);
+                    material.SetVector(AtmosphereOzoneId, Vector4.zero);
+                    material.SetTexture(AtmosphereOpticalDepthId, Texture2D.whiteTexture);
+                    return;
+                }
+
+                float atmosphereScale = effectData.AtmosphereRadius / effectData.OceanRadius - 1f;
+                RenderTexture opticalDepth = profile.GetOpticalDepthTexture(atmosphereScale);
+                material.SetVector(
+                    AtmosphereParamsId,
+                    new Vector4(
+                        effectData.AtmosphereRadius,
+                        profile.Intensity,
+                        profile.MieScatteringStrength * profile.MieExtinctionRatio,
+                        opticalDepth != null ? 1f : 0f));
+                material.SetVector(AtmosphereRayleighId, profile.GetScatteringCoefficients());
+                material.SetVector(AtmosphereOzoneId, profile.GetOzoneCoefficients());
+                material.SetTexture(
+                    AtmosphereOpticalDepthId,
+                    opticalDepth != null ? opticalDepth : Texture2D.whiteTexture);
             }
         }
     }

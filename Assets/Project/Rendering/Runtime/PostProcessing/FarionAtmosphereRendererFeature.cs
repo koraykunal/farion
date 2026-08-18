@@ -3,7 +3,6 @@ using Farion.Rendering.Celestial;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
-using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 
 namespace Farion.Rendering.PostProcessing
@@ -14,7 +13,7 @@ namespace Farion.Rendering.PostProcessing
         const int MaxAtmosphereBodies = 8;
 
         [SerializeField] Shader atmosphereShader;
-        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing - 3;
+        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingTransparents + 1;
         [Range(1, MaxAtmosphereBodies)]
         [SerializeField] int maxRenderedBodies = MaxAtmosphereBodies;
 
@@ -87,7 +86,6 @@ namespace Farion.Rendering.PostProcessing
             static readonly int OzoneShapeId = Shader.PropertyToID("_FarionAtmosphereOzoneShape");
             static readonly int BakedOpticalDepthId = Shader.PropertyToID("_FarionAtmosphereBakedOpticalDepth");
             static readonly int BlueNoiseId = Shader.PropertyToID("_FarionAtmosphereBlueNoise");
-
             static readonly List<CelestialAtmosphereEffectData> AtmosphereEffects = new();
             static readonly Vector4[] AtmosphereSpheres = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] PlanetSpheres = new Vector4[MaxAtmosphereBodies];
@@ -168,8 +166,7 @@ namespace Farion.Rendering.PostProcessing
                     destinationDesc.clearBuffer = false;
                     TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-                    RenderGraphUtils.BlitMaterialParameters parameters = new(source, destination, effectMaterial, 0);
-                    renderGraph.AddBlitPass(parameters, passName: $"Farion Atmosphere Post Process {passIndex}");
+                    AddAtmospherePass(renderGraph, source, destination, effectMaterial, passIndex);
                     source = destination;
 
                     start += groupCount;
@@ -177,6 +174,32 @@ namespace Farion.Rendering.PostProcessing
                 }
 
                 resourceData.cameraColor = source;
+            }
+
+            static void AddAtmospherePass(
+                RenderGraph renderGraph,
+                TextureHandle source,
+                TextureHandle destination,
+                Material material,
+                int index)
+            {
+                using IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass<AtmospherePassData>(
+                    $"Farion Atmosphere Post Process {index}",
+                    out AtmospherePassData passData);
+                passData.source = source;
+                passData.material = material;
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
+                builder.SetRenderFunc(static (AtmospherePassData data, RasterGraphContext context) =>
+                {
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1f, 1f, 0f, 0f), data.material, 0);
+                });
+            }
+
+            sealed class AtmospherePassData
+            {
+                public TextureHandle source;
+                public Material material;
             }
 
             static float AtmosphereScaleOf(CelestialAtmosphereEffectData effectData)

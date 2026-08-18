@@ -5,6 +5,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
         [NoScaleOffset] _FarionCloudShapeNoise("Shape Noise", 3D) = "white" {}
         [NoScaleOffset] _FarionCloudDetailNoise("Detail Noise", 3D) = "white" {}
         [NoScaleOffset] _FarionCloudBlueNoise("Blue Noise", 2D) = "white" {}
+        [NoScaleOffset] _FarionCloudAtmosphereOpticalDepth("Atmosphere Optical Depth", 2D) = "white" {}
     }
 
     SubShader
@@ -19,29 +20,38 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
         #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+        #include "FarionAtmosphereLighting.hlsl"
 
         #define FARION_CLOUD_MAX_VIEW_STEPS 96
         #define FARION_CLOUD_MAX_LIGHT_STEPS 12
         #define FARION_MAX_FLOAT 3.402823466e+38
-        #define FARION_SHADOW_PENUMBRA 0.04
 
         float4 _FarionCloudSphere;
         float4 _FarionCloudRadii;
         float4x4 _FarionCloudWorldToLocal;
         float4 _FarionCloudSeedOffset;
         float4 _FarionCloudShapeParams;
+        float4 _FarionCloudStructureParams;
         float4 _FarionCloudShapeWeights;
         float4 _FarionCloudDetailWeights;
         float4 _FarionCloudAbsorptionParams;
         float4 _FarionCloudPhaseParams;
+        float4 _FarionCloudLightingParams;
+        float4 _FarionCloudAtmosphereParams;
+        float4 _FarionCloudAtmosphereRayleigh;
+        float4 _FarionCloudAtmosphereOzone;
         float4 _FarionCloudWindAxis;
         float4 _FarionCloudSamplingParams;
+        float4 _FarionCloudMotion;
+        float4 _FarionCloudWeatherMotion;
+        float4 _FarionCloudLayerParams;
         float4 _FarionCloudTexture_TexelSize;
 
         float4 _FarionStarDirectionWS;
         half4 _FarionStarColor;
         float _FarionStarIntensity;
         half4 _FarionAmbientColor;
+        half4 _FarionCloudAmbientColor;
 
         TEXTURE3D(_FarionCloudShapeNoise);
         SAMPLER(sampler_FarionCloudShapeNoise);
@@ -49,6 +59,8 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
         SAMPLER(sampler_FarionCloudDetailNoise);
         TEXTURE2D(_FarionCloudBlueNoise);
         SAMPLER(sampler_FarionCloudBlueNoise);
+        TEXTURE2D(_FarionCloudAtmosphereOpticalDepth);
+        SAMPLER(sampler_FarionCloudAtmosphereOpticalDepth);
         TEXTURE2D_X(_FarionCloudTexture);
 
         float2 RaySphere(float3 center, float radius, float3 rayOrigin, float3 rayDirection)
@@ -102,12 +114,54 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             return max(0.0, dot(scenePosition - _WorldSpaceCameraPos, rayDirection));
         }
 
-        float3 RotateAroundAxis(float3 value, float3 axis, float angle)
+        float3 RotateAroundAxis(float3 value, float3 axis, float sine, float cosine)
         {
-            float sine;
-            float cosine;
-            sincos(angle, sine, cosine);
             return value * cosine + cross(axis, value) * sine + axis * dot(axis, value) * (1.0 - cosine);
+        }
+
+        float SampleWorldNoise(float3 worldPosition)
+        {
+            float shellThickness = max(_FarionCloudRadii.z - _FarionCloudRadii.y, 0.0001);
+            float3 localPosition = mul(
+                (float3x3)_FarionCloudWorldToLocal,
+                worldPosition - _FarionCloudSphere.xyz) / shellThickness;
+            float3 blend = pow(abs(normalize(localPosition)), 4.0);
+            blend /= max(dot(blend, 1.0), 0.0001);
+            float3 coordinates = localPosition * 8.0 + _FarionCloudSeedOffset.xyz * 31.0;
+            float x = SAMPLE_TEXTURE2D_LOD(
+                _FarionCloudBlueNoise,
+                sampler_FarionCloudBlueNoise,
+                coordinates.yz,
+                0).r;
+            float y = SAMPLE_TEXTURE2D_LOD(
+                _FarionCloudBlueNoise,
+                sampler_FarionCloudBlueNoise,
+                coordinates.xz,
+                0).r;
+            float z = SAMPLE_TEXTURE2D_LOD(
+                _FarionCloudBlueNoise,
+                sampler_FarionCloudBlueNoise,
+                coordinates.xy,
+                0).r;
+            return dot(float3(x, y, z), blend);
+        }
+
+        float3 AtmosphereSunTransmittance(float3 worldPosition, float3 directionToStar)
+        {
+            return FarionAtmosphereSunTransmittance(
+                worldPosition,
+                _FarionCloudSphere.xyz,
+                _FarionCloudRadii.x,
+                _FarionCloudAtmosphereParams.x,
+                _FarionCloudAtmosphereParams.y,
+                _FarionCloudAtmosphereParams.z,
+                _FarionCloudAtmosphereRayleigh.rgb,
+                _FarionCloudAtmosphereOzone.rgb,
+                _FarionCloudAtmosphereParams.w,
+                directionToStar,
+                TEXTURE2D_ARGS(
+                    _FarionCloudAtmosphereOpticalDepth,
+                    sampler_FarionCloudAtmosphereOpticalDepth));
         }
 
         float SampleDensity(float3 worldPosition)
@@ -115,37 +169,92 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             float3 center = _FarionCloudSphere.xyz;
             float innerRadius = _FarionCloudRadii.y;
             float outerRadius = _FarionCloudRadii.z;
-            float radius = length(worldPosition - center);
+            float3 offset = worldPosition - center;
+            float radius = length(offset);
             float height01 = saturate((radius - innerRadius) / max(outerRadius - innerRadius, 0.0001));
-            float heightGradient = smoothstep(0.0, 0.18, height01) * (1.0 - smoothstep(0.72, 1.0, height01));
+
+            float3 localDirection = mul(
+                (float3x3)_FarionCloudWorldToLocal,
+                offset / max(radius, 0.0001));
+            float3 windAxis = _FarionCloudWindAxis.xyz;
+            float3 weatherDirection = RotateAroundAxis(
+                localDirection,
+                windAxis,
+                _FarionCloudWeatherMotion.x,
+                _FarionCloudWeatherMotion.y);
+            float3 weatherPosition = weatherDirection * _FarionCloudStructureParams.x
+                + _FarionCloudSeedOffset.xyz;
+            float4 weather = SAMPLE_TEXTURE3D_LOD(
+                _FarionCloudShapeNoise,
+                sampler_FarionCloudShapeNoise,
+                weatherPosition,
+                0);
+            float coverage = saturate(_FarionCloudShapeParams.z);
+            float weatherMask = saturate(
+                (weather.r - (1.0 - coverage)) / max(coverage, 0.0001));
+            if (weatherMask <= 0.0)
+            {
+                return 0.0;
+            }
+
+            float cloudType = saturate(weather.g);
+            float heightVariation = _FarionCloudStructureParams.z;
+            float localBottom = saturate(
+                (weather.b - 0.5) * heightVariation * 0.2
+                + (1.0 - cloudType) * heightVariation * 0.08);
+            float localTop = saturate(
+                1.0
+                - (1.0 - cloudType) * heightVariation * 0.65
+                + (weather.a - 0.5) * heightVariation * 0.15);
+            localTop = max(localTop, localBottom + 0.12);
+            float localHeight = saturate(
+                (height01 - localBottom) / max(localTop - localBottom, 0.0001));
+            float gradientBottom = lerp(
+                _FarionCloudLayerParams.x * 0.75,
+                _FarionCloudLayerParams.x * 1.2,
+                cloudType);
+            float gradientTop = lerp(
+                _FarionCloudLayerParams.y * 0.82,
+                min(0.96, _FarionCloudLayerParams.y * 1.18),
+                cloudType);
+            float heightGradient = smoothstep(0.0, gradientBottom, localHeight)
+                * (1.0 - smoothstep(gradientTop, 1.0, localHeight));
             if (heightGradient <= 0.0)
             {
                 return 0.0;
             }
 
-            float3 localPosition = mul((float3x3)_FarionCloudWorldToLocal, worldPosition - center) / outerRadius;
-            float3 windAxis = normalize(_FarionCloudWindAxis.xyz);
-            float shapeAngle = radians(_FarionCloudWindAxis.w * _Time.y);
-            float detailAngle = radians(_FarionCloudSamplingParams.z * _Time.y);
-            float3 shapePosition = RotateAroundAxis(localPosition, windAxis, shapeAngle)
-                * _FarionCloudShapeParams.x + _FarionCloudSeedOffset.xyz;
-            float3 detailPosition = RotateAroundAxis(localPosition, windAxis, detailAngle)
-                * _FarionCloudShapeParams.y + _FarionCloudSeedOffset.zxy;
+            float3 warp = (weather.gba * 2.0 - 1.0) * _FarionCloudStructureParams.w;
+            float verticalScale = _FarionCloudStructureParams.y;
+            float3 shapeDirection = RotateAroundAxis(
+                localDirection,
+                windAxis,
+                _FarionCloudMotion.x,
+                _FarionCloudMotion.y);
+            float3 detailDirection = RotateAroundAxis(
+                localDirection,
+                windAxis,
+                _FarionCloudMotion.z,
+                _FarionCloudMotion.w);
+            float3 shapePosition = shapeDirection
+                * (_FarionCloudShapeParams.x + localHeight * verticalScale)
+                + warp
+                + _FarionCloudSeedOffset.xyz;
+            float3 detailPosition = detailDirection
+                * (_FarionCloudShapeParams.y + localHeight * verticalScale * 1.8)
+                + warp.zxy * 1.7
+                + _FarionCloudSeedOffset.zxy;
 
             float4 shapeNoise = SAMPLE_TEXTURE3D_LOD(
                 _FarionCloudShapeNoise,
                 sampler_FarionCloudShapeNoise,
                 shapePosition,
                 0);
-            float4 shapeWeights = max(_FarionCloudShapeWeights, 0.0);
-            if (dot(shapeWeights, 1.0) <= 0.0001)
-            {
-                shapeWeights = float4(1.0, 0.0, 0.0, 0.0);
-            }
-
-            float shapeWeight = dot(shapeWeights, 1.0);
-            float shapeFbm = dot(shapeNoise, shapeWeights / shapeWeight);
-            float baseDensity = shapeFbm * heightGradient - (1.0 - _FarionCloudShapeParams.z);
+            float shapeFbm = dot(shapeNoise, _FarionCloudShapeWeights);
+            float shapeThreshold = lerp(0.58, 0.34, weatherMask);
+            float shapeDensity = saturate(
+                (shapeFbm - shapeThreshold) / max(1.0 - shapeThreshold, 0.0001));
+            float baseDensity = shapeDensity * heightGradient * weatherMask;
             if (baseDensity <= 0.0)
             {
                 return 0.0;
@@ -156,17 +265,13 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 sampler_FarionCloudDetailNoise,
                 detailPosition,
                 0).rgb;
-            float3 detailWeights = max(_FarionCloudDetailWeights.xyz, 0.0);
-            if (dot(detailWeights, 1.0) <= 0.0001)
-            {
-                detailWeights = float3(1.0, 0.0, 0.0);
-            }
-
-            float detailWeight = dot(detailWeights, 1.0);
-            float detailFbm = dot(detailNoise, detailWeights / detailWeight);
-            float erosion = pow(saturate(1.0 - shapeFbm), 3.0)
+            float detailFbm = dot(detailNoise, _FarionCloudDetailWeights.xyz);
+            float erosion = pow(saturate(1.0 - shapeDensity), 2.0)
                 * (1.0 - detailFbm)
-                * _FarionCloudAbsorptionParams.w;
+                * _FarionCloudAbsorptionParams.w
+                * heightGradient
+                * weatherMask
+                * 0.35;
             return saturate(baseDensity - erosion) * _FarionCloudShapeParams.w;
         }
 
@@ -177,10 +282,14 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 / (12.5663706 * pow(max(1.0 + eccentricitySquared - 2.0 * eccentricity * cosineAngle, 0.001), 1.5));
         }
 
-        float Phase(float cosineAngle)
+        float Phase(float cosineAngle, float eccentricityScale)
         {
-            float forward = HenyeyGreenstein(cosineAngle, _FarionCloudPhaseParams.x);
-            float backward = HenyeyGreenstein(cosineAngle, -_FarionCloudPhaseParams.y);
+            float forward = HenyeyGreenstein(
+                cosineAngle,
+                _FarionCloudPhaseParams.x * eccentricityScale);
+            float backward = HenyeyGreenstein(
+                cosineAngle,
+                -_FarionCloudPhaseParams.y * eccentricityScale);
             return _FarionCloudPhaseParams.z
                 + lerp(forward, backward, 0.5) * _FarionCloudPhaseParams.w;
         }
@@ -196,39 +305,134 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
 
             float planetRadius = _FarionCloudRadii.x;
             float perpendicular = length(toSample - directionToStar * along);
-            return smoothstep(planetRadius - planetRadius * FARION_SHADOW_PENUMBRA, planetRadius, perpendicular);
+            float penumbra = max(_FarionCloudRadii.z - _FarionCloudRadii.y, 0.0001) * 0.25;
+            return smoothstep(planetRadius - penumbra, planetRadius + penumbra, perpendicular);
         }
 
-        float LightTransmittance(float3 position, float3 directionToStar)
+        void AccumulateLightDensity(
+            float3 rayOrigin,
+            float3 rayDirection,
+            float startDistance,
+            float endDistance,
+            int stepCount,
+            float coneRotation,
+            inout float totalDensity)
         {
-            float shadow = PlanetShadow(position, directionToStar);
-            if (shadow <= 0.0)
+            float segmentLength = endDistance - startDistance;
+            if (segmentLength <= 0.0 || stepCount <= 0)
             {
-                return _FarionCloudAbsorptionParams.z;
+                return;
             }
 
-            float2 outerHit = RaySphere(_FarionCloudSphere.xyz, _FarionCloudRadii.z, position, directionToStar);
-            int stepCount = max(1, (int)_FarionCloudSamplingParams.y);
-            float stepSize = outerHit.y / stepCount;
-            float normalizedStep = stepSize / max(_FarionCloudRadii.z - _FarionCloudRadii.y, 0.0001);
-            float totalDensity = 0.0;
-            float3 samplePosition = position + directionToStar * (stepSize * 0.5);
+            float shellThickness = max(_FarionCloudRadii.z - _FarionCloudRadii.y, 0.0001);
+            float stepSize = segmentLength / stepCount;
+            float3 referenceAxis = abs(rayDirection.y) < 0.99
+                ? float3(0.0, 1.0, 0.0)
+                : float3(1.0, 0.0, 0.0);
+            float3 tangent = normalize(cross(referenceAxis, rayDirection));
+            float3 bitangent = cross(rayDirection, tangent);
 
             [loop]
             for (int i = 0; i < FARION_CLOUD_MAX_LIGHT_STEPS; i++)
             {
-                if (i >= stepCount)
+                if (i >= stepCount || totalDensity * _FarionCloudAbsorptionParams.y > 7.0)
                 {
                     break;
                 }
 
+                float normalizedStep = stepSize / shellThickness;
+                float sampleDistance = startDistance + (i + 0.5) * stepSize;
+                float coneAngle = coneRotation + i * 2.39996323;
+                float coneRadius = sampleDistance
+                    * _FarionCloudLightingParams.y
+                    * sqrt((i + 0.5) / stepCount);
+                float sine;
+                float cosine;
+                sincos(coneAngle, sine, cosine);
+                float3 samplePosition = rayOrigin
+                    + rayDirection * sampleDistance
+                    + (tangent * cosine + bitangent * sine) * coneRadius;
                 totalDensity += SampleDensity(samplePosition) * normalizedStep;
-                samplePosition += directionToStar * stepSize;
+            }
+        }
+
+        float CloudLightEnergy(
+            float3 position,
+            float3 directionToStar,
+            float cosineAngle,
+            float coneRotation)
+        {
+            float shadow = PlanetShadow(position, directionToStar);
+            if (shadow <= 0.0)
+            {
+                return 0.0;
             }
 
-            float transmittance = exp(-totalDensity * _FarionCloudAbsorptionParams.y) * shadow;
-            return _FarionCloudAbsorptionParams.z
-                + transmittance * (1.0 - _FarionCloudAbsorptionParams.z);
+            float2 outerHit = RaySphere(_FarionCloudSphere.xyz, _FarionCloudRadii.z, position, directionToStar);
+            int stepCount = max(1, (int)_FarionCloudSamplingParams.y);
+            float outerStart = outerHit.x;
+            float outerEnd = outerHit.x + outerHit.y;
+            float firstStart = outerStart;
+            float firstEnd = outerEnd;
+            float secondStart = outerEnd;
+            float secondEnd = outerEnd;
+            float2 innerHit = RaySphere(_FarionCloudSphere.xyz, _FarionCloudRadii.y, position, directionToStar);
+            if (innerHit.y > 0.0)
+            {
+                float innerStart = innerHit.x;
+                float innerEnd = innerHit.x + innerHit.y;
+                firstEnd = min(outerEnd, innerStart);
+                secondStart = max(outerStart, innerEnd);
+            }
+
+            float firstLength = max(0.0, firstEnd - firstStart);
+            float secondLength = max(0.0, secondEnd - secondStart);
+            int firstSteps = firstLength > 0.0 ? stepCount : 0;
+            int secondSteps = 0;
+            if (firstLength > 0.0 && secondLength > 0.0 && stepCount > 1)
+            {
+                firstSteps = clamp(
+                    (int)round(stepCount * firstLength / (firstLength + secondLength)),
+                    1,
+                    stepCount - 1);
+                secondSteps = stepCount - firstSteps;
+            }
+            else if (firstLength <= 0.0 && secondLength > 0.0)
+            {
+                secondSteps = stepCount;
+            }
+
+            float totalDensity = 0.0;
+            AccumulateLightDensity(
+                position,
+                directionToStar,
+                firstStart,
+                firstEnd,
+                firstSteps,
+                coneRotation,
+                totalDensity);
+            AccumulateLightDensity(
+                position,
+                directionToStar,
+                secondStart,
+                secondEnd,
+                secondSteps,
+                coneRotation + 1.0471976,
+                totalDensity);
+            float darkness = _FarionCloudAbsorptionParams.z;
+            float opticalDepth = totalDensity * _FarionCloudAbsorptionParams.y;
+            float primaryTransmittance = (
+                darkness + exp(-opticalDepth) * (1.0 - darkness)) * shadow;
+            float secondaryTransmittance = (
+                darkness + exp(-opticalDepth * 0.45) * (1.0 - darkness)) * sqrt(shadow);
+            float tertiaryTransmittance = (
+                darkness + exp(-opticalDepth * 0.2) * (1.0 - darkness)) * pow(shadow, 0.25);
+            float primary = primaryTransmittance * Phase(cosineAngle, 1.0);
+            float multiple = (
+                primary
+                + secondaryTransmittance * Phase(cosineAngle, 0.5) * 0.5
+                + tertiaryTransmittance * Phase(cosineAngle, 0.25) * 0.25) / 1.75;
+            return lerp(primary, multiple, _FarionCloudLightingParams.x);
         }
 
         void MarchCloudSegment(
@@ -239,7 +443,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             int stepCount,
             float jitter,
             float3 directionToStar,
-            float phase,
+            float cosineAngle,
             inout float transmittance,
             inout float3 lightEnergy)
         {
@@ -250,8 +454,13 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             }
 
             float stepSize = marchDistance / stepCount;
-            float normalizedStep = stepSize / max(_FarionCloudRadii.z - _FarionCloudRadii.y, 0.0001);
-            float distanceTravelled = stepSize * saturate(0.5 + (jitter - 0.5) * _FarionCloudSamplingParams.w);
+            float shellThickness = max(_FarionCloudRadii.z - _FarionCloudRadii.y, 0.0001);
+            float distanceTravelled = stepSize * saturate(
+                0.5 + (jitter - 0.5) * _FarionCloudSamplingParams.z);
+            float cachedLight = 0.0;
+            int cachedLightStep = -2;
+            float3 atmosphereTransmittance = 1.0;
+            bool hasAtmosphereTransmittance = false;
 
             [loop]
             for (int i = 0; i < FARION_CLOUD_MAX_VIEW_STEPS; i++)
@@ -261,12 +470,33 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                     break;
                 }
 
-                float3 samplePosition = rayOrigin + rayDirection * (startDistance + distanceTravelled);
+                float normalizedStep = stepSize / shellThickness;
+                float sampleDistance = startDistance + distanceTravelled;
+                float3 samplePosition = rayOrigin + rayDirection * sampleDistance;
                 float density = SampleDensity(samplePosition);
                 if (density > 0.0)
                 {
-                    float light = LightTransmittance(samplePosition, directionToStar);
-                    lightEnergy += density * normalizedStep * transmittance * light * phase;
+                    if (i - cachedLightStep >= 2)
+                    {
+                        float coneRotation = frac(jitter + i * 0.61803398875) * 6.2831853;
+                        cachedLight = CloudLightEnergy(
+                            samplePosition,
+                            directionToStar,
+                            cosineAngle,
+                            coneRotation);
+                        cachedLightStep = i;
+                    }
+
+                    if (!hasAtmosphereTransmittance)
+                    {
+                        atmosphereTransmittance = AtmosphereSunTransmittance(samplePosition, directionToStar);
+                        hasAtmosphereTransmittance = true;
+                    }
+
+                    float weight = density * normalizedStep * transmittance;
+                    lightEnergy += weight
+                        * cachedLight
+                        * atmosphereTransmittance;
                     transmittance *= exp(
                         -density * normalizedStep * _FarionCloudAbsorptionParams.x);
                     if (transmittance < 0.01)
@@ -279,8 +509,10 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             }
         }
 
-        half4 RaymarchCloud(float2 uv)
+        void RaymarchCloud(float2 uv, out half4 cloud)
         {
+            cloud = half4(0.0, 0.0, 0.0, 1.0);
+
             float3 rayOrigin = _WorldSpaceCameraPos;
             float3 rayDirection = GetWorldRay(uv);
             float3 center = _FarionCloudSphere.xyz;
@@ -289,7 +521,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             float2 outerHit = RaySphere(center, outerRadius, rayOrigin, rayDirection);
             if (outerHit.y <= 0.0)
             {
-                return half4(0.0, 0.0, 0.0, 1.0);
+                return;
             }
 
             float outerStart = outerHit.x;
@@ -321,16 +553,13 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             float totalLength = firstLength + secondLength;
             if (totalLength <= 0.0)
             {
-                return half4(0.0, 0.0, 0.0, 1.0);
+                return;
             }
 
-            float blueNoise = SAMPLE_TEXTURE2D_LOD(
-                _FarionCloudBlueNoise,
-                sampler_FarionCloudBlueNoise,
-                uv * _ScreenParams.xy / 256.0,
-                0).r;
+            float entryDistance = firstLength > 0.0 ? firstStart : secondStart;
+            float blueNoise = SampleWorldNoise(rayOrigin + rayDirection * entryDistance);
             float3 directionToStar = normalize(_FarionStarDirectionWS.xyz);
-            float phase = Phase(dot(rayDirection, directionToStar));
+            float cosineAngle = dot(rayDirection, directionToStar);
             float transmittance = 1.0;
             float3 lightEnergy = 0.0;
             int totalSteps = max(8, (int)_FarionCloudSamplingParams.x);
@@ -359,7 +588,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 firstSteps,
                 blueNoise,
                 directionToStar,
-                phase,
+                cosineAngle,
                 transmittance,
                 lightEnergy);
             MarchCloudSegment(
@@ -370,13 +599,14 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 secondSteps,
                 frac(blueNoise + 0.37),
                 directionToStar,
-                phase,
+                cosineAngle,
                 transmittance,
                 lightEnergy);
 
             float3 directLight = _FarionStarColor.rgb * max(_FarionStarIntensity, 0.0);
-            float3 cloudLight = lightEnergy * directLight + (1.0 - transmittance) * _FarionAmbientColor.rgb;
-            return half4(cloudLight, transmittance);
+            float3 ambientLight = max(_FarionAmbientColor.rgb, _FarionCloudAmbientColor.rgb);
+            float3 cloudLight = lightEnergy * directLight + (1.0 - transmittance) * ambientLight;
+            cloud = half4(cloudLight, transmittance);
         }
 
         float DepthWeight(float centerDepth, float sampleDepth)
@@ -404,7 +634,9 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             half4 FragmentRaymarch(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                return RaymarchCloud(input.texcoord);
+                half4 cloud;
+                RaymarchCloud(input.texcoord, cloud);
+                return cloud;
             }
             ENDHLSL
         }
@@ -420,8 +652,15 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float2 uv = input.texcoord;
-                float2 halfTexel = _FarionCloudTexture_TexelSize.xy * 0.5;
                 float rawDepth = SampleSceneDepth(uv);
+                float4 cloud = SAMPLE_TEXTURE2D_X(_FarionCloudTexture, sampler_LinearClamp, uv);
+                if (IsSkyDepth(rawDepth))
+                {
+                    half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                    return half4(source.rgb * cloud.a + cloud.rgb, source.a);
+                }
+
+                float2 halfTexel = _FarionCloudTexture_TexelSize.xy * 0.5;
                 const float2 offsets[4] =
                 {
                     float2(-1.0, -1.0),
@@ -430,7 +669,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                     float2(1.0, 1.0)
                 };
 
-                float4 cloud = 0.0;
+                cloud = 0.0;
                 float totalWeight = 0.0;
                 [unroll]
                 for (int i = 0; i < 4; i++)

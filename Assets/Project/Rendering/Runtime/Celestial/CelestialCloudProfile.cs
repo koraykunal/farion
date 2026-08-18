@@ -13,6 +13,10 @@ namespace Farion.Rendering.Celestial
         [Header("Layer")]
         [Range(0f, 1f)] [SerializeField] float layerBottom = 0.02f;
         [Range(0f, 1f)] [SerializeField] float layerTop = 0.1f;
+        [Tooltip("Height inside the layer where density has fully faded in. Low values give flat cumulus bases.")]
+        [Range(0.01f, 0.9f)] [SerializeField] float gradientBottom = 0.18f;
+        [Tooltip("Height inside the layer where density starts fading out towards the top.")]
+        [Range(0.1f, 0.99f)] [SerializeField] float gradientTop = 0.72f;
 
         [Header("Density")]
         [Min(0.001f)] [SerializeField] float shapeScale = 2.8f;
@@ -20,8 +24,14 @@ namespace Farion.Rendering.Celestial
         [SerializeField] Vector4 shapeWeights = new(1f, 0.3f, 0.15f, 0.05f);
         [SerializeField] Vector3 detailWeights = new(1f, 0.5f, 0.25f);
         [Range(0f, 1f)] [SerializeField] float coverage = 0.52f;
-        [Min(0f)] [SerializeField] float densityMultiplier = 1.25f;
+        [Min(0f)] [SerializeField] float densityMultiplier = 0.65f;
         [Range(0f, 1f)] [SerializeField] float detailErosion = 0.3f;
+
+        [Header("Structure")]
+        [Min(0.001f)] [SerializeField] float weatherScale = 0.6f;
+        [Range(0.1f, 1.25f)] [SerializeField] float verticalShapeScale = 0.72f;
+        [Range(0f, 0.75f)] [SerializeField] float heightVariation = 0.4f;
+        [Range(0f, 0.5f)] [SerializeField] float domainWarp = 0.16f;
 
         [Header("Lighting")]
         [Min(0f)] [SerializeField] float lightAbsorptionThroughCloud = 0.8f;
@@ -31,6 +41,9 @@ namespace Farion.Rendering.Celestial
         [Range(0f, 0.99f)] [SerializeField] float backScattering = 0.25f;
         [Range(0f, 2f)] [SerializeField] float baseBrightness = 0.55f;
         [Range(0f, 2f)] [SerializeField] float phaseStrength = 0.65f;
+        [Range(0f, 1f)] [SerializeField] float multipleScattering = 0.7f;
+        [Range(0f, 2f)] [SerializeField] float starAngularRadius = 0.55f;
+        [ColorUsage(false, true)] [SerializeField] Color ambientLight = new(0.07f, 0.1f, 0.15f, 1f);
 
         [Header("Motion")]
         [SerializeField] Vector3 localWindAxis = new(0.25f, 1f, 0.1f);
@@ -47,8 +60,10 @@ namespace Farion.Rendering.Celestial
         public Texture2D BlueNoise => blueNoise;
         public float LayerBottom => layerBottom;
         public float LayerTop => layerTop;
+        public Vector4 LayerParameters => new(gradientBottom, gradientTop, 0f, 0f);
         public float ShapeScale => shapeScale;
         public float DetailScale => detailScale;
+        public Vector4 StructureParameters => new(weatherScale, verticalShapeScale, heightVariation, domainWarp);
         public Vector4 ShapeWeights => shapeWeights;
         public Vector3 DetailWeights => detailWeights;
         public float Coverage => coverage;
@@ -58,6 +73,12 @@ namespace Farion.Rendering.Celestial
         public float LightAbsorptionTowardStar => lightAbsorptionTowardStar;
         public float DarknessThreshold => darknessThreshold;
         public Vector4 PhaseParameters => new(forwardScattering, backScattering, baseBrightness, phaseStrength);
+        public Vector4 LightingParameters => new(
+            multipleScattering,
+            Mathf.Tan(starAngularRadius * Mathf.Deg2Rad),
+            0f,
+            0f);
+        public Color AmbientLight => ambientLight;
         public Vector3 LocalWindAxis => localWindAxis.sqrMagnitude > 0.0001f ? localWindAxis.normalized : Vector3.up;
         public float BaseAngularSpeed => baseAngularSpeed;
         public float DetailAngularSpeed => detailAngularSpeed;
@@ -77,8 +98,12 @@ namespace Farion.Rendering.Celestial
         {
             layerBottom = Mathf.Clamp(layerBottom, 0f, 0.999f);
             layerTop = Mathf.Clamp(layerTop, layerBottom + 0.001f, 1f);
+            gradientBottom = Mathf.Clamp(gradientBottom, 0.01f, 0.9f);
+            gradientTop = Mathf.Clamp(gradientTop, gradientBottom + 0.01f, 0.99f);
             shapeScale = Mathf.Max(0.001f, shapeScale);
             detailScale = Mathf.Max(0.001f, detailScale);
+            weatherScale = Mathf.Max(0.001f, weatherScale);
+            verticalShapeScale = Mathf.Clamp(verticalShapeScale, 0.1f, 1.25f);
             shapeWeights = new Vector4(
                 Mathf.Max(0f, shapeWeights.x),
                 Mathf.Max(0f, shapeWeights.y),

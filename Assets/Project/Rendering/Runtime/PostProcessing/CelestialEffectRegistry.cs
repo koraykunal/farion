@@ -6,9 +6,47 @@ namespace Farion.Rendering.PostProcessing
 {
     public static class CelestialEffectRegistry
     {
+        const float MinAtmosphereScreenPixelRadius = 6f;
+        const float MinOceanScreenPixelRadius = 12f;
+        const float MinCloudScreenPixelRadius = 12f;
+
         static readonly List<TerrestrialPlanetVisual> Sources = new();
+        static readonly Plane[] FrustumPlanes = new Plane[6];
 
         public static bool HasSources => Sources.Count > 0;
+
+        static bool CoversEnoughScreen(
+            Camera camera,
+            Vector3 center,
+            float radius,
+            float minimumPixelRadius)
+        {
+            if (radius <= 0f)
+            {
+                return false;
+            }
+
+            Bounds bounds = new(center, Vector3.one * (radius * 2f));
+            if (!GeometryUtility.TestPlanesAABB(FrustumPlanes, bounds))
+            {
+                return false;
+            }
+
+            float distance = Vector3.Distance(camera.transform.position, center);
+            if (distance <= radius)
+            {
+                return true;
+            }
+
+            float halfFovTangent = Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            if (halfFovTangent <= 0.0001f)
+            {
+                return true;
+            }
+
+            float pixelRadius = radius / distance * (camera.pixelHeight * 0.5f) / halfFovTangent;
+            return pixelRadius >= minimumPixelRadius;
+        }
 
         public static void Register(TerrestrialPlanetVisual source)
         {
@@ -34,9 +72,15 @@ namespace Farion.Rendering.PostProcessing
                 return;
             }
 
+            GeometryUtility.CalculateFrustumPlanes(camera, FrustumPlanes);
             for (int i = PruneDestroyed() - 1; i >= 0; i--)
             {
-                if (Sources[i].TryGetAtmosphereEffectData(out CelestialAtmosphereEffectData data))
+                if (Sources[i].TryGetAtmosphereEffectData(out CelestialAtmosphereEffectData data) &&
+                    CoversEnoughScreen(
+                        camera,
+                        data.Center,
+                        data.AtmosphereRadius,
+                        MinAtmosphereScreenPixelRadius))
                 {
                     results.Add(data);
                 }
@@ -55,9 +99,11 @@ namespace Farion.Rendering.PostProcessing
                 return;
             }
 
+            GeometryUtility.CalculateFrustumPlanes(camera, FrustumPlanes);
             for (int i = PruneDestroyed() - 1; i >= 0; i--)
             {
-                if (Sources[i].TryGetOceanEffectData(out CelestialOceanEffectData data))
+                if (Sources[i].TryGetOceanEffectData(out CelestialOceanEffectData data) &&
+                    CoversEnoughScreen(camera, data.Center, data.OceanRadius, MinOceanScreenPixelRadius))
                 {
                     results.Add(data);
                 }
@@ -73,7 +119,6 @@ namespace Farion.Rendering.PostProcessing
                 right.GetCameraSortDistance(cameraPosition).CompareTo(left.GetCameraSortDistance(cameraPosition)));
         }
 
-        // ponytail: render one cloud body; collect/sort multiple bodies only after profiling proves the need.
         public static bool TryGetClosestCloud(Camera camera, out CelestialCloudEffectData closest)
         {
             closest = default;
@@ -86,9 +131,15 @@ namespace Farion.Rendering.PostProcessing
             float closestDistance = float.PositiveInfinity;
             Vector3 cameraPosition = camera.transform.position;
 
+            GeometryUtility.CalculateFrustumPlanes(camera, FrustumPlanes);
             for (int i = PruneDestroyed() - 1; i >= 0; i--)
             {
-                if (!Sources[i].TryGetCloudEffectData(out CelestialCloudEffectData candidate))
+                if (!Sources[i].TryGetCloudEffectData(out CelestialCloudEffectData candidate) ||
+                    !CoversEnoughScreen(
+                        camera,
+                        candidate.Center,
+                        candidate.OuterRadius,
+                        MinCloudScreenPixelRadius))
                 {
                     continue;
                 }
@@ -115,13 +166,8 @@ namespace Farion.Rendering.PostProcessing
             Vector3 cameraPosition = camera.transform.position;
             for (int i = PruneDestroyed() - 1; i >= 0; i--)
             {
-                if (!Sources[i].TryGetOceanEffectData(out CelestialOceanEffectData data) ||
-                    data.OceanRadius <= 0f)
-                {
-                    continue;
-                }
-
-                if ((cameraPosition - data.Center).sqrMagnitude < data.OceanRadius * data.OceanRadius)
+                if (Sources[i].TryGetOceanEffectData(out CelestialOceanEffectData data) &&
+                    data.IsPointUnderwater(cameraPosition))
                 {
                     return true;
                 }

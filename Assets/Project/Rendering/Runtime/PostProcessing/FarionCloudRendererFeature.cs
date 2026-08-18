@@ -2,7 +2,6 @@ using Farion.Rendering.Celestial;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
-using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 
 namespace Farion.Rendering.PostProcessing
@@ -12,7 +11,7 @@ namespace Farion.Rendering.PostProcessing
         const string DefaultShaderName = "Hidden/Farion/Celestial/Cloud Post Process";
 
         [SerializeField] Shader cloudShader;
-        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingTransparents + 1;
+        [SerializeField] RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingTransparents + 2;
         [Range(1, 4)] [SerializeField] int downsample = 2;
 
         Material cloudMaterial;
@@ -33,11 +32,6 @@ namespace Farion.Rendering.PostProcessing
             }
 
             Material material = ResolveMaterial();
-            if (material == null)
-            {
-                return;
-            }
-
             cloudPass.Setup(material, downsample);
             renderer.EnqueuePass(cloudPass);
         }
@@ -81,12 +75,22 @@ namespace Farion.Rendering.PostProcessing
             static readonly int DetailNoiseId = Shader.PropertyToID("_FarionCloudDetailNoise");
             static readonly int BlueNoiseId = Shader.PropertyToID("_FarionCloudBlueNoise");
             static readonly int ShapeParamsId = Shader.PropertyToID("_FarionCloudShapeParams");
+            static readonly int StructureParamsId = Shader.PropertyToID("_FarionCloudStructureParams");
             static readonly int ShapeWeightsId = Shader.PropertyToID("_FarionCloudShapeWeights");
             static readonly int DetailWeightsId = Shader.PropertyToID("_FarionCloudDetailWeights");
             static readonly int AbsorptionParamsId = Shader.PropertyToID("_FarionCloudAbsorptionParams");
             static readonly int PhaseParamsId = Shader.PropertyToID("_FarionCloudPhaseParams");
+            static readonly int LightingParamsId = Shader.PropertyToID("_FarionCloudLightingParams");
+            static readonly int AtmosphereParamsId = Shader.PropertyToID("_FarionCloudAtmosphereParams");
+            static readonly int AtmosphereRayleighId = Shader.PropertyToID("_FarionCloudAtmosphereRayleigh");
+            static readonly int AtmosphereOzoneId = Shader.PropertyToID("_FarionCloudAtmosphereOzone");
+            static readonly int AtmosphereOpticalDepthId = Shader.PropertyToID("_FarionCloudAtmosphereOpticalDepth");
             static readonly int WindAxisId = Shader.PropertyToID("_FarionCloudWindAxis");
             static readonly int SamplingParamsId = Shader.PropertyToID("_FarionCloudSamplingParams");
+            static readonly int MotionId = Shader.PropertyToID("_FarionCloudMotion");
+            static readonly int WeatherMotionId = Shader.PropertyToID("_FarionCloudWeatherMotion");
+            static readonly int LayerParamsId = Shader.PropertyToID("_FarionCloudLayerParams");
+            static readonly int AmbientColorId = Shader.PropertyToID("_FarionCloudAmbientColor");
 
             Material material;
             int downsample = 2;
@@ -106,11 +110,6 @@ namespace Farion.Rendering.PostProcessing
 
             public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
             {
-                if (material == null)
-                {
-                    return;
-                }
-
                 UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
                 if (resourceData.isActiveTargetBackBuffer)
                 {
@@ -118,12 +117,12 @@ namespace Farion.Rendering.PostProcessing
                 }
 
                 UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-                if (!CelestialEffectRegistry.TryGetClosestCloud(cameraData.camera, out CelestialCloudEffectData effectData))
+                if (material == null ||
+                    !CelestialEffectRegistry.TryGetClosestCloud(cameraData.camera, out CelestialCloudEffectData effectData))
                 {
                     return;
                 }
 
-                ApplyMaterialProperties(effectData);
                 TextureHandle source = resourceData.activeColorTexture;
                 TextureDesc cloudDesc = renderGraph.GetTextureDesc(source);
                 cloudDesc.name = "Farion Cloud Half Resolution";
@@ -133,19 +132,39 @@ namespace Farion.Rendering.PostProcessing
                 cloudDesc.clearBuffer = false;
                 TextureHandle cloudTexture = renderGraph.CreateTexture(cloudDesc);
 
-                RenderGraphUtils.BlitMaterialParameters raymarch = new(source, cloudTexture, material, 0);
-                renderGraph.AddBlitPass(raymarch, passName: "Farion Cloud Raymarch");
+                material.SetVector(
+                    CloudTextureTexelSizeId,
+                    new Vector4(1f / cloudDesc.width, 1f / cloudDesc.height, cloudDesc.width, cloudDesc.height));
+                ApplyMaterialProperties(effectData);
+
+                AddRaymarchPass(renderGraph, source, cloudTexture, material);
 
                 TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
                 destinationDesc.name = "Farion Cloud Composite";
                 destinationDesc.clearBuffer = false;
                 TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-                material.SetVector(
-                    CloudTextureTexelSizeId,
-                    new Vector4(1f / cloudDesc.width, 1f / cloudDesc.height, cloudDesc.width, cloudDesc.height));
                 AddCompositePass(renderGraph, source, cloudTexture, destination, material);
                 resourceData.cameraColor = destination;
+            }
+
+            static void AddRaymarchPass(
+                RenderGraph renderGraph,
+                TextureHandle source,
+                TextureHandle cloudTexture,
+                Material material)
+            {
+                using IRasterRenderGraphBuilder builder = renderGraph.AddRasterRenderPass<RaymarchPassData>(
+                    "Farion Cloud Raymarch",
+                    out RaymarchPassData passData);
+                passData.source = source;
+                passData.material = material;
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.SetRenderAttachment(cloudTexture, 0, AccessFlags.Write);
+                builder.SetRenderFunc(static (RaymarchPassData data, RasterGraphContext context) =>
+                {
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1f, 1f, 0f, 0f), data.material, 0);
+                });
             }
 
             static void AddCompositePass(
@@ -186,8 +205,17 @@ namespace Farion.Rendering.PostProcessing
                 material.SetVector(
                     ShapeParamsId,
                     new Vector4(profile.ShapeScale, profile.DetailScale, profile.Coverage, profile.DensityMultiplier));
-                material.SetVector(ShapeWeightsId, profile.ShapeWeights);
-                material.SetVector(DetailWeightsId, profile.DetailWeights);
+                material.SetVector(StructureParamsId, profile.StructureParameters);
+                Vector4 shapeWeights = profile.ShapeWeights;
+                float shapeWeight = shapeWeights.x + shapeWeights.y + shapeWeights.z + shapeWeights.w;
+                material.SetVector(
+                    ShapeWeightsId,
+                    shapeWeight > 0.0001f ? shapeWeights / shapeWeight : new Vector4(1f, 0f, 0f, 0f));
+                Vector3 detailWeights = profile.DetailWeights;
+                float detailWeight = detailWeights.x + detailWeights.y + detailWeights.z;
+                material.SetVector(
+                    DetailWeightsId,
+                    detailWeight > 0.0001f ? detailWeights / detailWeight : Vector3.right);
                 material.SetVector(
                     AbsorptionParamsId,
                     new Vector4(
@@ -196,16 +224,64 @@ namespace Farion.Rendering.PostProcessing
                         profile.DarknessThreshold,
                         profile.DetailErosion));
                 material.SetVector(PhaseParamsId, profile.PhaseParameters);
+                material.SetVector(LightingParamsId, profile.LightingParameters);
+                ApplyAtmosphereProperties(effectData);
                 material.SetVector(
                     WindAxisId,
                     new Vector4(
                         profile.LocalWindAxis.x,
                         profile.LocalWindAxis.y,
                         profile.LocalWindAxis.z,
-                        profile.BaseAngularSpeed));
+                        0f));
                 material.SetVector(
                     SamplingParamsId,
-                    new Vector4(profile.ViewSteps, profile.LightSteps, profile.DetailAngularSpeed, profile.DitherStrength));
+                    new Vector4(profile.ViewSteps, profile.LightSteps, profile.DitherStrength, 0f));
+                material.SetVector(LayerParamsId, profile.LayerParameters);
+                material.SetColor(AmbientColorId, profile.AmbientLight);
+                double time = Time.timeAsDouble;
+                float baseAngle = GetMotionAngle(time, profile.BaseAngularSpeed);
+                float detailAngle = GetMotionAngle(time, profile.DetailAngularSpeed);
+                float weatherAngle = GetMotionAngle(time, profile.BaseAngularSpeed * 0.35f);
+                material.SetVector(
+                    MotionId,
+                    new Vector4(
+                        Mathf.Sin(baseAngle),
+                        Mathf.Cos(baseAngle),
+                        Mathf.Sin(detailAngle),
+                        Mathf.Cos(detailAngle)));
+                material.SetVector(
+                    WeatherMotionId,
+                    new Vector4(Mathf.Sin(weatherAngle), Mathf.Cos(weatherAngle), 0f, 0f));
+            }
+
+            void ApplyAtmosphereProperties(CelestialCloudEffectData effectData)
+            {
+                CelestialAtmosphereProfile profile = effectData.AtmosphereProfile;
+                float atmosphereScale = effectData.SurfaceRadius > 0.0001f
+                    ? Mathf.Max(0f, effectData.AtmosphereRadius / effectData.SurfaceRadius - 1f)
+                    : 0f;
+                RenderTexture opticalDepth = profile.GetOpticalDepthTexture(atmosphereScale);
+                Vector3 rayleigh = profile.GetScatteringCoefficients();
+                Vector3 ozone = profile.GetOzoneCoefficients();
+                material.SetVector(
+                    AtmosphereParamsId,
+                    new Vector4(
+                        effectData.AtmosphereRadius,
+                        profile.Intensity,
+                        profile.MieScatteringStrength * profile.MieExtinctionRatio,
+                        opticalDepth != null ? 1f : 0f));
+                material.SetVector(AtmosphereRayleighId, rayleigh);
+                material.SetVector(AtmosphereOzoneId, ozone);
+                material.SetTexture(
+                    AtmosphereOpticalDepthId,
+                    opticalDepth != null ? opticalDepth : Texture2D.whiteTexture);
+            }
+
+            static float GetMotionAngle(double time, float degreesPerSecond)
+            {
+                const double fullTurn = System.Math.PI * 2.0;
+                double angle = time * degreesPerSecond * Mathf.Deg2Rad % fullTurn;
+                return (float)(angle < 0d ? angle + fullTurn : angle);
             }
 
             static Vector4 GetSeedOffset(int seed)
@@ -225,6 +301,12 @@ namespace Farion.Rendering.PostProcessing
                 value *= 0x846ca68bu;
                 value ^= value >> 16;
                 return (value & 0x00ffffffu) / 16777216f;
+            }
+
+            sealed class RaymarchPassData
+            {
+                public TextureHandle source;
+                public Material material;
             }
 
             sealed class CompositePassData

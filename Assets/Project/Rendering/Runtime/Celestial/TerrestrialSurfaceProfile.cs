@@ -16,8 +16,6 @@ namespace Farion.Rendering.Celestial
         [SerializeField] float metallic;
         [Range(0f, 1f)]
         [SerializeField] float landSmoothness = 0.2f;
-        [Range(0f, 1f)]
-        [SerializeField] float oceanSmoothness = 0.75f;
 
         [Header("Colors")]
         [SerializeField] Color oceanLow = new(0.015f, 0.08f, 0.16f, 1f);
@@ -56,8 +54,6 @@ namespace Farion.Rendering.Celestial
         [SerializeField] float oceanEdgeBlend = 0.035f;
         [Range(0f, 1f)]
         [SerializeField] float shoreWetness = 0.38f;
-        [Range(0f, 1f)]
-        [SerializeField] float shoreFoamStrength = 0.14f;
         [Range(0f, 1f)]
         [SerializeField] float maxFlatHeight = 0.52f;
         [Range(1f, 20f)]
@@ -116,7 +112,6 @@ namespace Farion.Rendering.Celestial
             propertyBlock.SetFloat("_OceanLevel", Mathf.Clamp01(oceanLevelOverride));
             propertyBlock.SetFloat("_Metallic", metallic);
             propertyBlock.SetFloat("_LandSmoothness", landSmoothness);
-            propertyBlock.SetFloat("_OceanSmoothness", oceanSmoothness);
 
             if (surfaceVisualProfile != null)
             {
@@ -151,7 +146,6 @@ namespace Farion.Rendering.Celestial
             propertyBlock.SetFloat("_ShoreBlend", shoreBlend);
             propertyBlock.SetFloat("_OceanEdgeBlend", oceanEdgeBlend);
             propertyBlock.SetFloat("_ShoreWetness", shoreWetness);
-            propertyBlock.SetFloat("_ShoreFoamStrength", shoreFoamStrength);
             propertyBlock.SetFloat("_MaxFlatHeight", maxFlatHeight);
             propertyBlock.SetFloat("_SteepBands", steepBands);
             propertyBlock.SetFloat("_SteepBandStrength", steepBandStrength);
@@ -177,7 +171,6 @@ namespace Farion.Rendering.Celestial
             rockNormalTileSize = Mathf.Max(0.001f, rockNormalTileSize);
             oceanEdgeBlend = Mathf.Clamp(oceanEdgeBlend, 0.001f, 0.12f);
             shoreWetness = Mathf.Clamp01(shoreWetness);
-            shoreFoamStrength = Mathf.Clamp01(shoreFoamStrength);
             SyncSurfaceVisualProfileSubscription();
             NotifyChanged();
         }

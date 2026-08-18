@@ -37,7 +37,6 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
         _ShoreBlend("Shore Blend", Range(0, 0.25)) = 0.089
         _OceanEdgeBlend("Ocean Edge Blend", Range(0.001, 0.12)) = 0.035
         _ShoreWetness("Shore Wetness", Range(0, 1)) = 0.38
-        _ShoreFoamStrength("Shore Foam Strength", Range(0, 1)) = 0.14
         _MaxFlatHeight("Max Flat Height", Range(0, 1)) = 0.52
         _SteepBands("Steep Bands", Range(1, 20)) = 8
         _SteepBandStrength("Steep Band Strength", Range(-1, 1)) = 0.5
@@ -50,7 +49,6 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
         _AmbientHemisphere("Ambient Hemisphere", Range(0, 1)) = 0.65
         _Metallic("Metallic", Range(0, 1)) = 0
         _LandSmoothness("Land Smoothness", Range(0, 1)) = 0.2
-        _OceanSmoothness("Ocean Smoothness", Range(0, 1)) = 0.75
         _BodyRadius("Body Radius", Float) = 1
         _RadiusMinMax("Radius Min Max", Vector) = (1, 1, 0, 0)
     }
@@ -141,7 +139,6 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half _ShoreBlend;
                 half _OceanEdgeBlend;
                 half _ShoreWetness;
-                half _ShoreFoamStrength;
                 half _MaxFlatHeight;
                 half _SteepBands;
                 half _SteepBandStrength;
@@ -156,7 +153,6 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half _AmbientHemisphere;
                 half _Metallic;
                 half _LandSmoothness;
-                half _OceanSmoothness;
                 half _SurfaceVisualCount;
                 half _SurfaceVisualBlendStrength;
                 half _SurfaceTextureCount;
@@ -752,7 +748,8 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 landColor *= lerp(1.0h - _MacroVariation, 1.0h + _MacroVariation, surfaceMacro);
                 landColor = lerp(landColor, shoreColor, shoreBlendWeight * hasOcean);
                 half wetNoise = saturate(texNoise2.g * 0.65h + texNoise.b * 0.35h);
-                half wetShoreMask = shorelineBand * landWaterBlend * _ShoreWetness * lerp(0.72h, 1.0h, wetNoise);
+                half landShoreMask = shorelineBand * saturate(landWaterBlend * 2.0h - 1.0h);
+                half wetShoreMask = landShoreMask * _ShoreWetness * lerp(0.72h, 1.0h, wetNoise);
                 half3 wetShoreColor = lerp(shoreColor * 0.58h, _OceanHigh.rgb * 0.82h, 0.35h);
                 landColor = lerp(landColor, wetShoreColor, wetShoreMask);
 
@@ -760,10 +757,6 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half3 seabedColor = lerp(shoreColor * 0.62h, baseSteepTerrain * 0.72h, saturate(oceanDepth01));
                 seabedColor *= lerp(0.86h, 1.04h, texNoise.b);
                 half3 albedo = lerp(landColor, seabedColor, oceanMask);
-                half foamNoise = saturate(texNoise2.r * 0.55h + texNoise2.b * 0.45h);
-                half foamMask = shorelineBand * oceanMask * _ShoreFoamStrength * smoothstep(0.42h, 0.9h, foamNoise);
-                albedo = lerp(albedo, half3(0.82h, 0.9h, 0.86h), foamMask);
-
                 half landOverlayMask = 1.0h - oceanMask;
                 lavaMask = surfaceState.r * landOverlayMask * saturate(_LavaOverlayEnabled);
                 snowMask = surfaceState.g
@@ -846,7 +839,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                         ambientOcclusionMask * (1.0h - oceanMask) * 0.5h);
                 }
 
-                half smoothness = lerp(_LandSmoothness, _OceanSmoothness, oceanMask);
+                half smoothness = lerp(_LandSmoothness, 0.0h, oceanMask);
                 smoothness = lerp(smoothness, surfaceSmoothness, surfaceMask * (1.0h - oceanMask));
                 if (surfaceTextureMask > 0.0h)
                 {
@@ -855,7 +848,8 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 }
                 smoothness = lerp(smoothness, 1.0h - lavaRoughness, lavaMask);
                 smoothness = lerp(smoothness, 1.0h - snowRoughness, snowMask);
-                smoothness = lerp(smoothness, max(smoothness, 0.48h), wetnessMask * 0.65h);
+                half combinedWetness = saturate(wetnessMask * 0.65h + wetShoreMask);
+                smoothness = lerp(smoothness, max(smoothness, 0.48h), combinedWetness);
                 if (_SpecularAntialiasing > 0.0h)
                 {
                     smoothness = GeometricNormalFiltering(
@@ -890,7 +884,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = saturate(albedo);
                 surfaceData.specular = half3(0.0h, 0.0h, 0.0h);
-                surfaceData.metallic = saturate(_Metallic);
+                surfaceData.metallic = saturate(_Metallic) * (1.0h - oceanMask);
                 surfaceData.smoothness = saturate(smoothness);
                 surfaceData.normalTS = half3(0.0h, 0.0h, 1.0h);
                 surfaceData.emission = surfaceEmission;

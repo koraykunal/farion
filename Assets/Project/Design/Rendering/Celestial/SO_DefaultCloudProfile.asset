@@ -17,23 +17,32 @@ MonoBehaviour:
   blueNoise: {fileID: 2800000, guid: 36f118343fc974119bee3d09e2111500, type: 3}
   layerBottom: 0.16
   layerTop: 0.34
-  shapeScale: 1.15
-  detailScale: 7.5
+  gradientBottom: 0.24
+  gradientTop: 0.66
+  shapeScale: 2.25
+  detailScale: 10
   shapeWeights: {x: 1, y: 0.43, z: 0.12, w: 0.03}
   detailWeights: {x: 1, y: 0.35, z: 0.15}
-  coverage: 0.536
-  densityMultiplier: 10.2
-  detailErosion: 0.928
-  lightAbsorptionThroughCloud: 0.9
-  lightAbsorptionTowardStar: 1.6
-  darknessThreshold: 0.12
-  forwardScattering: 0.68
-  backScattering: 0.18
-  baseBrightness: 0.48
-  phaseStrength: 0.82
+  coverage: 0.58
+  densityMultiplier: 4.2
+  detailErosion: 0.5
+  weatherScale: 0.62
+  verticalShapeScale: 0.72
+  heightVariation: 0.42
+  domainWarp: 0.18
+  lightAbsorptionThroughCloud: 0.7
+  lightAbsorptionTowardStar: 0.95
+  darknessThreshold: 0.16
+  forwardScattering: 0.72
+  backScattering: 0.15
+  baseBrightness: 0.55
+  phaseStrength: 0.78
+  multipleScattering: 0.72
+  starAngularRadius: 0.55
+  ambientLight: {r: 0.07, g: 0.1, b: 0.15, a: 1}
   localWindAxis: {x: 0.25, y: 1, z: 0.1}
   baseAngularSpeed: 0.25
   detailAngularSpeed: 0.7
   viewSteps: 48
   lightSteps: 6
-  ditherStrength: 1
+  ditherStrength: 0.9

@@ -178,16 +178,22 @@ namespace Farion.Editor.Validation
 
             int oceanEvent =
                 (int)RenderPassEvent.BeforeRenderingTransparents;
-            int cloudEvent =
-                (int)RenderPassEvent.BeforeRenderingTransparents + 1;
+            int underwaterOceanEvent =
+                (int)RenderPassEvent.BeforeRenderingTransparents + 3;
             int atmosphereEvent =
-                (int)RenderPassEvent.BeforeRenderingPostProcessing - 3;
-            int underwaterEvent =
-                (int)RenderPassEvent.BeforeRenderingPostProcessing - 2;
+                (int)RenderPassEvent.BeforeRenderingTransparents + 1;
+            int cloudEvent =
+                (int)RenderPassEvent.BeforeRenderingTransparents + 2;
             ValidateIntegerProperty(
                 serializedOcean,
                 "renderPassEvent",
                 oceanEvent,
+                RendererDataPath,
+                report);
+            ValidateIntegerProperty(
+                serializedOcean,
+                "underwaterRenderPassEvent",
+                underwaterOceanEvent,
                 RendererDataPath,
                 report);
             ValidateIntegerProperty(
@@ -206,12 +212,6 @@ namespace Farion.Editor.Validation
                 serializedAtmosphere,
                 "renderPassEvent",
                 atmosphereEvent,
-                RendererDataPath,
-                report);
-            ValidateIntegerProperty(
-                serializedOcean,
-                "underwaterRenderPassEvent",
-                underwaterEvent,
                 RendererDataPath,
                 report);
         }

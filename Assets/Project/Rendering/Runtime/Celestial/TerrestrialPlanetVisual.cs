@@ -28,6 +28,7 @@ namespace Farion.Rendering.Celestial
         [SerializeField] bool applyOnEnable = true;
 
         TerrestrialPlanetVisualProfile subscribedProfile;
+        CelestialFrameProvider frameProvider;
 #if UNITY_EDITOR
         bool editorApplyQueued;
 #endif
@@ -83,9 +84,19 @@ namespace Farion.Rendering.Celestial
             ResolveComponents();
             sourceBody = GetComponent<CelestialBody>();
             environment = default;
-            return sourceBody != null &&
-                   surfaceModel != null &&
-                   surfaceModel.TryGetEnvironment(sourceBody, out environment);
+            if (sourceBody == null ||
+                surfaceModel == null ||
+                !surfaceModel.TryGetEnvironment(sourceBody, out environment))
+            {
+                return false;
+            }
+
+            CelestialFrameProvider provider = ResolveFrameProvider();
+            double simulationTime = Application.isPlaying && provider != null && provider.Simulation != null
+                ? provider.Simulation.SimulationTime
+                : Time.timeAsDouble;
+            environment = environment.AtSimulationTime(simulationTime);
+            return true;
         }
 
         public bool TryGetOceanEffectData(out CelestialOceanEffectData data)
@@ -111,12 +122,19 @@ namespace Farion.Rendering.Celestial
 
             float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
             ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
+            // Wave geometry is authored in simulation units, so it has to follow the
+            // same projection as the sphere itself for the shader to match buoyancy.
             data = new CelestialOceanEffectData(
                 renderCenter,
                 bodyRadius * renderScale,
-                environment.TerrainRadiusMinMax * renderScale,
                 environment.OceanRadius * renderScale,
-                profile.OceanProfile);
+                environment.WaveAmplitude * renderScale,
+                environment.WaveLength * renderScale,
+                environment.WavePhases,
+                Matrix4x4.Rotate(environment.WorldToBodyRotation),
+                profile.OceanProfile,
+                environment.HasAtmosphere ? environment.AtmosphereRadius * renderScale : 0f,
+                environment.HasAtmosphere ? profile.AtmosphereProfile : null);
             return true;
         }
 
@@ -186,9 +204,11 @@ namespace Farion.Rendering.Celestial
                 surfaceRadius * renderScale,
                 innerRadius * renderScale,
                 outerRadius * renderScale,
+                atmosphereRadius * renderScale,
                 Matrix4x4.Rotate(Quaternion.Inverse(sourceBody.transform.rotation)),
                 generation.PlanetSeed,
-                profile.CloudProfile);
+                profile.CloudProfile,
+                profile.AtmosphereProfile);
             return true;
         }
 
@@ -252,6 +272,27 @@ namespace Farion.Rendering.Celestial
             {
                 surfaceModel = GetComponent<PlanetSurfaceModel>();
             }
+        }
+
+        CelestialFrameProvider ResolveFrameProvider()
+        {
+            if (frameProvider != null && frameProvider.gameObject.scene == gameObject.scene)
+            {
+                return frameProvider;
+            }
+
+            CelestialFrameProvider[] providers = FindObjectsByType<CelestialFrameProvider>(
+                FindObjectsInactive.Exclude);
+            for (int i = 0; i < providers.Length; i++)
+            {
+                if (providers[i].gameObject.scene == gameObject.scene)
+                {
+                    frameProvider = providers[i];
+                    break;
+                }
+            }
+
+            return frameProvider;
         }
 
         void SyncProfileSubscription()
