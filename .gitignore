@@ -30,6 +30,7 @@
 
 # Recordings can get excessive in size
 /[Rr]ecordings/
+/ProfilerCaptures/
 
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
@@ -44,9 +45,11 @@
 
 # Local AI/agent workspace state
 .agents/
+.claude/
 .codex/
 .cursor/
 .windsurf/
+skills-lock.json
 
 # Gradle cache directory
 .gradle/
