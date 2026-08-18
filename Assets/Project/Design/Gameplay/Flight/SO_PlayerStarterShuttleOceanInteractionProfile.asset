@@ -13,12 +13,22 @@ MonoBehaviour:
   m_Name: SO_PlayerStarterShuttleOceanInteractionProfile
   m_EditorClassIdentifier: 
   effectiveHullRadius: 2.4
-  buoyancyToGravityRatio: 1.08
+  buoyancyPoints:
+  - {x: -2, y: 0.3, z: 1.5}
+  - {x: 2, y: 0.3, z: 1.5}
+  - {x: -2.3, y: 0.4, z: -3}
+  - {x: 2.3, y: 0.4, z: -3}
+  - {x: -6, y: 0.1, z: -6.8}
+  - {x: 6, y: 0.1, z: -6.8}
+  - {x: -2.8, y: 0.2, z: -9.3}
+  - {x: 2.8, y: 0.2, z: -9.3}
+  buoyancyToGravityRatio: 2.2
   verticalDrag: 5
   tangentialDrag: 2
   quadraticDrag: 0.08
   maxDragAcceleration: 80
   angularDamping: 3
+  slamDrag: 0.6
   pressureWarningDepth: 6
   crushDepth: 18
   safeWaterEntrySpeed: 10

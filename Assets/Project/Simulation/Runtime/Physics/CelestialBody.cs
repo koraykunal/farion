@@ -34,6 +34,7 @@ namespace Farion.Simulation.Physics
         OrbitalElements orbit;
         bool hasOrbit;
         Quaternion referenceRotation = Quaternion.identity;
+        bool hasAnalyticReference;
         Vector3 spinAxis = Vector3.up;
         float spinDegreesPerSecond;
         Vector3 systemPosition;
@@ -177,6 +178,7 @@ namespace Farion.Simulation.Physics
         public void CaptureAnalyticReference(Vector3 attractorSystemOrigin, Vector3 attractorSystemVelocity, float gravitationalConstant)
         {
             referenceRotation = Rigidbody != null ? Rigidbody.rotation : transform.rotation;
+            hasAnalyticReference = true;
             spinDegreesPerSecond = initialAngularVelocityDegreesPerSecond.magnitude;
             spinAxis = spinDegreesPerSecond > 0.0001f
                 ? initialAngularVelocityDegreesPerSecond / spinDegreesPerSecond
@@ -229,6 +231,11 @@ namespace Farion.Simulation.Physics
 
         public Quaternion EvaluateAnalyticRotation(double timeSeconds)
         {
+            if (!hasAnalyticReference)
+            {
+                return Rigidbody != null ? Rigidbody.rotation : transform.rotation;
+            }
+
             if (spinDegreesPerSecond <= 0.0001f)
             {
                 return referenceRotation;

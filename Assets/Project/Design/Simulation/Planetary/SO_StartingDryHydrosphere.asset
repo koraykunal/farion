@@ -15,3 +15,7 @@ MonoBehaviour:
   hasSurfaceOcean: 0
   oceanLevel: 0
   waterAvailability: 0
+  oceanRadiusOffset: 0
+  waveAmplitude: 0.35
+  waveLength: 26
+  waveSpeed: 0.7

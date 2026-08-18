@@ -113,6 +113,8 @@ namespace Farion.Multiplayer.Spawning
             predictionRigidbody.MovePosition(position);
         public void AddForce(Vector3 force, ForceMode mode) =>
             predictionRigidbody.AddForce(force, mode);
+        public void AddForceAtPosition(Vector3 force, Vector3 worldPosition, ForceMode mode) =>
+            predictionRigidbody.AddForceAtPosition(force, worldPosition, mode);
         public void AddRelativeTorque(Vector3 torque, ForceMode mode) =>
             predictionRigidbody.AddRelativeTorque(torque, mode);
         public void Commit() => predictionRigidbody.Simulate();
@@ -401,7 +403,7 @@ namespace Farion.Multiplayer.Spawning
                 data.OriginSequence != originAuthority.CurrentSequence;
             float deltaTime = (float)TimeManager.TickDelta;
             surfaceContactProbe?.BeginSimulationStep(deltaTime);
-            celestialProbe?.RefreshSample();
+            celestialProbe?.RefreshSample(data.GetTick() * TimeManager.TickDelta);
             atmosphereInteractor?.Simulate(deltaTime, physicsBody);
             oceanInteractor?.Simulate(deltaTime, physicsBody);
             surfaceContactStabilizer?.Simulate(deltaTime, physicsBody);

@@ -32,6 +32,17 @@ namespace Farion.Simulation.Celestial
         public CelestialFrameSample Sample(Vector3 position, Vector3 velocity)
         {
             GravitySimulation source = Simulation;
+            return source != null
+                ? Sample(position, velocity, source.SimulationTime)
+                : CelestialFrameSample.Empty(position, velocity);
+        }
+
+        public CelestialFrameSample Sample(
+            Vector3 position,
+            Vector3 velocity,
+            double simulationTime)
+        {
+            GravitySimulation source = Simulation;
             if (source == null)
             {
                 return CelestialFrameSample.Empty(position, velocity);
@@ -45,7 +56,8 @@ namespace Farion.Simulation.Celestial
 
             CelestialBody body = gravitySample.Body;
             CelestialSurfaceSample surfaceSample = ResolveSurface(body, position);
-            CelestialEnvironmentSample environmentSample = ResolveEnvironment(body);
+            CelestialEnvironmentSample environmentSample = ResolveEnvironment(body)
+                .AtSimulationTime(simulationTime);
 
             return new CelestialFrameSample(
                 body,

@@ -15,6 +15,7 @@ namespace Farion.Gameplay.Flight
         void SetAngularVelocity(Vector3 velocity);
         void MovePosition(Vector3 position);
         void AddForce(Vector3 force, ForceMode mode);
+        void AddForceAtPosition(Vector3 force, Vector3 worldPosition, ForceMode mode);
         void AddRelativeTorque(Vector3 torque, ForceMode mode);
         void Commit();
     }
@@ -50,6 +51,8 @@ namespace Farion.Gameplay.Flight
             body.angularVelocity = velocity;
         public void MovePosition(Vector3 position) => body.MovePosition(position);
         public void AddForce(Vector3 force, ForceMode mode) => body.AddForce(force, mode);
+        public void AddForceAtPosition(Vector3 force, Vector3 worldPosition, ForceMode mode) =>
+            body.AddForceAtPosition(force, worldPosition, mode);
         public void AddRelativeTorque(Vector3 torque, ForceMode mode) =>
             body.AddRelativeTorque(torque, mode);
         public void Commit()

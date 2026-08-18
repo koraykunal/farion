@@ -74,7 +74,10 @@ namespace Farion.Simulation.Planetary
                 hasAtmosphere,
                 atmosphereRadius,
                 terrainRange,
-                atmosphereBaseRadius);
+                atmosphereBaseRadius,
+                hasOcean ? hydrosphere.WaveAmplitude : 0f,
+                hasOcean ? hydrosphere.WaveLength : 1f,
+                hasOcean ? hydrosphere.WaveSpeed : 0f);
             return hasOcean || hasAtmosphere;
         }
 
@@ -429,4 +432,3 @@ namespace Farion.Simulation.Planetary
         }
     }
 }
-

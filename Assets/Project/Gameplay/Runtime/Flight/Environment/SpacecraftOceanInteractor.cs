@@ -1,4 +1,5 @@
 ﻿using Farion.Gameplay.Actors;
+using Farion.Simulation.Celestial;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -36,6 +37,9 @@ namespace Farion.Gameplay.Flight
         Rigidbody cachedRigidbody;
         ISpacecraftPhysicsBody offlinePhysicsBody;
         SpacecraftOceanInteractionSample currentInteraction;
+        readonly Vector3[] buoyancyWorldPoints = new Vector3[SpacecraftOceanInteractionProfile.MaxBuoyancyPoints];
+        readonly Vector3[] buoyancyAccelerations = new Vector3[SpacecraftOceanInteractionProfile.MaxBuoyancyPoints];
+        int buoyancyPointCount;
         bool externalSimulation;
 
         public SpacecraftOceanInteractionSample CurrentInteraction => currentInteraction;
@@ -96,7 +100,27 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            currentInteraction = profile.Evaluate(celestialProbe.CurrentSample);
+            CelestialFrameSample frame = celestialProbe.CurrentSample;
+            buoyancyPointCount = profile.BuoyancyPointCount;
+            float submergedSum = 0f;
+            Vector3 buoyancySum = Vector3.zero;
+            for (int i = 0; i < buoyancyPointCount; i++)
+            {
+                Vector3 worldPoint = transform.TransformPoint(profile.GetBuoyancyPointLocal(i));
+                Vector3 acceleration = profile.EvaluateBuoyancyPoint(
+                    frame,
+                    worldPoint,
+                    out float pointSubmergedFraction);
+                buoyancyWorldPoints[i] = worldPoint;
+                buoyancyAccelerations[i] = acceleration;
+                submergedSum += pointSubmergedFraction;
+                buoyancySum += acceleration;
+            }
+
+            currentInteraction = profile.Evaluate(
+                frame,
+                submergedSum / buoyancyPointCount,
+                buoyancySum);
             ApplyRuntimeState();
         }
 
@@ -109,11 +133,9 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            if (applyBuoyancy && currentInteraction.BuoyancyAcceleration.sqrMagnitude > 0.0001f)
+            if (applyBuoyancy)
             {
-                physicsBody.AddForce(
-                    currentInteraction.BuoyancyAcceleration,
-                    ForceMode.Acceleration);
+                ApplyBuoyancy(physicsBody);
             }
 
             if (applyDrag && currentInteraction.DragAcceleration.sqrMagnitude > 0.0001f)
@@ -133,6 +155,23 @@ namespace Farion.Gameplay.Flight
                     physicsBody.AngularVelocity,
                     Vector3.zero,
                     damping));
+            }
+        }
+
+        void ApplyBuoyancy(ISpacecraftPhysicsBody physicsBody)
+        {
+            for (int i = 0; i < buoyancyPointCount; i++)
+            {
+                Vector3 acceleration = buoyancyAccelerations[i];
+                if (acceleration.sqrMagnitude <= 0.0001f)
+                {
+                    continue;
+                }
+
+                physicsBody.AddForceAtPosition(
+                    acceleration,
+                    buoyancyWorldPoints[i],
+                    ForceMode.Acceleration);
             }
         }
 

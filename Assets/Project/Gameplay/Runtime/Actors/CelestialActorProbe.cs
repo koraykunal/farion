@@ -65,6 +65,14 @@ namespace Farion.Gameplay.Actors
         public void RefreshSample()
         {
             CelestialFrameProvider provider = FrameProvider;
+            RefreshSample(provider != null && provider.Simulation != null
+                ? provider.Simulation.SimulationTime
+                : 0d);
+        }
+
+        public void RefreshSample(double simulationTime)
+        {
+            CelestialFrameProvider provider = FrameProvider;
             if (provider == null)
             {
                 currentSample = CelestialFrameSample.Empty(Rigidbody.position, Rigidbody.linearVelocity);
@@ -72,7 +80,10 @@ namespace Farion.Gameplay.Actors
                 return;
             }
 
-            currentSample = provider.Sample(Rigidbody.position, Rigidbody.linearVelocity);
+            currentSample = provider.Sample(
+                Rigidbody.position,
+                Rigidbody.linearVelocity,
+                simulationTime);
             ApplyRuntimeState();
         }
 

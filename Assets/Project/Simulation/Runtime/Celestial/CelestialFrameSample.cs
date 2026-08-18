@@ -58,7 +58,9 @@ namespace Farion.Simulation.Celestial
             SurfaceTangentialSpeed = SurfaceTangentialVelocity.magnitude;
 
             HasOcean = environment.HasOcean;
-            OceanAltitude = HasOcean ? CenterDistance - environment.OceanRadius : float.PositiveInfinity;
+            OceanAltitude = HasOcean
+                ? CenterDistance - environment.GetOceanRadiusAt(RelativePosition)
+                : float.PositiveInfinity;
             IsBelowOceanLevel = HasOcean && OceanAltitude < 0f;
             WaterDepth = IsBelowOceanLevel ? -OceanAltitude : 0f;
 

@@ -37,7 +37,6 @@ namespace Farion.Gameplay.Flight
         public float WaterEntrySpeed { get; }
         public Vector3 BuoyancyAcceleration { get; }
         public Vector3 DragAcceleration { get; }
-        public Vector3 TotalAcceleration => BuoyancyAcceleration + DragAcceleration;
         public float PressureStress { get; }
         public bool CrushingDepth { get; }
         public bool UnsafeWaterEntry { get; }

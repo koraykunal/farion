@@ -20,6 +20,7 @@ namespace Farion.Multiplayer.Player
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(CelestialActorProbe))]
     [RequireComponent(typeof(FirstPersonMotor))]
     [RequireComponent(typeof(KeyboardFirstPersonInput))]
     public sealed class NetworkExplorerController :
@@ -37,6 +38,7 @@ namespace Farion.Multiplayer.Player
         PredictionRigidbodyFirstPersonPhysicsBody physicsBody;
         Rigidbody body;
         CapsuleCollider capsule;
+        CelestialActorProbe celestialProbe;
         NetworkWorldOriginAuthority originAuthority;
         MultiplayerSceneContext sceneContext;
         float accumulatedYaw;
@@ -72,6 +74,7 @@ namespace Farion.Multiplayer.Player
                 GetComponent<PlayerInteractionRaycaster>();
             body = GetComponent<Rigidbody>();
             capsule = GetComponent<CapsuleCollider>();
+            celestialProbe = GetComponent<CelestialActorProbe>();
             gameObject.layer = FarionLayers.Explorer;
             predictionRigidbody.Initialize(body);
             physicsBody = new PredictionRigidbodyFirstPersonPhysicsBody(
@@ -100,6 +103,7 @@ namespace Farion.Multiplayer.Player
         public override void OnStartNetwork()
         {
             motor.SetExternalSimulation(true);
+            celestialProbe.SetExternalSimulation(true);
             body.interpolation = RigidbodyInterpolation.None;
             SetTickCallbacks(TickCallback.Tick | TickCallback.PostTick);
             ApplyPossessionState(possessionActive.Value);
@@ -146,6 +150,7 @@ namespace Farion.Multiplayer.Player
         public override void OnStopNetwork()
         {
             motor.SetExternalSimulation(false);
+            celestialProbe.SetExternalSimulation(false);
         }
 
         public override void OnOwnershipClient(NetworkConnection prevOwner)
@@ -160,7 +165,7 @@ namespace Farion.Multiplayer.Player
             NetworkWorldOriginAuthority worldOriginAuthority)
         {
             originAuthority = worldOriginAuthority;
-            GetComponent<CelestialActorProbe>()?.SetFrameProvider(frameProvider);
+            celestialProbe.SetFrameProvider(frameProvider);
         }
 
         protected override void TimeManager_OnTick()
@@ -236,6 +241,7 @@ namespace Farion.Multiplayer.Player
                     clamped.YawDegrees,
                     clamped.Jump,
                     clamped.Sprint);
+            celestialProbe.RefreshSample(data.GetTick() * TimeManager.TickDelta);
             motor.Simulate(
                 motorInput,
                 (float)TimeManager.TickDelta,
