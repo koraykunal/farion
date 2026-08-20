@@ -11,6 +11,14 @@ namespace Farion.UI.Settings
         MusicVolume = 60,
         AmbienceVolume = 70,
         SfxVolume = 80,
-        UiVolume = 90
+        UiVolume = 90,
+        DisplayMode = 100,
+        Resolution = 110,
+        VSync = 120,
+        RefreshRate = 130,
+        FieldOfView = 140,
+        MouseSensitivity = 150,
+        InvertLookY = 160,
+        ResetBindings = 170
     }
 }

@@ -30,6 +30,8 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] PlayerPossessionSnapshot playerPossession;
         [SerializeField] FleetKnowledgeSnapshot fleetKnowledge;
         [SerializeField] List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
+        [SerializeField] List<MultiplayerPlayerSaveEntry> multiplayerPlayers = new();
+        [SerializeField] List<MultiplayerShipCargoSaveEntry> multiplayerShipCargo = new();
         [NonSerialized] int sourceSchemaVersion;
 
         public GameplaySaveData(
@@ -104,6 +106,41 @@ namespace Farion.Gameplay.Persistence
         public PlayerPossessionSnapshot PlayerPossession => playerPossession;
         public FleetKnowledgeSnapshot FleetKnowledge => fleetKnowledge;
         public IReadOnlyList<ResourceDepositDeltaSnapshot> ResourceDepositDeltas => resourceDepositDeltas;
+        public IReadOnlyList<MultiplayerPlayerSaveEntry> MultiplayerPlayers =>
+            multiplayerPlayers;
+        public IReadOnlyList<MultiplayerShipCargoSaveEntry> MultiplayerShipCargo =>
+            multiplayerShipCargo;
+
+        public void SetMultiplayerState(
+            IReadOnlyList<MultiplayerPlayerSaveEntry> players,
+            IReadOnlyList<MultiplayerShipCargoSaveEntry> shipCargo)
+        {
+            multiplayerPlayers.Clear();
+            multiplayerShipCargo.Clear();
+            if (players != null)
+            {
+                for (int i = 0; i < players.Count; i++)
+                {
+                    if (players[i] != null && players[i].IsValid)
+                    {
+                        multiplayerPlayers.Add(players[i]);
+                    }
+                }
+            }
+
+            if (shipCargo == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < shipCargo.Count; i++)
+            {
+                if (shipCargo[i] != null && shipCargo[i].IsValid)
+                {
+                    multiplayerShipCargo.Add(shipCargo[i]);
+                }
+            }
+        }
         public bool IsSupported => SaveGameSchema.IsSupportedVersion(schemaVersion);
 
         internal static GameplaySaveData CreateMigrated(

@@ -1,0 +1,25 @@
+{
+    "name": "Farion.Multiplayer.Steam",
+    "rootNamespace": "Farion.Multiplayer.Steam",
+    "references": [
+        "Farion.Core.Runtime",
+        "Farion.Multiplayer.Runtime",
+        "FishNet.Runtime",
+        "com.rlabrecque.steamworks.net"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "LinuxStandalone64",
+        "macOSStandalone",
+        "WindowsStandalone32",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

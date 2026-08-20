@@ -4,6 +4,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Ships;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.World;
 using Farion.Simulation.Celestial;
@@ -16,6 +17,7 @@ using FishNet.Object.Prediction;
 using FishNet.Object.Synchronizing;
 using FishNet.Transporting;
 using FishNet.Utility.Template;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Farion.Multiplayer.Spawning
@@ -137,6 +139,7 @@ namespace Farion.Multiplayer.Spawning
         [Min(0.1f)]
         [SerializeField] float maximumClaimDistance = 6f;
         PersistentObjectId persistentObjectId;
+        ShuttleCargoInventory cargo;
         VehicleBoardingPoint boardingPoint;
         SpacecraftRig spacecraftRig;
         SpacecraftMotor motor;
@@ -157,6 +160,29 @@ namespace Farion.Multiplayer.Spawning
         int claimedConnectionId = -1;
         bool localPiloting;
 
+        static readonly List<NetworkStarterShip> activeShips = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetActiveShips()
+        {
+            activeShips.Clear();
+        }
+
+        internal static IReadOnlyList<NetworkStarterShip> ActiveShips => activeShips;
+
+        internal static NetworkStarterShip FindByEntityId(GeneratedEntityId id)
+        {
+            for (int i = 0; i < activeShips.Count; i++)
+            {
+                if (activeShips[i] != null && activeShips[i].EntityId == id)
+                {
+                    return activeShips[i];
+                }
+            }
+
+            return null;
+        }
+
         public GeneratedEntityId EntityId => entityId.Value == 0UL
             ? GeneratedEntityId.None
             : new GeneratedEntityId(entityId.Value);
@@ -166,6 +192,7 @@ namespace Farion.Multiplayer.Spawning
         public bool IsClaimed => ClaimedBySessionPlayerId != 0UL;
         public bool IsPiloted => piloted.Value;
         public SpacecraftRig Rig => spacecraftRig;
+        public ShuttleCargoInventory Cargo => cargo;
         public SpacecraftMotor Motor => motor;
         public KeyboardSpacecraftInput Input => input;
         public string InteractionPrompt => CanLocalPilot()
@@ -175,6 +202,7 @@ namespace Farion.Multiplayer.Spawning
         void Awake()
         {
             persistentObjectId = GetComponent<PersistentObjectId>();
+            cargo = GetComponent<ShuttleCargoInventory>();
             boardingPoint = GetComponentInChildren<VehicleBoardingPoint>(true);
             boardingPoint?.Bind((IInteractable)this);
             spacecraftRig = GetComponent<SpacecraftRig>();
@@ -192,6 +220,11 @@ namespace Farion.Multiplayer.Spawning
             predictionRigidbody.Initialize(body);
             physicsBody = new PredictionRigidbodySpacecraftPhysicsBody(
                 predictionRigidbody);
+            if (!activeShips.Contains(this))
+            {
+                activeShips.Add(this);
+            }
+
             piloted.OnChange += OnPilotedChanged;
             landingGearDeployed.OnChange += OnLandingGearDeployedChanged;
         }
@@ -341,6 +374,11 @@ namespace Farion.Multiplayer.Spawning
             }
         }
 
+        void OnDestroy()
+        {
+            activeShips.Remove(this);
+        }
+
         public override void OnStopNetwork()
         {
             motor.SetExternalSimulation(false);
@@ -434,8 +472,19 @@ namespace Farion.Multiplayer.Spawning
                 return;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Vector3 previousPosition = body.position;
+            Quaternion previousRotation = body.rotation;
+#endif
             predictionRigidbody.Reconcile(data.PredictionRigidbody);
             motor.RestoreState(data.MotorState);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            PredictionDiagnostics.ReportReconcile(
+                previousPosition,
+                previousRotation,
+                body.position,
+                body.rotation);
+#endif
         }
 
         internal bool TryClaim(
@@ -580,10 +629,13 @@ namespace Farion.Multiplayer.Spawning
 
         void ApplyPersistentId()
         {
-            if (persistentObjectId != null && entityId.Value != 0UL)
+            if (persistentObjectId == null || entityId.Value == 0UL)
             {
-                persistentObjectId.SetId($"ship.generated.{entityId.Value:X16}");
+                return;
             }
+
+            persistentObjectId.SetId($"ship.generated.{entityId.Value:X16}");
+            cargo?.RefreshIdentity();
         }
 
         bool IsWithinClaimDistance(Vector3 explorerPosition)
@@ -663,7 +715,7 @@ namespace Farion.Multiplayer.Spawning
                 return;
             }
 
-            bool simulate = active && (IsServerStarted || IsOwner);
+            bool simulate = active;
             if (!simulate && !body.isKinematic)
             {
                 body.linearVelocity = Vector3.zero;

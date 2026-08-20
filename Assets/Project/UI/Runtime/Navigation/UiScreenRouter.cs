@@ -34,6 +34,7 @@ namespace Farion.UI.Navigation
         readonly List<HistoryEntry> history = new();
         bool initialized;
         int cancelHandledFrame = -1;
+        readonly List<IUiCancelConsumer> cancelConsumers = new();
 
         public event Action<UiScreenId> ScreenOpened;
         public event Action<UiScreenId> ScreenClosed;
@@ -189,9 +190,38 @@ namespace Farion.UI.Navigation
             return true;
         }
 
+        public void RegisterCancelConsumer(IUiCancelConsumer consumer)
+        {
+            if (consumer != null && !cancelConsumers.Contains(consumer))
+            {
+                cancelConsumers.Add(consumer);
+            }
+        }
+
+        public void UnregisterCancelConsumer(IUiCancelConsumer consumer)
+        {
+            cancelConsumers.Remove(consumer);
+        }
+
         public bool TryHandleCancel()
         {
             EnsureInitialized();
+            for (int i = cancelConsumers.Count - 1; i >= 0; i--)
+            {
+                IUiCancelConsumer consumer = cancelConsumers[i];
+                if (consumer == null)
+                {
+                    cancelConsumers.RemoveAt(i);
+                    continue;
+                }
+
+                if (consumer.TryConsumeCancel())
+                {
+                    AudioDirector.Current?.PlayUi(UiAudioCue.Back);
+                    return true;
+                }
+            }
+
             bool handled = history.Count > 0 &&
                            history[^1].Screen.CloseOnCancel &&
                            CloseTop();

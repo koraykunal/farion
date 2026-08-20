@@ -3,36 +3,29 @@ using UnityEngine;
 
 namespace Farion.Multiplayer.Session
 {
-    public static class MultiplayerDevelopmentRunner
+    public static class MultiplayerSessionLauncher
     {
-        const string SessionPrefabPath =
-            "Multiplayer/PF_NetworkSessionRoot";
+        const string SessionPrefabPath = "Multiplayer/PF_NetworkSessionRoot";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void StartFromCommandLine()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (!MultiplayerCommandLine.TryParse(
                     Environment.GetCommandLineArgs(),
-                    out MultiplayerLaunchRequest request))
-            {
-                return;
-            }
-
-            if (!TryCreateSession(out MultiplayerSessionController controller))
+                    out MultiplayerLaunchRequest request) ||
+                !TryCreateSession(out MultiplayerSessionController controller))
             {
                 return;
             }
 
             if (request.Mode == MultiplayerLaunchMode.Host)
             {
-                controller.StartHost();
+                controller.StartHost(request.Endpoint.Port);
             }
             else
             {
-                controller.StartClient(request.Address);
+                controller.StartClient(request.Endpoint);
             }
-#endif
         }
 
         public static bool TryCreateSession(

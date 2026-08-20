@@ -74,7 +74,15 @@ namespace Farion.Multiplayer.Session
         bool multiplayerConfigured;
         NetworkStarterShip ownedSpacecraft;
 
+        public static MultiplayerSceneContext Active { get; private set; }
+
         public event Action<PlayerPossessionMode> ModeChanged;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetActive()
+        {
+            Active = null;
+        }
 
         public PlayerPossessionMode CurrentMode => ownedSpacecraft != null
             ? PlayerPossessionMode.Spacecraft
@@ -113,10 +121,13 @@ namespace Farion.Multiplayer.Session
 
         void Awake()
         {
-            if (IsMultiplayerMode)
+            if (!IsMultiplayerMode)
             {
-                ConfigureMultiplayer();
+                return;
             }
+
+            Active = this;
+            ConfigureMultiplayer();
         }
 
         void Start()
@@ -133,6 +144,11 @@ namespace Farion.Multiplayer.Session
 
         void OnDestroy()
         {
+            if (Active == this)
+            {
+                Active = null;
+            }
+
             BindOriginRebaser(null);
             if (flightHud != null)
             {
@@ -388,6 +404,10 @@ namespace Farion.Multiplayer.Session
             commands?.BindOwnerExplorer(
                 player,
                 runtimeRoot != null ? runtimeRoot.Bindings : null);
+            if (commands != null)
+            {
+                gameplayUi?.BindCommandEvents(commands);
+            }
 
             return true;
         }

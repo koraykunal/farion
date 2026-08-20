@@ -335,7 +335,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058447
-    m_Localized: The primary record is unavailable. A compatible recovery copy will be used.
+    m_Localized: The primary record is unavailable. A compatible recovery copy will
+      be used.
     m_Metadata:
       m_Items: []
   - m_Id: 1264058448
@@ -371,7 +372,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058456
-    m_Localized: "Save failed: {0}."
+    m_Localized: 'Save failed: {0}.'
     m_Metadata:
       m_Items: []
   - m_Id: 1264058457
@@ -379,7 +380,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058458
-    m_Localized: "Delete failed: {0}."
+    m_Localized: 'Delete failed: {0}.'
     m_Metadata:
       m_Items: []
   - m_Id: 1264058459
@@ -455,7 +456,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058477
-    m_Localized: "{0} TERMINAL"
+    m_Localized: '{0} TERMINAL'
     m_Metadata:
       m_Items: []
   - m_Id: 1264058478
@@ -515,7 +516,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058492
-    m_Localized: "{0}  /  TIER {1}"
+    m_Localized: '{0}  /  TIER {1}'
     m_Metadata:
       m_Items: []
   - m_Id: 1264058493
@@ -634,10 +635,6 @@ MonoBehaviour:
     m_Localized: Control interface navigation and feedback sounds.
     m_Metadata:
       m_Items: []
-  - m_Id: 1264058522
-    m_Localized: VELOCITY
-    m_Metadata:
-      m_Items: []
   - m_Id: 1264058523
     m_Localized: LANDING VECTOR
     m_Metadata:
@@ -647,11 +644,273 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058525
-    m_Localized: HOST GAME
+    m_Localized: Join friend
     m_Metadata:
       m_Items: []
-  - m_Id: 1264058526
-    m_Localized: JOIN LOCALHOST
+  - m_Id: 1264058527
+    m_Localized: DISPLAY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058528
+    m_Localized: Display mode
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058529
+    m_Localized: Choose exclusive fullscreen, borderless fullscreen, or a standard
+      window.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058530
+    m_Localized: Window resolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058531
+    m_Localized: Choose from the resolutions your display reports.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058532
+    m_Localized: Vertical sync
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058533
+    m_Localized: Synchronize frames with the display refresh rate to reduce tearing.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058534
+    m_Localized: Borderless full screen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058535
+    m_Localized: Windowed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058536
+    m_Localized: APPLY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058537
+    m_Localized: QUIT TO DESKTOP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058538
+    m_Localized: RETURN TO MAIN MENU
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058539
+    m_Localized: RETURN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058540
+    m_Localized: Unsaved progress may be lost.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058541
+    m_Localized: Fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058542
+    m_Localized: Refresh rate
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058543
+    m_Localized: Applies in exclusive fullscreen only.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782848
+    m_Localized: JOIN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782849
+    m_Localized: Join Friend
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782850
+    m_Localized: Host address, for example 192.168.1.20
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782851
+    m_Localized: Connecting to the host...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782852
+    m_Localized: Starting the co-op session...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782853
+    m_Localized: Enter a valid host address.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782854
+    m_Localized: The host could not be reached.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782855
+    m_Localized: The host is running a different game version.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782856
+    m_Localized: The co-op session could not be created.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7938836249706496
+    m_Localized: The host ended the session.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598144
+    m_Localized: The Steam lobby could not be created; friends cannot join by invite.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598145
+    m_Localized: CO-OP SESSION SAVED.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598146
+    m_Localized: CO-OP SESSION COULD NOT BE SAVED.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7964775574667265
+    m_Localized: THROTTLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8230580786823168
+    m_Localized: The game could not be started.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8230580786823169
+    m_Localized: This screen is not available yet.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035849814016
+    m_Localized: Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757056
+    m_Localized: Host co-op
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757057
+    m_Localized: NEW EXPEDITION
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757058
+    m_Localized: NEW GAME
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757059
+    m_Localized: Choose the slot your new expedition will be saved to.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064127975424
+    m_Localized: Address copied to the clipboard.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064220250112
+    m_Localized: Share this address on your local network. Playing over the internet
+      needs port 7770 forwarded on the host router.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064220250113
+    m_Localized: COPY ADDRESS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444416
+    m_Localized: The host session is already full.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444417
+    m_Localized: INVITE A FRIEND
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444418
+    m_Localized: No other explorers are connected.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444419
+    m_Localized: (you)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444420
+    m_Localized: A co-op session is already starting.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444421
+    m_Localized: Already bound to {0}. The change was reverted.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444422
+    m_Localized: Select a control to rebind it. Escape cancels.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444423
+    m_Localized: PRESS A KEY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444424
+    m_Localized: Controls restored to their defaults.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444425
+    m_Localized: UNBOUND
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444426
+    m_Localized: Reverting to the previous display settings in {0} seconds.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444427
+    m_Localized: KEEP
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444428
+    m_Localized: REVERT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444429
+    m_Localized: Keep these display settings?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444430
+    m_Localized: Widen or narrow the camera field of view.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444431
+    m_Localized: Field of view
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444432
+    m_Localized: Invert the vertical look axis on foot and in flight.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444433
+    m_Localized: Invert look
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444434
+    m_Localized: Scale how far the view turns for a given mouse movement.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444435
+    m_Localized: Mouse sensitivity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444436
+    m_Localized: Restore every control to its default key.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444437
+    m_Localized: Reset controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444438
+    m_Localized: CONTROLS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8349379842277376
+    m_Localized: Control saved.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8349379880026112
+    m_Localized: SESSION
     m_Metadata:
       m_Items: []
   references:

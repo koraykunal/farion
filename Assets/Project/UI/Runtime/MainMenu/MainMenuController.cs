@@ -5,6 +5,7 @@ using Farion.Core.Persistence;
 using Farion.UI.Feedback;
 using Farion.UI.Foundation;
 using Farion.UI.Loading;
+using Farion.UI.Localization;
 using Farion.UI.Navigation;
 using Farion.UI.SaveLoad;
 using UnityEngine;
@@ -29,6 +30,8 @@ namespace Farion.UI.MainMenu
         [SerializeField] MainMenuButton continueButton;
         [SerializeField] MainMenuButton loadGameButton;
 
+        public event Action CoopHostRequested;
+
         public bool HasSaveGame => SaveGameSlotService.TryGetMostRecentLoadable(out _);
 
         public bool HasAnySaveData
@@ -47,8 +50,6 @@ namespace Farion.UI.MainMenu
                 return false;
             }
         }
-
-        public event Action<MainMenuAction> CoopActionRequested;
 
         void Awake()
         {
@@ -86,12 +87,12 @@ namespace Farion.UI.MainMenu
                     }
                     break;
                 case MainMenuAction.NewGame:
-                    StartGameplayLoad(ResolveGameplaySceneName(), SaveGameStartupMode.NewGame);
+                    OpenSlotScreen(SaveGameStartupMode.NewGame);
                     break;
                 case MainMenuAction.LoadGame:
                     if (HasAnySaveData)
                     {
-                        OpenLoadGameScreen();
+                        OpenSlotScreen(SaveGameStartupMode.LoadGame);
                     }
                     break;
                 case MainMenuAction.Settings:
@@ -100,10 +101,14 @@ namespace Farion.UI.MainMenu
                 case MainMenuAction.Credits:
                     OpenScreen(
                         UiScreenId.Credits,
-                        "Credits are not available yet.");
+                        UiLocalization.Get(UiTextKeys.FeedbackScreenUnavailable));
                     break;
                 case MainMenuAction.Exit:
-                    RequestExitConfirmation();
+                    Confirm(
+                        UiTextKeys.DialogQuitTitle,
+                        UiTextKeys.DialogUnsavedProgressBody,
+                        UiTextKeys.CommonQuit,
+                        Application.Quit);
                     break;
                 case MainMenuAction.Back:
                 case MainMenuAction.CancelExit:
@@ -115,9 +120,10 @@ namespace Farion.UI.MainMenu
                 case MainMenuAction.ConfirmExit:
                     Application.Quit();
                     break;
-                case MainMenuAction.HostGame:
-                case MainMenuAction.JoinLocalhost:
-                    CoopActionRequested?.Invoke(action);
+                case MainMenuAction.JoinCoop:
+                    OpenScreen(
+                        UiScreenId.Coop,
+                        UiLocalization.Get(UiTextKeys.FeedbackScreenUnavailable));
                     break;
             }
         }
@@ -128,18 +134,10 @@ namespace Farion.UI.MainMenu
             string requestedSlotName = null)
         {
             ResolveReferences();
-            if (string.IsNullOrWhiteSpace(sceneName))
+            if (string.IsNullOrWhiteSpace(sceneName) || loadingOverlay == null)
             {
                 ShowFeedback(
-                    "The gameplay scene is not configured.",
-                    UiFeedbackSeverity.Error);
-                return;
-            }
-
-            if (loadingOverlay == null)
-            {
-                ShowFeedback(
-                    "The loading screen is not configured.",
+                    UiLocalization.Get(UiTextKeys.FeedbackGameplayUnavailable),
                     UiFeedbackSeverity.Error);
                 return;
             }
@@ -154,7 +152,7 @@ namespace Farion.UI.MainMenu
                 {
                     OpenScreen(UiScreenId.MainMenu);
                     ShowFeedback(
-                        "The gameplay scene could not be loaded.",
+                        UiLocalization.Get(UiTextKeys.FeedbackGameplayUnavailable),
                         UiFeedbackSeverity.Error);
                 });
         }
@@ -180,23 +178,46 @@ namespace Farion.UI.MainMenu
             }
         }
 
-        void OpenLoadGameScreen()
+        void OpenSlotScreen(SaveGameStartupMode startupMode)
         {
             ResolveReferences();
+            void StartSolo(string slotName) => StartGameplayLoad(
+                ResolveGameplaySceneName(),
+                startupMode,
+                slotName);
+            void StartCoop(string slotName) => RequestCoopHost(startupMode, slotName);
+            Action<string> coopAction = CoopHostRequested != null
+                ? StartCoop
+                : null;
+
             if (saveLoadScreen != null &&
-                saveLoadScreen.OpenForLoad(
-                    slotName => StartGameplayLoad(
-                        ResolveGameplaySceneName(),
-                        SaveGameStartupMode.LoadGame,
-                        slotName),
-                    ResolveSaveSlotName()))
+                (startupMode == SaveGameStartupMode.NewGame
+                    ? saveLoadScreen.OpenForNewGame(StartSolo, coopAction)
+                    : saveLoadScreen.OpenForLoad(
+                        StartSolo,
+                        coopAction,
+                        ResolveSaveSlotName())))
             {
                 return;
             }
 
             ShowFeedback(
-                "The load game screen is not configured.",
+                UiLocalization.Get(UiTextKeys.FeedbackScreenUnavailable),
                 UiFeedbackSeverity.Error);
+        }
+
+        void RequestCoopHost(SaveGameStartupMode startupMode, string slotName)
+        {
+            if (startupMode == SaveGameStartupMode.LoadGame)
+            {
+                SaveGameStartupRequest.RequestLoad(slotName);
+            }
+            else
+            {
+                SaveGameStartupRequest.RequestNewGame(slotName);
+            }
+
+            CoopHostRequested?.Invoke();
         }
 
         void ApplySaveAvailability()
@@ -224,20 +245,25 @@ namespace Farion.UI.MainMenu
                 : SaveGameSlotCatalog.DefaultSlotName;
         }
 
-        void RequestExitConfirmation()
+        public bool Confirm(
+            string titleKey,
+            string bodyKey,
+            string confirmKey,
+            Action onConfirm)
         {
             ResolveReferences();
             if (confirmationDialog != null &&
                 confirmationDialog.Present(
-                    "QUIT TO DESKTOP",
-                    "Any unsaved progress will be lost.",
-                    "QUIT",
-                    Application.Quit))
+                    UiLocalization.Get(titleKey),
+                    UiLocalization.Get(bodyKey),
+                    UiLocalization.Get(confirmKey),
+                    onConfirm))
             {
-                return;
+                return true;
             }
 
-            ShowFeedback("Confirmation screen is not configured.");
+            ShowFeedback(UiLocalization.Get(UiTextKeys.FeedbackScreenUnavailable));
+            return false;
         }
 
         public void ShowFeedback(

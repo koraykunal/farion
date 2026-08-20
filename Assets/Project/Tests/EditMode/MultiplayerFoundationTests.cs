@@ -168,7 +168,7 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void DevelopmentArgumentsParseHostAndClientAddress()
+        public void LaunchArgumentsParseHostAndClientAddress()
         {
             Assert.That(
                 MultiplayerCommandLine.TryParse(
@@ -176,7 +176,49 @@ namespace Farion.Tests.EditMode
                     out MultiplayerLaunchRequest request),
                 Is.True);
             Assert.That(request.Mode, Is.EqualTo(MultiplayerLaunchMode.Client));
-            Assert.That(request.Address, Is.EqualTo("10.0.0.5"));
+            Assert.That(request.Endpoint.Address, Is.EqualTo("10.0.0.5"));
+            Assert.That(
+                request.Endpoint.Port,
+                Is.EqualTo(MultiplayerEndpoint.DefaultPort));
+        }
+
+        [TestCase("10.0.0.5", "10.0.0.5", MultiplayerEndpoint.DefaultPort)]
+        [TestCase("10.0.0.5:7000", "10.0.0.5", (ushort)7000)]
+        [TestCase("localhost", MultiplayerEndpoint.LoopbackAddress, MultiplayerEndpoint.DefaultPort)]
+        [TestCase("[::1]:7000", "::1", (ushort)7000)]
+        [TestCase("::1", "::1", MultiplayerEndpoint.DefaultPort)]
+        public void EndpointParsesAddressAndPort(
+            string value,
+            string expectedAddress,
+            ushort expectedPort)
+        {
+            Assert.That(
+                MultiplayerEndpoint.TryParse(value, out MultiplayerEndpoint endpoint),
+                Is.True);
+            Assert.That(endpoint.Address, Is.EqualTo(expectedAddress));
+            Assert.That(endpoint.Port, Is.EqualTo(expectedPort));
+        }
+
+        [TestCase("")]
+        [TestCase("   ")]
+        [TestCase("10.0.0.5:0")]
+        [TestCase("10.0.0.5:70000")]
+        [TestCase("http://10.0.0.5")]
+        public void EndpointRejectsMalformedValues(string value)
+        {
+            Assert.That(
+                MultiplayerEndpoint.TryParse(value, out _),
+                Is.False);
+        }
+
+        [Test]
+        public void ProtocolIdentityIsStableAndNonZero()
+        {
+            ulong first = FarionProtocolAuthenticator.LocalProtocol;
+            Assert.That(first, Is.Not.EqualTo(0UL));
+            Assert.That(
+                FarionProtocolAuthenticator.LocalProtocol,
+                Is.EqualTo(first));
         }
 
         [TestCase(1UL, "explorer.net.1")]

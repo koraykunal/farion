@@ -73,6 +73,7 @@ namespace Farion.Gameplay.Session
 
         void ApplySimulationAuthority()
         {
+            Physics.simulationMode = SimulationMode.FixedUpdate;
             if (assignedShuttle?.Motor == null)
             {
                 return;

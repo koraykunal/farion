@@ -57,6 +57,17 @@ namespace Farion.UI.Settings
             focusState.Reset();
         }
 
+        public void SetAvailable(bool available)
+        {
+            ResolveReferences();
+            if (button != null)
+            {
+                button.interactable = available;
+            }
+
+            RefreshVisual();
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             focusState.PointerEnter();
@@ -116,6 +127,12 @@ namespace Farion.UI.Settings
             Color secondary = Theme.SecondaryText;
             Color focus = Theme.Focus;
             Color critical = Theme.Critical;
+
+            if (!available)
+            {
+                normalSurface.a *= 0.42f;
+                secondary.a *= 0.3f;
+            }
 
             if (background != null)
             {

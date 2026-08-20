@@ -25,13 +25,6 @@ namespace Farion.UI.MainMenu
         void Awake()
         {
             ResolveReferences();
-#if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-            if (action == MainMenuAction.HostGame ||
-                action == MainMenuAction.JoinLocalhost)
-            {
-                gameObject.SetActive(false);
-            }
-#endif
         }
 
         void OnEnable()
@@ -120,8 +113,7 @@ namespace Farion.UI.MainMenu
                 MainMenuAction.Back => UiTextKeys.CommonBack,
                 MainMenuAction.ConfirmExit => UiTextKeys.CommonQuit,
                 MainMenuAction.CancelExit => UiTextKeys.CommonCancel,
-                MainMenuAction.HostGame => UiTextKeys.MainMenuHostGame,
-                MainMenuAction.JoinLocalhost => UiTextKeys.MainMenuJoinLocalhost,
+                MainMenuAction.JoinCoop => UiTextKeys.MainMenuJoinCoop,
                 _ => string.Empty
             };
             view.SetTitle(UiLocalization.Get(key));

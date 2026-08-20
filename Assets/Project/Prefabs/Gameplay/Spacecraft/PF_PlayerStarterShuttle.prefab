@@ -1172,7 +1172,7 @@ MonoBehaviour:
     targetLocalPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerOffset: {x: 0, y: 78, z: 0}
     startAmount: 0
-    durationAmount: 0.65
+    durationAmount: 0.01
     smoothStep: 1
   - partName: Landing Gear Front 2
     parentPartName: Landing Gear Front 1
@@ -1249,6 +1249,7 @@ MonoBehaviour:
   - {fileID: 9031543993812150043}
   - {fileID: 6820316482433673776}
   colliderEnableThreshold: 0.72
+  poseAuthoringMode: 0
   deployedAmount: 1
 --- !u!114 &8451750196482294104
 MonoBehaviour:

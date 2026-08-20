@@ -32,6 +32,8 @@ namespace Farion.Gameplay.Resources
         [SerializeField] bool skipOceanCoveredDeposits = true;
         [SerializeField, Min(0f)] float oceanSurfaceClearance = 0.05f;
 
+        static readonly List<ResourceDepositRuntimeSpawner> registeredSpawners = new();
+
         readonly List<ResourceDepositData> deposits = new();
         readonly List<DepositStreamingCandidate> spawnCandidates = new();
         readonly Dictionary<GeneratedEntityId, SpawnedDepositNode> spawnedNodes = new();
@@ -54,9 +56,27 @@ namespace Farion.Gameplay.Resources
         [System.NonSerialized] float nearestAvailableDepositDistance;
         [System.NonSerialized] string activeTrackingTargetName;
 
+        public static IReadOnlyList<ResourceDepositRuntimeSpawner> RegisteredSpawners =>
+            registeredSpawners;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetRegisteredSpawners()
+        {
+            registeredSpawners.Clear();
+        }
+
         void Awake()
         {
             ResolveComponents();
+            if (!registeredSpawners.Contains(this))
+            {
+                registeredSpawners.Add(this);
+            }
+        }
+
+        void OnDestroy()
+        {
+            registeredSpawners.Remove(this);
         }
 
         void Start()
@@ -340,8 +360,6 @@ namespace Farion.Gameplay.Resources
             GeneratedEntityId depositId,
             out ResourceDepositData deposit)
         {
-            // ponytail: generated deposit counts are small enough for a linear
-            // lookup; add an id index only if profiling shows this hot.
             for (int i = 0; i < deposits.Count; i++)
             {
                 if (deposits[i].DepositId == depositId)

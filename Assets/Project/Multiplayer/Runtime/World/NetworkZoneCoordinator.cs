@@ -54,8 +54,6 @@ namespace Farion.Multiplayer.World
                 return false;
             }
 
-            // ponytail: one shared active zone until origin authority and
-            // broadcasts are keyed by zone identity.
             activeZoneId = zoneId;
 
             SceneLoadData load = zones.TryGetValue(

@@ -30,6 +30,7 @@ namespace Farion.App.Commands
 
         public event Action<InventoryItemDefinition, int> ItemAcquired;
         public event Action<CargoTransferReceipt> CargoTransferCompleted;
+        public event Action<FleetProcessingResult> FleetProcessingCompleted;
 
         public ResourceHarvestResult CanHarvest(ResourceHarvestRequest request)
         {
@@ -100,7 +101,9 @@ namespace Farion.App.Commands
 
         public FleetProcessingResult TryProcessFleetRecipe(FleetProcessingRequest request)
         {
-            return fleetProcessing.TryExecute(request);
+            FleetProcessingResult result = fleetProcessing.TryExecute(request);
+            FleetProcessingCompleted?.Invoke(result);
+            return result;
         }
 
         public bool Matches(GameplaySessionRuntime candidate)

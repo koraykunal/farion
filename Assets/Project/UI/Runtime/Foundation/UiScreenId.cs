@@ -8,6 +8,7 @@ namespace Farion.UI.Foundation
         Settings = 20,
         Credits = 30,
         SaveLoad = 40,
+        Coop = 50,
 
         GameplayHud = 100,
         PauseMenu = 110,

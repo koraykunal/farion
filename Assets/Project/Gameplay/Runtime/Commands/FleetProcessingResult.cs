@@ -8,6 +8,8 @@ namespace Farion.Gameplay.Commands
         MissingStorage = 3,
         UnauthorizedStorage = 4,
         Rejected = 5,
-        StaleStorage = 6
+        StaleStorage = 6,
+        Pending = 7,
+        OutOfRange = 8
     }
 }

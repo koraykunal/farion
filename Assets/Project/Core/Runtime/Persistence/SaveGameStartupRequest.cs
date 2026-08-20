@@ -5,10 +5,10 @@ namespace Farion.Core.Persistence
         static SaveGameStartupMode mode;
         static string slotName;
 
-        public static void RequestNewGame()
+        public static void RequestNewGame(string requestedSlotName = null)
         {
             mode = SaveGameStartupMode.NewGame;
-            slotName = string.Empty;
+            slotName = SaveGameSlotCatalog.ResolveSlotName(requestedSlotName);
         }
 
         public static void RequestLoad(string requestedSlotName)

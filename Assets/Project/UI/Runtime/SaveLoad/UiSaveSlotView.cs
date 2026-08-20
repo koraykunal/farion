@@ -112,7 +112,6 @@ namespace Farion.UI.SaveLoad
             base.OnPointerEnter(eventData);
             focusState.PointerEnter();
             RefreshVisual();
-            Focused?.Invoke(this);
         }
 
         public override void OnPointerExit(PointerEventData eventData)
@@ -208,9 +207,9 @@ namespace Farion.UI.SaveLoad
 
             if (selectionFrame != null)
             {
-                focus.a *= focused
+                focus.a *= current
                     ? 0.94f
-                    : current
+                    : focused
                         ? 0.58f
                         : Summary.HasData
                             ? 0.15f

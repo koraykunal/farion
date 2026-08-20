@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Farion.Multiplayer.Session;
 using FishNet.Managing;
+using FishNet.Managing.Predicting;
+using FishNet.Managing.Timing;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,6 +15,7 @@ namespace Farion.Multiplayer.World
 
         readonly List<SimulationZoneContext> zones = new();
         readonly List<MultiplayerSceneContext> zoneSceneContexts = new();
+        PredictionManager predictionManager;
         bool subscribed;
 
         public int RegisteredZoneCount => zones.Count;
@@ -20,6 +23,10 @@ namespace Farion.Multiplayer.World
         void Awake()
         {
             networkManager ??= GetComponent<NetworkManager>();
+            if (networkManager != null)
+            {
+                predictionManager = networkManager.GetComponent<PredictionManager>();
+            }
         }
 
         void Start()
@@ -152,11 +159,21 @@ namespace Farion.Multiplayer.World
                 return;
             }
 
-            double seconds = networkManager.TimeManager.Tick * networkManager.TimeManager.TickDelta;
+            double seconds =
+                ResolveSimulationTick() * networkManager.TimeManager.TickDelta;
             for (int i = 0; i < zoneSceneContexts.Count; i++)
             {
                 zoneSceneContexts[i]?.ApplyNetworkSimulationTime(seconds);
             }
+        }
+
+        uint ResolveSimulationTick()
+        {
+            return predictionManager != null &&
+                predictionManager.IsReconciling &&
+                predictionManager.ClientReplayTick != TimeManager.UNSET_TICK
+                    ? predictionManager.ClientReplayTick
+                    : networkManager.TimeManager.Tick;
         }
 
         static bool TryGetIsolatedPhysicsScene(

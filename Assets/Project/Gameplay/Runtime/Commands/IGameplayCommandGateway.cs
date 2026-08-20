@@ -7,6 +7,7 @@ namespace Farion.Gameplay.Commands
     {
         event Action<InventoryItemDefinition, int> ItemAcquired;
         event Action<CargoTransferReceipt> CargoTransferCompleted;
+        event Action<FleetProcessingResult> FleetProcessingCompleted;
     }
 
     public enum CargoTransferKind

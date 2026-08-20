@@ -1,3 +1,4 @@
+using Farion.Gameplay.Input;
 using UnityEngine;
 
 namespace Farion.Gameplay.Character
@@ -22,14 +23,27 @@ namespace Farion.Gameplay.Character
         [Min(0f)]
         [SerializeField] float snapDistance = 4f;
 
+        [Header("Field Of View")]
+        [SerializeField] Camera viewCamera;
+
         KeyboardFirstPersonInput resolvedInput;
+        float authoredFieldOfView;
         float pitch;
         bool snapNextFrame = true;
 
         void OnEnable()
         {
             ResolveInputSource();
+            ResolveViewCamera();
             snapNextFrame = true;
+        }
+
+        void OnDisable()
+        {
+            if (viewCamera != null && authoredFieldOfView > 0f)
+            {
+                viewCamera.fieldOfView = authoredFieldOfView;
+            }
         }
 
         void OnValidate()
@@ -49,6 +63,7 @@ namespace Farion.Gameplay.Character
             }
 
             ResolveInputSource();
+            ApplyFieldOfView();
             FirstPersonInputState input = resolvedInput?.CurrentInput ?? FirstPersonInputState.None;
             pitch = Mathf.Clamp(pitch - input.Look.y, -pitchLimit, pitchLimit);
 
@@ -95,6 +110,31 @@ namespace Farion.Gameplay.Character
         {
             resolvedInput = source;
             inputSource = source;
+        }
+
+        void ResolveViewCamera()
+        {
+            viewCamera ??= GetComponentInChildren<Camera>(true);
+            if (viewCamera != null && authoredFieldOfView <= 0f)
+            {
+                authoredFieldOfView = viewCamera.fieldOfView;
+            }
+        }
+
+        void ApplyFieldOfView()
+        {
+            ResolveViewCamera();
+            if (viewCamera == null || authoredFieldOfView <= 0f)
+            {
+                return;
+            }
+
+            float desiredFieldOfView =
+                FarionViewPreferences.ResolveFieldOfView(authoredFieldOfView);
+            if (!Mathf.Approximately(viewCamera.fieldOfView, desiredFieldOfView))
+            {
+                viewCamera.fieldOfView = desiredFieldOfView;
+            }
         }
 
         void ResolveInputSource()

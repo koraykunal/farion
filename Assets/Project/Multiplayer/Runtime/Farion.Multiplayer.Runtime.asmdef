@@ -5,10 +5,13 @@
         "Farion.Core.Identity",
         "Farion.Core.Runtime",
         "Farion.Simulation.Runtime",
+        "Farion.Gameplay.Domain",
         "Farion.Gameplay.Runtime",
         "Farion.Gameplay.Presentation",
         "Farion.Rendering.Runtime",
         "Farion.UI.Runtime",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro",
         "Farion.App.Runtime",
         "FishNet.Runtime"
     ],

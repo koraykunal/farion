@@ -15,13 +15,16 @@
         "Farion.Multiplayer.Runtime",
         "Unity.InputSystem",
         "Unity.Localization",
+        "Unity.Localization.Editor",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
         "FishNet.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime",
         "FMODUnity",
-        "Unity.VisualEffectGraph.Runtime"
+        "Unity.VisualEffectGraph.Runtime",
+        "FishNet.Transporting.FishySteamworks",
+        "Farion.Multiplayer.Steam"
     ],
     "includePlatforms": [
         "Editor"

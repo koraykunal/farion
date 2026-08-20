@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using Farion.UI.Foundation;
+using Farion.UI.Localization;
 using Farion.UI.Navigation;
 using Farion.UI.Styling;
 using TMPro;
@@ -29,6 +31,10 @@ namespace Farion.UI.Feedback
         [SerializeField] Button cancelButton;
 
         Action pendingConfirmation;
+        Action pendingCancellation;
+        string countdownBodyFormat;
+        float countdownDeadline;
+        int countdownDisplayedSeconds = -1;
 
         void Reset()
         {
@@ -55,6 +61,8 @@ namespace Farion.UI.Feedback
         void OnDisable()
         {
             pendingConfirmation = null;
+            pendingCancellation = null;
+            countdownBodyFormat = null;
 
             if (confirmButton != null)
             {
@@ -72,7 +80,9 @@ namespace Farion.UI.Feedback
             string body,
             string confirmLabel,
             Action onConfirm,
-            string cancelLabel = "CANCEL")
+            string cancelLabel = null,
+            Action onCancel = null,
+            float autoCancelSeconds = 0f)
         {
             ResolveReferences();
             if (router == null || onConfirm == null)
@@ -80,10 +90,25 @@ namespace Farion.UI.Feedback
                 return false;
             }
 
+            pendingCancellation = onCancel;
+            countdownBodyFormat = autoCancelSeconds > 0f ? body : null;
+            countdownDeadline = autoCancelSeconds > 0f
+                ? Time.unscaledTime + autoCancelSeconds
+                : 0f;
+            countdownDisplayedSeconds = -1;
+            if (countdownBodyFormat != null)
+            {
+                body = FormatCountdownBody(Mathf.CeilToInt(autoCancelSeconds));
+            }
+
             SetText(titleText, title);
             SetText(bodyText, body);
             SetText(confirmLabelText, confirmLabel);
-            SetText(cancelLabelText, cancelLabel);
+            SetText(
+                cancelLabelText,
+                string.IsNullOrWhiteSpace(cancelLabel)
+                    ? UiLocalization.Get(UiTextKeys.CommonCancel)
+                    : cancelLabel);
             pendingConfirmation = onConfirm;
 
             if (router.Open(screenId))
@@ -92,21 +117,62 @@ namespace Farion.UI.Feedback
             }
 
             pendingConfirmation = null;
+            pendingCancellation = null;
+            countdownBodyFormat = null;
             return false;
         }
 
         public void Confirm()
         {
             Action action = pendingConfirmation;
-            pendingConfirmation = null;
+            ClearPending();
             router?.Close(screenId);
             action?.Invoke();
         }
 
         public void Cancel()
         {
-            pendingConfirmation = null;
+            Action action = pendingCancellation;
+            ClearPending();
             router?.Close(screenId);
+            action?.Invoke();
+        }
+
+        void Update()
+        {
+            if (countdownBodyFormat == null)
+            {
+                return;
+            }
+
+            int remaining = Mathf.Max(
+                0,
+                Mathf.CeilToInt(countdownDeadline - Time.unscaledTime));
+            if (remaining != countdownDisplayedSeconds)
+            {
+                countdownDisplayedSeconds = remaining;
+                SetText(bodyText, FormatCountdownBody(remaining));
+            }
+
+            if (remaining <= 0)
+            {
+                Cancel();
+            }
+        }
+
+        string FormatCountdownBody(int remainingSeconds)
+        {
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                countdownBodyFormat,
+                remainingSeconds);
+        }
+
+        void ClearPending()
+        {
+            pendingConfirmation = null;
+            pendingCancellation = null;
+            countdownBodyFormat = null;
         }
 
         void ResolveReferences()

@@ -1,5 +1,6 @@
 using Farion.Core.Identity;
 using System;
+using System.Collections.Generic;
 using Farion.Gameplay.Interaction;
 using Farion.Multiplayer.Spawning;
 using Farion.Simulation.World;
@@ -12,16 +13,27 @@ namespace Farion.Multiplayer.Session
 {
     public sealed class NetworkSessionPlayer : NetworkBehaviour
     {
+        const int MaximumDisplayNameLength = 24;
+
         readonly SyncVar<ulong> sessionPlayerId = new();
+        readonly SyncVar<string> displayName = new(string.Empty);
+        string persistentPlayerId = string.Empty;
         readonly SyncVar<ulong> currentZoneId = new();
         readonly SyncVar<ulong> assignedStarterShipId = new();
         readonly SyncVar<ulong> claimedStarterShipId = new();
         readonly SyncVar<PlayerPossessionMode> possessionMode = new();
         NetworkPlayerSpawner playerSpawner;
 
+        static readonly List<NetworkSessionPlayer> activePlayers = new();
+
         public static NetworkSessionPlayer Local { get; private set; }
 
+        public static IReadOnlyList<NetworkSessionPlayer> ActivePlayers =>
+            activePlayers;
+
         public ulong SessionPlayerId => sessionPlayerId.Value;
+        public string DisplayName => displayName.Value;
+        internal string PersistentPlayerId => persistentPlayerId;
         public GeneratedEntityId CurrentZoneId => currentZoneId.Value == 0UL
             ? GeneratedEntityId.None
             : new GeneratedEntityId(currentZoneId.Value);
@@ -40,11 +52,21 @@ namespace Farion.Multiplayer.Session
         static void ResetLocal()
         {
             Local = null;
+            activePlayers.Clear();
         }
 
         void Awake()
         {
             assignedStarterShipId.OnChange += OnAssignedStarterShipChanged;
+            if (!activePlayers.Contains(this))
+            {
+                activePlayers.Add(this);
+            }
+        }
+
+        void OnDestroy()
+        {
+            activePlayers.Remove(this);
         }
 
         internal void Initialize(ulong value, NetworkPlayerSpawner spawner)
@@ -69,6 +91,37 @@ namespace Farion.Multiplayer.Session
         public override void OnStartClient()
         {
             RefreshLocalBinding();
+            if (IsOwner)
+            {
+                SubmitProfileServerRpc(
+                    MultiplayerPlayerProfile.DisplayName,
+                    MultiplayerPlayerProfile.PersistentPlayerId);
+            }
+        }
+
+        [ServerRpc]
+        void SubmitProfileServerRpc(
+            string requestedName,
+            string requestedPersistentId,
+            NetworkConnection sender = null)
+        {
+            if (sender == null ||
+                !sender.IsActive ||
+                sender.ClientId != OwnerId)
+            {
+                return;
+            }
+
+            displayName.Value = MultiplayerPlayerProfile.Sanitize(
+                requestedName,
+                MaximumDisplayNameLength,
+                sessionPlayerId.Value);
+            if (persistentPlayerId.Length == 0 &&
+                !string.IsNullOrWhiteSpace(requestedPersistentId))
+            {
+                persistentPlayerId = requestedPersistentId.Trim();
+                playerSpawner?.RestorePlayerState(this);
+            }
         }
 
         public override void OnOwnershipClient(NetworkConnection prevOwner)

@@ -28,15 +28,23 @@ using Farion.Rendering.Celestial;
 using Farion.Rendering.Lighting;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
+using Farion.UI.Foundation;
 using Farion.UI.Gameplay;
+using Farion.UI.MainMenu;
+using Farion.UI.Navigation;
 using FMODUnity;
 using FishNet.Component.Observing;
 using FishNet.Component.Transforming.Beta;
 using FishNet.Managing;
+using FishNet.Managing.Client;
 using FishNet.Managing.Object;
 using FishNet.Managing.Observing;
+using FishNet.Managing.Predicting;
+using FishNet.Managing.Server;
 using FishNet.Managing.Timing;
 using FishNet.Object;
+using FishNet.Managing.Transporting;
+using FishNet.Transporting.Multipass;
 using FishNet.Transporting.Tugboat;
 using Object = UnityEngine.Object;
 using UnityEditor;
@@ -52,6 +60,13 @@ namespace Farion.Editor.Validation
 {
     public sealed partial class FarionProjectValidator
     {
+        const int MinimumTickRate = 30;
+        const int MaximumTickRate = 90;
+        const int MinimumStateInterpolation = 3;
+        const string CoopScreenPath =
+            "Assets/Project/Prefabs/UI/Screens/UI_CoopScreen.prefab";
+
+
         static void ValidateSimulationZoneScene(
             Scene scene,
             string scenePath,
@@ -281,14 +296,19 @@ namespace Farion.Editor.Validation
             if (timeManager != null)
             {
                 SerializedObject timeSerialized = new(timeManager);
-                if (timeSerialized.FindProperty("_tickRate").intValue <= 0 ||
+                int tickRate = timeSerialized.FindProperty("_tickRate").intValue;
+                if (tickRate < MinimumTickRate ||
+                    tickRate > MaximumTickRate ||
                     timeSerialized.FindProperty("_physicsMode").intValue !=
                     (int)PhysicsMode.TimeManager)
                 {
                     report.AddError(
-                        $"{sessionPath}: TimeManager requires a positive tick rate and TimeManager network physics.");
+                        $"{sessionPath}: TimeManager requires a tick rate between {MinimumTickRate} and {MaximumTickRate} with TimeManager network physics.");
                 }
             }
+
+            ValidateSessionNetworkManagers(session, sessionPath, report);
+            ValidateCoopScreen(report);
 
             if (tugboat != null)
             {
@@ -298,6 +318,8 @@ namespace Farion.Editor.Validation
                     report.AddError($"{sessionPath}: Tugboat must allow exactly four clients.");
                 }
             }
+
+            ValidateTransportComposition(session, sessionPath, report);
 
             NetworkObject networkObject = player.GetComponent<NetworkObject>();
             NetworkExplorerController networkExplorer =
@@ -459,6 +481,146 @@ namespace Farion.Editor.Validation
                 }
             }
 
+        }
+
+        static void ValidateTransportComposition(
+            GameObject session,
+            string sessionPath,
+            FarionValidationReport report)
+        {
+            Multipass multipass = session.GetComponent<Multipass>();
+            TransportManager transportManager = session.GetComponent<TransportManager>();
+            FishySteamworks.FishySteamworks steam =
+                session.GetComponent<FishySteamworks.FishySteamworks>();
+            if (multipass == null || transportManager == null || steam == null)
+            {
+                report.AddError(
+                    $"{sessionPath}: co-op requires Multipass, TransportManager, and the Steam transport on the session root.");
+                return;
+            }
+
+            if (new SerializedObject(transportManager)
+                    .FindProperty("Transport").objectReferenceValue != multipass)
+            {
+                report.AddError(
+                    $"{sessionPath}: TransportManager must route through Multipass.");
+            }
+
+            SerializedObject serializedMultipass = new(multipass);
+            SerializedProperty transports =
+                serializedMultipass.FindProperty("_transports");
+            if (!serializedMultipass.FindProperty("GlobalServerActions").boolValue)
+            {
+                report.AddError(
+                    $"{sessionPath}: Multipass must use global server actions so the host listens on every transport.");
+            }
+
+            if (transports == null ||
+                transports.arraySize != 2 ||
+                transports.GetArrayElementAtIndex((int)MultiplayerTransportKind.Direct)
+                    .objectReferenceValue != session.GetComponent<Tugboat>() ||
+                transports.GetArrayElementAtIndex((int)MultiplayerTransportKind.Steam)
+                    .objectReferenceValue != steam)
+            {
+                report.AddError(
+                    $"{sessionPath}: Multipass transports must be ordered as Tugboat then Steam to match MultiplayerTransportKind.");
+            }
+
+            if (new SerializedObject(steam)
+                    .FindProperty("_maximumClients").intValue != 4)
+            {
+                report.AddError(
+                    $"{sessionPath}: the Steam transport must allow exactly four clients.");
+            }
+        }
+
+        static readonly string[] CoopScreenFields =
+        {
+            "addressInput",
+            "joinButton",
+            "backButton",
+            "statusText",
+            "titleText"
+        };
+
+        static void ValidateCoopScreen(FarionValidationReport report)
+        {
+            GameObject coopScreen =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CoopScreenPath);
+            if (coopScreen == null)
+            {
+                report.AddError($"{CoopScreenPath}: the co-op join screen is missing.");
+                return;
+            }
+
+            UiScreenView screenView = coopScreen.GetComponent<UiScreenView>();
+            UiCoopScreenPresenter presenter =
+                coopScreen.GetComponent<UiCoopScreenPresenter>();
+            if (screenView == null ||
+                screenView.ScreenId != UiScreenId.Coop ||
+                presenter == null)
+            {
+                report.AddError(
+                    $"{CoopScreenPath}: the co-op screen composition is incomplete.");
+                return;
+            }
+
+            SerializedObject serializedPresenter = new(presenter);
+            foreach (string field in CoopScreenFields)
+            {
+                if (serializedPresenter.FindProperty(field).objectReferenceValue == null)
+                {
+                    report.AddError(
+                        $"{CoopScreenPath}: the co-op screen must author its {field}.");
+                }
+            }
+        }
+
+        static void ValidateSessionNetworkManagers(
+            GameObject session,
+            string sessionPath,
+            FarionValidationReport report)
+        {
+            ServerManager server = session.GetComponent<ServerManager>();
+            ClientManager client = session.GetComponent<ClientManager>();
+            PredictionManager prediction = session.GetComponent<PredictionManager>();
+            FarionProtocolAuthenticator authenticator =
+                session.GetComponent<FarionProtocolAuthenticator>();
+            if (server == null ||
+                client == null ||
+                prediction == null ||
+                authenticator == null ||
+                session.GetComponent<NetworkStatusReporter>() == null ||
+                session.GetComponent<MultiplayerSaveBridge>() == null)
+            {
+                report.AddError(
+                    $"{sessionPath}: the session root must author ServerManager, ClientManager, PredictionManager, the protocol authenticator, the status reporter, and the save bridge.");
+                return;
+            }
+
+            SerializedObject serializedServer = new(server);
+            if (serializedServer.FindProperty("_changeFrameRate").boolValue ||
+                new SerializedObject(client)
+                    .FindProperty("_changeFrameRate").boolValue)
+            {
+                report.AddError(
+                    $"{sessionPath}: networking must not override the application frame rate.");
+            }
+
+            if (serializedServer.FindProperty("_authenticator")
+                    .objectReferenceValue != authenticator)
+            {
+                report.AddError(
+                    $"{sessionPath}: ServerManager must use the Farion protocol authenticator.");
+            }
+
+            if (new SerializedObject(prediction)
+                    .FindProperty("_stateInterpolation").intValue <
+                MinimumStateInterpolation)
+            {
+                report.AddError(
+                    $"{sessionPath}: prediction state interpolation must be at least {MinimumStateInterpolation}.");
+            }
         }
 
         static void ValidateRequiredBuildScene(

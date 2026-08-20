@@ -175,7 +175,9 @@ namespace Farion.Tests.EditMode
             CelestialBody body = gameObject.AddComponent<CelestialBody>();
             try
             {
-                body.transform.rotation = Quaternion.Euler(17f, 63f, -9f);
+                Quaternion bodyRotation = Quaternion.Euler(17f, 63f, -9f);
+                body.transform.rotation = bodyRotation;
+                body.Rigidbody.rotation = bodyRotation;
                 CelestialEnvironmentSample environment = new(
                     body,
                     true,
@@ -189,7 +191,7 @@ namespace Farion.Tests.EditMode
                     0.7f,
                     18d);
                 Vector3 localPosition = new(4f, 8f, -3f);
-                Vector3 worldRelativePosition = body.transform.TransformDirection(localPosition);
+                Vector3 worldRelativePosition = bodyRotation * localPosition;
                 float expected = 10f + OceanWaveField.SampleHeight(
                     localPosition,
                     environment.WaveLength,

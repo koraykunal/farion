@@ -13,60 +13,62 @@ namespace Farion.Multiplayer.Session
     {
         public MultiplayerLaunchRequest(
             MultiplayerLaunchMode mode,
-            string address)
+            MultiplayerEndpoint endpoint)
         {
             Mode = mode;
-            Address = address;
+            Endpoint = endpoint;
         }
 
         public MultiplayerLaunchMode Mode { get; }
-        public string Address { get; }
+        public MultiplayerEndpoint Endpoint { get; }
     }
 
     public static class MultiplayerCommandLine
     {
         const string ModePrefix = "-farion-net=";
         const string AddressPrefix = "-farion-address=";
-        const string DefaultAddress = "127.0.0.1";
 
         public static bool TryParse(
             string[] arguments,
             out MultiplayerLaunchRequest request)
         {
             MultiplayerLaunchMode mode = MultiplayerLaunchMode.None;
-            string address = DefaultAddress;
+            MultiplayerEndpoint endpoint = MultiplayerEndpoint.Loopback;
 
-            if (arguments != null)
+            for (int i = 0; arguments != null && i < arguments.Length; i++)
             {
-                for (int i = 0; i < arguments.Length; i++)
+                string argument = arguments[i] ?? string.Empty;
+                if (argument.StartsWith(
+                        ModePrefix,
+                        StringComparison.OrdinalIgnoreCase))
                 {
-                    string argument = arguments[i] ?? string.Empty;
-                    if (argument.StartsWith(
-                            ModePrefix,
-                            StringComparison.OrdinalIgnoreCase))
-                    {
-                        string value = argument[ModePrefix.Length..];
-                        mode = value.Equals("host", StringComparison.OrdinalIgnoreCase)
-                            ? MultiplayerLaunchMode.Host
-                            : value.Equals("client", StringComparison.OrdinalIgnoreCase)
-                                ? MultiplayerLaunchMode.Client
-                                : MultiplayerLaunchMode.None;
-                    }
-                    else if (argument.StartsWith(
-                                 AddressPrefix,
-                                 StringComparison.OrdinalIgnoreCase))
-                    {
-                        string value = argument[AddressPrefix.Length..].Trim();
-                        if (!string.IsNullOrWhiteSpace(value))
-                        {
-                            address = value;
-                        }
-                    }
+                    mode = ParseMode(argument[ModePrefix.Length..]);
+                }
+                else if (argument.StartsWith(
+                             AddressPrefix,
+                             StringComparison.OrdinalIgnoreCase) &&
+                         MultiplayerEndpoint.TryParse(
+                             argument[AddressPrefix.Length..],
+                             out MultiplayerEndpoint parsed))
+                {
+                    endpoint = parsed;
                 }
             }
 
-            request = new MultiplayerLaunchRequest(mode, address);
+            request = new MultiplayerLaunchRequest(mode, endpoint);
             return mode != MultiplayerLaunchMode.None;
+        }
+
+        static MultiplayerLaunchMode ParseMode(string value)
+        {
+            if (value.Equals("host", StringComparison.OrdinalIgnoreCase))
+            {
+                return MultiplayerLaunchMode.Host;
+            }
+
+            return value.Equals("client", StringComparison.OrdinalIgnoreCase)
+                ? MultiplayerLaunchMode.Client
+                : MultiplayerLaunchMode.None;
         }
     }
 }

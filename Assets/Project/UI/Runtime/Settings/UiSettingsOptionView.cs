@@ -1,6 +1,7 @@
 using System;
 using Farion.UI.Common;
 using Farion.UI.Foundation;
+using Farion.UI.Localization;
 using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace Farion.UI.Settings
     [RequireComponent(typeof(Image))]
     public sealed class UiSettingsOptionView :
         Selectable,
+        IUiValueControl,
         ISubmitHandler,
         IPointerClickHandler
     {
@@ -29,6 +31,7 @@ namespace Farion.UI.Settings
         [SerializeField] Image selectionFrame;
 
         UiPointerFocusState focusState;
+        bool pending;
         string displayTitle = string.Empty;
         string displayDescription = string.Empty;
         string displayValue = string.Empty;
@@ -36,12 +39,13 @@ namespace Farion.UI.Settings
         UiTheme Theme => theme = UiTheme.Resolve(theme);
 
         public event Action<UiSettingsOptionView, int> AdjustmentRequested;
-        public event Action<UiSettingsOptionView> Focused;
+        public event Action<IUiValueControl> Focused;
 
         public UiSettingId SettingId => settingId;
         public string DisplayTitle => displayTitle;
         public string DisplayDescription => displayDescription;
         public string DisplayValue => displayValue;
+        public Selectable Selectable => this;
 
         protected override void Awake()
         {
@@ -96,6 +100,17 @@ namespace Farion.UI.Settings
         public void SetAvailable(bool available)
         {
             interactable = available;
+            RefreshVisual();
+        }
+
+        public void SetPending(bool value)
+        {
+            if (pending == value)
+            {
+                return;
+            }
+
+            pending = value;
             RefreshVisual();
         }
 
@@ -229,7 +244,11 @@ namespace Farion.UI.Settings
 
             if (valueText != null)
             {
-                valueText.color = focused ? focus : supporting;
+                valueText.color = pending && available
+                    ? Theme.Caution
+                    : focused
+                        ? focus
+                        : supporting;
             }
 
             if (selectionFrame == null)
@@ -244,9 +263,7 @@ namespace Farion.UI.Settings
 
         static string ToLabel(string value)
         {
-            return string.IsNullOrWhiteSpace(value)
-                ? string.Empty
-                : value.ToUpperInvariant();
+            return UiLocalization.ToDisplayUpper(value);
         }
     }
 }

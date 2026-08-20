@@ -631,10 +631,6 @@ MonoBehaviour:
     m_Key: settings.audio.ui.description
     m_Metadata:
       m_Items: []
-  - m_Id: 1264058522
-    m_Key: hud.velocity
-    m_Metadata:
-      m_Items: []
   - m_Id: 1264058523
     m_Key: hud.landing_vector
     m_Metadata:
@@ -644,11 +640,271 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058525
-    m_Key: main_menu.host_game
+    m_Key: main_menu.join_coop
     m_Metadata:
       m_Items: []
-  - m_Id: 1264058526
-    m_Key: main_menu.join_localhost
+  - m_Id: 1264058527
+    m_Key: settings.section.display
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058528
+    m_Key: settings.display.mode.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058529
+    m_Key: settings.display.mode.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058530
+    m_Key: settings.display.resolution.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058531
+    m_Key: settings.display.resolution.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058532
+    m_Key: settings.display.vsync.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058533
+    m_Key: settings.display.vsync.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058534
+    m_Key: value.borderless
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058535
+    m_Key: value.windowed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058536
+    m_Key: common.apply
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058537
+    m_Key: dialog.quit.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058538
+    m_Key: dialog.main_menu.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058539
+    m_Key: dialog.main_menu.confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058540
+    m_Key: dialog.unsaved_progress.body
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058541
+    m_Key: value.fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058542
+    m_Key: settings.display.refresh_rate.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058543
+    m_Key: settings.display.refresh_rate.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782848
+    m_Key: common.join
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782849
+    m_Key: coop.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782850
+    m_Key: coop.address.placeholder
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782851
+    m_Key: coop.status.connecting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782852
+    m_Key: coop.status.hosting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782853
+    m_Key: coop.error.address
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782854
+    m_Key: coop.error.connection
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782855
+    m_Key: coop.error.protocol
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782856
+    m_Key: coop.error.session
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7938836249706496
+    m_Key: coop.error.host_left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598144
+    m_Key: coop.error.lobby
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598145
+    m_Key: coop.save.completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598146
+    m_Key: coop.save.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7964775574667265
+    m_Key: hud.throttle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8230580786823168
+    m_Key: feedback.gameplay_unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8230580786823169
+    m_Key: feedback.screen_unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035849814016
+    m_Key: common.start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757056
+    m_Key: save_load.host_coop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757057
+    m_Key: save_load.eyebrow.new_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757058
+    m_Key: save_load.title.new_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757059
+    m_Key: save_load.description.new_game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064127975424
+    m_Key: coop.address.copied
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064220250112
+    m_Key: coop.address.hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064220250113
+    m_Key: coop.address.copy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444416
+    m_Key: coop.error.server_full
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444417
+    m_Key: coop.invite
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444418
+    m_Key: coop.roster.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444419
+    m_Key: coop.roster.self
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444420
+    m_Key: coop.status.busy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444421
+    m_Key: settings.bindings.conflict
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444422
+    m_Key: settings.bindings.hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444423
+    m_Key: settings.bindings.listening
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444424
+    m_Key: settings.bindings.reset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444425
+    m_Key: settings.bindings.unbound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444426
+    m_Key: settings.display.confirm.body
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444427
+    m_Key: settings.display.confirm.keep
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444428
+    m_Key: settings.display.confirm.revert
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444429
+    m_Key: settings.display.confirm.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444430
+    m_Key: settings.field_of_view.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444431
+    m_Key: settings.field_of_view.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444432
+    m_Key: settings.invert_look.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444433
+    m_Key: settings.invert_look.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444434
+    m_Key: settings.mouse_sensitivity.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444435
+    m_Key: settings.mouse_sensitivity.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444436
+    m_Key: settings.reset_bindings.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444437
+    m_Key: settings.reset_bindings.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444438
+    m_Key: settings.section.controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8349379842277376
+    m_Key: settings.bindings.saved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8349379880026112
+    m_Key: coop.session.title
     m_Metadata:
       m_Items: []
   m_Metadata:

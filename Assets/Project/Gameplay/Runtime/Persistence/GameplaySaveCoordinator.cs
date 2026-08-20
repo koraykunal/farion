@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Session;
 using UnityEngine;
@@ -29,6 +30,9 @@ namespace Farion.Gameplay.Persistence
             new ResourceDepositSaveParticipant()
         };
 
+        readonly List<MultiplayerPlayerSaveEntry> capturedPlayers = new();
+        readonly List<MultiplayerShipCargoSaveEntry> capturedShipCargo = new();
+        IMultiplayerSaveSource multiplayerSource;
         SaveGameOperationResult lastSaveResult;
         SaveGameOperationResult lastLoadResult;
 
@@ -38,11 +42,15 @@ namespace Farion.Gameplay.Persistence
         public SaveGameOperationResult LastSaveResult => lastSaveResult;
         public SaveGameOperationResult LastLoadResult => lastLoadResult;
 
+        public void SetMultiplayerSource(IMultiplayerSaveSource source)
+        {
+            multiplayerSource = source;
+        }
+
         void Start()
         {
             if (ResolveRuntimeRoot()?.Mode == GameplaySessionMode.Multiplayer)
             {
-                enabled = false;
                 return;
             }
 
@@ -59,7 +67,10 @@ namespace Farion.Gameplay.Persistence
             if (startupMode == SaveGameStartupMode.LoadGame)
             {
                 Load(requestedSlotName);
+                return;
             }
+
+            slotName = SaveGameSlotCatalog.ResolveSlotName(requestedSlotName);
         }
 
         void OnValidate()
@@ -161,7 +172,16 @@ namespace Farion.Gameplay.Persistence
                 saveParticipants[i].Capture(capture, context);
             }
 
-            return capture.CreateSnapshot();
+            GameplaySaveData snapshot = capture.CreateSnapshot();
+            if (multiplayerSource != null)
+            {
+                capturedPlayers.Clear();
+                capturedShipCargo.Clear();
+                multiplayerSource.Capture(capturedPlayers, capturedShipCargo);
+                snapshot.SetMultiplayerState(capturedPlayers, capturedShipCargo);
+            }
+
+            return snapshot;
         }
 
         bool CanCaptureSaveData()
@@ -262,6 +282,10 @@ namespace Farion.Gameplay.Persistence
                 }
             }
 
+            multiplayerSource?.Apply(
+                saveData.MultiplayerPlayers,
+                saveData.MultiplayerShipCargo,
+                context.Definitions);
             return true;
         }
 

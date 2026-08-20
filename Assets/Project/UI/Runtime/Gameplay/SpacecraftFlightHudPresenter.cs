@@ -17,8 +17,7 @@ namespace Farion.UI.Gameplay
     public sealed class SpacecraftFlightHudPresenter : MonoBehaviour
     {
         static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
-        const string SectionLabelOpen = "<size=72%><alpha=#96>";
-        const string SectionLabelClose = "</alpha></size>";
+        const float VelocityVectorProjectionDistance = 1000f;
 
         [Header("Design")]
         [SerializeField] UiTheme theme;
@@ -30,12 +29,16 @@ namespace Farion.UI.Gameplay
 
         [Header("Views")]
         [SerializeField] TMP_Text navigationText;
+        [SerializeField] TMP_Text phaseText;
         [SerializeField] TMP_Text advisoryText;
         [SerializeField] RectTransform navigationMarker;
         [SerializeField] TMP_Text navigationMarkerText;
+        [SerializeField] RectTransform velocityVectorMarker;
         [SerializeField] SpacecraftFlightHudGraphics graphics;
         [Min(0f)]
         [SerializeField] float navigationMarkerEdgePadding = 48f;
+        [Min(0f)]
+        [SerializeField] float velocityVectorMinimumSpeed = 2f;
 
         [Header("Refresh")]
         [Min(1f)]
@@ -48,6 +51,7 @@ namespace Farion.UI.Gameplay
         SpacecraftLandingComputer landingComputer;
         SpacecraftLandingGuidanceComputer guidanceComputer;
         SpacecraftLandingGearAnimator landingGear;
+        SpacecraftOrbitComputer orbitComputer;
         ILocalPilotContext pilotContext;
         float nextRefreshTime;
         bool visible;
@@ -100,6 +104,7 @@ namespace Farion.UI.Gameplay
             refreshRate = Mathf.Max(1f, refreshRate);
             navigationMarkerEdgePadding =
                 Mathf.Max(0f, navigationMarkerEdgePadding);
+            velocityVectorMinimumSpeed = Mathf.Max(0f, velocityVectorMinimumSpeed);
             if (pilotContextSource != null && pilotContextSource is not ILocalPilotContext)
             {
                 pilotContextSource = null;
@@ -147,6 +152,7 @@ namespace Farion.UI.Gameplay
         void LateUpdate()
         {
             RefreshNavigationMarker();
+            RefreshVelocityVector();
         }
 
         void ResolveSources()
@@ -164,22 +170,26 @@ namespace Farion.UI.Gameplay
             landingComputer = motor != null ? motor.GetComponent<SpacecraftLandingComputer>() : null;
             guidanceComputer = motor != null ? motor.GetComponent<SpacecraftLandingGuidanceComputer>() : null;
             landingGear = motor != null ? motor.GetComponent<SpacecraftLandingGearAnimator>() : null;
+            orbitComputer = motor != null ? motor.GetComponent<SpacecraftOrbitComputer>() : null;
         }
 
         void RefreshText()
         {
             SpacecraftMovementTelemetry telemetry = motor.Telemetry;
-            float speedScale = motor.FlightProfile != null
-                ? motor.FlightProfile.MaxBoostForwardSpeed
-                : 260f;
-            graphics?.RefreshTelemetry(telemetry, speedScale);
+            SpacecraftFlightProfile profile = motor.FlightProfile;
+            graphics?.RefreshTelemetry(
+                telemetry,
+                motor.CurrentLocalTranslationInput.z,
+                profile != null ? profile.MaxForwardSpeed : 180f,
+                profile != null ? profile.MaxReverseSpeed : 70f);
+
+            if (phaseText != null)
+            {
+                phaseText.text = ResolvePhaseLabel();
+                phaseText.color = ResolvePhaseColor();
+            }
 
             navigationBuilder.Clear();
-            navigationBuilder
-                .Append(SectionLabelOpen)
-                .Append("NAVIGATION / LANDING")
-                .Append(SectionLabelClose)
-                .AppendLine();
             float targetDistance = AppendNavigationTarget(telemetry);
             SpacecraftLandingAssessment landingAssessment =
                 landingComputer != null
@@ -191,34 +201,35 @@ namespace Farion.UI.Gameplay
             {
                 var frame = celestialProbe.CurrentSample;
                 navigationBuilder
-                    .Append("ALTITUDE    ")
-                    .Append(frame.SurfaceAltitude.ToString("0.0", InvariantCulture))
-                    .Append(" m  V/S ")
+                    .Append("ALTITUDE    ");
+                AppendDistance(navigationBuilder, frame.SurfaceAltitude);
+                navigationBuilder
+                    .Append("  V/S ")
                     .Append(frame.SurfaceNormalVelocity.ToString("+0.0;-0.0;0.0", InvariantCulture))
                     .Append(" m/s")
                     .AppendLine()
                     .Append("LATERAL     ")
                     .Append(frame.SurfaceTangentialSpeed.ToString("0.0", InvariantCulture))
                     .Append(" m/s  GEAR ")
-                    .Append(ResolveGearLabel());
+                    .Append(ResolveGearLabel())
+                    .AppendLine();
                 graphics?.RefreshLanding(
                     frame.SurfaceNormalVelocity,
                     frame.SurfaceTangentialSpeed,
+                    landingAssessment.VerticalSpeedLimit,
+                    landingAssessment.TangentialSpeedLimit,
                     hasFrame: true);
             }
             else
             {
-                graphics?.RefreshLanding(0f, 0f, hasFrame: false);
-                if (navigationTarget == null)
-                {
-                    navigationBuilder.Append("MODE        CRUISE");
-                }
-
+                graphics?.RefreshLanding(0f, 0f, 0f, 0f, hasFrame: false);
                 navigationBuilder
-                    .AppendLine()
                     .Append("GEAR        ")
-                    .Append(ResolveGearLabel());
+                    .Append(ResolveGearLabel())
+                    .AppendLine();
             }
+
+            AppendOrbit();
             SetText(navigationText, navigationBuilder);
             RefreshNavigationMarkerText(targetDistance);
 
@@ -235,6 +246,78 @@ namespace Farion.UI.Gameplay
                 advisoryText.text = advisory;
                 advisoryText.color = ResolveAdvisoryColor();
             }
+        }
+
+        void AppendOrbit()
+        {
+            SpacecraftOrbitSample orbit = orbitComputer != null
+                ? orbitComputer.CurrentOrbit
+                : SpacecraftOrbitSample.NoFrame;
+            if (!orbit.HasFrame ||
+                orbit.Regime == SpacecraftOrbitRegime.SurfaceProximity)
+            {
+                return;
+            }
+
+            navigationBuilder.Append("APOAPSIS    ");
+            if (orbit.IsBound)
+            {
+                AppendDistance(navigationBuilder, orbit.ApoapsisAltitude);
+            }
+            else
+            {
+                navigationBuilder.Append("ESCAPE");
+            }
+
+            navigationBuilder
+                .Append("  PE ");
+            AppendDistance(navigationBuilder, orbit.PeriapsisAltitude);
+            navigationBuilder
+                .AppendLine()
+                .Append("ECC         ")
+                .Append(orbit.Eccentricity.ToString("0.000", InvariantCulture));
+            if (orbit.IsBound && orbit.OrbitalPeriod > 0f)
+            {
+                navigationBuilder.Append("  PERIOD ");
+                AppendDuration(navigationBuilder, orbit.OrbitalPeriod);
+            }
+        }
+
+        static void AppendDuration(StringBuilder builder, float seconds)
+        {
+            int total = Mathf.Max(0, Mathf.RoundToInt(seconds));
+            int hours = total / 3600;
+            int minutes = total % 3600 / 60;
+            if (hours > 0)
+            {
+                builder
+                    .Append(hours.ToString(InvariantCulture))
+                    .Append('h')
+                    .Append(minutes.ToString("00", InvariantCulture));
+                return;
+            }
+
+            builder
+                .Append(minutes.ToString(InvariantCulture))
+                .Append(':')
+                .Append((total % 60).ToString("00", InvariantCulture));
+        }
+
+        Color ResolvePhaseColor()
+        {
+            SpacecraftApproachPhase phase = landingComputer != null
+                ? landingComputer.Phase
+                : SpacecraftApproachPhase.NoFrame;
+            return phase switch
+            {
+                SpacecraftApproachPhase.UnsafeTouchdown => ResolveCriticalColor(),
+                SpacecraftApproachPhase.Submerged => ResolveCriticalColor(),
+                SpacecraftApproachPhase.TouchdownWindow => ResolveNominalColor(),
+                SpacecraftApproachPhase.LowApproach => ResolveCautionColor(),
+                SpacecraftApproachPhase.HighDescent => ResolveCautionColor(),
+                SpacecraftApproachPhase.AtmosphericDescent => ResolveCautionColor(),
+                _ => Theme.SupportingText
+            };
         }
 
         float AppendNavigationTarget(SpacecraftMovementTelemetry telemetry)
@@ -366,6 +449,79 @@ namespace Farion.UI.Gameplay
             navigationMarkerText.SetText(markerBuilder);
         }
 
+        void RefreshVelocityVector()
+        {
+            bool shouldShow =
+                visible &&
+                motor != null &&
+                worldCamera != null &&
+                velocityVectorMarker != null &&
+                velocityVectorMarker.parent is RectTransform;
+            if (!shouldShow)
+            {
+                SetVelocityVectorActive(false);
+                graphics?.RefreshVelocityVector(false);
+                return;
+            }
+
+            Vector3 velocity = motor.Telemetry.WorldRelativeVelocity;
+            if (velocity.magnitude < velocityVectorMinimumSpeed)
+            {
+                SetVelocityVectorActive(false);
+                graphics?.RefreshVelocityVector(false);
+                return;
+            }
+
+            Vector3 projected = worldCamera.transform.position +
+                velocity.normalized * VelocityVectorProjectionDistance;
+            Vector3 viewport = worldCamera.WorldToViewportPoint(projected);
+            bool onScreen =
+                viewport.z > 0f &&
+                viewport.x > 0.03f && viewport.x < 0.97f &&
+                viewport.y > 0.03f && viewport.y < 0.97f;
+
+            SetVelocityVectorActive(true);
+            if (onScreen)
+            {
+                RectTransform bounds = (RectTransform)velocityVectorMarker.parent;
+                velocityVectorMarker.anchoredPosition = new Vector2(
+                    (viewport.x - 0.5f) * bounds.rect.width,
+                    (viewport.y - 0.5f) * bounds.rect.height);
+            }
+
+            graphics?.RefreshVelocityVector(onScreen);
+        }
+
+        void SetVelocityVectorActive(bool active)
+        {
+            if (velocityVectorMarker != null &&
+                velocityVectorMarker.gameObject.activeSelf != active)
+            {
+                velocityVectorMarker.gameObject.SetActive(active);
+            }
+        }
+
+        string ResolvePhaseLabel()
+        {
+            SpacecraftApproachPhase phase = landingComputer != null
+                ? landingComputer.Phase
+                : SpacecraftApproachPhase.NoFrame;
+            return phase switch
+            {
+                SpacecraftApproachPhase.BodyProximity => "PROXIMITY",
+                SpacecraftApproachPhase.Orbit => "ORBIT",
+                SpacecraftApproachPhase.Deorbiting => "DEORBIT",
+                SpacecraftApproachPhase.AtmosphericFlight => "ATMOSPHERIC",
+                SpacecraftApproachPhase.AtmosphericDescent => "ATMO DESCENT",
+                SpacecraftApproachPhase.HighDescent => "HIGH DESCENT",
+                SpacecraftApproachPhase.LowApproach => "LOW APPROACH",
+                SpacecraftApproachPhase.TouchdownWindow => "TOUCHDOWN WINDOW",
+                SpacecraftApproachPhase.UnsafeTouchdown => "UNSAFE APPROACH",
+                SpacecraftApproachPhase.Submerged => "SUBMERGED",
+                _ => "DEEP SPACE"
+            };
+        }
+
         string ResolveGearLabel()
         {
             if (landingGear == null)
@@ -400,9 +556,14 @@ namespace Farion.UI.Gameplay
             bool changed = visible != shouldShow;
             visible = shouldShow;
             SetActive(navigationText, visible);
+            SetActive(phaseText, visible);
             SetActive(advisoryText, visible);
             graphics?.SetVisible(visible);
             SetMarkerActive(visible && navigationTarget != null);
+            if (!visible)
+            {
+                SetVelocityVectorActive(false);
+            }
             if (changed && visible)
             {
                 nextRefreshTime = 0f;
@@ -473,6 +634,7 @@ namespace Farion.UI.Gameplay
         {
 
             ApplyFont(navigationText, theme.InstrumentFont, 2f, 2f);
+            ApplyFont(phaseText, theme.InstrumentFont, 2f, 0f);
             ApplyFont(navigationMarkerText, theme.InstrumentFont, 2f, 0f);
             ApplyFont(advisoryText, theme.InterfaceMediumFont, 5f, 0f);
         }

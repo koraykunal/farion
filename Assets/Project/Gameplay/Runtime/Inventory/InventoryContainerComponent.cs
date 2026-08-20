@@ -578,6 +578,11 @@ namespace Farion.Gameplay.Inventory
             }
         }
 
+        public void RefreshIdentity()
+        {
+            InvalidateRuntimeState();
+        }
+
         void InvalidateRuntimeState()
         {
             state = null;

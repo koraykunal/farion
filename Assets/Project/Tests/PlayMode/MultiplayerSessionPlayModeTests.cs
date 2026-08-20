@@ -40,11 +40,11 @@ namespace Farion.Tests.PlayMode
         public IEnumerator SessionFactoryReusesTheActiveRootAndIdleStopClearsMode()
         {
             Assert.That(
-                MultiplayerDevelopmentRunner.TryCreateSession(
+                MultiplayerSessionLauncher.TryCreateSession(
                     out MultiplayerSessionController first),
                 Is.True);
             Assert.That(
-                MultiplayerDevelopmentRunner.TryCreateSession(
+                MultiplayerSessionLauncher.TryCreateSession(
                     out MultiplayerSessionController second),
                 Is.True);
             Assert.That(second, Is.SameAs(first));
@@ -64,9 +64,13 @@ namespace Farion.Tests.PlayMode
         public IEnumerator TransportConnectionDoesNotReportReadyBeforeOwnedPlayer()
         {
             Assert.That(
-                MultiplayerDevelopmentRunner.TryCreateSession(
+                MultiplayerSessionLauncher.TryCreateSession(
                     out MultiplayerSessionController session),
                 Is.True);
+            Invoke(
+                session,
+                "SelectClientTransport",
+                MultiplayerTransportKind.Direct);
             Invoke(session, "SetState", MultiplayerSessionState.Starting);
 
             Invoke(

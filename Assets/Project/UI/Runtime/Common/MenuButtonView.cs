@@ -1,5 +1,6 @@
 using System;
 using Farion.UI.Foundation;
+using Farion.UI.Localization;
 using Farion.UI.Styling;
 using DG.Tweening;
 using TMPro;
@@ -61,13 +62,16 @@ namespace Farion.UI.Common
 
         // Colors and durations come from the theme; nothing here is per-instance authored.
         UiTheme Theme => theme = UiTheme.Resolve(theme);
-        Color NormalPanel => Theme.ButtonSurface;
-        Color HighlightedPanel => Theme.ButtonSurfaceHighlighted;
+        Color NormalPanel => TintForRole(Theme.ButtonSurface, 0.18f);
+        Color HighlightedPanel => TintForRole(Theme.ButtonSurfaceHighlighted, 0.3f);
         Color NormalTitle => Theme.SecondaryText;
-        Color HighlightedTitle => Theme.PrimaryText;
+        Color HighlightedTitle => destructive
+            ? Color.Lerp(Theme.PrimaryText, Theme.Critical, 0.55f)
+            : Theme.PrimaryText;
         Color NormalSubtitle => Theme.SecondaryText;
         Color HighlightedSubtitle => Theme.SupportingText;
         Color AccentColor => destructive ? Theme.Critical : Theme.Focus;
+        float RestingAccentAmount => destructive ? 0.32f : 0f;
 
         public event Action Clicked;
         public bool Available => available;
@@ -347,7 +351,9 @@ namespace Farion.UI.Common
             }
 
             SetAccentVisible(accentBar, visualAmount);
-            SetAccentVisible(selectionFrame, visualAmount * 0.95f);
+            SetAccentVisible(
+                selectionFrame,
+                Mathf.Lerp(RestingAccentAmount, 0.95f, visualAmount));
 
             if (contentRoot != null)
             {
@@ -407,6 +413,13 @@ namespace Farion.UI.Common
             ApplyIconLayout(hasIcon);
         }
 
+        Color TintForRole(Color surface, float amount)
+        {
+            return destructive
+                ? Color.Lerp(surface, WithAlpha(Theme.Critical, surface.a), amount)
+                : surface;
+        }
+
         static Color WithAlpha(Color color, float alpha)
         {
             color.a = alpha;
@@ -415,9 +428,7 @@ namespace Farion.UI.Common
 
         static string ToMenuLabel(string value)
         {
-            return string.IsNullOrWhiteSpace(value)
-                ? string.Empty
-                : value.ToUpperInvariant();
+            return UiLocalization.ToDisplayUpper(value);
         }
 
         bool IsReducedMotionEnabled()

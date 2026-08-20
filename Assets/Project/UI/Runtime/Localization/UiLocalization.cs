@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 using UnityEngine.Localization.Tables;
@@ -36,6 +37,23 @@ namespace Farion.UI.Localization
             }
 
             return value;
+        }
+
+        public static string ToDisplayUpper(string value)
+        {
+            return string.IsNullOrWhiteSpace(value)
+                ? string.Empty
+                : value.ToUpper(ResolveCulture());
+        }
+
+        public static CultureInfo ResolveCulture()
+        {
+            Locale locale = LocalizationSettings.HasSettings
+                ? LocalizationSettings.SelectedLocale
+                : null;
+            return locale != null && locale.Identifier.CultureInfo != null
+                ? locale.Identifier.CultureInfo
+                : CultureInfo.InvariantCulture;
         }
 
         public static bool TrySelectLocale(string localeCode)

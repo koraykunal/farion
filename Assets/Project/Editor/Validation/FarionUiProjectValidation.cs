@@ -425,6 +425,16 @@ namespace Farion.Editor.Validation
                 prefab.GetComponentsInChildren<UiSettingsOptionView>(true);
             ValidateSettingsOptions(options, report);
 
+            UiSettingsScreenPresenter settingsPresenter =
+                prefab.GetComponentInChildren<UiSettingsScreenPresenter>(true);
+            if (settingsPresenter != null &&
+                !settingsPresenter.HasCompleteDisplayControls)
+            {
+                report.AddError(
+                    $"{SettingsPrefabPath}: display mode, resolution, and " +
+                    "refresh rate dropdowns must all be authored.");
+            }
+
             ValidateRequiredComponentInChildren<UiSettingsActionView>(
                 prefab,
                 SettingsPrefabPath,
@@ -533,6 +543,13 @@ namespace Farion.Editor.Validation
             }
         }
 
+        static readonly UiSettingId[] DropdownBackedSettings =
+        {
+            UiSettingId.DisplayMode,
+            UiSettingId.Resolution,
+            UiSettingId.RefreshRate
+        };
+
         static void ValidateSettingsOptions(
             UiSettingsOptionView[] options,
             FarionValidationReport report)
@@ -559,6 +576,11 @@ namespace Farion.Editor.Validation
 
             foreach (UiSettingId required in Enum.GetValues(typeof(UiSettingId)))
             {
+                if (Array.IndexOf(DropdownBackedSettings, required) >= 0)
+                {
+                    continue;
+                }
+
                 if (!authored.Contains(required))
                 {
                     report.AddError(

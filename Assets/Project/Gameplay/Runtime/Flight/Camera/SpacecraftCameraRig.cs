@@ -1,4 +1,5 @@
 using Farion.Core.Physics;
+using Farion.Gameplay.Input;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -476,7 +477,7 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            float targetFov = baseFieldOfView;
+            float targetFov = FarionViewPreferences.ResolveFieldOfView(baseFieldOfView);
             if (motor != null)
             {
                 SpacecraftMovementTelemetry telemetry = motor.Telemetry;

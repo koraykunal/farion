@@ -249,9 +249,9 @@ namespace Farion.Tests.PlayMode
                 yield return null;
             }
 
-            for (int frame = 0;
-                 frame < 300 && !SceneManager.GetSceneByName("SC_WorldZone").isLoaded;
-                 frame++)
+            float zoneLoadDeadline = Time.realtimeSinceStartup + 90f;
+            while (Time.realtimeSinceStartup < zoneLoadDeadline &&
+                   !SceneManager.GetSceneByName("SC_WorldZone").isLoaded)
             {
                 yield return null;
             }

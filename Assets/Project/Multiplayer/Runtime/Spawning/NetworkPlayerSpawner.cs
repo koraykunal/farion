@@ -1,6 +1,9 @@
 using Farion.Core.Identity;
 using System.Collections.Generic;
+using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Inventory;
+using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
@@ -19,7 +22,7 @@ namespace Farion.Multiplayer.Spawning
     [RequireComponent(typeof(NetworkManager))]
     public sealed class NetworkPlayerSpawner : MonoBehaviour
     {
-        const int MaximumPlayers = 4;
+        public const int MaximumPlayers = 4;
 
         [SerializeField] NetworkManager networkManager;
         [SerializeField] NetworkObject sessionPlayerPrefab;
@@ -31,8 +34,11 @@ namespace Farion.Multiplayer.Spawning
         readonly Dictionary<int, NetworkObject> players = new();
         readonly Dictionary<SceneHandle, MultiplayerSceneContext> contexts = new();
         readonly Dictionary<SceneHandle, Dictionary<int, NetworkObject>> starterShips = new();
+        readonly Dictionary<string, MultiplayerPlayerSaveEntry> restoredPlayers = new();
+        readonly List<MultiplayerShipCargoSaveEntry> restoredShipCargo = new();
         ulong nextSessionPlayerId;
         NetworkWorldOriginAuthority originAuthority;
+        GameplayDefinitionRegistry definitions;
 
         public int SpawnedPlayerCount => players.Count;
         public int SessionPlayerCount => sessionPlayers.Count;
@@ -56,11 +62,25 @@ namespace Farion.Multiplayer.Spawning
             return explorer != null;
         }
 
+        bool TryResolveDefinitions(out GameplayDefinitionRegistry registry)
+        {
+            registry = definitions;
+            if (registry != null)
+            {
+                return true;
+            }
+
+            if (TryGetRuntimeBindings(out GameplayRuntimeBindings bindings))
+            {
+                registry = bindings.Definitions;
+            }
+
+            return registry != null;
+        }
+
         internal bool TryGetRuntimeBindings(out GameplayRuntimeBindings bindings)
         {
             bindings = null;
-            // ponytail: single active zone context assumed (matches current
-            // one-zone-scene validation); revisit if multi-zone hosting lands.
             foreach (MultiplayerSceneContext context in contexts.Values)
             {
                 if (context != null && context.RuntimeRoot != null)
@@ -119,6 +139,338 @@ namespace Farion.Multiplayer.Spawning
             RefreshStarterShips(sceneContext);
         }
 
+        public void LoadRestoredState(
+            IReadOnlyList<MultiplayerPlayerSaveEntry> players,
+            GameplayDefinitionRegistry definitionRegistry)
+        {
+            restoredPlayers.Clear();
+            definitions = definitionRegistry;
+            if (players == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                MultiplayerPlayerSaveEntry entry = players[i];
+                if (entry != null && entry.IsValid)
+                {
+                    restoredPlayers[entry.PersistentPlayerId] = entry;
+                }
+            }
+        }
+
+        internal void RestorePlayerState(NetworkSessionPlayer sessionPlayer)
+        {
+            if (!networkManager.IsServerStarted ||
+                sessionPlayer == null ||
+                !TryResolveDefinitions(out GameplayDefinitionRegistry registry))
+            {
+                return;
+            }
+
+            ApplyRestoredShipCargo(restoredShipCargo);
+
+            if (string.IsNullOrEmpty(sessionPlayer.PersistentPlayerId) ||
+                !restoredPlayers.TryGetValue(
+                    sessionPlayer.PersistentPlayerId,
+                    out MultiplayerPlayerSaveEntry entry) ||
+                !TryGetSpawnedExplorer(
+                    sessionPlayer,
+                    out NetworkExplorerController explorer))
+            {
+                return;
+            }
+
+            InventoryContainerComponent inventory =
+                explorer.GetComponentInChildren<InventoryContainerComponent>(true);
+            if (inventory != null && entry.CarriedInventory != null)
+            {
+                inventory.ApplyContainerSnapshot(entry.CarriedInventory, registry);
+                sessionPlayer.GetComponent<NetworkGameplayCommands>()
+                    ?.PushOwnerInventory(inventory);
+            }
+
+            restoredPlayers.Remove(sessionPlayer.PersistentPlayerId);
+        }
+
+        void PreservePlayerState(int connectionId)
+        {
+            if (!sessionPlayers.TryGetValue(
+                    connectionId,
+                    out NetworkObject sessionObject) ||
+                sessionObject == null)
+            {
+                return;
+            }
+
+            NetworkSessionPlayer sessionPlayer =
+                sessionObject.GetComponent<NetworkSessionPlayer>();
+            if (sessionPlayer == null ||
+                string.IsNullOrEmpty(sessionPlayer.PersistentPlayerId) ||
+                !TryCaptureEntry(
+                    sessionPlayer,
+                    connectionId,
+                    out MultiplayerPlayerSaveEntry entry))
+            {
+                return;
+            }
+
+            restoredPlayers[sessionPlayer.PersistentPlayerId] = entry;
+        }
+
+        bool TryCaptureEntry(
+            NetworkSessionPlayer sessionPlayer,
+            int connectionId,
+            out MultiplayerPlayerSaveEntry entry)
+        {
+            entry = null;
+            if (!TryGetSpawnedExplorer(
+                    sessionPlayer,
+                    out NetworkExplorerController explorer))
+            {
+                return false;
+            }
+
+            InventoryContainerComponent inventory =
+                explorer.GetComponentInChildren<InventoryContainerComponent>(true);
+            entry = new MultiplayerPlayerSaveEntry(
+                sessionPlayer.PersistentPlayerId,
+                sessionPlayer.DisplayName,
+                slots.TryGetReserved(connectionId, out int slot) ? slot : -1,
+                inventory != null ? inventory.CaptureContainerSnapshot() : null);
+            return true;
+        }
+
+        public void CaptureState(
+            List<MultiplayerPlayerSaveEntry> players,
+            List<MultiplayerShipCargoSaveEntry> shipCargo)
+        {
+            if (players == null || shipCargo == null)
+            {
+                return;
+            }
+
+            foreach (MultiplayerPlayerSaveEntry pending in restoredPlayers.Values)
+            {
+                players.Add(pending);
+            }
+
+            foreach (KeyValuePair<int, NetworkObject> pair in sessionPlayers)
+            {
+                NetworkSessionPlayer sessionPlayer = pair.Value != null
+                    ? pair.Value.GetComponent<NetworkSessionPlayer>()
+                    : null;
+                if (sessionPlayer != null &&
+                    !string.IsNullOrEmpty(sessionPlayer.PersistentPlayerId) &&
+                    TryCaptureEntry(
+                        sessionPlayer,
+                        pair.Key,
+                        out MultiplayerPlayerSaveEntry entry))
+                {
+                    players.Add(entry);
+                }
+            }
+
+            HashSet<string> capturedOwners = new();
+            HashSet<int> capturedSlots = new();
+            foreach (Dictionary<int, NetworkObject> ships in starterShips.Values)
+            {
+                foreach (KeyValuePair<int, NetworkObject> pair in ships)
+                {
+                    NetworkStarterShip ship = pair.Value != null
+                        ? pair.Value.GetComponent<NetworkStarterShip>()
+                        : null;
+                    if (ship == null || ship.Cargo == null)
+                    {
+                        continue;
+                    }
+
+                    string owner = ResolveSlotOwner(pair.Key);
+                    if (!string.IsNullOrEmpty(owner))
+                    {
+                        capturedOwners.Add(owner);
+                    }
+
+                    capturedSlots.Add(pair.Key);
+                    shipCargo.Add(new MultiplayerShipCargoSaveEntry(
+                        owner,
+                        pair.Key,
+                        ship.Cargo.CaptureContainerSnapshot()));
+                }
+            }
+
+            for (int i = 0; i < restoredShipCargo.Count; i++)
+            {
+                MultiplayerShipCargoSaveEntry pending = restoredShipCargo[i];
+                bool alreadyCaptured = pending.HasOwner
+                    ? capturedOwners.Contains(pending.PersistentPlayerId)
+                    : capturedSlots.Contains(pending.FormationSlot);
+                if (!alreadyCaptured)
+                {
+                    shipCargo.Add(pending);
+                }
+            }
+        }
+
+        public void LoadRestoredShipCargo(
+            IReadOnlyList<MultiplayerShipCargoSaveEntry> shipCargo)
+        {
+            restoredShipCargo.Clear();
+            if (shipCargo == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < shipCargo.Count; i++)
+            {
+                if (shipCargo[i] != null && shipCargo[i].IsValid)
+                {
+                    restoredShipCargo.Add(shipCargo[i]);
+                }
+            }
+
+            ApplyRestoredShipCargo(restoredShipCargo);
+        }
+
+        void ApplyRestoredShipCargo(List<MultiplayerShipCargoSaveEntry> shipCargo)
+        {
+            if (shipCargo.Count == 0 ||
+                !TryResolveDefinitions(out GameplayDefinitionRegistry registry))
+            {
+                return;
+            }
+
+            for (int i = shipCargo.Count - 1; i >= 0; i--)
+            {
+                MultiplayerShipCargoSaveEntry entry = shipCargo[i];
+                if (!TryResolveCargoSlot(entry, out int slot) ||
+                    !TryGetStarterShipInSlot(slot, out NetworkStarterShip starterShip))
+                {
+                    continue;
+                }
+
+                starterShip.Cargo.ApplyContainerSnapshot(entry.Cargo, registry);
+                shipCargo.RemoveAt(i);
+            }
+        }
+
+        bool TryResolveCargoSlot(
+            MultiplayerShipCargoSaveEntry entry,
+            out int slot)
+        {
+            if (entry.HasOwner)
+            {
+                return TryGetSlotForPersistentId(entry.PersistentPlayerId, out slot);
+            }
+
+            slot = entry.FormationSlot;
+            return slot >= 0;
+        }
+
+        bool TryGetSlotForPersistentId(string persistentPlayerId, out int slot)
+        {
+            slot = -1;
+            if (string.IsNullOrWhiteSpace(persistentPlayerId))
+            {
+                return false;
+            }
+
+            foreach (KeyValuePair<int, NetworkObject> pair in sessionPlayers)
+            {
+                NetworkSessionPlayer sessionPlayer = pair.Value != null
+                    ? pair.Value.GetComponent<NetworkSessionPlayer>()
+                    : null;
+                if (sessionPlayer != null &&
+                    sessionPlayer.PersistentPlayerId == persistentPlayerId)
+                {
+                    return slots.TryGetReserved(pair.Key, out slot);
+                }
+            }
+
+            return false;
+        }
+
+        string ResolveSlotOwner(int slot)
+        {
+            foreach (KeyValuePair<int, NetworkObject> pair in sessionPlayers)
+            {
+                if (!slots.TryGetReserved(pair.Key, out int reserved) ||
+                    reserved != slot)
+                {
+                    continue;
+                }
+
+                NetworkSessionPlayer sessionPlayer = pair.Value != null
+                    ? pair.Value.GetComponent<NetworkSessionPlayer>()
+                    : null;
+                return sessionPlayer != null
+                    ? sessionPlayer.PersistentPlayerId
+                    : string.Empty;
+            }
+
+            return string.Empty;
+        }
+
+        bool TryGetStarterShipInSlot(int slot, out NetworkStarterShip starterShip)
+        {
+            starterShip = null;
+            if (slot < 0)
+            {
+                return false;
+            }
+
+            foreach (Dictionary<int, NetworkObject> ships in starterShips.Values)
+            {
+                if (!ships.TryGetValue(slot, out NetworkObject ship) ||
+                    ship == null)
+                {
+                    continue;
+                }
+
+                NetworkStarterShip candidate =
+                    ship.GetComponent<NetworkStarterShip>();
+                if (candidate != null && candidate.Cargo != null)
+                {
+                    starterShip = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        void PreserveStarterShipCargo(NetworkStarterShip starterShip, int slot)
+        {
+            if (starterShip == null || starterShip.Cargo == null)
+            {
+                return;
+            }
+
+            MultiplayerShipCargoSaveEntry entry = new(
+                ResolveSlotOwner(slot),
+                slot,
+                starterShip.Cargo.CaptureContainerSnapshot());
+            if (!entry.IsValid)
+            {
+                return;
+            }
+
+            for (int i = restoredShipCargo.Count - 1; i >= 0; i--)
+            {
+                MultiplayerShipCargoSaveEntry existing = restoredShipCargo[i];
+                bool duplicate = entry.HasOwner && existing.HasOwner
+                    ? existing.PersistentPlayerId == entry.PersistentPlayerId
+                    : existing.FormationSlot == slot;
+                if (duplicate)
+                {
+                    restoredShipCargo.RemoveAt(i);
+                }
+            }
+
+            restoredShipCargo.Add(entry);
+        }
+
         public void ResetSession()
         {
             sessionPlayers.Clear();
@@ -127,6 +479,9 @@ namespace Farion.Multiplayer.Spawning
             nextSessionPlayerId = 0UL;
             contexts.Clear();
             starterShips.Clear();
+            restoredPlayers.Clear();
+            restoredShipCargo.Clear();
+            definitions = null;
             originAuthority = null;
         }
 
@@ -222,6 +577,9 @@ namespace Farion.Multiplayer.Spawning
             sceneContext.AttachToShiftedWorld(player.transform);
             players.Add(connection.ClientId, player);
             connection.SetFirstObject(player);
+            RestorePlayerState(
+                sessionPlayers[connection.ClientId]
+                    .GetComponent<NetworkSessionPlayer>());
 
             if (IsHostConnection(connection))
             {
@@ -243,6 +601,7 @@ namespace Farion.Multiplayer.Spawning
                 return;
             }
 
+            PreservePlayerState(args.ConnectionId);
             ReleaseStarterShipClaims(args.ConnectionId);
             RemoveStarterShip(args.ConnectionId);
             sessionPlayers.Remove(args.ConnectionId);
@@ -376,6 +735,8 @@ namespace Farion.Multiplayer.Spawning
             {
                 DespawnStarterShip(ships, staleSlots[i]);
             }
+
+            ApplyRestoredShipCargo(restoredShipCargo);
         }
 
         void RemoveStarterShip(int connectionId)
@@ -655,6 +1016,7 @@ namespace Farion.Multiplayer.Spawning
 
             NetworkStarterShip starterShip =
                 ship.GetComponent<NetworkStarterShip>();
+            PreserveStarterShipCargo(starterShip, slot);
             if (starterShip != null && starterShip.IsClaimed)
             {
                 ulong claimedSessionPlayerId =

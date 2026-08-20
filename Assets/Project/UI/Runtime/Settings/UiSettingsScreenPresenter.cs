@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Globalization;
 using Farion.Audio;
+using Farion.UI.Common;
+using Farion.UI.Feedback;
 using Farion.UI.Foundation;
 using Farion.UI.Localization;
 using Farion.UI.Navigation;
@@ -25,6 +28,9 @@ namespace Farion.UI.Settings
         [SerializeField] GameObject interfaceGroup;
         [SerializeField] GameObject accessibilityGroup;
         [SerializeField] GameObject audioGroup;
+        [SerializeField] GameObject displayGroup;
+        [SerializeField] GameObject controlsGroup;
+        [SerializeField] UiKeyBindingsPanel keyBindingsPanel;
 
         [Header("Header")]
         [SerializeField] TMP_Text titleText;
@@ -35,14 +41,27 @@ namespace Farion.UI.Settings
         [SerializeField] TMP_Text detailDescriptionText;
         [SerializeField] TMP_Text detailValueText;
 
+        [Header("Display")]
+        [SerializeField] UiDropdownView displayModeDropdown;
+        [SerializeField] UiDropdownView resolutionDropdown;
+        [SerializeField] UiDropdownView refreshRateDropdown;
+
         [Header("Actions")]
+        [SerializeField] UiConfirmationDialog displayConfirmationDialog;
+        [SerializeField, Min(3f)] float displayRevertSeconds = 12f;
+        [SerializeField] UiSettingsActionView applyActionView;
+        [SerializeField] TMP_Text applyLabelText;
+        [SerializeField] Button applyButton;
         [SerializeField] TMP_Text backLabelText;
         [SerializeField] Button backButton;
 
         bool subscribed;
         AudioDirector audioDirector;
-        UiSettingsCategory activeCategory = UiSettingsCategory.Interface;
-        UiSettingsOptionView focusedOption;
+        UiSettingsCategory activeCategory = UiSettingsCategory.Display;
+        IUiValueControl focusedControl;
+        readonly List<IUiValueControl> activeControls = new();
+        readonly List<IUiValueControl> lookupControls = new();
+        readonly List<string> optionLabels = new();
 
         void Reset()
         {
@@ -72,12 +91,70 @@ namespace Farion.UI.Settings
         void OnDisable()
         {
             Unsubscribe();
+            preferences?.DiscardPendingDisplayPreferences();
         }
+
+        public bool HasCompleteDisplayControls =>
+            displayModeDropdown != null &&
+            resolutionDropdown != null &&
+            refreshRateDropdown != null;
 
         public void Close()
         {
             ResolveReferences();
             systemRoot?.ScreenRouter?.Close(UiScreenId.Settings);
+        }
+
+        public void ApplyDisplayPreferences()
+        {
+            if (preferences == null || !preferences.HasPendingDisplayChanges)
+            {
+                return;
+            }
+
+            preferences.ApplyDisplayPreferences();
+            RequestDisplayConfirmation();
+            if (activeCategory == UiSettingsCategory.Display)
+            {
+                focusedControl = FindFirstControl(activeCategory);
+                focusedControl?.Selectable.Select();
+            }
+        }
+
+        void RequestDisplayConfirmation()
+        {
+            ResolveConfirmationDialog();
+            bool presented = displayConfirmationDialog != null &&
+                displayConfirmationDialog.Present(
+                    UiLocalization.ToDisplayUpper(
+                        UiLocalization.Get(UiTextKeys.SettingsDisplayConfirmTitle)),
+                    UiLocalization.Get(UiTextKeys.SettingsDisplayConfirmBody),
+                    UiLocalization.Get(UiTextKeys.SettingsDisplayConfirmKeep),
+                    preferences.ConfirmDisplayPreferences,
+                    UiLocalization.Get(UiTextKeys.SettingsDisplayConfirmRevert),
+                    preferences.RevertDisplayPreferences,
+                    displayRevertSeconds);
+            if (!presented)
+            {
+                preferences.ConfirmDisplayPreferences();
+            }
+        }
+
+        void ResolveConfirmationDialog()
+        {
+            if (displayConfirmationDialog != null)
+            {
+                return;
+            }
+
+            UiSystemRoot root = systemRoot != null
+                ? systemRoot
+                : UiCompositionScope.FindSystemRoot(this);
+            if (root != null)
+            {
+                displayConfirmationDialog =
+                    root.GetComponentInChildren<UiConfirmationDialog>(true);
+            }
         }
 
         void Subscribe()
@@ -109,8 +186,12 @@ namespace Farion.UI.Settings
                 }
 
                 option.AdjustmentRequested += HandleAdjustment;
-                option.Focused += HandleOptionFocused;
+                option.Focused += HandleControlFocused;
             }
+
+            BindDropdown(displayModeDropdown, HandleDisplayModeChanged, true);
+            BindDropdown(resolutionDropdown, HandleResolutionChanged, true);
+            BindDropdown(refreshRateDropdown, HandleRefreshRateChanged, true);
 
             for (int i = 0; i < categories.Count; i++)
             {
@@ -124,6 +205,11 @@ namespace Farion.UI.Settings
             if (backButton != null)
             {
                 backButton.onClick.AddListener(Close);
+            }
+
+            if (applyButton != null)
+            {
+                applyButton.onClick.AddListener(ApplyDisplayPreferences);
             }
 
             subscribed = true;
@@ -158,8 +244,12 @@ namespace Farion.UI.Settings
                 }
 
                 option.AdjustmentRequested -= HandleAdjustment;
-                option.Focused -= HandleOptionFocused;
+                option.Focused -= HandleControlFocused;
             }
+
+            BindDropdown(displayModeDropdown, HandleDisplayModeChanged, false);
+            BindDropdown(resolutionDropdown, HandleResolutionChanged, false);
+            BindDropdown(refreshRateDropdown, HandleRefreshRateChanged, false);
 
             for (int i = 0; i < categories.Count; i++)
             {
@@ -173,6 +263,11 @@ namespace Farion.UI.Settings
             if (backButton != null)
             {
                 backButton.onClick.RemoveListener(Close);
+            }
+
+            if (applyButton != null)
+            {
+                applyButton.onClick.RemoveListener(ApplyDisplayPreferences);
             }
 
             subscribed = false;
@@ -191,10 +286,44 @@ namespace Farion.UI.Settings
             }
         }
 
-        void HandleOptionFocused(UiSettingsOptionView option)
+        void BindDropdown(
+            UiDropdownView dropdown,
+            System.Action<UiDropdownView, int> handler,
+            bool subscribe)
         {
-            focusedOption = option;
+            if (dropdown == null)
+            {
+                return;
+            }
+
+            dropdown.Focused -= HandleControlFocused;
+            dropdown.SelectionChanged -= handler;
+            if (subscribe)
+            {
+                dropdown.Focused += HandleControlFocused;
+                dropdown.SelectionChanged += handler;
+            }
+        }
+
+        void HandleControlFocused(IUiValueControl control)
+        {
+            focusedControl = control;
             RefreshDetail();
+        }
+
+        void HandleDisplayModeChanged(UiDropdownView dropdown, int index)
+        {
+            preferences?.SetDisplayModeIndex(index);
+        }
+
+        void HandleResolutionChanged(UiDropdownView dropdown, int index)
+        {
+            preferences?.SetResolutionIndex(index);
+        }
+
+        void HandleRefreshRateChanged(UiDropdownView dropdown, int index)
+        {
+            preferences?.SetRefreshRateIndex(index);
         }
 
         void HandleAdjustment(UiSettingsOptionView option, int direction)
@@ -239,12 +368,36 @@ namespace Farion.UI.Settings
                 case UiSettingId.UiVolume:
                     audioDirector?.AdjustBusVolume(AudioBusId.Ui, direction);
                     break;
+                case UiSettingId.VSync:
+                    preferences.SetVSyncEnabled(!preferences.VSyncEnabled);
+                    break;
+                case UiSettingId.FieldOfView:
+                    preferences.AdjustFieldOfView(direction);
+                    break;
+                case UiSettingId.MouseSensitivity:
+                    preferences.AdjustMouseSensitivity(direction);
+                    break;
+                case UiSettingId.InvertLookY:
+                    preferences.SetInvertLookY(!preferences.InvertLookY);
+                    break;
+                case UiSettingId.ResetBindings:
+                    if (keyBindingsPanel != null)
+                    {
+                        keyBindingsPanel.ResetAll();
+                    }
+                    else
+                    {
+                        preferences.ResetInputBindings();
+                    }
+
+                    break;
             }
         }
 
         void Refresh()
         {
             SetText(titleText, UiTextKeys.SettingsTitle);
+            SetText(applyLabelText, UiTextKeys.CommonApply);
             SetText(backLabelText, UiTextKeys.CommonBack);
 
             for (int i = 0; i < categories.Count; i++)
@@ -265,7 +418,86 @@ namespace Farion.UI.Settings
                 }
             }
 
+            RefreshDisplayControls();
             SetCategory(activeCategory, moveFocusToOption: false);
+        }
+
+        void RefreshDisplayControls()
+        {
+            if (preferences == null)
+            {
+                return;
+            }
+
+            if (displayModeDropdown != null)
+            {
+                IReadOnlyList<FullScreenMode> modes = preferences.DisplayModes;
+                optionLabels.Clear();
+                for (int i = 0; i < modes.Count; i++)
+                {
+                    optionLabels.Add(
+                        UiLocalization.Get(ResolveDisplayModeKey(modes[i])));
+                }
+
+                displayModeDropdown.ConfigureContent(
+                    UiLocalization.Get(UiTextKeys.SettingsDisplayModeTitle),
+                    UiLocalization.Get(UiTextKeys.SettingsDisplayModeDescription));
+                displayModeDropdown.SetOptions(
+                    optionLabels,
+                    preferences.DisplayModeIndex);
+                displayModeDropdown.SetAvailable(true);
+                displayModeDropdown.SetPending(preferences.HasPendingDisplayMode);
+            }
+
+            if (resolutionDropdown != null)
+            {
+                IReadOnlyList<Vector2Int> resolutions = preferences.Resolutions;
+                optionLabels.Clear();
+                for (int i = 0; i < resolutions.Count; i++)
+                {
+                    optionLabels.Add(
+                        $"{resolutions[i].x} \u00D7 {resolutions[i].y}");
+                }
+
+                resolutionDropdown.ConfigureContent(
+                    UiLocalization.Get(UiTextKeys.SettingsResolutionTitle),
+                    UiLocalization.Get(UiTextKeys.SettingsResolutionDescription));
+                resolutionDropdown.SetOptions(
+                    optionLabels,
+                    preferences.ResolutionIndex);
+                resolutionDropdown.SetAvailable(preferences.HasSelectableResolutions);
+                resolutionDropdown.SetPending(preferences.HasPendingResolution);
+            }
+
+            if (refreshRateDropdown != null)
+            {
+                IReadOnlyList<RefreshRate> rates = preferences.RefreshRates;
+                optionLabels.Clear();
+                for (int i = 0; i < rates.Count; i++)
+                {
+                    optionLabels.Add(FormatRefreshRate(rates[i]));
+                }
+
+                refreshRateDropdown.ConfigureContent(
+                    UiLocalization.Get(UiTextKeys.SettingsRefreshRateTitle),
+                    UiLocalization.Get(UiTextKeys.SettingsRefreshRateDescription));
+                refreshRateDropdown.SetOptions(
+                    optionLabels,
+                    preferences.RefreshRateIndex);
+                refreshRateDropdown.SetAvailable(
+                    preferences.SupportsRefreshRateSelection);
+                refreshRateDropdown.SetPending(preferences.HasPendingRefreshRate);
+            }
+        }
+
+        static string FormatRefreshRate(RefreshRate rate)
+        {
+            CultureInfo culture = UiLocalization.ResolveCulture();
+            double value = rate.value;
+            string number = System.Math.Abs(value - System.Math.Round(value)) < 0.01d
+                ? value.ToString("0", culture)
+                : value.ToString("0.00", culture);
+            return number + " Hz";
         }
 
         void RefreshOption(UiSettingsOptionView option)
@@ -361,6 +593,47 @@ namespace Farion.UI.Settings
                         UiTextKeys.SettingsAudioUiDescription,
                         "Control interface navigation and feedback sounds.");
                     break;
+                case UiSettingId.VSync:
+                    option.ConfigureContent(
+                        UiLocalization.Get(UiTextKeys.SettingsVSyncTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsVSyncDescription),
+                        ResolveBoolean(preferences.VSyncEnabled));
+                    option.SetAvailable(true);
+                    break;
+                case UiSettingId.FieldOfView:
+                    option.ConfigureContent(
+                        UiLocalization.Get(UiTextKeys.SettingsFieldOfViewTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsFieldOfViewDescription),
+                        preferences.FieldOfView.ToString(
+                            "0",
+                            CultureInfo.InvariantCulture));
+                    option.SetAvailable(true);
+                    break;
+                case UiSettingId.MouseSensitivity:
+                    option.ConfigureContent(
+                        UiLocalization.Get(UiTextKeys.SettingsMouseSensitivityTitle),
+                        UiLocalization.Get(
+                            UiTextKeys.SettingsMouseSensitivityDescription),
+                        preferences.MouseSensitivity.ToString(
+                            "0.0",
+                            CultureInfo.InvariantCulture));
+                    option.SetAvailable(true);
+                    break;
+                case UiSettingId.InvertLookY:
+                    option.ConfigureContent(
+                        UiLocalization.Get(UiTextKeys.SettingsInvertLookTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsInvertLookDescription),
+                        ResolveBoolean(preferences.InvertLookY));
+                    option.SetAvailable(true);
+                    break;
+                case UiSettingId.ResetBindings:
+                    option.ConfigureContent(
+                        UiLocalization.Get(UiTextKeys.SettingsResetBindingsTitle),
+                        UiLocalization.Get(
+                            UiTextKeys.SettingsResetBindingsDescription),
+                        UiLocalization.Get(UiTextKeys.CommonApply));
+                    option.SetAvailable(true);
+                    break;
             }
         }
 
@@ -389,7 +662,7 @@ namespace Farion.UI.Settings
             UiSettingsCategory category,
             bool moveFocusToOption)
         {
-            UiSettingsOptionView previousFocus = focusedOption;
+            IUiValueControl previousFocus = focusedControl;
             activeCategory = category;
 
             if (interfaceGroup != null)
@@ -408,6 +681,21 @@ namespace Farion.UI.Settings
                 audioGroup.SetActive(category == UiSettingsCategory.Audio);
             }
 
+            if (displayGroup != null)
+            {
+                displayGroup.SetActive(category == UiSettingsCategory.Display);
+            }
+
+            if (controlsGroup != null)
+            {
+                controlsGroup.SetActive(category == UiSettingsCategory.Controls);
+            }
+
+            applyActionView?.SetAvailable(
+                category == UiSettingsCategory.Display &&
+                preferences != null &&
+                preferences.HasPendingDisplayChanges);
+
             for (int i = 0; i < categories.Count; i++)
             {
                 UiSettingsCategoryView categoryView = categories[i];
@@ -419,22 +707,20 @@ namespace Farion.UI.Settings
 
             if (categoryTitleText != null)
             {
-                categoryTitleText.text = GetCategoryLabel(category).ToUpperInvariant();
+                categoryTitleText.text =
+                    UiLocalization.ToDisplayUpper(GetCategoryLabel(category));
             }
 
             ConfigureNavigation();
-            focusedOption =
-                previousFocus != null &&
-                previousFocus.IsActive() &&
-                previousFocus.IsInteractable() &&
-                BelongsToCategory(previousFocus, category)
+            focusedControl =
+                IsUsable(previousFocus) && BelongsToCategory(previousFocus, category)
                     ? previousFocus
-                    : FindFirstOption(category);
+                    : FindFirstControl(category);
             RefreshDetail();
 
-            if (moveFocusToOption && focusedOption != null)
+            if (moveFocusToOption)
             {
-                focusedOption.Select();
+                focusedControl?.Selectable.Select();
             }
         }
 
@@ -456,27 +742,35 @@ namespace Farion.UI.Settings
                 };
             }
 
-            List<UiSettingsOptionView> activeOptions = new();
-            for (int i = 0; i < options.Count; i++)
-            {
-                UiSettingsOptionView option = options[i];
-                if (option != null && option.IsActive() && option.IsInteractable())
-                {
-                    activeOptions.Add(option);
-                }
-            }
+            CollectControls(activeCategory, activeControls);
+            bool canApply = applyButton != null &&
+                applyButton.gameObject.activeInHierarchy &&
+                applyButton.IsInteractable();
+            Selectable lastControl = activeControls.Count > 0
+                ? activeControls[^1].Selectable
+                : currentCategory;
 
-            for (int i = 0; i < activeOptions.Count; i++)
+            for (int i = 0; i < activeControls.Count; i++)
             {
-                activeOptions[i].navigation = new UiNavigation
+                activeControls[i].Selectable.navigation = new UiNavigation
                 {
                     mode = UiNavigation.Mode.Explicit,
                     selectOnUp = i == 0
                         ? currentCategory
-                        : activeOptions[i - 1],
-                    selectOnDown = i == activeOptions.Count - 1
-                        ? backButton
-                        : activeOptions[i + 1]
+                        : activeControls[i - 1].Selectable,
+                    selectOnDown = i == activeControls.Count - 1
+                        ? canApply ? applyButton : backButton
+                        : activeControls[i + 1].Selectable
+                };
+            }
+
+            if (canApply)
+            {
+                applyButton.navigation = new UiNavigation
+                {
+                    mode = UiNavigation.Mode.Explicit,
+                    selectOnUp = lastControl,
+                    selectOnDown = backButton
                 };
             }
 
@@ -485,86 +779,95 @@ namespace Farion.UI.Settings
                 backButton.navigation = new UiNavigation
                 {
                     mode = UiNavigation.Mode.Explicit,
-                    selectOnUp = activeOptions.Count > 0
-                        ? activeOptions[^1]
-                        : currentCategory,
+                    selectOnUp = canApply ? applyButton : lastControl,
                     selectOnDown = currentCategory
                 };
             }
         }
 
-        UiSettingsOptionView FindFirstOption(UiSettingsCategory category)
+        void CollectControls(
+            UiSettingsCategory category,
+            List<IUiValueControl> result)
         {
-            for (int i = 0; i < options.Count; i++)
+            result.Clear();
+            GameObject group = ResolveGroup(category);
+            if (group == null)
             {
-                UiSettingsOptionView option = options[i];
-                if (option == null ||
-                    !option.IsActive() ||
-                    !option.IsInteractable())
-                {
-                    continue;
-                }
-
-                if (BelongsToCategory(option, category))
-                {
-                    return option;
-                }
+                return;
             }
 
-            return null;
+            Selectable[] candidates =
+                group.GetComponentsInChildren<Selectable>(true);
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                if (candidates[i] is IUiValueControl control && IsUsable(control))
+                {
+                    result.Add(control);
+                }
+            }
         }
 
-        static bool BelongsToCategory(
-            UiSettingsOptionView option,
-            UiSettingsCategory category)
+        GameObject ResolveGroup(UiSettingsCategory category)
         {
-            if (option == null)
-            {
-                return false;
-            }
-
             return category switch
             {
-                UiSettingsCategory.Interface =>
-                    option.SettingId is UiSettingId.Language or UiSettingId.UiScale,
-                UiSettingsCategory.Accessibility =>
-                    option.SettingId is UiSettingId.ReducedMotion or
-                        UiSettingId.Subtitles or
-                        UiSettingId.SubtitleSize,
-                UiSettingsCategory.Audio =>
-                    option.SettingId is UiSettingId.MasterVolume or
-                        UiSettingId.MusicVolume or
-                        UiSettingId.AmbienceVolume or
-                        UiSettingId.SfxVolume or
-                        UiSettingId.UiVolume,
-                _ => false
+                UiSettingsCategory.Controls => controlsGroup,
+                UiSettingsCategory.Display => displayGroup,
+                UiSettingsCategory.Audio => audioGroup,
+                UiSettingsCategory.Interface => interfaceGroup,
+                UiSettingsCategory.Accessibility => accessibilityGroup,
+                _ => null
             };
+        }
+
+        static bool IsUsable(IUiValueControl control)
+        {
+            return control?.Selectable != null &&
+                   control.Selectable.IsActive() &&
+                   control.Selectable.IsInteractable();
+        }
+
+        IUiValueControl FindFirstControl(UiSettingsCategory category)
+        {
+            CollectControls(category, lookupControls);
+            return lookupControls.Count > 0 ? lookupControls[0] : null;
+        }
+
+        bool BelongsToCategory(
+            IUiValueControl control,
+            UiSettingsCategory category)
+        {
+            GameObject group = ResolveGroup(category);
+            return control?.Selectable != null &&
+                   group != null &&
+                   control.Selectable.transform.IsChildOf(group.transform);
         }
 
         void RefreshDetail()
         {
-            UiSettingsOptionView option =
-                focusedOption != null && focusedOption.IsActive()
-                    ? focusedOption
-                    : FindFirstOption(activeCategory);
-            if (option == null)
+            IUiValueControl control = IsUsable(focusedControl)
+                ? focusedControl
+                : FindFirstControl(activeCategory);
+            if (control == null)
             {
                 return;
             }
 
             if (detailTitleText != null)
             {
-                detailTitleText.text = option.DisplayTitle.ToUpperInvariant();
+                detailTitleText.text =
+                    UiLocalization.ToDisplayUpper(control.DisplayTitle);
             }
 
             if (detailDescriptionText != null)
             {
-                detailDescriptionText.text = option.DisplayDescription;
+                detailDescriptionText.text = control.DisplayDescription;
             }
 
             if (detailValueText != null)
             {
-                detailValueText.text = option.DisplayValue.ToUpperInvariant();
+                detailValueText.text =
+                    UiLocalization.ToDisplayUpper(control.DisplayValue);
             }
         }
 
@@ -575,6 +878,16 @@ namespace Farion.UI.Settings
                 : UiLocalization.Get(UiTextKeys.ValueOff);
         }
 
+        static string ResolveDisplayModeKey(FullScreenMode mode)
+        {
+            return mode switch
+            {
+                FullScreenMode.Windowed => UiTextKeys.ValueWindowed,
+                FullScreenMode.FullScreenWindow => UiTextKeys.ValueBorderless,
+                _ => UiTextKeys.ValueFullscreen
+            };
+        }
+
         static string GetCategoryLabel(UiSettingsCategory category)
         {
             return category switch
@@ -583,6 +896,10 @@ namespace Farion.UI.Settings
                     UiLocalization.Get(UiTextKeys.SettingsSubtitle),
                 UiSettingsCategory.Audio =>
                     UiLocalization.Get(UiTextKeys.SettingsSectionAudio),
+                UiSettingsCategory.Display =>
+                    UiLocalization.Get(UiTextKeys.SettingsSectionDisplay),
+                UiSettingsCategory.Controls =>
+                    UiLocalization.Get(UiTextKeys.SettingsSectionControls),
                 _ => UiLocalization.Get(UiTextKeys.SettingsSectionInterface)
             };
         }
@@ -594,6 +911,11 @@ namespace Farion.UI.Settings
             preferences ??= systemRoot != null
                 ? systemRoot.PreferencesService
                 : UiCompositionScope.FindFirstInScope<UiPreferencesService>(this);
+            applyActionView ??= applyButton != null
+                ? applyButton.GetComponent<UiSettingsActionView>()
+                : null;
+
+            keyBindingsPanel ??= GetComponentInChildren<UiKeyBindingsPanel>(true);
 
             options ??= new List<UiSettingsOptionView>();
             if (options.Count == 0)
@@ -618,7 +940,7 @@ namespace Farion.UI.Settings
 
             UiSettingsCategoryView firstCategory = categories.Find(category =>
                 category != null &&
-                category.Category == UiSettingsCategory.Interface &&
+                category.Category == activeCategory &&
                 category.IsActive() &&
                 category.IsInteractable());
             if (firstCategory != null)
@@ -627,10 +949,10 @@ namespace Farion.UI.Settings
                 return;
             }
 
-            UiSettingsOptionView firstOption = FindFirstOption(activeCategory);
-            if (firstOption != null)
+            IUiValueControl firstControl = FindFirstControl(activeCategory);
+            if (firstControl != null)
             {
-                screenView.SetFirstSelection(firstOption);
+                screenView.SetFirstSelection(firstControl.Selectable);
             }
         }
 
@@ -643,6 +965,7 @@ namespace Farion.UI.Settings
             SetFont(detailTitleText, theme.InterfaceMediumFont, FontWeight.Medium);
             SetFont(detailDescriptionText, theme.InterfaceFont, FontWeight.Regular);
             SetFont(detailValueText, theme.InstrumentFont, FontWeight.Medium);
+            SetFont(applyLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
             SetFont(backLabelText, theme.InterfaceMediumFont, FontWeight.Medium);
         }
 

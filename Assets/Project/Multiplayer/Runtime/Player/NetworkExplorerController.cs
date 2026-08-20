@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Farion.Core.Physics;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Actors;
@@ -52,6 +53,17 @@ namespace Farion.Multiplayer.Player
             interactionRaycaster;
         public ulong SessionPlayerId => sessionPlayerId.Value;
 
+        static readonly List<NetworkExplorerController> activeExplorers = new();
+
+        public static IReadOnlyList<NetworkExplorerController> ActiveExplorers =>
+            activeExplorers;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetActiveExplorers()
+        {
+            activeExplorers.Clear();
+        }
+
         internal void InitializeIdentity(ulong value)
         {
             if (value == 0UL)
@@ -76,6 +88,11 @@ namespace Farion.Multiplayer.Player
             capsule = GetComponent<CapsuleCollider>();
             celestialProbe = GetComponent<CelestialActorProbe>();
             gameObject.layer = FarionLayers.Explorer;
+            if (!activeExplorers.Contains(this))
+            {
+                activeExplorers.Add(this);
+            }
+
             predictionRigidbody.Initialize(body);
             physicsBody = new PredictionRigidbodyFirstPersonPhysicsBody(
                 predictionRigidbody);
@@ -145,6 +162,11 @@ namespace Farion.Multiplayer.Player
             {
                 sceneContext.UnbindOwnedPlayer(this);
             }
+        }
+
+        void OnDestroy()
+        {
+            activeExplorers.Remove(this);
         }
 
         public override void OnStopNetwork()
@@ -292,7 +314,7 @@ namespace Farion.Multiplayer.Player
                 }
             }
 
-            bool simulate = active && (IsServerStarted || IsOwner);
+            bool simulate = active;
             if (!simulate && !body.isKinematic)
             {
                 body.linearVelocity = Vector3.zero;
@@ -324,8 +346,19 @@ namespace Farion.Multiplayer.Player
                 return;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Vector3 previousPosition = body.position;
+            Quaternion previousRotation = body.rotation;
+#endif
             predictionRigidbody.Reconcile(data.PredictionRigidbody);
             motor.RestoreState(data.MotorState);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            PredictionDiagnostics.ReportReconcile(
+                previousPosition,
+                previousRotation,
+                body.position,
+                body.rotation);
+#endif
         }
 
         void SetOwnerRendererVisibility(bool visible)

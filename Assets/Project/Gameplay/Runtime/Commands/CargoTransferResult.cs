@@ -11,6 +11,8 @@ namespace Farion.Gameplay.Commands
         DefinitionMismatch = 6,
         InsufficientCapacity = 7,
         StaleState = 8,
-        Rejected = 9
+        Rejected = 9,
+        Pending = 10,
+        OutOfRange = 11
     }
 }

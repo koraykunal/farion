@@ -5,10 +5,83 @@ namespace Farion.Gameplay.Input
 {
     public static class FarionInputActions
     {
+        public const float MinimumMouseSensitivity = 0.2f;
+        public const float MaximumMouseSensitivity = 3f;
+
         const string BindingOverridesKey = "farion.input.binding-overrides";
+        const string MouseSensitivityKey = "farion.input.mouse-sensitivity";
+        const string InvertLookKey = "farion.input.invert-look";
         const float ReferenceGamepadLookRate = 120f;
 
         static InputActionAsset asset;
+        static float mouseSensitivityScale = float.NaN;
+        static bool invertLookY;
+
+        public static float MouseSensitivityScale
+        {
+            get
+            {
+                EnsureLookPreferences();
+                return mouseSensitivityScale;
+            }
+            set
+            {
+                float clamped = Mathf.Clamp(
+                    value,
+                    MinimumMouseSensitivity,
+                    MaximumMouseSensitivity);
+                EnsureLookPreferences();
+                if (Mathf.Approximately(mouseSensitivityScale, clamped))
+                {
+                    return;
+                }
+
+                mouseSensitivityScale = clamped;
+                PlayerPrefs.SetFloat(MouseSensitivityKey, clamped);
+                PlayerPrefs.Save();
+            }
+        }
+
+        public static bool InvertLookY
+        {
+            get
+            {
+                EnsureLookPreferences();
+                return invertLookY;
+            }
+            set
+            {
+                EnsureLookPreferences();
+                if (invertLookY == value)
+                {
+                    return;
+                }
+
+                invertLookY = value;
+                PlayerPrefs.SetInt(InvertLookKey, value ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetLookPreferences()
+        {
+            mouseSensitivityScale = float.NaN;
+        }
+
+        static void EnsureLookPreferences()
+        {
+            if (!float.IsNaN(mouseSensitivityScale))
+            {
+                return;
+            }
+
+            mouseSensitivityScale = Mathf.Clamp(
+                PlayerPrefs.GetFloat(MouseSensitivityKey, 1f),
+                MinimumMouseSensitivity,
+                MaximumMouseSensitivity);
+            invertLookY = PlayerPrefs.GetInt(InvertLookKey, 0) != 0;
+        }
 
         public static InputAction OnFootMove => Find("OnFoot", "Move");
         public static InputAction OnFootLook => Find("OnFoot", "Look");
@@ -59,9 +132,15 @@ namespace Farion.Gameplay.Input
             float gamepadDegreesPerSecond)
         {
             Vector2 value = action?.ReadValue<Vector2>() ?? Vector2.zero;
-            return action?.activeControl?.device is Mouse
-                ? ScaleMouseLook(value, mouseSensitivity)
+            Vector2 scaled = action?.activeControl?.device is Mouse
+                ? ScaleMouseLook(value, mouseSensitivity * MouseSensitivityScale)
                 : ScaleGamepadLook(value, gamepadDegreesPerSecond);
+            return ApplyLookInversion(scaled);
+        }
+
+        internal static Vector2 ApplyLookInversion(Vector2 scaled)
+        {
+            return InvertLookY ? new Vector2(scaled.x, -scaled.y) : scaled;
         }
 
         internal static Vector2 ScaleMouseLook(

@@ -174,7 +174,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058406
-    m_Localized: DURAKLATMA MENÜSÜ
+    m_Localized: "DURAKLATMA MEN\xDCS\xDC"
     m_Metadata:
       m_Items: []
   - m_Id: 1264058407
@@ -262,7 +262,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058428
-    m_Localized: KAYIT TAR\u0130H\u0130
+    m_Localized: "KAYIT TAR\u0130H\u0130"
     m_Metadata:
       m_Items: []
   - m_Id: 1264058429
@@ -270,7 +270,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058430
-    m_Localized: "KULLANILAMAZ"
+    m_Localized: KULLANILAMAZ
     m_Metadata:
       m_Items: []
   - m_Id: 1264058431
@@ -286,7 +286,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058434
-    m_Localized: "MANUEL KAYIT {0:00}"
+    m_Localized: MANUEL KAYIT {0:00}
     m_Metadata:
       m_Items: []
   - m_Id: 1264058435
@@ -338,7 +338,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058447
-    m_Localized: "Ana kay\u0131t kullan\u0131lam\u0131yor. Uyumlu kurtarma kopyas\u0131 kullan\u0131lacak."
+    m_Localized: "Ana kay\u0131t kullan\u0131lam\u0131yor. Uyumlu kurtarma kopyas\u0131
+      kullan\u0131lacak."
     m_Metadata:
       m_Items: []
   - m_Id: 1264058448
@@ -378,7 +379,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058457
-    m_Localized: "Oyun kaydedildi."
+    m_Localized: Oyun kaydedildi.
     m_Metadata:
       m_Items: []
   - m_Id: 1264058458
@@ -418,7 +419,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058467
-    m_Localized: "{0} {1} AKTARILDI"
+    m_Localized: '{0} {1} AKTARILDI'
     m_Metadata:
       m_Items: []
   - m_Id: 1264058468
@@ -490,7 +491,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058485
-    m_Localized: "{0} TAMAMLANDI"
+    m_Localized: '{0} TAMAMLANDI'
     m_Metadata:
       m_Items: []
   - m_Id: 1264058486
@@ -550,7 +551,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058500
-    m_Localized: "Terminali kapat"
+    m_Localized: Terminali kapat
     m_Metadata:
       m_Items: []
   - m_Id: 1264058501
@@ -602,15 +603,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058513
-    m_Localized: Oyunun t\xFCm ses kar\u0131\u015F\u0131m\u0131n\u0131 kontrol et.
+    m_Localized: "Oyunun t\xFCm ses kar\u0131\u015F\u0131m\u0131n\u0131 kontrol et."
     m_Metadata:
       m_Items: []
   - m_Id: 1264058514
-    m_Localized: M\xFCzik
+    m_Localized: "M\xFCzik"
     m_Metadata:
       m_Items: []
   - m_Id: 1264058515
-    m_Localized: Adaptif m\xFCzik seviyesini kontrol et.
+    m_Localized: "Adaptif m\xFCzik seviyesini kontrol et."
     m_Metadata:
       m_Items: []
   - m_Id: 1264058516
@@ -618,7 +619,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058517
-    m_Localized: Uzay, atmosfer ve i\xE7 mek\xE2n ortam seslerini kontrol et.
+    m_Localized: "Uzay, atmosfer ve i\xE7 mek\xE2n ortam seslerini kontrol et."
     m_Metadata:
       m_Items: []
   - m_Id: 1264058518
@@ -626,19 +627,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058519
-    m_Localized: Uzay arac\u0131 ve d\xFCnya ses efektlerini kontrol et.
+    m_Localized: "Uzay arac\u0131 ve d\xFCnya ses efektlerini kontrol et."
     m_Metadata:
       m_Items: []
   - m_Id: 1264058520
-    m_Localized: Aray\xFCz sesi
+    m_Localized: "Aray\xFCz sesi"
     m_Metadata:
       m_Items: []
   - m_Id: 1264058521
-    m_Localized: Aray\xFCz gezinme ve geri bildirim seslerini kontrol et.
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1264058522
-    m_Localized: HIZ
+    m_Localized: "Aray\xFCz gezinme ve geri bildirim seslerini kontrol et."
     m_Metadata:
       m_Items: []
   - m_Id: 1264058523
@@ -650,11 +647,279 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058525
-    m_Localized: OYUN KUR
+    m_Localized: "Arkada\u015Fa kat\u0131l"
     m_Metadata:
       m_Items: []
-  - m_Id: 1264058526
-    m_Localized: YERELE KATIL
+  - m_Id: 1264058527
+    m_Localized: "G\xD6R\xDCNT\xDC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058528
+    m_Localized: Ekran modu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058529
+    m_Localized: "Tam ekran, kenarl\u0131ks\u0131z tam ekran veya standart pencere
+      aras\u0131nda se\xE7im yap."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058530
+    m_Localized: "Pencere \xE7\xF6z\xFCn\xFCrl\xFC\u011F\xFC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058531
+    m_Localized: "Ekran\u0131n\u0131n bildirdi\u011Fi \xE7\xF6z\xFCn\xFCrl\xFCkler
+      aras\u0131ndan se\xE7."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058532
+    m_Localized: "Dikey e\u015Fitleme"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058533
+    m_Localized: "Ekran y\u0131rt\u0131lmas\u0131n\u0131 azaltmak i\xE7in kareleri
+      monit\xF6r yenileme h\u0131z\u0131yla e\u015Fitle."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058534
+    m_Localized: "Kenarl\u0131ks\u0131z tam ekran"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058535
+    m_Localized: Pencereli
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058536
+    m_Localized: UYGULA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058537
+    m_Localized: "MASA\xDCST\xDCNE \xC7IK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058538
+    m_Localized: "ANA MEN\xDCYE D\xD6N"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058539
+    m_Localized: "D\xD6N"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058540
+    m_Localized: "Kaydedilmemi\u015F ilerleme kaybolabilir."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058541
+    m_Localized: Tam ekran
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058542
+    m_Localized: "Yenileme h\u0131z\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1264058543
+    m_Localized: "Yaln\u0131zca tam ekran modunda ge\xE7erlidir."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782848
+    m_Localized: KATIL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782849
+    m_Localized: "Arkada\u015Fa Kat\u0131l"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782850
+    m_Localized: "Sunucu adresi, \xF6rne\u011Fin 192.168.1.20"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782851
+    m_Localized: "Sunucuya ba\u011Flan\u0131l\u0131yor..."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782852
+    m_Localized: "Ortak oyun oturumu ba\u015Flat\u0131l\u0131yor..."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782853
+    m_Localized: "Ge\xE7erli bir sunucu adresi girin."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782854
+    m_Localized: "Sunucuya ula\u015F\u0131lamad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782855
+    m_Localized: "Sunucu farkl\u0131 bir oyun s\xFCr\xFCm\xFC \xE7al\u0131\u015Ft\u0131r\u0131yor."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7915893880782856
+    m_Localized: "Ortak oyun oturumu olu\u015Fturulamad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7938836249706496
+    m_Localized: "Sunucu oturumu sonland\u0131rd\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598144
+    m_Localized: "Steam lobisi olu\u015Fturulamad\u0131; arkada\u015Flar davetle
+      kat\u0131lamaz."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598145
+    m_Localized: "ORTAK OYUN KAYDED\u0130LD\u0130."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7949909262598146
+    m_Localized: "ORTAK OYUN KAYDED\u0130LEMED\u0130."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 7964775574667265
+    m_Localized: GAZ
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8230580786823168
+    m_Localized: "Oyun ba\u015Flat\u0131lamad\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8230580786823169
+    m_Localized: "Bu ekran hen\xFCz kullan\u0131lam\u0131yor."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035849814016
+    m_Localized: "Ba\u015Flat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757056
+    m_Localized: "Ortak oyuna a\xE7"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757057
+    m_Localized: "YEN\u0130 SEFER"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757058
+    m_Localized: "YEN\u0130 OYUN"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8244035891757059
+    m_Localized: "Yeni seferin kaydedilece\u011Fi yuvay\u0131 se\xE7."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064127975424
+    m_Localized: "Adres panoya kopyaland\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064220250112
+    m_Localized: "Bu adresi yerel a\u011F\u0131n\u0131zda payla\u015F\u0131n. \u0130nternet
+      \xFCzerinden oynamak i\xE7in sunucu y\xF6nlendiricisinde 7770 portu a\xE7\u0131lmal\u0131d\u0131r."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064220250113
+    m_Localized: "ADRES\u0130 KOPYALA"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444416
+    m_Localized: Sunucu oturumu dolu.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444417
+    m_Localized: "ARKADA\u015E DAVET ET"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444418
+    m_Localized: "Ba\u011Fl\u0131 ba\u015Fka k\xE2\u015Fif yok."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444419
+    m_Localized: (sen)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444420
+    m_Localized: "Bir co-op oturumu zaten ba\u015Flat\u0131l\u0131yor."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444421
+    m_Localized: "{0} ile \xE7ak\u0131\u015F\u0131yor. De\u011Fi\u015Fiklik geri
+      al\u0131nd\u0131."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444422
+    m_Localized: "Yeniden atamak i\xE7in bir kontrol se\xE7in. Escape iptal eder."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444423
+    m_Localized: "B\u0130R TU\u015EA BASIN"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444424
+    m_Localized: "Kontroller varsay\u0131lanlar\u0131na d\xF6nd\xFCr\xFCld\xFC."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444425
+    m_Localized: "ATANMAMI\u015E"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444426
+    m_Localized: "\xD6nceki ekran ayarlar\u0131na {0} saniye i\xE7inde d\xF6n\xFClecek."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444427
+    m_Localized: KORU
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444428
+    m_Localized: "GER\u0130 AL"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444429
+    m_Localized: "Bu ekran ayarlar\u0131 korunsun mu?"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444430
+    m_Localized: "Kamera g\xF6r\xFC\u015F a\xE7\u0131s\u0131n\u0131 geni\u015Fletin
+      veya daralt\u0131n."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444431
+    m_Localized: "G\xF6r\xFC\u015F a\xE7\u0131s\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444432
+    m_Localized: "Yaya ve u\xE7u\u015Fta dikey bak\u0131\u015F eksenini ters \xE7evirin."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444433
+    m_Localized: "Bak\u0131\u015F\u0131 ters \xE7evir"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444434
+    m_Localized: "Belirli bir fare hareketinde g\xF6r\xFC\u015F\xFCn ne kadar d\xF6nece\u011Fini
+      \xF6l\xE7ekleyin."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444435
+    m_Localized: Fare hassasiyeti
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444436
+    m_Localized: "T\xFCm kontrolleri varsay\u0131lan tu\u015Funa d\xF6nd\xFCr\xFCn."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444437
+    m_Localized: "Kontrolleri s\u0131f\u0131rla"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8332064224444438
+    m_Localized: KONTROLLER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8349379842277376
+    m_Localized: Kontrol kaydedildi.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8349379880026112
+    m_Localized: OTURUM
     m_Metadata:
       m_Items: []
   references:

@@ -45,12 +45,15 @@ namespace Farion.UI.SaveLoad
         [SerializeField] TMP_Text deleteLabelText;
         [SerializeField] Button primaryButton;
         [SerializeField] TMP_Text primaryLabelText;
+        [SerializeField] Button coopButton;
+        [SerializeField] TMP_Text coopLabelText;
 
         readonly List<SaveGameSlotSummary> summaries = new();
         UiSaveLoadMode mode;
         int selectedIndex;
         bool subscribed;
         Action<string> loadRequested;
+        Action<string> coopRequested;
         Func<string, SaveGameOperationResult> saveRequested;
 
         public event Action CatalogChanged;
@@ -62,7 +65,8 @@ namespace Farion.UI.SaveLoad
             detailSlotText != null &&
             backButton != null &&
             deleteButton != null &&
-            primaryButton != null;
+            primaryButton != null &&
+            coopButton != null;
 
         void Reset()
         {
@@ -95,6 +99,7 @@ namespace Farion.UI.SaveLoad
 
         public bool OpenForLoad(
             Action<string> onLoadRequested,
+            Action<string> onCoopRequested = null,
             string preferredSlotName = null)
         {
             if (onLoadRequested == null)
@@ -104,12 +109,49 @@ namespace Farion.UI.SaveLoad
 
             mode = UiSaveLoadMode.Load;
             loadRequested = onLoadRequested;
+            coopRequested = onCoopRequested;
             saveRequested = null;
+            return OpenScreen(preferredSlotName);
+        }
+
+        public bool OpenForNewGame(
+            Action<string> onStartRequested,
+            Action<string> onCoopRequested = null)
+        {
+            if (onStartRequested == null)
+            {
+                return false;
+            }
+
+            mode = UiSaveLoadMode.NewGame;
+            loadRequested = onStartRequested;
+            coopRequested = onCoopRequested;
+            saveRequested = null;
+            return OpenScreen(ResolveFirstEmptySlotName());
+        }
+
+        bool OpenScreen(string preferredSlotName)
+        {
             ResolveReferences();
             Refresh(preferredSlotName);
             return systemRoot != null &&
                    systemRoot.ScreenRouter != null &&
                    systemRoot.ScreenRouter.Open(UiScreenId.SaveLoad);
+        }
+
+        static string ResolveFirstEmptySlotName()
+        {
+            IReadOnlyList<SaveGameSlotSummary> slots =
+                SaveGameSlotService.GetPlayerSlotSummaries();
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (!slots[i].HasData)
+                {
+                    return slots[i].SlotName;
+                }
+            }
+
+            return null;
         }
 
         public bool OpenForSave(
@@ -124,11 +166,8 @@ namespace Farion.UI.SaveLoad
             mode = UiSaveLoadMode.Save;
             saveRequested = onSaveRequested;
             loadRequested = null;
-            ResolveReferences();
-            Refresh(preferredSlotName);
-            return systemRoot != null &&
-                   systemRoot.ScreenRouter != null &&
-                   systemRoot.ScreenRouter.Open(UiScreenId.SaveLoad);
+            coopRequested = null;
+            return OpenScreen(preferredSlotName);
         }
 
         public void Close()
@@ -155,6 +194,7 @@ namespace Farion.UI.SaveLoad
             backButton?.onClick.AddListener(Close);
             deleteButton?.onClick.AddListener(RequestDelete);
             primaryButton?.onClick.AddListener(RequestPrimaryAction);
+            coopButton?.onClick.AddListener(RequestCoopAction);
             LocalizationSettings.SelectedLocaleChanged += HandleLocaleChanged;
             subscribed = true;
         }
@@ -178,6 +218,7 @@ namespace Farion.UI.SaveLoad
             backButton?.onClick.RemoveListener(Close);
             deleteButton?.onClick.RemoveListener(RequestDelete);
             primaryButton?.onClick.RemoveListener(RequestPrimaryAction);
+            coopButton?.onClick.RemoveListener(RequestCoopAction);
             LocalizationSettings.SelectedLocaleChanged -= HandleLocaleChanged;
             subscribed = false;
         }
@@ -218,28 +259,25 @@ namespace Farion.UI.SaveLoad
                 : SaveGameSlotCatalog.ResolveSlotName(preferredSlotName);
             selectedIndex = ResolveSelectionIndex(requestedSlot);
 
-            SetText(
-                eyebrowText,
-                mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get(UiTextKeys.SaveLoadEyebrowSave)
-                    : UiLocalization.Get(UiTextKeys.SaveLoadEyebrowLoad));
-            SetText(
-                titleText,
-                mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get(UiTextKeys.SaveLoadTitleSave)
-                    : UiLocalization.Get(UiTextKeys.SaveLoadTitleLoad));
-            SetText(
-                descriptionText,
-                mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get(UiTextKeys.SaveLoadDescriptionSave)
-                    : UiLocalization.Get(UiTextKeys.SaveLoadDescriptionLoad));
+            SetText(eyebrowText, UiLocalization.Get(ResolveKey(
+                UiTextKeys.SaveLoadEyebrowLoad,
+                UiTextKeys.SaveLoadEyebrowSave,
+                UiTextKeys.SaveLoadEyebrowNewGame)));
+            SetText(titleText, UiLocalization.Get(ResolveKey(
+                UiTextKeys.SaveLoadTitleLoad,
+                UiTextKeys.SaveLoadTitleSave,
+                UiTextKeys.SaveLoadTitleNewGame)));
+            SetText(descriptionText, UiLocalization.Get(ResolveKey(
+                UiTextKeys.SaveLoadDescriptionLoad,
+                UiTextKeys.SaveLoadDescriptionSave,
+                UiTextKeys.SaveLoadDescriptionNewGame)));
             SetText(backLabelText, UiLocalization.Get(UiTextKeys.CommonBack));
             SetText(deleteLabelText, UiLocalization.Get(UiTextKeys.CommonDelete));
-            SetText(
-                primaryLabelText,
-                mode == UiSaveLoadMode.Save
-                    ? UiLocalization.Get(UiTextKeys.CommonSave)
-                    : UiLocalization.Get(UiTextKeys.CommonLoad));
+            SetText(primaryLabelText, UiLocalization.Get(ResolveKey(
+                UiTextKeys.CommonLoad,
+                UiTextKeys.CommonSave,
+                UiTextKeys.CommonStart)));
+            SetText(coopLabelText, UiLocalization.Get(UiTextKeys.SaveLoadHostCoop));
             SetText(savedLabelText, UiLocalization.Get(UiTextKeys.SaveLoadSaved));
             SetText(versionLabelText, UiLocalization.Get(UiTextKeys.SaveLoadVersion));
 
@@ -289,11 +327,20 @@ namespace Farion.UI.SaveLoad
                     ? $"V{summary.SchemaVersion}"
                     : UiLocalization.Get(UiTextKeys.SaveLoadNotAvailable));
 
-            bool canLoad = mode == UiSaveLoadMode.Load && summary.IsLoadable;
-            bool canSave = mode == UiSaveLoadMode.Save;
+            bool canStart = mode switch
+            {
+                UiSaveLoadMode.Load => summary.IsLoadable,
+                _ => true
+            };
             if (primaryButton != null)
             {
-                primaryButton.interactable = canLoad || canSave;
+                primaryButton.interactable = canStart;
+            }
+
+            if (coopButton != null)
+            {
+                coopButton.gameObject.SetActive(coopRequested != null);
+                coopButton.interactable = canStart;
             }
 
             if (deleteButton != null)
@@ -304,29 +351,35 @@ namespace Farion.UI.SaveLoad
             }
         }
 
+        string ResolveKey(string load, string save, string newGame)
+        {
+            return mode switch
+            {
+                UiSaveLoadMode.Save => save,
+                UiSaveLoadMode.NewGame => newGame,
+                _ => load
+            };
+        }
+
+        void RequestCoopAction()
+        {
+            StartSelectedSlot(coopRequested);
+        }
+
         void RequestPrimaryAction()
         {
+            if (mode != UiSaveLoadMode.Save)
+            {
+                StartSelectedSlot(loadRequested);
+                return;
+            }
+
             if (summaries.Count == 0)
             {
                 return;
             }
 
             SaveGameSlotSummary summary = summaries[selectedIndex];
-            if (mode == UiSaveLoadMode.Load)
-            {
-                if (!summary.IsLoadable || loadRequested == null)
-                {
-                    ShowFeedback(
-                        UiLocalization.Get(UiTextKeys.SaveLoadFeedbackUnavailable),
-                        UiFeedbackSeverity.Caution);
-                    return;
-                }
-
-                Action<string> callback = loadRequested;
-                Close();
-                callback(summary.SlotName);
-                return;
-            }
 
             if (saveRequested == null)
             {
@@ -347,6 +400,43 @@ namespace Farion.UI.SaveLoad
                 UiLocalization.Get(UiTextKeys.SaveLoadOverwriteBody),
                 UiLocalization.Get(UiTextKeys.SaveLoadOverwriteConfirm),
                 () => PerformSave(summary.SlotName));
+        }
+
+        void StartSelectedSlot(Action<string> callback)
+        {
+            if (summaries.Count == 0)
+            {
+                return;
+            }
+
+            SaveGameSlotSummary summary = summaries[selectedIndex];
+            bool unavailable = callback == null ||
+                (mode == UiSaveLoadMode.Load && !summary.IsLoadable);
+            if (unavailable)
+            {
+                ShowFeedback(
+                    UiLocalization.Get(UiTextKeys.SaveLoadFeedbackUnavailable),
+                    UiFeedbackSeverity.Caution);
+                return;
+            }
+
+            if (mode == UiSaveLoadMode.NewGame && summary.HasData)
+            {
+                PresentConfirmation(
+                    UiLocalization.Get(UiTextKeys.SaveLoadOverwriteTitle),
+                    UiLocalization.Get(UiTextKeys.SaveLoadOverwriteBody),
+                    UiLocalization.Get(UiTextKeys.SaveLoadOverwriteConfirm),
+                    () => InvokeAndClose(callback, summary.SlotName));
+                return;
+            }
+
+            InvokeAndClose(callback, summary.SlotName);
+        }
+
+        void InvokeAndClose(Action<string> callback, string slotName)
+        {
+            Close();
+            callback(slotName);
         }
 
         void RequestDelete()
@@ -446,7 +536,7 @@ namespace Farion.UI.SaveLoad
                 }
             }
 
-            if (mode == UiSaveLoadMode.Load &&
+            if (mode != UiSaveLoadMode.Save &&
                 SaveGameSlotService.TryGetMostRecentLoadable(
                     out SaveGameSlotSummary recent))
             {
@@ -521,6 +611,10 @@ namespace Farion.UI.SaveLoad
                 };
             }
 
+            Selectable coopSelectable = coopButton != null &&
+                coopButton.gameObject.activeSelf
+                    ? coopButton
+                    : null;
             if (primaryButton != null)
             {
                 primaryButton.navigation = new UiNavigation
@@ -530,7 +624,19 @@ namespace Farion.UI.SaveLoad
                     selectOnDown = slotViews[0],
                     selectOnLeft = mode == UiSaveLoadMode.Load
                         ? deleteButton
-                        : backButton
+                        : backButton,
+                    selectOnRight = coopSelectable
+                };
+            }
+
+            if (coopSelectable != null)
+            {
+                coopButton.navigation = new UiNavigation
+                {
+                    mode = UiNavigation.Mode.Explicit,
+                    selectOnUp = slotViews[^1],
+                    selectOnDown = slotViews[0],
+                    selectOnLeft = primaryButton
                 };
             }
         }

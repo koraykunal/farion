@@ -39,6 +39,12 @@ namespace Farion.Gameplay.Flight
         [Range(0f, 1f)]
         [SerializeField] float colliderEnableThreshold = 0.72f;
 
+        [Header("Authoring")]
+        [Tooltip("Play-mode only tool: freezes the deployment logic so Deployed Amount can " +
+            "be scrubbed by hand while dialling in part poses. Always resets to off on start, " +
+            "so it can never be left enabled in the prefab.")]
+        [SerializeField] bool poseAuthoringMode;
+
         [Header("Runtime")]
         [Range(0f, 1f)]
         [SerializeField] float deployedAmount;
@@ -88,6 +94,14 @@ namespace Farion.Gameplay.Flight
 
         void Update()
         {
+            if (poseAuthoringMode)
+            {
+                deployedAmount = Mathf.Clamp01(deployedAmount);
+                ApplyParts();
+                ApplyLandingGearColliders();
+                return;
+            }
+
             UpdateManualCommand();
             float target = UpdateDeployDecision(Time.deltaTime) ? 1f : 0f;
             float speed = 1f / Mathf.Max(0.01f, transitionSeconds);
@@ -145,6 +159,7 @@ namespace Farion.Gameplay.Flight
 
         void InitializeParts()
         {
+            poseAuthoringMode = false;
             deployedAmount = landingGearStartsDeployed ? 1f : 0f;
             commandedDeployed = landingGearStartsDeployed;
             deployDecision = landingGearStartsDeployed;

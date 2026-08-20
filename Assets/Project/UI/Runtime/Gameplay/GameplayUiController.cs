@@ -1,5 +1,6 @@
 using System;
 using Farion.App.Flow;
+using Farion.Core.Persistence;
 using Farion.Gameplay.Commands;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
@@ -8,6 +9,7 @@ using Farion.UI.Feedback;
 using Farion.UI.Foundation;
 using Farion.UI.Input;
 using Farion.UI.Loading;
+using Farion.UI.Localization;
 using Farion.UI.Navigation;
 using Farion.UI.SaveLoad;
 using TMPro;
@@ -38,14 +40,18 @@ namespace Farion.UI.Gameplay
         [SerializeField] PlayerInteractionRaycaster interactionRaycaster;
         [SerializeField] TMP_Text interactionPromptText;
         [SerializeField] string interactionPromptPrefix = "E";
+        [SerializeField] TMP_Text networkStatusText;
 
         [Header("Cursor")]
         [SerializeField] bool lockCursorDuringGameplay = true;
 
         InventoryContainerComponent playerInventory;
         IGameplayCommandEvents observedCommandEvents;
+        IGameplayCommandEvents externalCommandEvents;
         Action returnToMainMenuAction;
         Action quitGameAction;
+        Func<string, SaveGameOperationResult> externalSaveAction;
+        string externalSaveSlotName;
 
         public event Action<UiScreenId> ScreenChanged;
         public UiScreenId CurrentScreen => currentScreen;
@@ -56,6 +62,25 @@ namespace Farion.UI.Gameplay
         {
             interactionRaycaster = raycaster;
             RefreshHud();
+        }
+
+        public void SetNetworkStatus(string status)
+        {
+            if (networkStatusText == null)
+            {
+                return;
+            }
+
+            bool visible = !string.IsNullOrEmpty(status);
+            if (networkStatusText.gameObject.activeSelf != visible)
+            {
+                networkStatusText.gameObject.SetActive(visible);
+            }
+
+            if (visible)
+            {
+                networkStatusText.SetText(status);
+            }
         }
 
         public void BindSession(
@@ -78,6 +103,15 @@ namespace Farion.UI.Gameplay
             GetComponentInChildren<GameplayMenuListPresenter>(true)?.Rebuild();
         }
 
+        public void SetSaveAction(
+            Func<string, SaveGameOperationResult> action,
+            string slotName)
+        {
+            externalSaveAction = action;
+            externalSaveSlotName = slotName;
+            GetComponentInChildren<GameplayMenuListPresenter>(true)?.Rebuild();
+        }
+
         public bool IsActionAvailable(GameplayMenuAction action)
         {
             ResolveReferences();
@@ -91,6 +125,7 @@ namespace Farion.UI.Gameplay
                 GameplayMenuAction.Resume => true,
                 GameplayMenuAction.Options => screenRouter != null &&
                     screenRouter.TryGetScreen(UiScreenId.Settings, out _),
+                GameplayMenuAction.Save => externalSaveAction != null,
                 GameplayMenuAction.ExitToMainMenu => returnToMainMenuAction != null,
                 GameplayMenuAction.QuitGame => quitGameAction != null,
                 _ => false
@@ -219,16 +254,16 @@ namespace Farion.UI.Gameplay
                     break;
                 case GameplayMenuAction.ExitToMainMenu:
                     RequestConfirmation(
-                        "RETURN TO MAIN MENU",
-                        "Unsaved progress may be lost.",
-                        "RETURN",
+                        UiLocalization.Get(UiTextKeys.DialogMainMenuTitle),
+                        UiLocalization.Get(UiTextKeys.DialogUnsavedProgressBody),
+                        UiLocalization.Get(UiTextKeys.DialogMainMenuConfirm),
                         BeginReturnToMainMenu);
                     break;
                 case GameplayMenuAction.QuitGame:
                     RequestConfirmation(
-                        "QUIT TO DESKTOP",
-                        "Unsaved progress may be lost.",
-                        "QUIT",
+                        UiLocalization.Get(UiTextKeys.DialogQuitTitle),
+                        UiLocalization.Get(UiTextKeys.DialogUnsavedProgressBody),
+                        UiLocalization.Get(UiTextKeys.CommonQuit),
                         () =>
                         {
                             if (quitGameAction != null)
@@ -308,9 +343,16 @@ namespace Farion.UI.Gameplay
             SynchronizeScreenStateFromRouter(notify: true);
         }
 
+        public void BindCommandEvents(IGameplayCommandEvents commandEvents)
+        {
+            externalCommandEvents = commandEvents;
+            BindItemAcquisitionFeedback();
+        }
+
         void BindItemAcquisitionFeedback()
         {
-            IGameplayCommandEvents commandEvents = sessionController?.CommandEvents;
+            IGameplayCommandEvents commandEvents =
+                externalCommandEvents ?? sessionController?.CommandEvents;
             if (ReferenceEquals(observedCommandEvents, commandEvents))
             {
                 return;
@@ -323,6 +365,8 @@ namespace Farion.UI.Gameplay
                 observedCommandEvents.ItemAcquired += HandleItemAcquired;
                 observedCommandEvents.CargoTransferCompleted +=
                     HandleCargoTransferCompleted;
+                observedCommandEvents.FleetProcessingCompleted +=
+                    HandleFleetProcessingCompleted;
             }
         }
 
@@ -333,6 +377,8 @@ namespace Farion.UI.Gameplay
                 observedCommandEvents.ItemAcquired -= HandleItemAcquired;
                 observedCommandEvents.CargoTransferCompleted -=
                     HandleCargoTransferCompleted;
+                observedCommandEvents.FleetProcessingCompleted -=
+                    HandleFleetProcessingCompleted;
                 observedCommandEvents = null;
             }
         }
@@ -356,6 +402,41 @@ namespace Farion.UI.Gameplay
                       receipt.Result == CargoTransferResult.InsufficientCapacity
                         ? UiFeedbackSeverity.Caution
                         : UiFeedbackSeverity.Error);
+        }
+
+        void HandleFleetProcessingCompleted(FleetProcessingResult result)
+        {
+            if (result == FleetProcessingResult.Pending)
+            {
+                return;
+            }
+
+            ShowFeedback(
+                FormatFleetProcessingMessage(result),
+                result == FleetProcessingResult.Succeeded
+                    ? UiFeedbackSeverity.Success
+                    : result == FleetProcessingResult.Rejected ||
+                      result == FleetProcessingResult.OutOfRange
+                        ? UiFeedbackSeverity.Caution
+                        : UiFeedbackSeverity.Error);
+        }
+
+        internal static string FormatFleetProcessingMessage(
+            FleetProcessingResult result)
+        {
+            return result switch
+            {
+                FleetProcessingResult.Succeeded => "PROCESSING COMPLETE.",
+                FleetProcessingResult.Rejected =>
+                    "FLEET STORAGE LACKS THE REQUIRED INPUTS.",
+                FleetProcessingResult.OutOfRange =>
+                    "MOVE CLOSER TO THE FLEET TO PROCESS.",
+                FleetProcessingResult.MissingStorage =>
+                    "FLEET STORAGE IS UNAVAILABLE.",
+                FleetProcessingResult.StaleStorage =>
+                    "FLEET STORAGE CHANGED. TRY AGAIN.",
+                _ => "PROCESSING FAILED."
+            };
         }
 
         internal static string FormatCargoTransferMessage(
@@ -382,6 +463,10 @@ namespace Farion.UI.Gameplay
                     "CARGO CONTAINS AN INCOMPATIBLE ITEM.",
                 CargoTransferResult.StaleState =>
                     "CARGO CHANGED. TRY AGAIN.",
+                CargoTransferResult.OutOfRange =>
+                    receipt.Kind == CargoTransferKind.LoadShuttle
+                        ? "MOVE CLOSER TO YOUR SHUTTLE TO LOAD."
+                        : "DOCK CLOSER TO THE FLEET TO UNLOAD.",
                 _ => "CARGO TRANSFER FAILED."
             };
         }
@@ -500,7 +585,25 @@ namespace Farion.UI.Gameplay
 
         void OpenSaveGameScreen()
         {
-            if (sessionController == null)
+            if (externalSaveAction != null)
+            {
+                SaveGameOperationResult result =
+                    externalSaveAction(externalSaveSlotName);
+                ShowFeedback(
+                    result.Succeeded
+                        ? UiLocalization.Get(UiTextKeys.CoopSaveCompleted)
+                        : UiLocalization.Get(UiTextKeys.CoopSaveFailed),
+                    result.Succeeded
+                        ? UiFeedbackSeverity.Success
+                        : UiFeedbackSeverity.Error);
+                CloseActiveScreen();
+                return;
+            }
+
+            Func<string, SaveGameOperationResult> save =
+                sessionController != null ? sessionController.Save : null;
+            string slot = sessionController?.SaveSlotName;
+            if (save == null)
             {
                 ShowFeedback(
                     "Save is unavailable because the gameplay session is not ready.",
@@ -509,9 +612,7 @@ namespace Farion.UI.Gameplay
             }
 
             if (saveLoadScreen != null &&
-                saveLoadScreen.OpenForSave(
-                    sessionController.Save,
-                    sessionController.SaveSlotName))
+                saveLoadScreen.OpenForSave(save, slot))
             {
                 return;
             }
