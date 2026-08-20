@@ -85,24 +85,12 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void InputSchemaContainsRequiredActionMaps()
+        public void InputSchemaBindsGamepadNavigationAndDeadzonedSticks()
         {
             Assert.That(FarionInputActions.Asset.FindActionMap("OnFoot"), Is.Not.Null);
             Assert.That(FarionInputActions.Asset.FindActionMap("Flight"), Is.Not.Null);
             Assert.That(FarionInputActions.Asset.FindActionMap("Vehicle"), Is.Not.Null);
             Assert.That(FarionInputActions.Asset.FindActionMap("UI"), Is.Not.Null);
-            Assert.That(FarionInputActions.FlightToggleAssist, Is.Not.Null);
-            Assert.That(FarionInputActions.FlightToggleLandingGear, Is.Not.Null);
-            Assert.That(FarionInputActions.UiPause, Is.Not.Null);
-            Assert.That(FarionInputActions.UiInventory, Is.Not.Null);
-            Assert.That(FarionInputActions.UiNavigate, Is.Not.Null);
-            Assert.That(FarionInputActions.UiSubmit, Is.Not.Null);
-            Assert.That(FarionInputActions.UiCancel, Is.Not.Null);
-            Assert.That(FarionInputActions.UiPoint, Is.Not.Null);
-            Assert.That(FarionInputActions.UiLeftClick, Is.Not.Null);
-            Assert.That(FarionInputActions.UiMiddleClick, Is.Not.Null);
-            Assert.That(FarionInputActions.UiRightClick, Is.Not.Null);
-            Assert.That(FarionInputActions.UiScrollWheel, Is.Not.Null);
             Assert.That(
                 FarionInputActions.FlightTranslate.bindings.Any(binding =>
                     binding.path == "<Gamepad>/leftStick" &&

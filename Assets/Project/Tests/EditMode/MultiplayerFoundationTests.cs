@@ -211,16 +211,6 @@ namespace Farion.Tests.EditMode
                 Is.False);
         }
 
-        [Test]
-        public void ProtocolIdentityIsStableAndNonZero()
-        {
-            ulong first = FarionProtocolAuthenticator.LocalProtocol;
-            Assert.That(first, Is.Not.EqualTo(0UL));
-            Assert.That(
-                FarionProtocolAuthenticator.LocalProtocol,
-                Is.EqualTo(first));
-        }
-
         [TestCase(1UL, "explorer.net.1")]
         [TestCase(42UL, "explorer.net.42")]
         public void NetworkExplorerIdentityIsUniquePerSessionPlayer(

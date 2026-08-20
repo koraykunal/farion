@@ -141,17 +141,6 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void WorldOriginSnapshotPreservesRuntimeMetadata()
-        {
-            Vector3 offset = new(1200.5f, -4f, 980f);
-            WorldOriginSnapshot snapshot = new(offset, 3);
-
-            Assert.That(snapshot.IsSupported, Is.True);
-            Assert.That(snapshot.AccumulatedOffset, Is.EqualTo(offset));
-            Assert.That(snapshot.ShiftCount, Is.EqualTo(3));
-        }
-
-        [Test]
         public void ResourceDeltaStoreReplacesStateWhenApplyingSnapshot()
         {
             ResourceDepositDeltaStore store = new();

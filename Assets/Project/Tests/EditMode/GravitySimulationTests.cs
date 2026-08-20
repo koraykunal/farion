@@ -23,6 +23,34 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void KinematicOrbitUsesOnlyItsAssignedAttractor()
+        {
+            CelestialBody star = CreateBody("Star", Vector3.zero, 1200f, 350f, CelestialBodyMotionMode.Static);
+            CelestialBody planet = CreateBody(
+                "Planet",
+                Vector3.right * 60000f,
+                1600f,
+                9.81f,
+                CelestialBodyMotionMode.KinematicOrbit);
+            CelestialBody perturbingBody = CreateBody(
+                "Perturber",
+                Vector3.right * 65000f,
+                800f,
+                5f,
+                CelestialBodyMotionMode.Static);
+            planet.SetOrbitAttractor(star);
+
+            GravitySimulation simulation = CreateSimulation(null, star, planet, perturbingBody);
+            Vector3 expected = simulation.CalculateAccelerationFromBody(planet.Position, star);
+            Vector3 fullNBody = expected +
+                simulation.CalculateAccelerationFromBody(planet.Position, perturbingBody);
+            Vector3 actual = simulation.CalculateOrbitalAcceleration(planet);
+
+            Assert.That(Vector3.Distance(actual, expected), Is.LessThan(0.00001f));
+            Assert.That(Vector3.Distance(actual, fullNBody), Is.GreaterThan(0.001f));
+        }
+
+        [Test]
         public void ReferenceFrameVelocityMatchesAssignedPhysicsBody()
         {
             CelestialBody star = CreateBody("Star", Vector3.zero, 1200f, 350f, CelestialBodyMotionMode.Static);

@@ -2,7 +2,7 @@ using Farion.Rendering.Celestial;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace Farion.Tests.PlayMode
+namespace Farion.Tests.EditMode
 {
     public sealed class CelestialScaledSpaceProfileTests
     {

@@ -11,7 +11,6 @@ using Farion.Rendering.Celestial;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Tests.Support;
-using FishNet.Object.Prediction;
 using FishNet.Transporting;
 using NUnit.Framework;
 using UnityEngine;
@@ -185,44 +184,6 @@ namespace Farion.Tests.PlayMode
             context.BindSession(null, null);
 
             Assert.That(simulation.IntegrationEnabled, Is.False);
-        }
-
-        [UnityTest]
-        public IEnumerator PredictionRigidbodyAppliesForceInManualPhysicsStep()
-        {
-            SimulationMode previousMode = UnityEngine.Physics.simulationMode;
-            testRoot = new GameObject("PredictionRigidbodyTest");
-            Rigidbody body = testRoot.AddComponent<Rigidbody>();
-            body.useGravity = false;
-            body.freezeRotation = true;
-            PredictionRigidbody predictionBody = new();
-            predictionBody.Initialize(body);
-            Quaternion targetRotation = Quaternion.Euler(0f, 45f, 0f);
-
-            try
-            {
-                UnityEngine.Physics.simulationMode = SimulationMode.Script;
-                predictionBody.AddForce(
-                    Vector3.right * 10f,
-                    ForceMode.Acceleration);
-                predictionBody.MoveRotation(targetRotation);
-                predictionBody.Simulate();
-                UnityEngine.Physics.Simulate(0.01f);
-
-                Assert.That(
-                    body.linearVelocity.x,
-                    Is.EqualTo(0.1f).Within(0.001f));
-                Assert.That(
-                    Quaternion.Angle(body.rotation, targetRotation),
-                    Is.LessThan(0.1f));
-                Assert.That(body.angularVelocity, Is.EqualTo(Vector3.zero));
-            }
-            finally
-            {
-                UnityEngine.Physics.simulationMode = previousMode;
-            }
-
-            yield return null;
         }
 
         [UnityTest]

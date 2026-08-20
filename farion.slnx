@@ -21,12 +21,12 @@
   <Project Path="Farion.Core.Runtime.csproj" />
   <Project Path="com.rlabrecque.steamworks.net.editor.csproj" />
   <Project Path="FMODUnityHaptics.csproj" />
+  <Project Path="Farion.Tests.EditMode.csproj" />
   <Project Path="Farion.Gameplay.Domain.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="FishNet.Transporting.FishySteamworks.csproj" />
   <Project Path="FMODUnityResonance.csproj" />
   <Project Path="Farion.App.Runtime.csproj" />
-  <Project Path="Farion.Tests.EditMode.csproj" />
   <Project Path="Farion.Multiplayer.Steam.csproj" />
   <Project Path="Farion.Core.Identity.csproj" />
   <Project Path="Farion.Tests.Support.csproj" />

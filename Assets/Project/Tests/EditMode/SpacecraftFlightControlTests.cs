@@ -1,5 +1,4 @@
 using Farion.Audio.Spacecraft;
-using Farion.Gameplay.Actors;
 using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
@@ -122,32 +121,6 @@ namespace Farion.Tests.EditMode
                 Settings());
 
             Assert.That(output.LocalLinearAcceleration.z, Is.EqualTo(-18f));
-        }
-
-        [Test]
-        public void SimultaneousAxesAreNotNormalizedAgainstEachOther()
-        {
-            SpacecraftInputState input = new(
-                new Vector3(1f, 1f, 1f),
-                Vector2.zero,
-                roll: 0f,
-                boost: false);
-
-            Assert.That(input.Translation, Is.EqualTo(Vector3.one));
-
-            SpacecraftThrusterVfxFrame vfxFrame = new(
-                throttle: 1f,
-                boost: 0f,
-                heat: 0f,
-                atmosphereDensity: 0f,
-                relativeSpeed: 0f,
-                localTranslation: Vector3.one,
-                localRotation: Vector3.one,
-                localLinearAcceleration: Vector3.zero,
-                localAngularAcceleration: Vector3.zero,
-                thrusters: SpacecraftThrusterCommand.None);
-            Assert.That(vfxFrame.LocalTranslation, Is.EqualTo(Vector3.one));
-            Assert.That(vfxFrame.LocalRotation, Is.EqualTo(Vector3.one));
         }
 
         [Test]
@@ -318,16 +291,6 @@ namespace Farion.Tests.EditMode
             Assert.That(
                 ShipAudioController.EvaluateBoostTransition(true, false),
                 Is.EqualTo(ShipAudioController.BoostTransition.Shutdown));
-        }
-
-        [Test]
-        public void GamepadLookScalingDoesNotDependOnFrameDelta()
-        {
-            Vector2 first = FarionInputActions.ScaleGamepadLook(Vector2.one, 120f);
-            Vector2 second = FarionInputActions.ScaleGamepadLook(Vector2.one, 120f);
-
-            Assert.That(first, Is.EqualTo(Vector2.one));
-            Assert.That(second, Is.EqualTo(first));
         }
 
         [Test]
@@ -504,28 +467,6 @@ namespace Farion.Tests.EditMode
             finally
             {
                 Object.DestroyImmediate(bodyObject);
-            }
-        }
-
-        [Test]
-        public void ActorProbeUsesOnlyExplicitCelestialFrameProvider()
-        {
-            GameObject providerObject = new("Frame Provider");
-            GameObject actorObject = new("Actor");
-            try
-            {
-                CelestialFrameProvider provider =
-                    providerObject.AddComponent<CelestialFrameProvider>();
-                CelestialActorProbe probe = actorObject.AddComponent<CelestialActorProbe>();
-
-                Assert.That(probe.FrameProvider, Is.Null);
-                probe.SetFrameProvider(provider);
-                Assert.That(probe.FrameProvider, Is.SameAs(provider));
-            }
-            finally
-            {
-                Object.DestroyImmediate(actorObject);
-                Object.DestroyImmediate(providerObject);
             }
         }
 

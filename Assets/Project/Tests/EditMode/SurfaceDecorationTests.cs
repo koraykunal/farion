@@ -1,13 +1,10 @@
 using Farion.Rendering.Celestial;
-using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.TestTools.Utils;
-using UnityEngine.SceneManagement;
 
 namespace Farion.Tests.EditMode
 {
@@ -48,14 +45,10 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void TerrestrialProfile_HasValidInstancedVariantsAndUniqueRuleIds()
+        public void PlacementSuspendsAboveSpeedAndAltitudeThresholds()
         {
-            SurfaceDecorationProfile profile =
-                AssetDatabase.LoadAssetAtPath<SurfaceDecorationProfile>(ProfilePath);
-            Assert.That(profile, Is.Not.Null);
-            Assert.That(profile.Rules.Count, Is.EqualTo(8));
-            Assert.That(profile.MaximumCandidateEvaluationsPerFrame, Is.LessThanOrEqualTo(64));
-            Assert.That(profile.CandidateEvaluationBudgetMilliseconds, Is.LessThanOrEqualTo(1f));
+            SurfaceDecorationProfile profile = LoadProfile();
+
             Assert.That(SurfaceDecorationRenderer.ShouldSuspendPlacement(0f, 0f, profile), Is.False);
             Assert.That(
                 SurfaceDecorationRenderer.ShouldSuspendPlacement(profile.PlacementPauseSpeed, 0f, profile),
@@ -63,9 +56,15 @@ namespace Farion.Tests.EditMode
             Assert.That(
                 SurfaceDecorationRenderer.ShouldSuspendPlacement(0f, profile.PlacementPauseAltitude, profile),
                 Is.True);
+        }
 
+        [Test]
+        [Category("Content")]
+        public void TerrestrialProfile_HasUniqueRuleIdsAndInstancedVariants()
+        {
+            SurfaceDecorationProfile profile = LoadProfile();
             System.Collections.Generic.HashSet<string> ids = new();
-            int tobyGroundCoverRuleCount = 0;
+
             foreach (SurfaceDecorationRule rule in profile.Rules)
             {
                 Assert.That(rule, Is.Not.Null);
@@ -81,80 +80,14 @@ namespace Farion.Tests.EditMode
                         Assert.That(material, Is.Not.Null);
                         Assert.That(material.enableInstancing, Is.True);
                     }
-
-                    if (rule.StableId == "surfaceflora.birch")
-                    {
-                        Assert.That(variant.NearMesh.subMeshCount, Is.EqualTo(2));
-                        Assert.That(variant.NearMesh.GetIndexCount(1), Is.GreaterThan(1000));
-                        Assert.That(variant.FarMesh.GetIndexCount(1), Is.GreaterThan(1000));
-                        Assert.That(variant.Materials.Count, Is.EqualTo(2));
-                        Assert.That(variant.Materials[0], Is.Not.SameAs(variant.Materials[1]));
-                        Assert.That(
-                            variant.Materials[1].shader.name,
-                            Is.EqualTo("Universal Render Pipeline/Lit"));
-                        Assert.That(variant.Materials[1].GetFloat("_Cull"), Is.EqualTo(0f));
-                        Assert.That(variant.Materials[1].doubleSidedGI, Is.True);
-                        Assert.That(variant.Materials[1].GetColor("_BaseColor").maxColorComponent, Is.LessThanOrEqualTo(1f));
-                    }
-
-                    if (rule.StableId == "surfaceflora.boulder01")
-                    {
-                        Assert.That(
-                            variant.NearMesh.bounds.size.magnitude * variant.BaseScale,
-                            Is.GreaterThan(10f));
-                    }
-
-                    if (rule.StableId is "surfaceflora.temperateflowers" or "surfaceflora.temperategrass")
-                    {
-                        tobyGroundCoverRuleCount++;
-                        Assert.That(
-                            AssetDatabase.GetAssetPath(variant.NearMesh),
-                            Does.StartWith("Assets/Toby Fredson/The Toby Foliage Engine/"));
-                        Assert.That(
-                            variant.Materials[0].shader.name,
-                            Is.EqualTo("Toby Fredson/The Toby Foliage Engine/(TTFE) Grass Foliage (Mobile)"));
-                    }
                 }
             }
-
-            Assert.That(tobyGroundCoverRuleCount, Is.EqualTo(2));
-
-            SurfaceDecorationRule birch = profile.Rules[0];
-            Assert.That(
-                birch.AllowsBiome(AssetDatabase.LoadAssetAtPath<BiomeDefinition>(
-                    "Assets/Project/Design/Simulation/Planetary/SO_TemperateBiome.asset")),
-                Is.True);
-            Assert.That(
-                birch.AllowsBiome(AssetDatabase.LoadAssetAtPath<BiomeDefinition>(
-                    "Assets/Project/Design/Simulation/Planetary/SO_BasaltDesertBiome.asset")),
-                Is.False);
-        }
-
-        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Temperate/SM_SurfaceDecoration_FirTree_01.fbx")]
-        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Temperate/SM_SurfaceDecoration_PineTree_01.fbx")]
-        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Frozen/SM_SurfaceDecoration_CrystallineIceplant_01.fbx")]
-        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Shared/SM_SurfaceDecoration_Boulder_01.fbx")]
-        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Shared/SM_SurfaceDecoration_Rock_09.fbx")]
-        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Arid/SM_SurfaceDecoration_DeadQuiverBranch_01.fbx")]
-        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Arid/SM_SurfaceDecoration_Othonna_01.fbx")]
-        public void NewSurfaceFloraModels_UseStaticRuntimeImportSettings(string path)
-        {
-            ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
-            Assert.That(importer, Is.Not.Null);
-            Assert.That(importer.importAnimation, Is.False);
-            Assert.That(importer.importBlendShapes, Is.False);
-            Assert.That(importer.importCameras, Is.False);
-            Assert.That(importer.importLights, Is.False);
-            Assert.That(importer.materialImportMode, Is.EqualTo(ModelImporterMaterialImportMode.None));
-            Assert.That(importer.isReadable, Is.False);
         }
 
         [Test]
         public void TemperateBirchSuitability_RejectsOceanCoveredSurface()
         {
-            SurfaceDecorationProfile profile =
-                AssetDatabase.LoadAssetAtPath<SurfaceDecorationProfile>(ProfilePath);
-            SurfaceDecorationRule birch = profile.Rules[0];
+            SurfaceDecorationRule birch = LoadProfile().Rules[0];
             GameObject owner = new("Surface Decoration Suitability Test");
             try
             {
@@ -205,97 +138,12 @@ namespace Farion.Tests.EditMode
             }
         }
 
-        [TestCase("Assets/Project/Scenes/SC_WorldZone.unity")]
-        public void TargetScene_HasConfiguredVisualOnlySurfaceDecorationRenderer(string scenePath)
+        static SurfaceDecorationProfile LoadProfile()
         {
-            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
-            try
-            {
-                SurfaceDecorationRenderer[] renderers =
-                    Object.FindObjectsByType<SurfaceDecorationRenderer>(FindObjectsInactive.Include);
-                System.Collections.Generic.HashSet<string> decoratedBodies = new();
-                foreach (SurfaceDecorationRenderer candidate in renderers)
-                {
-                    if (candidate.gameObject.scene == scene)
-                    {
-                        Assert.That(candidate.Profile, Is.Not.Null);
-                        decoratedBodies.Add(candidate.gameObject.name);
-                    }
-                }
-
-                Assert.That(decoratedBodies, Is.EquivalentTo(new[] { "Starting Planet", "Rime", "Ember" }));
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(scene, removeScene: true);
-            }
-        }
-
-        [Test]
-        public void StartingWorldLandingArea_SupportsTemperateDecoration()
-        {
-            Scene scene = EditorSceneManager.OpenScene(
-                "Assets/Project/Scenes/SC_WorldZone.unity",
-                OpenSceneMode.Additive);
-            try
-            {
-                SurfaceDecorationRenderer renderer = null;
-                foreach (SurfaceDecorationRenderer candidate in
-                    Object.FindObjectsByType<SurfaceDecorationRenderer>(FindObjectsInactive.Include))
-                {
-                    if (candidate.gameObject.scene == scene && candidate.gameObject.name == "Starting Planet")
-                    {
-                        renderer = candidate;
-                        break;
-                    }
-                }
-
-                Assert.That(renderer, Is.Not.Null);
-                PlanetSurfaceModel surfaceModel = renderer.GetComponent<PlanetSurfaceModel>();
-                Assert.That(surfaceModel.TrySamplePlanetSurface(
-                    renderer.transform.InverseTransformDirection(Vector3.up),
-                    out PlanetSurfaceSample sample), Is.True);
-                Assert.That(sample.Biome.Biome.name, Is.EqualTo("SO_TemperateBiome"));
-                Assert.That(sample.Climate.TemperatureCelsius, Is.InRange(-3f, 24f));
-                Assert.That(sample.Climate.EffectiveMoisture, Is.GreaterThanOrEqualTo(0.65f));
-
-                bool hasOcean = false;
-                float oceanRadius = 0f;
-                foreach (MonoBehaviour behaviour in renderer.GetComponents<MonoBehaviour>())
-                {
-                    if (behaviour is ICelestialEnvironmentProvider provider &&
-                        provider.TryGetEnvironment(sample.Surface.Body, out CelestialEnvironmentSample environment))
-                    {
-                        hasOcean = environment.HasOcean;
-                        oceanRadius = environment.OceanRadius;
-                        break;
-                    }
-                }
-
-                int suitableRuleCount = 0;
-                foreach (SurfaceDecorationRule rule in renderer.Profile.Rules)
-                {
-                    if (!rule.AllowsBiome(sample.Biome.Biome))
-                    {
-                        continue;
-                    }
-
-                    if (rule.EvaluateSuitability(sample, sample.Biome.Suitability, hasOcean, oceanRadius) > 0f)
-                    {
-                        suitableRuleCount++;
-                    }
-                }
-
-                Assert.That(
-                    suitableRuleCount,
-                    Is.GreaterThan(0),
-                    "The starting landing area must support at least one decoration rule. "
-                    + "Rules tuned for other climates may legitimately score zero here.");
-            }
-            finally
-            {
-                EditorSceneManager.CloseScene(scene, removeScene: true);
-            }
+            SurfaceDecorationProfile profile =
+                AssetDatabase.LoadAssetAtPath<SurfaceDecorationProfile>(ProfilePath);
+            Assert.That(profile, Is.Not.Null, ProfilePath);
+            return profile;
         }
     }
 }

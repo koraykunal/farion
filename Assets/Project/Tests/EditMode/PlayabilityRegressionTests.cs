@@ -18,28 +18,17 @@ namespace Farion.Tests.EditMode
                 System.Array.Empty<InventoryStackSnapshot>());
         }
 
-        [Test]
-        public void ClimbingAwayFromTheSurfaceStaysWithinLandingLimits()
+        [TestCase(2.6f, 0.4f, true, TestName = "ClimbingStaysWithinLandingLimits")]
+        [TestCase(-2.6f, 0.4f, false, TestName = "DescendingTooFastLeavesLandingLimits")]
+        [TestCase(-0.2f, 1.8f, false, TestName = "ExcessiveLateralDriftLeavesLandingLimits")]
+        public void LandingLimitsBoundVerticalAndLateralSpeed(
+            float verticalSpeed,
+            float lateralSpeed,
+            bool expected)
         {
             Assert.That(
-                UiSpacecraftFlightHudGraphics.IsWithinLandingLimits(2.6f, 0.4f),
-                Is.True);
-        }
-
-        [Test]
-        public void DescendingFasterThanTheLimitLeavesLandingLimits()
-        {
-            Assert.That(
-                UiSpacecraftFlightHudGraphics.IsWithinLandingLimits(-2.6f, 0.4f),
-                Is.False);
-        }
-
-        [Test]
-        public void ExcessiveLateralDriftLeavesLandingLimits()
-        {
-            Assert.That(
-                UiSpacecraftFlightHudGraphics.IsWithinLandingLimits(-0.2f, 1.8f),
-                Is.False);
+                UiSpacecraftFlightHudGraphics.IsWithinLandingLimits(verticalSpeed, lateralSpeed),
+                Is.EqualTo(expected));
         }
 
         [Test]

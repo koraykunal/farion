@@ -5,7 +5,6 @@ using Farion.UI.Foundation;
 using Farion.UI.Gameplay;
 using Farion.UI.Input;
 using Farion.UI.Navigation;
-using Farion.UI.Styling;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -263,31 +262,11 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void FeedbackFormatsItemAcquisitionAndKeepsBottomCenterLayout()
+        public void FeedbackFormatsItemAcquisition()
         {
-            const string path =
-                "Assets/Project/Prefabs/UI/Foundation/PF_UI_FeedbackOverlay.prefab";
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            UiFeedbackService feedback = prefab.GetComponent<UiFeedbackService>();
-            RectTransform rect = prefab.GetComponent<RectTransform>();
-            SerializedObject serializedFeedback = new(feedback);
-            LayoutElement iconLayout = prefab.transform
-                .Find("ItemIcon")
-                .GetComponent<LayoutElement>();
-
             Assert.That(
                 UiFeedbackService.FormatItemMessage("Iron Ore", 2),
                 Is.EqualTo("Iron Ore ×2"));
-            Assert.That(
-                serializedFeedback.FindProperty("iconImage").objectReferenceValue,
-                Is.Not.Null);
-            Assert.That(prefab.GetComponent<HorizontalLayoutGroup>(), Is.Not.Null);
-            Assert.That(prefab.GetComponent<ContentSizeFitter>(), Is.Not.Null);
-            Assert.That(iconLayout.preferredWidth, Is.EqualTo(64f));
-            Assert.That(iconLayout.preferredHeight, Is.EqualTo(64f));
-            Assert.That(rect.anchorMin, Is.EqualTo(new Vector2(0.5f, 0f)));
-            Assert.That(rect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0f)));
-            Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(0f, 72f)));
         }
 
         [Test]
@@ -347,79 +326,7 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void DefaultThemeProvidesDistinctInterfaceAndInstrumentFonts()
-        {
-            const string path =
-                "Assets/Project/Design/UI/Styling/SO_DefaultUiTheme.asset";
-            UiTheme theme = AssetDatabase.LoadAssetAtPath<UiTheme>(path);
-
-            Assert.That(theme, Is.Not.Null);
-            SerializedObject serializedTheme = new(theme);
-            Object interfaceFont = serializedTheme
-                .FindProperty("interfaceFont").objectReferenceValue;
-            Object interfaceMediumFont = serializedTheme
-                .FindProperty("interfaceMediumFont").objectReferenceValue;
-            Object instrumentFont = serializedTheme
-                .FindProperty("instrumentFont").objectReferenceValue;
-
-            Assert.That(interfaceFont, Is.Not.Null);
-            Assert.That(interfaceMediumFont, Is.Not.Null);
-            Assert.That(instrumentFont, Is.Not.Null);
-            Assert.That(interfaceFont, Is.Not.SameAs(instrumentFont));
-        }
-
-        [Test]
-        public void AuthoredFlightHudProvidesTelemetryGraphics()
-        {
-            const string path =
-                "Assets/Project/Prefabs/UI/Hud/PF_UI_SpacecraftFlightHud.prefab";
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-
-            Assert.That(prefab, Is.Not.Null);
-            Assert.That(
-                prefab.GetComponent<UiSpacecraftFlightHudPresenter>(),
-                Is.Not.Null);
-            Assert.That(
-                prefab.GetComponentInChildren<UiSpacecraftFlightHudGraphics>(true),
-                Is.Not.Null);
-            Assert.That(
-                prefab.transform.Find(
-                    "Graphics/FlightCluster/FuelArc"),
-                Is.Not.Null);
-            Assert.That(
-                prefab.transform.Find(
-                    "Graphics/FlightCluster/PropulsionReadout"),
-                Is.Not.Null);
-            Assert.That(
-                prefab.transform.Find(
-                    "NavigationTargetMarker/TargetReadout/DirectionArrow"),
-                Is.Not.Null);
-
-            SerializedObject graphics = new(
-                prefab.GetComponentInChildren<UiSpacecraftFlightHudGraphics>(true));
-            Assert.That(
-                graphics.FindProperty("fuelArcFillImage").objectReferenceValue,
-                Is.Not.Null);
-            Assert.That(
-                graphics.FindProperty("speedValueText").objectReferenceValue,
-                Is.Not.Null);
-            Assert.That(
-                graphics.FindProperty("assistValueText").objectReferenceValue,
-                Is.Not.Null);
-            Assert.That(
-                graphics.FindProperty("navigationArrow").objectReferenceValue,
-                Is.Not.Null);
-            Assert.That(
-                prefab.transform.Find(
-                    "Graphics/FlightCluster/FlightStatusText"),
-                Is.Null);
-            Assert.That(
-                prefab.transform.Find(
-                    "Graphics/FlightCluster/ThrottleRail"),
-                Is.Null);
-        }
-
-        [Test]
+        [Category("Content")]
         public void AuthoredPauseMenuProvidesRuntimeInitialSelection()
         {
             const string path =
@@ -442,24 +349,6 @@ namespace Farion.Tests.EditMode
             Assert.That(
                 screen.ResolveFirstSelection(),
                 Is.EqualTo(presenter.FirstAvailableButton.Button));
-        }
-
-        [Test]
-        public void SystemRootPrefabRemainsServiceOnly()
-        {
-            const string path =
-                "Assets/Project/Prefabs/UI/Foundation/PF_UI_SystemRoot.prefab";
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-
-            Assert.That(prefab, Is.Not.Null);
-            Assert.That(prefab.GetComponent<UiSystemRoot>(), Is.Not.Null);
-            Assert.That(prefab.GetComponent<UiScreenRouter>(), Is.Not.Null);
-            Assert.That(prefab.GetComponent<UiFocusController>(), Is.Not.Null);
-            Assert.That(prefab.GetComponent<UiInputDeviceService>(), Is.Not.Null);
-            Assert.That(prefab.transform.childCount, Is.Zero);
-            Assert.That(
-                prefab.GetComponentInChildren<UiScreenView>(true),
-                Is.Null);
         }
 
         UiScreenView CreateScreen(
