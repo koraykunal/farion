@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
-using Farion.Audio;
+using Farion.Audio.Direction;
 using Farion.UI.Common;
 using Farion.UI.Feedback;
 using Farion.UI.Foundation;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Inventory
 {
-    [CreateAssetMenu(menuName = "Farion/Gameplay/Inventory Item", fileName = "SO_Item")]
+    [CreateAssetMenu(menuName = "Farion/Gameplay/Inventory/Item Definition", fileName = "SO_Item")]
     public sealed class InventoryItemDefinition : ScriptableObject
     {
         [SerializeField] string itemId = "item.resource";

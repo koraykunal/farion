@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Farion.Rendering.Celestial
 {
     [CreateAssetMenu(
-        menuName = "Farion/Rendering/Celestial Star Visual Profile",
+        menuName = "Farion/Rendering/Celestial/Star Visual Profile",
         fileName = "SO_CelestialStarVisualProfile")]
     public sealed class CelestialStarVisualProfile : ScriptableObject
     {

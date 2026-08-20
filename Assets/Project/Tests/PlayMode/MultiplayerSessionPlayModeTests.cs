@@ -10,7 +10,7 @@ using Farion.Multiplayer.Session;
 using Farion.Rendering.Celestial;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
-using Farion.Tests;
+using Farion.Tests.Support;
 using FishNet.Object.Prediction;
 using FishNet.Transporting;
 using NUnit.Framework;
@@ -88,7 +88,7 @@ namespace Farion.Tests.PlayMode
                 session.State,
                 Is.EqualTo(MultiplayerSessionState.Starting));
 
-            Invoke(session, "NotifyAssignedStarterShipReady");
+            Invoke(session, "NotifyAssignedStarterShuttleReady");
             Assert.That(
                 session.State,
                 Is.EqualTo(MultiplayerSessionState.Connected));

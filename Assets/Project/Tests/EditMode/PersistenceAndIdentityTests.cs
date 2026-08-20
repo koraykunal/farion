@@ -3,7 +3,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Persistence;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
 using Farion.Simulation.World;
 using NUnit.Framework;

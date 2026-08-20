@@ -3,7 +3,7 @@ using System.Collections;
 using Farion.Gameplay.Character;
 using Farion.Multiplayer.World;
 using Farion.Simulation.World;
-using Farion.Tests;
+using Farion.Tests.Support;
 using FishNet.Managing.Scened;
 using NUnit.Framework;
 using UnityEngine;
@@ -43,7 +43,7 @@ namespace Farion.Tests.PlayMode
         {
             GeneratedEntityId expected = new(0x1020304050607080UL);
 
-            SceneLoadData data = NetworkZoneSceneLoad.Create(
+            SceneLoadData data = MultiplayerZoneSceneLoad.Create(
                 "SC_WorldZone",
                 expected);
 
@@ -52,7 +52,7 @@ namespace Farion.Tests.PlayMode
             Assert.That(data.Options.LocalPhysics, Is.EqualTo(LocalPhysicsMode.Physics3D));
             Assert.That(data.ReplaceScenes, Is.EqualTo(ReplaceOption.None));
             Assert.That(
-                NetworkZoneSceneLoad.TryDecode(
+                MultiplayerZoneSceneLoad.TryDecode(
                     data.Params.ClientParams,
                     out GeneratedEntityId decoded),
                 Is.True);
@@ -63,11 +63,11 @@ namespace Farion.Tests.PlayMode
         public void ZoneSceneLoadRejectsMissingIdentity()
         {
             Assert.Throws<System.ArgumentOutOfRangeException>(() =>
-                NetworkZoneSceneLoad.Create(
+                MultiplayerZoneSceneLoad.Create(
                     "SC_WorldZone",
                     GeneratedEntityId.None));
             Assert.That(
-                NetworkZoneSceneLoad.TryDecode(
+                MultiplayerZoneSceneLoad.TryDecode(
                     new byte[sizeof(ulong)],
                     out GeneratedEntityId decoded),
                 Is.False);
@@ -80,7 +80,7 @@ namespace Farion.Tests.PlayMode
             firstScene = CreatePhysicsScene("FarionSharedZone");
             GeneratedEntityId expected = new(404UL);
 
-            SceneLoadData data = NetworkZoneSceneLoad.Create(firstScene, expected);
+            SceneLoadData data = MultiplayerZoneSceneLoad.Create(firstScene, expected);
 
             Assert.That(data.SceneLookupDatas, Has.Length.EqualTo(1));
             Assert.That(

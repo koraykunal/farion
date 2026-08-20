@@ -21,7 +21,7 @@ namespace Farion.Tests.EditMode
         public void ClimbingAwayFromTheSurfaceStaysWithinLandingLimits()
         {
             Assert.That(
-                SpacecraftFlightHudGraphics.IsWithinLandingLimits(2.6f, 0.4f),
+                UiSpacecraftFlightHudGraphics.IsWithinLandingLimits(2.6f, 0.4f),
                 Is.True);
         }
 
@@ -29,7 +29,7 @@ namespace Farion.Tests.EditMode
         public void DescendingFasterThanTheLimitLeavesLandingLimits()
         {
             Assert.That(
-                SpacecraftFlightHudGraphics.IsWithinLandingLimits(-2.6f, 0.4f),
+                UiSpacecraftFlightHudGraphics.IsWithinLandingLimits(-2.6f, 0.4f),
                 Is.False);
         }
 
@@ -37,7 +37,7 @@ namespace Farion.Tests.EditMode
         public void ExcessiveLateralDriftLeavesLandingLimits()
         {
             Assert.That(
-                SpacecraftFlightHudGraphics.IsWithinLandingLimits(-0.2f, 1.8f),
+                UiSpacecraftFlightHudGraphics.IsWithinLandingLimits(-0.2f, 1.8f),
                 Is.False);
         }
 
@@ -91,24 +91,24 @@ namespace Farion.Tests.EditMode
         [Test]
         public void FieldOfViewPreferenceIsClampedAndOffsetsAuthoredValue()
         {
-            float previous = FarionViewPreferences.FieldOfView;
+            float previous = PlayerViewPreferences.FieldOfView;
             try
             {
-                FarionViewPreferences.FieldOfView = 500f;
+                PlayerViewPreferences.FieldOfView = 500f;
                 Assert.That(
-                    FarionViewPreferences.FieldOfView,
-                    Is.EqualTo(FarionViewPreferences.MaximumFieldOfView)
+                    PlayerViewPreferences.FieldOfView,
+                    Is.EqualTo(PlayerViewPreferences.MaximumFieldOfView)
                         .Within(0.0001f));
 
-                FarionViewPreferences.FieldOfView =
-                    FarionViewPreferences.ReferenceFieldOfView + 10f;
+                PlayerViewPreferences.FieldOfView =
+                    PlayerViewPreferences.ReferenceFieldOfView + 10f;
                 Assert.That(
-                    FarionViewPreferences.ResolveFieldOfView(70f),
+                    PlayerViewPreferences.ResolveFieldOfView(70f),
                     Is.EqualTo(80f).Within(0.0001f));
             }
             finally
             {
-                FarionViewPreferences.FieldOfView = previous;
+                PlayerViewPreferences.FieldOfView = previous;
             }
         }
 

@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07411407fad1464ea4ad6f8bdbb29d4d, type: 3}
+  m_Name: SO_StartingPlanetResourceDistribution
+  m_EditorClassIdentifier: 
+  baseSeed: 1001
+  surfaceSampleSpacing: 64
+  maxSurfaceSamples: 2048
+  resourceNoiseScale: 1
+  clusterAngularJitterDegrees: 1.5
+  rules:
+  - resource: {fileID: 11400000, guid: 812f67a5eb3c4960b62c3caac9c9a655, type: 2}
+    weight: 5
+    altitudeRange: {x: -1000000, y: 1000000}
+    slopeRange: {x: 0, y: 30}
+    allowedBiomes:
+    - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+    - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    allowedTerrainFeatures: []
+    noiseThreshold: 0.72
+    minClusterSize: 1
+    maxClusterSize: 1
+  - resource: {fileID: 11400000, guid: 57f33f503c114cc784208068d47c696c, type: 2}
+    weight: 1.3
+    altitudeRange: {x: -5, y: 1000000}
+    slopeRange: {x: 12, y: 75}
+    allowedBiomes:
+    - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+    allowedTerrainFeatures: []
+    noiseThreshold: 0.68
+    minClusterSize: 1
+    maxClusterSize: 2
+  - resource: {fileID: 11400000, guid: 781593be774844bdb3473ed3476a5c22, type: 2}
+    weight: 0.9
+    altitudeRange: {x: -1000000, y: 300}
+    slopeRange: {x: 0, y: 45}
+    allowedBiomes:
+    - {fileID: 11400000, guid: ec69e337fda94e90b1e1d0900b3536ed, type: 2}
+    allowedTerrainFeatures: []
+    noiseThreshold: 0.7
+    minClusterSize: 1
+    maxClusterSize: 1

@@ -42,7 +42,7 @@ Assets/Project/Audio/Runtime
     |-- SpacecraftAudioPerspective.cs
     `-- SpacecraftAudioTuningProfile.cs
 
-Assets/Project/Prefabs/Audio/PF_AudioSystem.prefab
+Assets/Project/Prefabs/Audio/PF_AudioDirector.prefab
 FMODProject/FarionAudio/FarionAudio.fspro
 FMODProject/FarionAudio/Assets
 FMODProject/FarionAudio/Build/Desktop
@@ -125,7 +125,7 @@ final WAV content is added in FMOD Studio.
 
 Every enabled build scene contains exactly:
 
-- one `PF_AudioSystem` prefab instance;
+- one `PF_AudioDirector` prefab instance;
 - one `AudioSceneContext` configured for that scene;
 - one active `FMOD Studio Listener`;
 - zero Unity `AudioListener` and `AudioSource` components.

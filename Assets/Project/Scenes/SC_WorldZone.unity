@@ -1126,13 +1126,13 @@ MonoBehaviour:
   - {fileID: 796783953}
   - {fileID: 1684625538}
   - {fileID: 1313707470}
-  starterShipFormations:
+  starterShuttleFormations:
   - {fileID: 1009712691}
   - {fileID: 1796747984}
   - {fileID: 412401546}
   - {fileID: 463113332}
   surfaceClearance: 1.02
-  starterShipSurfaceClearance: 3
+  starterShuttleSurfaceClearance: 3
 --- !u!1 &1148478145
 GameObject:
   m_ObjectHideFlags: 0
@@ -1258,7 +1258,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.ResourceNodes.ResourceDepositRuntimeSpawner
   body: {fileID: 1148478148}
   surfaceModel: {fileID: 1148478146}
   frameProvider: {fileID: 0}
@@ -1688,7 +1688,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.ResourceNodes.ResourceDepositRuntimeSpawner
   body: {fileID: 1477076283}
   surfaceModel: {fileID: 1477076288}
   frameProvider: {fileID: 0}
@@ -2269,7 +2269,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Resources.ResourceDepositRuntimeSpawner
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.ResourceNodes.ResourceDepositRuntimeSpawner
   body: {fileID: 1772746501}
   surfaceModel: {fileID: 1772746497}
   frameProvider: {fileID: 0}

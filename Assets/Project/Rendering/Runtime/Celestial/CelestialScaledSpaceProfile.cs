@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Farion.Rendering.Celestial
 {
     [CreateAssetMenu(
-        menuName = "Farion/Rendering/Celestial Scaled Space Profile",
+        menuName = "Farion/Rendering/Celestial/Scaled Space Profile",
         fileName = "SO_CelestialScaledSpaceProfile")]
     public sealed class CelestialScaledSpaceProfile : ScriptableObject
     {

@@ -6,7 +6,7 @@ using Farion.Gameplay.Actors;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
 using Farion.Simulation.Physics;
 using Farion.Simulation.World;

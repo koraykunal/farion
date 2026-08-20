@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Flight
 {
-    [CreateAssetMenu(menuName = "Farion/Gameplay/Spacecraft Landing Profile", fileName = "SO_SpacecraftLandingProfile")]
+    [CreateAssetMenu(menuName = "Farion/Gameplay/Flight/Spacecraft Landing Profile", fileName = "SO_SpacecraftLandingProfile")]
     public sealed class SpacecraftLandingProfile : ScriptableObject
     {
         const float DefaultMinimumSurfaceFrameAltitude = 100f;

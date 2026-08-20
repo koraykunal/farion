@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial Cloud Profile", fileName = "SO_CelestialCloudProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/Cloud Profile", fileName = "SO_CelestialCloudProfile")]
     public sealed class CelestialCloudProfile : ScriptableObject
     {
         [Header("Volume Textures")]

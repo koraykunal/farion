@@ -13,32 +13,32 @@ namespace Farion.Editor
         public const string NetworkSessionPlayerPrefab =
             "Assets/Project/Prefabs/Multiplayer/PF_NetworkSessionPlayer.prefab";
         public const string NetworkStarterShuttlePrefab =
-            "Assets/Project/Prefabs/Multiplayer/PF_StarterShuttleNetwork.prefab";
+            "Assets/Project/Prefabs/Multiplayer/PF_PlayerStarterShuttleNetwork.prefab";
         public const string NetworkExplorerPrefab =
             "Assets/Project/Prefabs/Gameplay/Character/PF_PlayerExplorerNetwork.prefab";
 
         public const string UiSystemRootPrefab =
-            "Assets/Project/Prefabs/UI/Foundation/UI_SystemRoot.prefab";
+            "Assets/Project/Prefabs/UI/Foundation/PF_UI_SystemRoot.prefab";
         public const string UiConfirmationPrefab =
-            "Assets/Project/Prefabs/UI/Foundation/UI_ConfirmationDialog.prefab";
+            "Assets/Project/Prefabs/UI/Foundation/PF_UI_ConfirmationDialog.prefab";
         public const string UiLoadingPrefab =
-            "Assets/Project/Prefabs/UI/Foundation/UI_LoadingOverlay.prefab";
+            "Assets/Project/Prefabs/UI/Foundation/PF_UI_LoadingOverlay.prefab";
         public const string UiFeedbackPrefab =
-            "Assets/Project/Prefabs/UI/Foundation/UI_FeedbackOverlay.prefab";
+            "Assets/Project/Prefabs/UI/Foundation/PF_UI_FeedbackOverlay.prefab";
         public const string UiSettingsPrefab =
-            "Assets/Project/Prefabs/UI/Screens/UI_SettingsScreen.prefab";
+            "Assets/Project/Prefabs/UI/Screens/PF_UI_SettingsScreen.prefab";
         public const string UiSaveSlotPrefab =
-            "Assets/Project/Prefabs/UI/Common/UI_SaveSlot.prefab";
+            "Assets/Project/Prefabs/UI/Widgets/PF_UI_SaveSlot.prefab";
         public const string UiSaveLoadPrefab =
-            "Assets/Project/Prefabs/UI/Screens/UI_SaveLoadScreen.prefab";
+            "Assets/Project/Prefabs/UI/Screens/PF_UI_SaveLoadScreen.prefab";
         public const string UiInventoryPrefab =
-            "Assets/Project/Prefabs/UI/Screens/UI_InventoryScreen.prefab";
+            "Assets/Project/Prefabs/UI/Screens/PF_UI_InventoryScreen.prefab";
         public const string UiPausePrefab =
-            "Assets/Project/Prefabs/UI/Screens/UI_PauseMenuScreen.prefab";
+            "Assets/Project/Prefabs/UI/Screens/PF_UI_PauseMenuScreen.prefab";
         public const string UiFlightHudPrefab =
-            "Assets/Project/Prefabs/UI/Gameplay/HUD/UI_SpacecraftFlightHud.prefab";
+            "Assets/Project/Prefabs/UI/Hud/PF_UI_SpacecraftFlightHud.prefab";
         public const string UiMenuButtonFrameTexture =
-            "Assets/Project/Art/UI/Textures/Common/UI_MenuButtonFrame.png";
+            "Assets/Project/Art/Textures/UI/Common/TX_UI_Common_MenuButtonFrame.png";
 
         public const string SurfacePatchProfile =
             "Assets/Project/Design/Rendering/Celestial/SO_CelestialSurfacePatchProfile.asset";
@@ -49,18 +49,18 @@ namespace Farion.Editor
         public const string TerrestrialSurfaceProfile =
             "Assets/Project/Design/Rendering/Celestial/SO_TerrestrialSurfaceProfile.asset";
         public const string StarVisualProfile =
-            "Assets/Project/Design/Rendering/Celestial/SO_TestStarVisualProfile.asset";
+            "Assets/Project/Design/Rendering/Celestial/SO_StartingStarVisualProfile.asset";
         public const string PlanetaryGenerationProfile =
             "Assets/Project/Design/Simulation/Planetary/SO_StartingTemperateGeneration.asset";
 
-        public const string ItemIconFolder = "Assets/Project/Art/UI/Icons/Items/";
+        public const string ItemIconFolder = "Assets/Project/Art/Icons/Items/";
         public const string CelestialMoonTextureFolder = "Assets/Project/Art/Textures/Celestial/Moon/";
         public const string CelestialOceanTextureFolder = "Assets/Project/Art/Textures/Celestial/Ocean/";
         public const string CelestialSurfaceMaterialTextureFolder =
             "Assets/Project/Art/Textures/Celestial/SurfaceMaterials/";
-        public const string SurfaceFloraModelFolder =
-            "Assets/Project/Art/Models/Environment/SurfaceFlora/";
-        public const string SurfaceFloraTextureFolder =
-            "Assets/Project/Art/Textures/Environment/SurfaceFlora/";
+        public const string SurfaceDecorationModelFolder =
+            "Assets/Project/Art/Models/SurfaceDecoration/";
+        public const string SurfaceDecorationTextureFolder =
+            "Assets/Project/Art/Textures/SurfaceDecoration/";
     }
 }

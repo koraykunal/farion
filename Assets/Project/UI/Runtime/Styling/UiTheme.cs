@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Farion.UI.Styling
 {
-    [CreateAssetMenu(menuName = "Farion/UI/Theme", fileName = "SO_UiTheme")]
+    [CreateAssetMenu(menuName = "Farion/UI/Styling/Theme", fileName = "SO_UiTheme")]
     public sealed class UiTheme : ScriptableObject
     {
         [Header("Surfaces")]

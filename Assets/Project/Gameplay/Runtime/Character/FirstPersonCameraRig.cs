@@ -130,7 +130,7 @@ namespace Farion.Gameplay.Character
             }
 
             float desiredFieldOfView =
-                FarionViewPreferences.ResolveFieldOfView(authoredFieldOfView);
+                PlayerViewPreferences.ResolveFieldOfView(authoredFieldOfView);
             if (!Mathf.Approximately(viewCamera.fieldOfView, desiredFieldOfView))
             {
                 viewCamera.fieldOfView = desiredFieldOfView;

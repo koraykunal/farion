@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Space
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Star Dome Profile", fileName = "SO_StarDomeProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Space/Star Dome Profile", fileName = "SO_StarDomeProfile")]
     public sealed class StarDomeProfile : ScriptableObject
     {
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");

@@ -7,7 +7,7 @@ using Farion.Gameplay.Commands;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Persistence;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
 using Farion.Gameplay.Ships;
 using Farion.UI.Feedback;
@@ -52,7 +52,7 @@ namespace Farion.Tests.PlayMode
             SpacecraftCameraRig cameraRig = Object.FindAnyObjectByType<SpacecraftCameraRig>();
             Assert.That(cameraRig, Is.Not.Null);
             Assert.That(
-                Object.FindAnyObjectByType<SpacecraftFlightHudPresenter>(),
+                Object.FindAnyObjectByType<UiSpacecraftFlightHudPresenter>(),
                 Is.Not.Null);
 
             PilotSeatInteractable pilotSeat =

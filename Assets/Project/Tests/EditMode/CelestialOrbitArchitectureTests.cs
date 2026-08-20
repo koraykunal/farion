@@ -1,6 +1,6 @@
 using Farion.Rendering.Celestial;
 using Farion.Simulation.Physics;
-using Farion.Tests;
+using Farion.Tests.Support;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;

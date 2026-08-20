@@ -4,7 +4,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace Farion.Simulation.Physics
 {
     [MovedFrom(true, "Farion.Core.Physics", "Farion.Core.Runtime")]
-    [CreateAssetMenu(menuName = "Farion/Physics/Celestial Body Definition", fileName = "SO_CelestialBodyDefinition")]
+    [CreateAssetMenu(menuName = "Farion/Simulation/Physics/Celestial Body Definition", fileName = "SO_CelestialBodyDefinition")]
     public sealed class CelestialBodyDefinition : ScriptableObject
     {
         [SerializeField] string bodyName = "Unnamed Body";

@@ -1,0 +1,492 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ce5fd08abc447f8b90cb07e3e5466a1, type: 3}
+  m_Name: SO_TerrestrialSurfaceDecoration
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationProfile
+  maximumCandidateEvaluationsPerFrame: 32
+  candidateEvaluationBudgetMilliseconds: 0.75
+  placementPauseSpeed: 18
+  placementPauseAltitude: 140
+  rules:
+  - stableId: surfaceflora.birch
+    displayName: Temperate Birch
+    variants:
+    - nearMesh: {fileID: 4300000, guid: 834387ee99a5430489b3816a82c5aca2, type: 2}
+      farMesh: {fileID: 4300000, guid: 413505ac9628bae46b62e230f0d5a372, type: 2}
+      materials:
+      - {fileID: 2100000, guid: 9f215652e692f8a4baaaeac04e8b7ff1, type: 2}
+      - {fileID: 2100000, guid: 5ce2a76b9b09a664286723198dc0477b, type: 2}
+      weight: 0.65
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 1
+    - nearMesh: {fileID: 4300000, guid: cc17eb5306a2dd549b2c04d733af21dd, type: 2}
+      farMesh: {fileID: 4300000, guid: 72d7982717157f0418de6214710aa82d, type: 2}
+      materials:
+      - {fileID: 2100000, guid: a7c0c1f8d10c4bb6a728eea66e7bfc01, type: 2}
+      - {fileID: 2100000, guid: b1d72d4a4f7f42a88f7325a3e9da2472, type: 2}
+      weight: 0.35
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 1
+    allowedBiomes:
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.25, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: 1, y: 38}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 28}
+    slopeFeather: 4
+    temperatureRange: {x: -3, y: 24}
+    temperatureFeather: 4
+    moistureRange: {x: 0.45, y: 1}
+    moistureFeather: 0.08
+    radiationRange: {x: 0, y: 0.62}
+    radiationFeather: 0.05
+    snowRange: {x: 0, y: 0.2}
+    snowFeather: 0.05
+    wetnessRange: {x: 0.15, y: 1}
+    wetnessFeather: 0.08
+    volcanismRange: {x: 0, y: 0.15}
+    volcanismFeather: 0.05
+    spacingMeters: 11
+    spawnChance: 0.1
+    clusterScaleMeters: 45
+    clusterCutoff: 0.42
+    clusterFeather: 0.12
+    uniformScaleRange: {x: 0.85, y: 1.15}
+    normalAlignment: 0.15
+    surfaceOffset: 0.03
+    drawDistance: 320
+    shadowDistance: 80
+    farLodStartDistance: 90
+    maxInstances: 160
+  - stableId: surfaceflora.temperateflowers
+    displayName: Temperate Flowers
+    variants:
+    - nearMesh: {fileID: 3008190533417431587, guid: 4b119968f24796b44a8cd28178093f3b, type: 3}
+      farMesh: {fileID: 2300431935074376055, guid: 4b119968f24796b44a8cd28178093f3b, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 1528b25a59b7e5a47b88be2911d4fe8c, type: 2}
+      weight: 1
+      rotationOffset: {x: 0, y: 0, z: 0}
+      baseScale: 1
+    allowedBiomes:
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.25, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: 0.5, y: 45}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 35}
+    slopeFeather: 4
+    temperatureRange: {x: 0, y: 30}
+    temperatureFeather: 4
+    moistureRange: {x: 0.3, y: 0.9}
+    moistureFeather: 0.08
+    radiationRange: {x: 0, y: 0.62}
+    radiationFeather: 0.05
+    snowRange: {x: 0, y: 0.2}
+    snowFeather: 0.05
+    wetnessRange: {x: 0.1, y: 1}
+    wetnessFeather: 0.08
+    volcanismRange: {x: 0, y: 0.15}
+    volcanismFeather: 0.05
+    spacingMeters: 6
+    spawnChance: 0.14
+    clusterScaleMeters: 18
+    clusterCutoff: 0.42
+    clusterFeather: 0.12
+    uniformScaleRange: {x: 0.8, y: 1.2}
+    normalAlignment: 0.65
+    surfaceOffset: 0.03
+    drawDistance: 180
+    shadowDistance: 0
+    farLodStartDistance: 45
+    maxInstances: 384
+  - stableId: surfaceflora.temperategrass
+    displayName: Temperate Grass
+    variants:
+    - nearMesh: {fileID: -1772909878647028648, guid: 30a53a4465454f54bbb21a09898038de, type: 3}
+      farMesh: {fileID: -5521069586582878837, guid: 30a53a4465454f54bbb21a09898038de, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 375416245d95ec64290f92d1beb54ca6, type: 2}
+      weight: 1
+      rotationOffset: {x: 0, y: 0, z: 0}
+      baseScale: 1
+    allowedBiomes:
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.25, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: 0.25, y: 25}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 30}
+    slopeFeather: 4
+    temperatureRange: {x: 2, y: 26}
+    temperatureFeather: 4
+    moistureRange: {x: 0.65, y: 1}
+    moistureFeather: 0.08
+    radiationRange: {x: 0, y: 0.62}
+    radiationFeather: 0.05
+    snowRange: {x: 0, y: 0.15}
+    snowFeather: 0.05
+    wetnessRange: {x: 0.45, y: 1}
+    wetnessFeather: 0.08
+    volcanismRange: {x: 0, y: 0.1}
+    volcanismFeather: 0.05
+    spacingMeters: 2.5
+    spawnChance: 0.26
+    clusterScaleMeters: 8
+    clusterCutoff: 0.42
+    clusterFeather: 0.12
+    uniformScaleRange: {x: 0.75, y: 1.25}
+    normalAlignment: 0.8
+    surfaceOffset: 0.03
+    drawDistance: 90
+    shadowDistance: 0
+    farLodStartDistance: 25
+    maxInstances: 1024
+  - stableId: surfaceflora.boulder01
+    displayName: Terrestrial Boulder
+    variants:
+    - nearMesh: {fileID: -3413407926206594423, guid: bdc9b38b5068aa3459921a2eedde925e, type: 3}
+      farMesh: {fileID: -7537484524203446838, guid: bdc9b38b5068aa3459921a2eedde925e, type: 3}
+      materials:
+      - {fileID: 2100000, guid: d49d7a29e4524dbab5f790c5e039986f, type: 2}
+      weight: 1
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 1200
+    allowedBiomes:
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+    - {fileID: 11400000, guid: ec69e337fda94e90b1e1d0900b3536ed, type: 2}
+    - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    - {fileID: 11400000, guid: efc4474a4cfc46739600e347366c7f8c, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.1, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: -1000000, y: 1000000}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 55}
+    slopeFeather: 8
+    temperatureRange: {x: -100, y: 100}
+    temperatureFeather: 4
+    moistureRange: {x: 0, y: 1}
+    moistureFeather: 0
+    radiationRange: {x: 0, y: 1}
+    radiationFeather: 0
+    snowRange: {x: 0, y: 1}
+    snowFeather: 0
+    wetnessRange: {x: 0, y: 1}
+    wetnessFeather: 0
+    volcanismRange: {x: 0, y: 1}
+    volcanismFeather: 0
+    spacingMeters: 130
+    spawnChance: 0.16
+    clusterScaleMeters: 350
+    clusterCutoff: 0.38
+    clusterFeather: 0.2
+    uniformScaleRange: {x: 0.7, y: 1.5}
+    normalAlignment: 1
+    surfaceOffset: 0.03
+    drawDistance: 520
+    shadowDistance: 180
+    farLodStartDistance: 180
+    maxInstances: 24
+  - stableId: surfaceflora.rock09
+    displayName: Terrestrial Rock
+    variants:
+    - nearMesh: {fileID: -3130650632942756367, guid: 3d370df0fd98c5147bac35e8e91d2795, type: 3}
+      farMesh: {fileID: -6111115221892868622, guid: 3d370df0fd98c5147bac35e8e91d2795, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 9936f8258bac4cf6a0e7e4f61087d82b, type: 2}
+      weight: 1
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 650
+    allowedBiomes:
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+    - {fileID: 11400000, guid: ec69e337fda94e90b1e1d0900b3536ed, type: 2}
+    - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    - {fileID: 11400000, guid: efc4474a4cfc46739600e347366c7f8c, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.05, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: -1000000, y: 1000000}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 48}
+    slopeFeather: 8
+    temperatureRange: {x: -100, y: 100}
+    temperatureFeather: 4
+    moistureRange: {x: 0, y: 1}
+    moistureFeather: 0
+    radiationRange: {x: 0, y: 1}
+    radiationFeather: 0
+    snowRange: {x: 0, y: 1}
+    snowFeather: 0
+    wetnessRange: {x: 0, y: 1}
+    wetnessFeather: 0
+    volcanismRange: {x: 0, y: 1}
+    volcanismFeather: 0
+    spacingMeters: 5
+    spawnChance: 0.55
+    clusterScaleMeters: 42
+    clusterCutoff: 0.25
+    clusterFeather: 0.25
+    uniformScaleRange: {x: 0.7, y: 1.35}
+    normalAlignment: 1
+    surfaceOffset: 0.02
+    drawDistance: 220
+    shadowDistance: 65
+    farLodStartDistance: 75
+    maxInstances: 768
+  - stableId: surfaceflora.crystallineiceplant
+    displayName: Crystalline Iceplant
+    variants:
+    - nearMesh: {fileID: -1203708256808709242, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: 6257336160417395304, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.16
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    - nearMesh: {fileID: -8981330895570484644, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: -8574650014878112802, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.15
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    - nearMesh: {fileID: -5802539689345744639, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: -946357247693004449, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.14
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    - nearMesh: {fileID: 7283735264564020687, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: 7778778432856303746, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.14
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    - nearMesh: {fileID: 3478030002137643435, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: 2977857202706120839, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.12
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    - nearMesh: {fileID: -826866580410632079, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: -4489800702590054700, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.11
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    - nearMesh: {fileID: 541451548471057896, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: -4325756907971099390, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.1
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    - nearMesh: {fileID: 7890569541588410790, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      farMesh: {fileID: -9147679339532511678, guid: c9679b08cee7db44fb494e19d8dad415, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 5d5d2d7e6ad54ab69cb365185ed8c2fc, type: 2}
+      weight: 0.08
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 120
+    allowedBiomes:
+    - {fileID: 11400000, guid: ec69e337fda94e90b1e1d0900b3536ed, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.05, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: -1000000, y: 1000000}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 40}
+    slopeFeather: 6
+    temperatureRange: {x: -100, y: 5}
+    temperatureFeather: 5
+    moistureRange: {x: 0.08, y: 1}
+    moistureFeather: 0.08
+    radiationRange: {x: 0, y: 0.75}
+    radiationFeather: 0.08
+    snowRange: {x: 0.15, y: 1}
+    snowFeather: 0.08
+    wetnessRange: {x: 0, y: 1}
+    wetnessFeather: 0.08
+    volcanismRange: {x: 0, y: 0.2}
+    volcanismFeather: 0.08
+    spacingMeters: 4.5
+    spawnChance: 0.22
+    clusterScaleMeters: 15
+    clusterCutoff: 0.38
+    clusterFeather: 0.18
+    uniformScaleRange: {x: 0.7, y: 1.25}
+    normalAlignment: 0.85
+    surfaceOffset: 0.01
+    drawDistance: 100
+    shadowDistance: 0
+    farLodStartDistance: 35
+    maxInstances: 768
+  - stableId: surfaceflora.othonna
+    displayName: Arid Othonna
+    variants:
+    - nearMesh: {fileID: 4881516717144212935, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      farMesh: {fileID: 6040480260710445415, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 799ebe4af0e143ecadf1102d7baaf6ef, type: 2}
+      - {fileID: 2100000, guid: fe3b9293483d42e081a764e6cd944d56, type: 2}
+      weight: 0.18
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 100
+    - nearMesh: {fileID: 4362490354903658880, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      farMesh: {fileID: -8721350635963482543, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 799ebe4af0e143ecadf1102d7baaf6ef, type: 2}
+      - {fileID: 2100000, guid: fe3b9293483d42e081a764e6cd944d56, type: 2}
+      weight: 0.2
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 100
+    - nearMesh: {fileID: 1878108235945931775, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      farMesh: {fileID: -4391682686418575601, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 799ebe4af0e143ecadf1102d7baaf6ef, type: 2}
+      - {fileID: 2100000, guid: fe3b9293483d42e081a764e6cd944d56, type: 2}
+      weight: 0.2
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 100
+    - nearMesh: {fileID: -3292202741885515101, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      farMesh: {fileID: -2570384515704619161, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 799ebe4af0e143ecadf1102d7baaf6ef, type: 2}
+      - {fileID: 2100000, guid: fe3b9293483d42e081a764e6cd944d56, type: 2}
+      weight: 0.21
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 100
+    - nearMesh: {fileID: -9074637500334798545, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      farMesh: {fileID: 7623932349202577992, guid: af0bf8ceeffbb244cb44e75a94d77e8a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 799ebe4af0e143ecadf1102d7baaf6ef, type: 2}
+      - {fileID: 2100000, guid: fe3b9293483d42e081a764e6cd944d56, type: 2}
+      weight: 0.21
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 100
+    allowedBiomes:
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+    - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    - {fileID: 11400000, guid: efc4474a4cfc46739600e347366c7f8c, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.1, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: -1000000, y: 1000000}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 35}
+    slopeFeather: 6
+    temperatureRange: {x: 2, y: 38}
+    temperatureFeather: 5
+    moistureRange: {x: 0.05, y: 0.62}
+    moistureFeather: 0.1
+    radiationRange: {x: 0, y: 0.8}
+    radiationFeather: 0.08
+    snowRange: {x: 0, y: 0.15}
+    snowFeather: 0.05
+    wetnessRange: {x: 0, y: 0.5}
+    wetnessFeather: 0.08
+    volcanismRange: {x: 0, y: 0.5}
+    volcanismFeather: 0.08
+    spacingMeters: 8
+    spawnChance: 0.2
+    clusterScaleMeters: 22
+    clusterCutoff: 0.35
+    clusterFeather: 0.2
+    uniformScaleRange: {x: 0.75, y: 1.25}
+    normalAlignment: 0.7
+    surfaceOffset: 0.02
+    drawDistance: 160
+    shadowDistance: 35
+    farLodStartDistance: 48
+    maxInstances: 320
+  - stableId: surfaceflora.deadquiverbranch
+    displayName: Dead Quiver Branch
+    variants:
+    - nearMesh: {fileID: 8041264461124284331, guid: a66a7611c433a0b488957fdad04558a7, type: 3}
+      farMesh: {fileID: 8041264461124284331, guid: a66a7611c433a0b488957fdad04558a7, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 31b6e2ed97d9407f8fc02e31ee22e68f, type: 2}
+      weight: 1
+      rotationOffset: {x: -90, y: 0, z: 0}
+      baseScale: 300
+    allowedBiomes:
+    - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+    - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+    - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    - {fileID: 11400000, guid: efc4474a4cfc46739600e347366c7f8c, type: 2}
+    allowedSurfaceMaterials: []
+    allowedTerrainFeatures: []
+    requireDryLand: 1
+    limitHeightAboveOcean: 0
+    heightAboveOceanRange: {x: 0.1, y: 1000000}
+    heightAboveOceanFeather: 1
+    altitudeRange: {x: -1000000, y: 1000000}
+    altitudeFeather: 4
+    slopeRange: {x: 0, y: 42}
+    slopeFeather: 6
+    temperatureRange: {x: -5, y: 50}
+    temperatureFeather: 6
+    moistureRange: {x: 0, y: 0.48}
+    moistureFeather: 0.1
+    radiationRange: {x: 0, y: 1}
+    radiationFeather: 0
+    snowRange: {x: 0, y: 0.2}
+    snowFeather: 0.05
+    wetnessRange: {x: 0, y: 0.4}
+    wetnessFeather: 0.08
+    volcanismRange: {x: 0, y: 1}
+    volcanismFeather: 0
+    spacingMeters: 28
+    spawnChance: 0.08
+    clusterScaleMeters: 75
+    clusterCutoff: 0.4
+    clusterFeather: 0.18
+    uniformScaleRange: {x: 0.75, y: 1.35}
+    normalAlignment: 0.8
+    surfaceOffset: 0.02
+    drawDistance: 220
+    shadowDistance: 50
+    farLodStartDistance: 0
+    maxInstances: 64

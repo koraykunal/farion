@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Simulation.World;
 using UnityEngine;
 

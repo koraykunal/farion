@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Farion.Simulation.Planetary;
@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Surface Visual Profile", fileName = "SO_SurfaceVisualProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/Surface Visual Profile", fileName = "SO_SurfaceVisualProfile")]
     public sealed class SurfaceVisualProfile : ScriptableObject
     {
         public const int MaxSurfaceSlots = 8;

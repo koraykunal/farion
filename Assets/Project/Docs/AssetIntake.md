@@ -10,18 +10,24 @@ textures belong under `Assets/Project/Art`.
 
 ## Item And Progression Data
 
-Runtime gameplay data is authored as ScriptableObject definitions:
+Runtime gameplay data is authored as ScriptableObject definitions. Every one
+is named subject-first, `SO_<Subject><DefinitionType>`, so a folder listing
+reads as a list of subjects. The type suffix is the runtime type without its
+`Definition`/`Profile` boilerplate. Shared defaults are prefixed `Default`,
+and content belonging to the starting system is prefixed `Starting`.
+`Test` never appears in a shipped asset name.
+
 
 - Item definitions: `Assets/Project/Design/Gameplay/Inventory`
   - `SO_<ItemName>Item.asset`
   - owns display name, category, form, tech domain, stack size, and future icon
     reference.
-- Resource node definitions: `Assets/Project/Design/Gameplay/Resources`
+- Resource node definitions: `Assets/Project/Design/Gameplay/ResourceNodes`
   - `SO_<ResourceName>Node.asset`
   - owns prompt text, yielded item, reserve range, harvest amount, and visual
     prefab reference.
 - Processing recipes: `Assets/Project/Design/Gameplay/Processing`
-  - `SO_Process_<InputName>.asset`
+  - `SO_<InputName>Recipe.asset`
   - owns a stable recipe id, display name, inputs, and outputs.
 
 Research definitions do not exist yet. Create
@@ -83,10 +89,10 @@ Preferred source format:
 
 Folders:
 
-- Gameplay item icons: `Assets/Project/Art/UI/Icons/Items`
-- Menu and navigation icons: `Assets/Project/Art/UI/Icons/Menu`
+- Gameplay item icons: `Assets/Project/Art/Icons/Items`
+- Menu and navigation icons: `Assets/Project/Art/Icons/Menu`
 - Ship and suit system icons reserved for later HUD/system panels:
-  `Assets/Project/Art/UI/Icons/Systems`
+  `Assets/Project/Art/Icons/Systems`
 - Temporary or review-only source exports: `ArtSource/UI`
 
 Naming:
@@ -114,10 +120,10 @@ Preferred runtime format:
 Folders:
 
 - Shared frames, masks, panels, and controls:
-  `Assets/Project/Art/UI/Textures/Common`
-- HUD-specific textures: `Assets/Project/Art/UI/Textures/HUD`
-- Brand marks and logos: `Assets/Project/Art/UI/Textures/Branding`
-- Feature-specific screen art: `Assets/Project/Art/UI/Textures/Screens/<Feature>`;
+  `Assets/Project/Art/Textures/UI/Common`
+- HUD-specific textures: `Assets/Project/Art/Textures/UI/HUD`
+- Brand marks and logos: `Assets/Project/Art/Textures/UI/Branding`
+- Feature-specific screen art: `Assets/Project/Art/Textures/UI/Screens/<Feature>`;
   create the feature folder only when a runtime asset exists.
 
 Naming:
@@ -130,10 +136,11 @@ Naming:
 
 Reusable authored prefabs live under:
 
-- Shared widgets: `Assets/Project/Prefabs/UI/Common`
-- Flight and gameplay HUDs: `Assets/Project/Prefabs/UI/Gameplay/HUD`
-- Inventory widgets and tooltips: `Assets/Project/Prefabs/UI/Gameplay/Inventory`
-- Full screens and modal panels: `Assets/Project/Prefabs/UI/Screens`
+- System overlays and roots: `Assets/Project/Prefabs/UI/Foundation`
+- Full screens: `Assets/Project/Prefabs/UI/Screens`
+- Reusable widgets (buttons, dropdowns, slots, tooltips):
+  `Assets/Project/Prefabs/UI/Widgets`
+- Flight and gameplay HUDs: `Assets/Project/Prefabs/UI/Hud`
 
 The interaction prompt is part of the authored gameplay HUD; do not create a
 parallel interaction-prefab folder unless a second composition actually reuses it.
@@ -144,10 +151,10 @@ Gameplay, and full-screen compositions in Screens.
 
 ## UI Fonts And Authored Settings
 
-- Editable font files and licenses: `Assets/Project/Art/UI/Fonts/Source` and
-  `Assets/Project/Art/UI/Fonts/OFL.txt`.
-- Generated TextMesh Pro font assets: `Assets/Project/Art/UI/Fonts/Generated`.
-- Theme assets: `Assets/Project/Design/UI/Themes`.
+- Editable font files and licenses: `Assets/Project/Art/Fonts/Source` and
+  `Assets/Project/Art/Fonts/OFL.txt`.
+- Generated TextMesh Pro font assets: `Assets/Project/Art/Fonts/Generated`.
+- Theme assets: `Assets/Project/Design/UI/Styling`.
 - Game-flow UI settings: `Assets/Project/Design/UI/Flow`.
 
 `Assets/Project/UI` contains runtime code only. Do not place sprites, fonts,
@@ -164,10 +171,10 @@ Preferred runtime format:
 
 Folders:
 
-- Models: `Assets/Project/Art/Models/Resources`
-- Textures: `Assets/Project/Art/Textures/Resources`
-- Materials: `Assets/Project/Art/Materials/Resources`
-- Prefabs: `Assets/Project/Prefabs/Gameplay/Resources`
+- Models: `Assets/Project/Art/Models/ResourceNodes`
+- Textures: `Assets/Project/Art/Textures/ResourceNodes`
+- Materials: `Assets/Project/Art/Materials/ResourceNodes`
+- Prefabs: `Assets/Project/Prefabs/Gameplay/ResourceNodes`
 
 Create model and texture folders only when imported runtime assets actually
 exist; Unity primitive-based prefabs do not need empty placeholder folders.

@@ -20,8 +20,8 @@ namespace Farion.UI.MainMenu
 
         [Header("View")]
         [SerializeField] TMP_InputField addressInput;
-        [SerializeField] MenuButtonView joinButton;
-        [SerializeField] MenuButtonView backButton;
+        [SerializeField] UiMenuButtonView joinButton;
+        [SerializeField] UiMenuButtonView backButton;
         [SerializeField] TMP_Text statusText;
         [SerializeField] TMP_Text titleText;
 

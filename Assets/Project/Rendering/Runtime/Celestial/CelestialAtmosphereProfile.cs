@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace Farion.Rendering.Celestial
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial Atmosphere Profile", fileName = "SO_CelestialAtmosphereProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/Atmosphere Profile", fileName = "SO_CelestialAtmosphereProfile")]
     public sealed class CelestialAtmosphereProfile : ScriptableObject
     {
         [Header("Radius")]

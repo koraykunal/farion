@@ -1,6 +1,6 @@
 using System;
 using Farion.Gameplay.Flight;
-using Farion.Core;
+using Farion.Core.Numerics;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.VFX;

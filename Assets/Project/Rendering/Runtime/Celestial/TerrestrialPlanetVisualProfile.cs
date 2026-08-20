@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Terrestrial Planet Visual Profile", fileName = "SO_TerrestrialPlanetVisualProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/Terrestrial Planet Visual Profile", fileName = "SO_TerrestrialPlanetVisualProfile")]
     public sealed class TerrestrialPlanetVisualProfile : ScriptableObject
     {
         [Header("Terrain")]

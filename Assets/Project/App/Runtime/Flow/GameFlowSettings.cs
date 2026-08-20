@@ -5,7 +5,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace Farion.App.Flow
 {
     [MovedFrom(true, "Farion.App.Flow", "Farion.App.Runtime")]
-    [CreateAssetMenu(menuName = "Farion/Application/Game Flow Settings", fileName = "SO_GameFlowSettings")]
+    [CreateAssetMenu(menuName = "Farion/App/Flow/Game Flow Settings", fileName = "SO_GameFlowSettings")]
     public sealed class GameFlowSettings : ScriptableObject
     {
         const string DefaultGameplaySceneName = "SC_GameplayShell";

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Farion.Simulation.World;
 using NUnit.Framework;
 using UnityEngine;
+using Farion.Tests.Support;
 
 namespace Farion.Tests.EditMode
 {

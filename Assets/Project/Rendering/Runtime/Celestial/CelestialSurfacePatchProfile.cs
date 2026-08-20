@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Farion.Rendering.Celestial
 {
     [CreateAssetMenu(
-        menuName = "Farion/Rendering/Celestial Surface Patch Profile",
+        menuName = "Farion/Rendering/Celestial/Surface Patch Profile",
         fileName = "SO_CelestialSurfacePatchProfile")]
     public sealed class CelestialSurfacePatchProfile : ScriptableObject
     {

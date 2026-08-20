@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial Ocean Profile", fileName = "SO_CelestialOceanProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/Ocean Profile", fileName = "SO_CelestialOceanProfile")]
     public sealed class CelestialOceanProfile : ScriptableObject
     {
         [Header("Color")]

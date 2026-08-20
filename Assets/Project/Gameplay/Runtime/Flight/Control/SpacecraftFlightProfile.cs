@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Flight
 {
-    [CreateAssetMenu(menuName = "Farion/Spacecraft/Flight Profile", fileName = "SO_SpacecraftFlightProfile")]
+    [CreateAssetMenu(menuName = "Farion/Gameplay/Flight/Spacecraft Flight Profile", fileName = "SO_SpacecraftFlightProfile")]
     public sealed class SpacecraftFlightProfile : ScriptableObject
     {
         [Header("Linear Speed")]

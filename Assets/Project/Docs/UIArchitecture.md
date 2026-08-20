@@ -70,31 +70,30 @@ Authored reusable UI prefabs live under:
 
 ```text
 Assets/Project/Prefabs/UI/
-  Common/
   Foundation/   System root, confirmation, loading, and feedback prefabs
-  Gameplay/
-    HUD/
-    Inventory/
-  Screens/
+  Screens/      One prefab per routed screen
+  Widgets/      Reusable leaf widgets: buttons, dropdowns, slots, tooltips
+  Hud/          Gameplay heads-up displays
 ```
 
-Theme assets live under `Assets/Project/Design/UI/Themes/`; flow settings live
-under `Assets/Project/Design/UI/Flow/`. Runtime-ready UI art and fonts live under
-`Assets/Project/Art/UI/` according to `AssetIntake.md`. English and Turkish
+Theme assets live under `Assets/Project/Design/UI/Styling/`. Runtime-ready UI art and fonts live under
+`Assets/Project/Art/Icons` and `Assets/Project/Art/Textures/UI` according to
+`AssetIntake.md`. English and Turkish
 string tables live under `Assets/Project/Localization/`, outside runtime scripts.
 
 ## Naming
 
-- Runtime types use the `Ui` prefix only for project-wide infrastructure:
-  `UiScreenRouter`, `UiTheme`, `UiFeedbackService`.
-- Feature types use their feature name: `InventoryPanelPresenter`,
-  `MainMenuController`, `SpacecraftFlightHudPresenter`.
+- Every runtime type in `Farion.UI` carries the `Ui` prefix, with no
+  exception: `UiScreenRouter`, `UiTheme`, `UiMainMenuController`,
+  `UiSpacecraftFlightHudPresenter`. The rule is mechanical so a reviewer can
+  check it without reading the type.
 - `Controller` coordinates user intent and application flow.
 - `Presenter` maps state into an authored view.
 - `View` owns component-level visual state and no domain authority.
 - `Service` is a shared scene-level capability with explicit ownership.
 - `Router` owns navigation history and screen transitions.
-- Prefabs use `UI_<Role>`; ScriptableObjects use `SO_<Role>`.
+- Prefabs use `PF_UI_<Role>`; ScriptableObjects use `SO_<Subject><Type>`.
+  The asset-side token is `UI`, the C# token is `Ui`.
 - Scene names use `SC_<Purpose>` for new gameplay/test scenes. Existing
   production scene names change only in a dedicated scene-catalog migration.
 
@@ -109,7 +108,7 @@ Every routed screen has exactly one `UiScreenView`:
 - A layer: `Hud`, `Screen`, `Modal`, or `System`.
 - An explicit first selectable control when the screen is interactive.
 - Explicit cancel and gameplay-input-lock behavior.
-- A `CanvasGroup`; `FarionPanelFader` is optional.
+- A `CanvasGroup`; `UiPanelFader` is optional.
 
 Layer behavior:
 
@@ -126,13 +125,13 @@ compatibility state to the router. Destructive actions never execute when their
 confirmation surface is missing.
 
 Runtime-authored interactive lists must assign their first available control to
-`UiScreenView` after building. `GameplayMenuListPresenter` owns that contract
+`UiScreenView` after building. `UiGameplayMenuListPresenter` owns that contract
 for the current Pause menu. Authored controls continue to serialize their
 initial selection directly.
 
 ### Motion contract
 
-Routed operational screens use `FarionPanelFader` for one restrained transition
+Routed operational screens use `UiPanelFader` for one restrained transition
 language: a 160 ms ease-out entrance, a 100 ms exit, and a 24-pixel horizontal
 offset. The component animates only opacity and anchored position, runs on
 unscaled time, and resolves timing plus offset from `UiTheme`.
@@ -183,7 +182,7 @@ assign it to the router. Each scene has one EventSystem with:
 2. `InputSystemUIInputModule`
 3. `UiInputModuleBinder`
 
-The root references `SO_UiTheme_Default`. Scene controllers receive the root
+The root references `SO_DefaultUiTheme`. Scene controllers receive the root
 explicitly and resolve its services through that one contract.
 `UiCompositionScope` finds feedback, confirmation, loading, and feature screens
 under the same nearest Canvas while excluding nested Canvas scopes. The router
@@ -208,8 +207,8 @@ blocking. It remains a direct Canvas sibling of `UI_SystemRoot`.
 feature controller, opens the system screen for one rendered frame, then maps
 Unity's `0..0.9` asynchronous load range to a player-facing `0..100%` value.
 It does not choose destinations, save startup modes, or scene names.
-`MainMenuController` chooses expedition loading;
-`GameplayUiController` chooses the return-to-menu presentation;
+`UiMainMenuController` chooses expedition loading;
+`UiGameplayController` chooses the return-to-menu presentation;
 `GameFlowService` remains the scene-loading authority.
 
 Load failure closes the system layer and returns control to the existing screen
@@ -254,8 +253,8 @@ manual slots.
   state without depending on gameplay types.
 - `UiSaveLoadScreenPresenter` owns selection, localized copy, overwrite/delete
   confirmation, and action availability.
-- `MainMenuController` supplies the load callback and destination scene.
-- `GameplayUiController` supplies the save callback through
+- `UiMainMenuController` supplies the load callback and destination scene.
+- `UiGameplayController` supplies the save callback through
   `GameplaySessionController`.
 
 Continue resolves the newest compatible record. Unsupported or damaged records
@@ -271,10 +270,10 @@ left panel, structural frame, localized title, and the separate gameplay-action
 and session-action mounts. The shell follows the Main Menu's 480-pixel authored
 column proportion instead of stretching a generic full-screen menu.
 
-`GameplayMenuListPresenter` remains a narrow binding adapter. It reads the
+`UiGameplayMenuListPresenter` remains a narrow binding adapter. It reads the
 prefab-configured action entries, creates the shared `UI_MenuButton` views in
 the authored mounts, assigns the first available selection, and submits intent
-to `GameplayUiController`. It does not decide gameplay or persistence outcomes.
+to `UiGameplayController`. It does not decide gameplay or persistence outcomes.
 Unavailable or unfinished features are omitted instead of appearing as dead
 production controls. Exit-to-menu and quit actions are placed in the lower
 session group so destructive navigation is visually separated from normal
@@ -287,7 +286,7 @@ capacity header, two-column slot region, and selected-item detail panel.
 `UI_InventorySlot.prefab` owns one focusable slot row and its pointer, keyboard,
 and gamepad focus presentation.
 
-`InventoryPanelPresenter` is the binding boundary. It may instantiate enough
+`UiInventoryPanelPresenter` is the binding boundary. It may instantiate enough
 slot prefab instances to match the authoritative container capacity because
 inventory slots are a dynamic collection, but it never creates the surrounding
 screen composition. It binds `InventoryContainerComponent.Stacks`, assigns the
@@ -337,11 +336,11 @@ control locking and asynchronous focus restoration.
 ### Keep
 
 - Authored prefabs in `Prefabs/UI`.
-- `MenuButtonView` as the common button visual behaviour.
-- `FarionPanelFader` as the restrained transition behaviour.
-- `SpacecraftFlightHudPresenter` as a feature presenter.
-- `MainMenuController`, `GameplayUiController`, and
-  `InventoryPanelPresenter` as feature entry points.
+- `UiMenuButtonView` as the common button visual behaviour.
+- `UiPanelFader` as the restrained transition behaviour.
+- `UiSpacecraftFlightHudPresenter` as a feature presenter.
+- `UiMainMenuController`, `UiGameplayController`, and
+  `UiInventoryPanelPresenter` as feature entry points.
 
 ### Migrate
 
@@ -371,7 +370,7 @@ The production scene is already wired:
 1. Keep the `UI_SystemRoot` prefab instance under `MainCanvas`.
 2. Keep `UI_ConfirmationDialog`, `UI_LoadingOverlay`, and
    `UI_FeedbackOverlay` as direct `MainCanvas` children beside the root.
-3. Keep `MainMenuController > Ui System Root` assigned to the root instance.
+3. Keep `UiMainMenuController > Ui System Root` assigned to the root instance.
 4. Keep MainPanel registered as `MainMenu` and Initial Screen as `MainMenu`.
 5. Keep one EventSystem and one `UiInputModuleBinder`. Do not generate or
    serialize runtime Input Actions in Edit Mode.
@@ -390,7 +389,7 @@ The production sandbox is already wired:
 1. Keep the `UI_SystemRoot` prefab instance below `GameplayCanvas`.
 2. Keep `UI_ConfirmationDialog`, `UI_LoadingOverlay`, and
    `UI_FeedbackOverlay` as direct `GameplayCanvas` children beside the root.
-3. Keep `GameplayUiController > Ui System Root` assigned to the root instance.
+3. Keep `UiGameplayController > Ui System Root` assigned to the root instance.
 4. Keep HUD, Pause, Inventory, Settings, and Save/Load in the same Canvas
    composition.
 5. Keep the Canvas `PlayerControlLock` assigned to the router.

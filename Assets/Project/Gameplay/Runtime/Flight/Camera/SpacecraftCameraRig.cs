@@ -477,7 +477,7 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            float targetFov = FarionViewPreferences.ResolveFieldOfView(baseFieldOfView);
+            float targetFov = PlayerViewPreferences.ResolveFieldOfView(baseFieldOfView);
             if (motor != null)
             {
                 SpacecraftMovementTelemetry telemetry = motor.Telemetry;

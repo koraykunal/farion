@@ -1,5 +1,5 @@
 using Farion.Simulation.Planetary;
-using Farion.Core;
+using Farion.Core.Numerics;
 using UnityEngine;
 using UnityEngine.Serialization;
 

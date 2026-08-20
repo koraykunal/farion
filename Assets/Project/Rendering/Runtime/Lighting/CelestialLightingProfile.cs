@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace Farion.Rendering.Lighting
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial Lighting Profile", fileName = "SO_CelestialLightingProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Lighting/Celestial Lighting Profile", fileName = "SO_CelestialLightingProfile")]
     public sealed class CelestialLightingProfile : ScriptableObject
     {
         [Header("Main Light")]

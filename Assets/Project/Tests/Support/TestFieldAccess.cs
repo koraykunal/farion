@@ -1,7 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
 
-namespace Farion.Tests
+namespace Farion.Tests.Support
 {
     public static class TestFieldAccess
     {

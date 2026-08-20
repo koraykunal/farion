@@ -5,6 +5,7 @@ using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
 using NUnit.Framework;
 using UnityEngine;
+using Farion.Tests.Support;
 
 namespace Farion.Tests.EditMode
 {

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Farion.Gameplay.Processing
 {
     [CreateAssetMenu(
-        menuName = "Farion/Gameplay/Processing Recipe",
+        menuName = "Farion/Gameplay/Processing/Recipe Definition",
         fileName = "SO_ProcessRecipe")]
     public sealed class ProcessingRecipeDefinition : ScriptableObject
     {

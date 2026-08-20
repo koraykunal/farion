@@ -1,0 +1,107 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3f68ace99ea42da941acce1ff8cadda, type: 3}
+  m_Name: SO_TerrestrialSurfaceVisualProfile
+  m_EditorClassIdentifier:
+  blendStrength: 0.92
+  surfaceMapResolution: 64
+  rules:
+  - material: {fileID: 11400000, guid: 38792ff2e70e4ba58bdf97a62c50e71f, type: 2}
+    flatLow: {r: 0.31, g: 0.27, b: 0.22, a: 1}
+    flatHigh: {r: 0.62, g: 0.52, b: 0.38, a: 1}
+    steepLow: {r: 0.27, g: 0.25, b: 0.23, a: 1}
+    steepHigh: {r: 0.11, g: 0.1, b: 0.09, a: 1}
+    smoothness: 0.16
+    textures:
+      baseColor: {fileID: 2800000, guid: e2cce99ee5e4aae42a01f41227240f7e, type: 3}
+      normal: {fileID: 2800000, guid: 9e28e7ed255d8f64a9a552c43c026c2d, type: 3}
+      roughness: {fileID: 2800000, guid: 31e8f9c5cbdaac44e8f2671f9535d800, type: 3}
+      ambientOcclusion: {fileID: 2800000, guid: a7fb50a4fd7003e45bcfda08cd098306, type: 3}
+      height: {fileID: 2800000, guid: 2088881ba7f42074ea98ebe44b026571, type: 3}
+      emission: {fileID: 0}
+      worldTileSize: 8
+      normalStrength: 0.95
+      heightStrength: 0.1
+      emissionTint: {r: 1, g: 1, b: 1, a: 1}
+      emissionStrength: 0
+  - material: {fileID: 11400000, guid: 0b7baed533854d3682e5415e9672f11b, type: 2}
+    flatLow: {r: 0.16, g: 0.13, b: 0.11, a: 1}
+    flatHigh: {r: 0.34, g: 0.25, b: 0.18, a: 1}
+    steepLow: {r: 0.12, g: 0.1, b: 0.09, a: 1}
+    steepHigh: {r: 0.055, g: 0.05, b: 0.046, a: 1}
+    smoothness: 0.13
+    textures:
+      baseColor: {fileID: 2800000, guid: 79e6f1cc94339ed439502b9160cf8cf0, type: 3}
+      normal: {fileID: 2800000, guid: dbac2e957a63abb48aa27762df410463, type: 3}
+      roughness: {fileID: 2800000, guid: 86250e9b9f5092b4d904ef1112f4b597, type: 3}
+      ambientOcclusion: {fileID: 2800000, guid: ddc0bd4e675dac7469b7d68d61256289, type: 3}
+      height: {fileID: 2800000, guid: aac628e219ffdd44f97c892f2a735aec, type: 3}
+      emission: {fileID: 0}
+      worldTileSize: 10
+      normalStrength: 1
+      heightStrength: 0.12
+      emissionTint: {r: 1, g: 1, b: 1, a: 1}
+      emissionStrength: 0
+  - material: {fileID: 11400000, guid: 140bd8707b6b4a189c2881ffc5995501, type: 2}
+    flatLow: {r: 0.46, g: 0.31, b: 0.17, a: 1}
+    flatHigh: {r: 0.72, g: 0.54, b: 0.31, a: 1}
+    steepLow: {r: 0.34, g: 0.24, b: 0.16, a: 1}
+    steepHigh: {r: 0.16, g: 0.11, b: 0.08, a: 1}
+    smoothness: 0.12
+    textures:
+      baseColor: {fileID: 2800000, guid: 8be854c0266c3a044823d64377c70953, type: 3}
+      normal: {fileID: 2800000, guid: ac451eb19cb00f844a2afad9b22b62a2, type: 3}
+      roughness: {fileID: 2800000, guid: 04fc2084c42a2ee4eb3359b59c26c2cf, type: 3}
+      ambientOcclusion: {fileID: 2800000, guid: c8345489b24190243ba60abe326109bc, type: 3}
+      height: {fileID: 2800000, guid: 4e43d3634e6d46b40b39795daf8ca8ef, type: 3}
+      emission: {fileID: 0}
+      worldTileSize: 7
+      normalStrength: 0.9
+      heightStrength: 0.08
+      emissionTint: {r: 1, g: 1, b: 1, a: 1}
+      emissionStrength: 0
+  - material: {fileID: 11400000, guid: 07de2b90bab8418ba5797722b640bf8f, type: 2}
+    flatLow: {r: 0.18, g: 0.26, b: 0.16, a: 1}
+    flatHigh: {r: 0.4, g: 0.5, b: 0.27, a: 1}
+    steepLow: {r: 0.22, g: 0.2, b: 0.15, a: 1}
+    steepHigh: {r: 0.08, g: 0.09, b: 0.07, a: 1}
+    smoothness: 0.24
+    textures:
+      baseColor: {fileID: 2800000, guid: 97a0ec9637cac25418cf272efd740d13, type: 3}
+      normal: {fileID: 2800000, guid: 6a413622dc6094c478dacd1430cc751f, type: 3}
+      roughness: {fileID: 2800000, guid: bdfad132180197a43a754c8fd0668d59, type: 3}
+      ambientOcclusion: {fileID: 2800000, guid: aa50d8cb6e326b041b72047743157f4b, type: 3}
+      height: {fileID: 2800000, guid: 1729fad6090d09a4bbb22048b6d5d4a5, type: 3}
+      emission: {fileID: 0}
+      worldTileSize: 5
+      normalStrength: 0.95
+      heightStrength: 0.1
+      emissionTint: {r: 1, g: 1, b: 1, a: 1}
+      emissionStrength: 0
+  - material: {fileID: 11400000, guid: 48cf3484ce45491bbd95106be576a427, type: 2}
+    flatLow: {r: 0.42, g: 0.52, b: 0.58, a: 1}
+    flatHigh: {r: 0.78, g: 0.88, b: 0.92, a: 1}
+    steepLow: {r: 0.34, g: 0.42, b: 0.47, a: 1}
+    steepHigh: {r: 0.16, g: 0.2, b: 0.24, a: 1}
+    smoothness: 0.44
+    textures:
+      baseColor: {fileID: 2800000, guid: b4ca924dfd06df049aebd8cfb3442fa7, type: 3}
+      normal: {fileID: 2800000, guid: 6da7555dbebc5084bb8d772bf03b374e, type: 3}
+      roughness: {fileID: 2800000, guid: 2d0151551b264f2468b8072e71adde24, type: 3}
+      ambientOcclusion: {fileID: 0}
+      height: {fileID: 2800000, guid: a6327a23c141a304b89417d073dcdfb9, type: 3}
+      emission: {fileID: 0}
+      worldTileSize: 6.5
+      normalStrength: 0.85
+      heightStrength: 0.09
+      emissionTint: {r: 1, g: 1, b: 1, a: 1}
+      emissionStrength: 0

@@ -1,5 +1,5 @@
 using Farion.Gameplay.Flight;
-using Farion.Core;
+using Farion.Core.Numerics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting.APIUpdating;

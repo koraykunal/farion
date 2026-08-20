@@ -4,7 +4,7 @@ using UnityEngine.Serialization;
 
 namespace Farion.Gameplay.Flight
 {
-    [CreateAssetMenu(menuName = "Farion/Gameplay/Spacecraft Ocean Interaction Profile", fileName = "SO_SpacecraftOceanInteractionProfile")]
+    [CreateAssetMenu(menuName = "Farion/Gameplay/Flight/Spacecraft Ocean Interaction Profile", fileName = "SO_SpacecraftOceanInteractionProfile")]
     public sealed class SpacecraftOceanInteractionProfile : ScriptableObject
     {
         public const int MaxBuoyancyPoints = 8;

@@ -249,7 +249,7 @@ namespace Farion.Rendering.Celestial
     }
 
     [CreateAssetMenu(
-        menuName = "Farion/Rendering/Surface Decoration Profile",
+        menuName = "Farion/Rendering/Celestial/Surface Decoration Profile",
         fileName = "SO_SurfaceDecoration")]
     public sealed class SurfaceDecorationProfile : ScriptableObject
     {

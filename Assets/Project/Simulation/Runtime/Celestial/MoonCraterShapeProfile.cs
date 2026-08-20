@@ -1,5 +1,5 @@
 using System;
-using Farion.Core;
+using Farion.Core.Numerics;
 using UnityEngine;
 
 namespace Farion.Simulation.Celestial

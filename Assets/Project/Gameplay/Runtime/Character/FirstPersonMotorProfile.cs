@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 namespace Farion.Gameplay.Character
 {
-    [CreateAssetMenu(menuName = "Farion/Gameplay/First Person Motor Profile", fileName = "SO_FirstPersonMotorProfile")]
+    [CreateAssetMenu(menuName = "Farion/Gameplay/Character/First Person Motor Profile", fileName = "SO_FirstPersonMotorProfile")]
     public sealed class FirstPersonMotorProfile : ScriptableObject
     {
         [Header("Movement")]

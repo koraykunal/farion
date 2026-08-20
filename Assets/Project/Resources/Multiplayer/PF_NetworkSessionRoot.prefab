@@ -160,7 +160,7 @@ MonoBehaviour:
   networkManager: {fileID: 8331091889345338321}
   sessionPlayerPrefab: {fileID: 137434322254670392, guid: bef03f00757c1f24d8500e7c726fcd10, type: 3}
   playerPrefab: {fileID: 2325502369699534513, guid: a862abc008e9b7845a45279b0a0b7ab6, type: 3}
-  starterShipPrefab: {fileID: 6343661596808606471, guid: 86753c7d1cb3f9f42ba71b53459fda9e, type: 3}
+  starterShuttlePrefab: {fileID: 6343661596808606471, guid: 86753c7d1cb3f9f42ba71b53459fda9e, type: 3}
 --- !u!114 &2836211278628195314
 MonoBehaviour:
   m_ObjectHideFlags: 0

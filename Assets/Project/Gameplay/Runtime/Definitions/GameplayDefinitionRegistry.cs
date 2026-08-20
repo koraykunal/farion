@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using Farion.Gameplay.Domain.Identity;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Processing;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Object = UnityEngine.Object;
 using UnityEngine;
 
 namespace Farion.Gameplay.Definitions
 {
     [CreateAssetMenu(
-        menuName = "Farion/Gameplay/Definition Registry",
+        menuName = "Farion/Gameplay/Definitions/Definition Registry",
         fileName = "SO_GameplayDefinitionRegistry")]
     public sealed class GameplayDefinitionRegistry : ScriptableObject
     {

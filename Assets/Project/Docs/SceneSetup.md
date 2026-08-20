@@ -18,7 +18,7 @@ Create these root objects:
 On `Simulation`:
 
 1. Add `GravitySimulation`.
-2. Assign `Assets/Project/Design/Physics/Gravity/SO_DefaultGravitySettings.asset`.
+2. Assign `Assets/Project/Design/Simulation/Physics/SO_DefaultGravitySettings.asset`.
 3. Add `Test Star`, `Test Planet`, and `Test Moon` to `Registered Bodies`.
 4. Assign the currently explorable `Test Planet` to `Physics Reference Body`.
 5. Keep `Auto Discover Bodies` disabled once those references are assigned.
@@ -74,7 +74,7 @@ scene builder or future networking authority.
 On `Simulation`:
 
 1. Add `WorldOriginRebaser`.
-2. Assign `Assets/Project/Design/World/SO_WorldOriginSettings.asset` to
+2. Assign `Assets/Project/Design/Simulation/World/SO_WorldOriginSettings.asset` to
    `Settings`.
 3. Assign `Player Starter Shuttle` to `Tracking Target` while testing ship travel. If this
    is empty, rebasing is disabled and the component will warn.
@@ -110,9 +110,9 @@ For each body:
 3. Add `CelestialBody`.
 4. Add `CelestialBodyDefinitionAuthoring`.
 5. Assign one of:
-   - `Assets/Project/Design/Physics/CelestialBodies/SO_TestStar.asset`
-   - `Assets/Project/Design/Physics/CelestialBodies/SO_TestPlanet.asset`
-   - `Assets/Project/Design/Physics/CelestialBodies/SO_TestMoon.asset`
+   - `Assets/Project/Design/Simulation/Physics/SO_StartingStar.asset`
+   - `Assets/Project/Design/Simulation/Physics/SO_StartingPlanet.asset`
+   - `Assets/Project/Design/Simulation/Physics/SO_StartingMoon.asset`
 6. Use the component context menu `Apply Definition` if the inspector values do
    not update immediately.
 7. Keep `Sync Transform Scale To Radius` enabled while using primitive
@@ -404,7 +404,7 @@ The continent-ridge shape profile follows the Solar-System reference structure:
 
 The land shader still colors terrain below sea level for continuity under the
 screen-space ocean pass. Sea level is authored once on
-`SO_TestPlanetHydrosphere`; `SO_TerrestrialPlanetVisualProfile` owns only the
+`SO_StartingOceanHydrosphere`; `SO_TerrestrialPlanetVisualProfile` owns only the
 ocean and atmosphere rendering styles.
 
 ### Ocean And Atmosphere Post-Process Setup
@@ -499,7 +499,7 @@ The current authored assets are:
 
 - `Assets/Project/Art/Materials/Celestial/MAT_Celestial_Star.mat`
 - `Assets/Project/Art/Shaders/Lighting/FarionStarEmission.shader`
-- `Assets/Project/Design/Rendering/Celestial/SO_TestStarVisualProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_StartingStarVisualProfile.asset`
 
 Use this ownership hierarchy:
 
@@ -509,7 +509,7 @@ Use this ownership hierarchy:
    `MeshRenderer`.
 3. Add `CelestialStarVisual` to `Test Star`.
 4. Assign:
-   - `Profile`: `SO_TestStarVisualProfile`
+   - `Profile`: `SO_StartingStarVisualProfile`
    - `Scaled Space Profile`: `SO_CelestialScaledSpaceProfile`
    - `Light Source`: the root `CelestialLightSource`
    - `Star Renderer`: `Star Visual > MeshRenderer`
@@ -775,7 +775,7 @@ For a camera:
 `GameplayCanvas/HudRoot/SpacecraftFlightHud`. It is visible only while the
 player is piloting and reads existing flight/landing telemetry.
 
-`SpacecraftFlightHudPresenter > Pilot Context Source` takes any component that
+`UiSpacecraftFlightHudPresenter > Pilot Context Source` takes any component that
 implements `ILocalPilotContext`. Offline, that is `Player Possession` from `SC_WorldZone`.
 In multiplayer it is assigned at runtime by
 `MultiplayerSceneContext`; do not serialize a cross-scene reference there.
@@ -1060,7 +1060,7 @@ On the target planet:
 
 1. Add `PlanetSurfaceModel`.
 2. Assign the planet `CelestialBody` to `Body`.
-3. Assign `Assets/Project/Design/Simulation/Planetary/SO_TestPlanetaryGeneration.asset`
+3. Assign `Assets/Project/Design/Simulation/Planetary/SO_StartingTemperateGeneration.asset`
    to `Generation Profile`.
 4. Assign the same terrain shape profile used by the planet visual, or assign
    it through `PlanetaryGenerationProfile > Shape Profile`.
@@ -1070,7 +1070,7 @@ On the target planet:
    terrain altitude, slope, local temperature, moisture, radiation, biome, and
    terrain-feature sampling all come from the same `PlanetSurfaceModel`.
 
-`SO_TestStellarRadiation > Reference Orbit Distance` is calibrated to the
+`SO_StartingStellarRadiation > Reference Orbit Distance` is calibrated to the
 current authored `Test Star` to `Test Planet` distance. If you move the star or
 rescale the sandbox, update the radiation profile or the planet's thermal report
 will legitimately shift biome coverage. The test biome set includes cold,
@@ -1081,7 +1081,7 @@ For resource distribution:
 
 1. Add `ResourceDepositRuntimeSpawner` to the target planet.
 2. Assign the same `Body` and `PlanetSurfaceModel`.
-3. Assign `Assets/Project/Design/Gameplay/Resources/SO_TestPlanetResourceDistribution.asset`
+3. Assign `Assets/Project/Design/Gameplay/ResourceNodes/SO_StartingPlanetResourceDistribution.asset`
    to `Resource Distribution`.
 4. Use `Log Resource Distribution Report` to verify sampled surface count,
    missing biome count, allowed resource rules, and generated deposit counts.
@@ -1108,9 +1108,9 @@ modifiers after their coverage is stable.
 
 Current vertical-slice placeholder prefabs:
 
-- `Assets/Project/Prefabs/Gameplay/Resources/PF_IronOreNode.prefab`
-- `Assets/Project/Prefabs/Gameplay/Resources/PF_NickelFragmentNode.prefab`
-- `Assets/Project/Prefabs/Gameplay/Resources/PF_IceCrystalNode.prefab`
+- `Assets/Project/Prefabs/Gameplay/ResourceNodes/PF_IronOreNode.prefab`
+- `Assets/Project/Prefabs/Gameplay/ResourceNodes/PF_NickelFragmentNode.prefab`
+- `Assets/Project/Prefabs/Gameplay/ResourceNodes/PF_IceCrystalNode.prefab`
 
 These are authored temporary prefabs, not runtime fallbacks. Replace their
 visuals later through the `ResourceNodeDefinition > Visual Prefab` field when
@@ -1137,7 +1137,7 @@ For a collectible surface node:
    resource spawning should not make every node query procedural surface data
    every frame.
 8. Add `ResourceNodeInteractable`.
-9. Assign `Assets/Project/Design/Gameplay/Resources/SO_IronOreNode.asset` to
+9. Assign `Assets/Project/Design/Gameplay/ResourceNodes/SO_IronOreNode.asset` to
    `Definition`.
 10. Keep `Initialize Reserve On Awake` and `Consume On Depleted` enabled for the
    first test.
@@ -1174,7 +1174,7 @@ Current starter item chain:
 Processing definitions live under
 `Assets/Project/Design/Gameplay/Processing`:
 
-- `SO_Process_IronOre.asset`: the first typed Iron Ore processing exchange.
+- `SO_IronOreRecipe.asset`: the first typed Iron Ore processing exchange.
 
 Do not create Crafting or Research folders until those systems have a real
 runtime consumer. Do not wire multiplayer, station queues, or upgrade
@@ -1203,7 +1203,7 @@ GameplayCanvas
 `-- UI_FeedbackOverlay          queued non-blocking messages
 ```
 
-`GameplayUiController` receives one explicit `UiSystemRoot` reference.
+`UiGameplayController` receives one explicit `UiSystemRoot` reference.
 `UiScreenRouter` is the sole owner of screen visibility, history, cancel, focus
 restoration, and UI-related `PlayerControlLock`. The router merges its explicit
 screen list with all `UiScreenView` instances owned by the same Canvas,
@@ -1229,15 +1229,15 @@ Runtime behavior:
 ### Pause Menu Visual Target
 
 Use the authored
-`Assets/Project/Prefabs/UI/Screens/UI_PauseMenuScreen.prefab`. It owns the
-restrained full-screen panel, `CanvasGroup`, `FarionPanelFader`,
-`GameplayMenuListPresenter`, and menu entries. The presenter creates
+`Assets/Project/Prefabs/UI/Screens/PF_UI_PauseMenuScreen.prefab`. It owns the
+restrained full-screen panel, `CanvasGroup`, `UiPanelFader`,
+`UiGameplayMenuListPresenter`, and menu entries. The presenter creates
 `UI_MenuButton` views from its serialized entries and submits
-`GameplayMenuAction` values to `GameplayUiController`.
+`UiGameplayMenuAction` values to `UiGameplayController`.
 
 Do not add per-button action components or a second panel switcher. New menu
-actions belong in `GameplayMenuAction`, their presentation data belongs in the
-pause prefab entry list, and the outcome remains in `GameplayUiController` or a
+actions belong in `UiGameplayMenuAction`, their presentation data belongs in the
+pause prefab entry list, and the outcome remains in `UiGameplayController` or a
 lower application/gameplay service.
 
 ### Terrain Mesh Collision
@@ -1291,7 +1291,7 @@ convenience.
 `SC_GameplayShell` owns presentation only:
 
 - `CameraRig/Camera` with `SpacecraftCameraRig`, `FirstPersonCameraRig`,
-  `StudioListener`, a camera-local `Volume`, and `FarionPostProcessRig`.
+  `StudioListener`, a camera-local `Volume`, and `SpacecraftPostProcessRig`.
 - `Lighting` with the single `Directional Light`, `CelestialLightingRig`,
   `StarDomeController`, `CelestialLodController`, `CelestialOrbitLineRenderer`,
   and `GlobalVolume`.
@@ -1305,7 +1305,7 @@ celestial bodies, resource streamers, spawn points, and the four starter-ship
 formations. It must not contain a camera, an audio listener, a `Light`, or a
 `CelestialLightingRig`; project validation rejects each of those.
 
-`GameplaySceneShellController` owns the shell references. Offline it loads and
+`UiGameplaySceneShellController` owns the shell references. Offline it loads and
 binds `SC_WorldZone`; multiplayer hands the same controller to
 `MultiplayerSceneContext.BindPresentation`, which assigns the camera to the LOD
 controller and every `CelestialSurfacePatchSystem`, the simulation to the orbit

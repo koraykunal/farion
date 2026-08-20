@@ -4,7 +4,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace Farion.Simulation.Physics
 {
     [MovedFrom(true, "Farion.Core.Physics", "Farion.Core.Runtime")]
-    [CreateAssetMenu(menuName = "Farion/Physics/Gravity Settings", fileName = "GravitySettings")]
+    [CreateAssetMenu(menuName = "Farion/Simulation/Physics/Gravity Settings", fileName = "SO_GravitySettings")]
     public sealed class GravitySettings : ScriptableObject
     {
         [Min(0.000001f)]

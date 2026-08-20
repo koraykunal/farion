@@ -266,7 +266,7 @@ namespace Farion.Tests.EditMode
         public void FeedbackFormatsItemAcquisitionAndKeepsBottomCenterLayout()
         {
             const string path =
-                "Assets/Project/Prefabs/UI/Foundation/UI_FeedbackOverlay.prefab";
+                "Assets/Project/Prefabs/UI/Foundation/PF_UI_FeedbackOverlay.prefab";
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             UiFeedbackService feedback = prefab.GetComponent<UiFeedbackService>();
             RectTransform rect = prefab.GetComponent<RectTransform>();
@@ -330,9 +330,9 @@ namespace Farion.Tests.EditMode
                 typeof(RectTransform),
                 typeof(CanvasRenderer),
                 typeof(Image),
-                typeof(InventorySlotView));
+                typeof(UiInventorySlotView));
             slotObject.transform.SetParent(root.transform);
-            InventorySlotView slot = slotObject.GetComponent<InventorySlotView>();
+            UiInventorySlotView slot = slotObject.GetComponent<UiInventorySlotView>();
             int requestCount = 0;
             slot.ContextRequested += _ => requestCount++;
 
@@ -350,7 +350,7 @@ namespace Farion.Tests.EditMode
         public void DefaultThemeProvidesDistinctInterfaceAndInstrumentFonts()
         {
             const string path =
-                "Assets/Project/Design/UI/Styling/SO_UiTheme_Default.asset";
+                "Assets/Project/Design/UI/Styling/SO_DefaultUiTheme.asset";
             UiTheme theme = AssetDatabase.LoadAssetAtPath<UiTheme>(path);
 
             Assert.That(theme, Is.Not.Null);
@@ -372,15 +372,15 @@ namespace Farion.Tests.EditMode
         public void AuthoredFlightHudProvidesTelemetryGraphics()
         {
             const string path =
-                "Assets/Project/Prefabs/UI/Gameplay/HUD/UI_SpacecraftFlightHud.prefab";
+                "Assets/Project/Prefabs/UI/Hud/PF_UI_SpacecraftFlightHud.prefab";
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
 
             Assert.That(prefab, Is.Not.Null);
             Assert.That(
-                prefab.GetComponent<SpacecraftFlightHudPresenter>(),
+                prefab.GetComponent<UiSpacecraftFlightHudPresenter>(),
                 Is.Not.Null);
             Assert.That(
-                prefab.GetComponentInChildren<SpacecraftFlightHudGraphics>(true),
+                prefab.GetComponentInChildren<UiSpacecraftFlightHudGraphics>(true),
                 Is.Not.Null);
             Assert.That(
                 prefab.transform.Find(
@@ -396,7 +396,7 @@ namespace Farion.Tests.EditMode
                 Is.Not.Null);
 
             SerializedObject graphics = new(
-                prefab.GetComponentInChildren<SpacecraftFlightHudGraphics>(true));
+                prefab.GetComponentInChildren<UiSpacecraftFlightHudGraphics>(true));
             Assert.That(
                 graphics.FindProperty("boostArcFillImage").objectReferenceValue,
                 Is.Not.Null);
@@ -423,13 +423,13 @@ namespace Farion.Tests.EditMode
         public void AuthoredPauseMenuProvidesRuntimeInitialSelection()
         {
             const string path =
-                "Assets/Project/Prefabs/UI/Screens/UI_PauseMenuScreen.prefab";
+                "Assets/Project/Prefabs/UI/Screens/PF_UI_PauseMenuScreen.prefab";
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             Assert.That(prefab, Is.Not.Null);
 
             root = Object.Instantiate(prefab);
-            GameplayMenuListPresenter presenter =
-                root.GetComponentInChildren<GameplayMenuListPresenter>(true);
+            UiGameplayMenuListPresenter presenter =
+                root.GetComponentInChildren<UiGameplayMenuListPresenter>(true);
             UiScreenView screen = root.GetComponent<UiScreenView>();
 
             Assert.That(presenter, Is.Not.Null);
@@ -448,7 +448,7 @@ namespace Farion.Tests.EditMode
         public void SystemRootPrefabRemainsServiceOnly()
         {
             const string path =
-                "Assets/Project/Prefabs/UI/Foundation/UI_SystemRoot.prefab";
+                "Assets/Project/Prefabs/UI/Foundation/PF_UI_SystemRoot.prefab";
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
 
             Assert.That(prefab, Is.Not.Null);

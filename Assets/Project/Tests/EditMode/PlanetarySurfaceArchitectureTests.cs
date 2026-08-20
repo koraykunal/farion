@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Farion.Simulation.Planetary;
-using Farion.Tests;
+using Farion.Tests.Support;
 using NUnit.Framework;
 using UnityEngine;
 

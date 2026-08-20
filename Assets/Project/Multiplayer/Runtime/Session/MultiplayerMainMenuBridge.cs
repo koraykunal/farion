@@ -7,12 +7,12 @@ using UnityEngine;
 namespace Farion.Multiplayer.Session
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(MainMenuController))]
+    [RequireComponent(typeof(UiMainMenuController))]
     public sealed class MultiplayerMainMenuBridge : MonoBehaviour
     {
         const int MaximumCoopPlayers = 4;
 
-        [SerializeField] MainMenuController mainMenu;
+        [SerializeField] UiMainMenuController mainMenu;
         [SerializeField] UiCoopScreenPresenter coopScreen;
 
         MultiplayerSessionController session;
@@ -68,7 +68,7 @@ namespace Farion.Multiplayer.Session
 
         void ResolveReferences()
         {
-            mainMenu ??= GetComponent<MainMenuController>();
+            mainMenu ??= GetComponent<UiMainMenuController>();
             coopScreen ??= GetComponentInChildren<UiCoopScreenPresenter>(true);
         }
 

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 
 namespace Farion.Gameplay.Persistence
 {

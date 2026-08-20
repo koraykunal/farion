@@ -2,7 +2,7 @@ using System;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Simulation.Celestial;
-using Farion.Core;
+using Farion.Core.Numerics;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 

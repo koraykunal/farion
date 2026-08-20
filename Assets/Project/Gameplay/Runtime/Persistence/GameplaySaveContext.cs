@@ -3,7 +3,7 @@ using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
 using Farion.Gameplay.Ships;
 using Farion.Simulation.Physics;

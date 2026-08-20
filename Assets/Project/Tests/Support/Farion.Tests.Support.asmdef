@@ -1,6 +1,6 @@
 {
     "name": "Farion.Tests.Support",
-    "rootNamespace": "Farion.Tests",
+    "rootNamespace": "Farion.Tests.Support",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

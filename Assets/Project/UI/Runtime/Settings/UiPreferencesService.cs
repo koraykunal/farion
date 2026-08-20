@@ -89,7 +89,7 @@ namespace Farion.UI.Settings
         public bool VSyncEnabled => vSyncEnabled;
         public float MouseSensitivity => FarionInputActions.MouseSensitivityScale;
         public bool InvertLookY => FarionInputActions.InvertLookY;
-        public float FieldOfView => FarionViewPreferences.FieldOfView;
+        public float FieldOfView => PlayerViewPreferences.FieldOfView;
         public bool HasSelectableResolutions => supportedResolutions.Count > 1;
         public bool SupportsRefreshRateSelection =>
             displayMode == FullScreenMode.ExclusiveFullScreen &&
@@ -332,7 +332,7 @@ namespace Farion.UI.Settings
         public void AdjustFieldOfView(int direction)
         {
             SetFieldOfView(
-                FarionViewPreferences.FieldOfView +
+                PlayerViewPreferences.FieldOfView +
                 (direction < 0 ? -FieldOfViewStep : FieldOfViewStep));
         }
 
@@ -340,14 +340,14 @@ namespace Farion.UI.Settings
         {
             float clamped = Mathf.Clamp(
                 Mathf.Round(value / FieldOfViewStep) * FieldOfViewStep,
-                FarionViewPreferences.MinimumFieldOfView,
-                FarionViewPreferences.MaximumFieldOfView);
-            if (Mathf.Approximately(FarionViewPreferences.FieldOfView, clamped))
+                PlayerViewPreferences.MinimumFieldOfView,
+                PlayerViewPreferences.MaximumFieldOfView);
+            if (Mathf.Approximately(PlayerViewPreferences.FieldOfView, clamped))
             {
                 return;
             }
 
-            FarionViewPreferences.FieldOfView = clamped;
+            PlayerViewPreferences.FieldOfView = clamped;
             Changed?.Invoke();
         }
 

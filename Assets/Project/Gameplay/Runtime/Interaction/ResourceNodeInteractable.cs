@@ -2,7 +2,7 @@ using Farion.Core.Identity;
 using System;
 using Farion.Gameplay.Commands;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Simulation.World;
 using UnityEngine;
 

@@ -33,10 +33,10 @@ namespace Farion.Multiplayer.Session
                 StableHashUtility.Combine("zone.starting_system"));
 
         [SerializeField] NetworkManager networkManager;
-        [SerializeField] NetworkPlayerSpawner playerSpawner;
-        [SerializeField] NetworkWorldOriginAuthority worldOriginAuthority;
-        [SerializeField] NetworkZoneCoordinator zoneCoordinator;
-        [SerializeField] NetworkStatusReporter statusReporter;
+        [SerializeField] MultiplayerPlayerSpawner playerSpawner;
+        [SerializeField] MultiplayerWorldOriginAuthority worldOriginAuthority;
+        [SerializeField] MultiplayerZoneCoordinator zoneCoordinator;
+        [SerializeField] MultiplayerStatusReporter statusReporter;
         [SerializeField] MultiplayerSaveBridge saveBridge;
         [SerializeField] string presentationSceneName = DefaultPresentationScene;
         [SerializeField] string startingZoneSceneName = DefaultStartingZoneScene;
@@ -52,9 +52,9 @@ namespace Farion.Multiplayer.Session
         bool returningToMainMenu;
         bool subscribed;
         bool ownedPlayerReady;
-        bool assignedStarterShipReady;
+        bool assignedStarterShuttleReady;
         Coroutine stopRoutine;
-        GameplaySceneShellController presentation;
+        UiGameplaySceneShellController presentation;
 
         public static MultiplayerSessionController Active { get; private set; }
 
@@ -87,8 +87,8 @@ namespace Farion.Multiplayer.Session
 
             Active = this;
             networkManager ??= GetComponent<NetworkManager>();
-            zoneCoordinator ??= GetComponent<NetworkZoneCoordinator>();
-            statusReporter ??= GetComponent<NetworkStatusReporter>();
+            zoneCoordinator ??= GetComponent<MultiplayerZoneCoordinator>();
+            statusReporter ??= GetComponent<MultiplayerStatusReporter>();
             saveBridge ??= GetComponent<MultiplayerSaveBridge>();
             DontDestroyOnLoad(gameObject);
             Subscribe();
@@ -539,9 +539,9 @@ namespace Farion.Multiplayer.Session
             TryCompleteStartup();
         }
 
-        internal void NotifyAssignedStarterShipReady()
+        internal void NotifyAssignedStarterShuttleReady()
         {
-            assignedStarterShipReady = true;
+            assignedStarterShuttleReady = true;
             TryCompleteStartup();
         }
 
@@ -556,7 +556,7 @@ namespace Farion.Multiplayer.Session
 
         bool ResolvePresentation(Scene scene)
         {
-            presentation = FindInScene<GameplaySceneShellController>(scene);
+            presentation = FindInScene<UiGameplaySceneShellController>(scene);
             if (presentation == null)
             {
                 return false;
@@ -676,7 +676,7 @@ namespace Farion.Multiplayer.Session
         {
             if (State == MultiplayerSessionState.Starting &&
                 ownedPlayerReady &&
-                assignedStarterShipReady)
+                assignedStarterShuttleReady)
             {
                 SetState(MultiplayerSessionState.Connected);
             }
@@ -685,7 +685,7 @@ namespace Farion.Multiplayer.Session
         void ResetReadiness()
         {
             ownedPlayerReady = false;
-            assignedStarterShipReady = false;
+            assignedStarterShuttleReady = false;
         }
 
         void SetState(MultiplayerSessionState state)

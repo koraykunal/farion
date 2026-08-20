@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Farion.Gameplay.Flight
 {
     [CreateAssetMenu(
-        menuName = "Farion/Gameplay/Spacecraft Atmosphere Interaction Profile",
+        menuName = "Farion/Gameplay/Flight/Spacecraft Atmosphere Interaction Profile",
         fileName = "SO_SpacecraftAtmosphereInteractionProfile")]
     public sealed class SpacecraftAtmosphereInteractionProfile : ScriptableObject
     {

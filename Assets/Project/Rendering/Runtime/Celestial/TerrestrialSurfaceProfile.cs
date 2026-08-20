@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 
 namespace Farion.Rendering.Celestial
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Terrestrial Surface Profile", fileName = "SO_TerrestrialSurfaceProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/Terrestrial Surface Profile", fileName = "SO_TerrestrialSurfaceProfile")]
     public sealed class TerrestrialSurfaceProfile : CelestialSurfaceProfileBase
     {
         [Header("Material")]

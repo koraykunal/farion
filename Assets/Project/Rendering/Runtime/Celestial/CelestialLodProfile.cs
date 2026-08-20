@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial LOD Profile", fileName = "SO_CelestialLodProfile")]
+    [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/LOD Profile", fileName = "SO_CelestialLodProfile")]
     public sealed class CelestialLodProfile : ScriptableObject
     {
         const int MaxResolution = 128;

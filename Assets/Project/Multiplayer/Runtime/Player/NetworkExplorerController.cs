@@ -40,7 +40,7 @@ namespace Farion.Multiplayer.Player
         Rigidbody body;
         CapsuleCollider capsule;
         CelestialActorProbe celestialProbe;
-        NetworkWorldOriginAuthority originAuthority;
+        MultiplayerWorldOriginAuthority originAuthority;
         MultiplayerSceneContext sceneContext;
         float accumulatedYaw;
         bool jumpQueued;
@@ -184,7 +184,7 @@ namespace Farion.Multiplayer.Player
 
         public void BindScene(
             CelestialFrameProvider frameProvider,
-            NetworkWorldOriginAuthority worldOriginAuthority)
+            MultiplayerWorldOriginAuthority worldOriginAuthority)
         {
             originAuthority = worldOriginAuthority;
             celestialProbe.SetFrameProvider(frameProvider);

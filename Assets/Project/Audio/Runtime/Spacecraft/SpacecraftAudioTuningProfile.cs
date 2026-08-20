@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Audio.Spacecraft
 {
-    [CreateAssetMenu(menuName = "Farion/Audio/Spacecraft Audio Tuning Profile", fileName = "SO_SpacecraftAudioTuningProfile")]
+    [CreateAssetMenu(menuName = "Farion/Audio/Spacecraft/Audio Tuning Profile", fileName = "SO_SpacecraftAudioTuningProfile")]
     public sealed class SpacecraftAudioTuningProfile : ScriptableObject
     {
         [Header("Normalization")]

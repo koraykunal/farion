@@ -22,7 +22,7 @@ namespace Farion.UI.Navigation
 
         [Header("Presentation")]
         [SerializeField] CanvasGroup canvasGroup;
-        [SerializeField] FarionPanelFader panelFader;
+        [SerializeField] UiPanelFader panelFader;
 
         public UiScreenId ScreenId => screenId;
         public UiScreenLayer Layer => layer;
@@ -116,7 +116,7 @@ namespace Farion.UI.Navigation
         void ResolveReferences()
         {
             canvasGroup ??= GetComponent<CanvasGroup>();
-            panelFader ??= GetComponent<FarionPanelFader>();
+            panelFader ??= GetComponent<UiPanelFader>();
         }
 
         static bool IsSelectable(Selectable candidate)

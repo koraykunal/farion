@@ -2963,7 +2963,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 997753878406949556, guid: cc0e7b00d9df39b4b997f6d7985dfdf4, type: 3}
       propertyPath: m_Name
-      value: PF_AudioSystem
+      value: PF_AudioDirector
       objectReference: {fileID: 0}
     - target: {fileID: 4584539620017091101, guid: cc0e7b00d9df39b4b997f6d7985dfdf4, type: 3}
       propertyPath: m_LocalPosition.x

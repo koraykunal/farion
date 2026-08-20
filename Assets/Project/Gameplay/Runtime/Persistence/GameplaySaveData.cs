@@ -5,7 +5,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Simulation.Physics;
 using Farion.Simulation.World;
 using UnityEngine;

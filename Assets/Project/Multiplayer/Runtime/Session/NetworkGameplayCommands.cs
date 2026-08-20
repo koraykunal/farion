@@ -9,13 +9,14 @@ using Farion.Gameplay.Processing;
 using Farion.Gameplay.Ships;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Spawning;
 using FishNet.Connection;
 using FishNet.Object;
 using UnityEngine;
+using Farion.Multiplayer.Spacecraft;
 
 namespace Farion.Multiplayer.Session
 {
@@ -33,7 +34,7 @@ namespace Farion.Multiplayer.Session
         NetworkSessionPlayer sessionPlayer;
         NetworkExplorerController ownerExplorer;
         InventoryContainerComponent ownerInventory;
-        NetworkStarterShip ownerCargo;
+        NetworkStarterShuttle ownerCargo;
 
         public event Action<InventoryItemDefinition, int> ItemAcquired;
         public event Action<CargoTransferReceipt> CargoTransferCompleted;
@@ -245,7 +246,7 @@ namespace Farion.Multiplayer.Session
         ShuttleCargoInventory ResolveOwnerCargo()
         {
             GeneratedEntityId claimed = sessionPlayer != null
-                ? sessionPlayer.ClaimedStarterShipId
+                ? sessionPlayer.ClaimedStarterShuttleId
                 : GeneratedEntityId.None;
             if (!claimed.IsValid)
             {
@@ -257,7 +258,7 @@ namespace Farion.Multiplayer.Session
                 return ownerCargo.Cargo;
             }
 
-            ownerCargo = NetworkStarterShip.FindByEntityId(claimed);
+            ownerCargo = NetworkStarterShuttle.FindByEntityId(claimed);
             return ownerCargo != null ? ownerCargo.Cargo : null;
         }
 
@@ -544,7 +545,7 @@ namespace Farion.Multiplayer.Session
             if (sender == null ||
                 !sender.IsActive ||
                 sender.ClientId != OwnerId ||
-                !sessionPlayer.ClaimedStarterShipId.IsValid ||
+                !sessionPlayer.ClaimedStarterShuttleId.IsValid ||
                 !TryResolveServerBindings(out GameplayRuntimeBindings bindings) ||
                 !sessionPlayer.PlayerSpawner.TryGetSpawnedExplorer(
                     sessionPlayer,
@@ -553,8 +554,8 @@ namespace Farion.Multiplayer.Session
                 return false;
             }
 
-            NetworkStarterShip ship = NetworkStarterShip.FindByEntityId(
-                sessionPlayer.ClaimedStarterShipId);
+            NetworkStarterShuttle ship = NetworkStarterShuttle.FindByEntityId(
+                sessionPlayer.ClaimedStarterShuttleId);
             if (ship == null ||
                 !ship.IsClaimedBy(sessionPlayer.SessionPlayerId))
             {
@@ -615,7 +616,7 @@ namespace Farion.Multiplayer.Session
         bool TryResolveServerBindings(out GameplayRuntimeBindings bindings)
         {
             bindings = null;
-            NetworkPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
+            MultiplayerPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
             return spawner != null && spawner.TryGetRuntimeBindings(out bindings);
         }
 
@@ -684,7 +685,7 @@ namespace Farion.Multiplayer.Session
 
         static void ApplyCargoSnapshot(string cargoContainerId, string snapshotJson)
         {
-            IReadOnlyList<NetworkStarterShip> ships = NetworkStarterShip.ActiveShips;
+            IReadOnlyList<NetworkStarterShuttle> ships = NetworkStarterShuttle.ActiveShips;
             for (int i = 0; i < ships.Count; i++)
             {
                 ShuttleCargoInventory cargo = ships[i] != null ? ships[i].Cargo : null;
@@ -727,7 +728,7 @@ namespace Farion.Multiplayer.Session
         [ServerRpc]
         void RequestSessionStateServerRpc(NetworkConnection sender = null)
         {
-            NetworkPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
+            MultiplayerPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
             if (sender == null ||
                 !sender.IsActive ||
                 sender.ClientId != OwnerId ||
@@ -778,7 +779,7 @@ namespace Farion.Multiplayer.Session
                 }
             }
 
-            IReadOnlyList<NetworkStarterShip> ships = NetworkStarterShip.ActiveShips;
+            IReadOnlyList<NetworkStarterShuttle> ships = NetworkStarterShuttle.ActiveShips;
             for (int i = 0; i < ships.Count; i++)
             {
                 ShuttleCargoInventory cargo = ships[i] != null ? ships[i].Cargo : null;
@@ -899,7 +900,7 @@ namespace Farion.Multiplayer.Session
             bindings = null;
             explorer = null;
             inventory = null;
-            NetworkPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
+            MultiplayerPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
             if (spawner == null ||
                 !spawner.TryGetRuntimeBindings(
                     out bindings) ||

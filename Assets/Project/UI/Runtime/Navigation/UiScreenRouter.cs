@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Farion.Audio;
+using Farion.Audio.Direction;
 using Farion.Gameplay.Input;
 using Farion.UI.Foundation;
 using UnityEngine;

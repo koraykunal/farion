@@ -13,7 +13,7 @@ namespace Farion.Multiplayer.Session
     public sealed class MultiplayerSaveBridge : MonoBehaviour, IMultiplayerSaveSource
     {
         [SerializeField] NetworkManager networkManager;
-        [SerializeField] NetworkPlayerSpawner playerSpawner;
+        [SerializeField] MultiplayerPlayerSpawner playerSpawner;
 
         GameplaySaveCoordinator coordinator;
         string slotName = SaveGameSlotCatalog.DefaultSlotName;
@@ -27,7 +27,7 @@ namespace Farion.Multiplayer.Session
         void Awake()
         {
             networkManager ??= GetComponent<NetworkManager>();
-            playerSpawner ??= GetComponent<NetworkPlayerSpawner>();
+            playerSpawner ??= GetComponent<MultiplayerPlayerSpawner>();
         }
 
         public void SetSlot(string requestedSlotName)

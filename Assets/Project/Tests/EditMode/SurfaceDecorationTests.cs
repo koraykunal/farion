@@ -14,7 +14,7 @@ namespace Farion.Tests.EditMode
     public sealed class SurfaceDecorationTests
     {
         const string ProfilePath =
-            "Assets/Project/Design/Rendering/Celestial/SO_SurfaceDecoration_Terrestrial.asset";
+            "Assets/Project/Design/Rendering/Celestial/SO_TerrestrialSurfaceDecoration.asset";
 
         [Test]
         public void SurfaceCellPlacement_IsDeterministicAndSeeded()
@@ -122,21 +122,21 @@ namespace Farion.Tests.EditMode
             SurfaceDecorationRule birch = profile.Rules[0];
             Assert.That(
                 birch.AllowsBiome(AssetDatabase.LoadAssetAtPath<BiomeDefinition>(
-                    "Assets/Project/Design/Simulation/Planetary/SO_Biome_Temperate.asset")),
+                    "Assets/Project/Design/Simulation/Planetary/SO_TemperateBiome.asset")),
                 Is.True);
             Assert.That(
                 birch.AllowsBiome(AssetDatabase.LoadAssetAtPath<BiomeDefinition>(
-                    "Assets/Project/Design/Simulation/Planetary/SO_Biome_BasaltDesert.asset")),
+                    "Assets/Project/Design/Simulation/Planetary/SO_BasaltDesertBiome.asset")),
                 Is.False);
         }
 
-        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Temperate/fir_tree_01_4k.fbx")]
-        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Temperate/pine_tree_01_4k.fbx")]
-        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Frozen/crystalline_iceplant_4k.fbx")]
-        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Rocks/boulder_01_4k.fbx")]
-        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Rocks/rock_09_4k.fbx")]
-        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Arid/dead_quiver_branch_01_4k.fbx")]
-        [TestCase("Assets/Project/Art/Models/Environment/SurfaceFlora/Arid/othonna_cerarioides_4k.fbx")]
+        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Temperate/SM_SurfaceDecoration_FirTree_01.fbx")]
+        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Temperate/SM_SurfaceDecoration_PineTree_01.fbx")]
+        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Frozen/SM_SurfaceDecoration_CrystallineIceplant_01.fbx")]
+        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Shared/SM_SurfaceDecoration_Boulder_01.fbx")]
+        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Shared/SM_SurfaceDecoration_Rock_09.fbx")]
+        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Arid/SM_SurfaceDecoration_DeadQuiverBranch_01.fbx")]
+        [TestCase("Assets/Project/Art/Models/SurfaceDecoration/Arid/SM_SurfaceDecoration_Othonna_01.fbx")]
         public void NewSurfaceFloraModels_UseStaticRuntimeImportSettings(string path)
         {
             ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
@@ -255,7 +255,7 @@ namespace Farion.Tests.EditMode
                 Assert.That(surfaceModel.TrySamplePlanetSurface(
                     renderer.transform.InverseTransformDirection(Vector3.up),
                     out PlanetSurfaceSample sample), Is.True);
-                Assert.That(sample.Biome.Biome.name, Is.EqualTo("SO_Biome_Temperate"));
+                Assert.That(sample.Biome.Biome.name, Is.EqualTo("SO_TemperateBiome"));
                 Assert.That(sample.Climate.TemperatureCelsius, Is.InRange(-3f, 24f));
                 Assert.That(sample.Climate.EffectiveMoisture, Is.GreaterThanOrEqualTo(0.65f));
 

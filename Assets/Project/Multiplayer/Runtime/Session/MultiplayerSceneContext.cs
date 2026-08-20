@@ -6,7 +6,7 @@ using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Presentation.Flight;
-using Farion.Gameplay.Resources;
+using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Spawning;
@@ -21,6 +21,7 @@ using FishNet.Component.Transforming.Beta;
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Farion.Multiplayer.Spacecraft;
 
 namespace Farion.Multiplayer.Session
 {
@@ -59,20 +60,20 @@ namespace Farion.Multiplayer.Session
 
         [Header("Spawn")]
         [SerializeField] Transform[] spawnPoints = new Transform[4];
-        [SerializeField] Transform[] starterShipFormations = new Transform[4];
+        [SerializeField] Transform[] starterShuttleFormations = new Transform[4];
         [Min(0f)]
         [SerializeField] float surfaceClearance = 1.02f;
         [Min(0f)]
-        [SerializeField] float starterShipSurfaceClearance = 3f;
+        [SerializeField] float starterShuttleSurfaceClearance = 3f;
 
-        NetworkPlayerSpawner playerSpawner;
-        NetworkWorldOriginAuthority originAuthority;
+        MultiplayerPlayerSpawner playerSpawner;
+        MultiplayerWorldOriginAuthority originAuthority;
         NetworkExplorerController ownedPlayer;
-        GameplayUiController gameplayUi;
-        SpacecraftFlightHudPresenter flightHud;
-        FarionPostProcessRig postProcessRig;
+        UiGameplayController gameplayUi;
+        UiSpacecraftFlightHudPresenter flightHud;
+        SpacecraftPostProcessRig postProcessRig;
         bool multiplayerConfigured;
-        NetworkStarterShip ownedSpacecraft;
+        NetworkStarterShuttle ownedSpacecraft;
 
         public static MultiplayerSceneContext Active { get; private set; }
 
@@ -97,7 +98,7 @@ namespace Farion.Multiplayer.Session
             celestialFrameProvider;
         public GravitySimulation GravitySimulation => gravitySimulation;
         public GameplayRuntimeRoot RuntimeRoot => runtimeRoot;
-        public NetworkWorldOriginAuthority OriginAuthority => originAuthority;
+        public MultiplayerWorldOriginAuthority OriginAuthority => originAuthority;
         public GeneratedEntityId ZoneId => simulationZoneContext != null
             ? simulationZoneContext.ZoneId
             : GeneratedEntityId.None;
@@ -162,8 +163,8 @@ namespace Farion.Multiplayer.Session
         }
 
         public void BindSession(
-            NetworkPlayerSpawner spawner,
-            NetworkWorldOriginAuthority worldOriginAuthority)
+            MultiplayerPlayerSpawner spawner,
+            MultiplayerWorldOriginAuthority worldOriginAuthority)
         {
             ConfigureMultiplayer();
             playerSpawner = spawner;
@@ -173,7 +174,7 @@ namespace Farion.Multiplayer.Session
             playerSpawner?.BindContext(this, originAuthority);
         }
 
-        public void BindPresentation(GameplaySceneShellController bindings)
+        public void BindPresentation(UiGameplaySceneShellController bindings)
         {
             if (bindings == null)
             {
@@ -301,7 +302,7 @@ namespace Farion.Multiplayer.Session
             return found;
         }
 
-        public bool TryGetStarterShipPose(
+        public bool TryGetStarterShuttlePose(
             int partySize,
             int shipIndex,
             out Vector3 position,
@@ -309,16 +310,16 @@ namespace Farion.Multiplayer.Session
         {
             position = Vector3.zero;
             rotation = Quaternion.identity;
-            if (starterShipFormations == null ||
+            if (starterShuttleFormations == null ||
                 partySize < 1 ||
-                partySize > starterShipFormations.Length ||
+                partySize > starterShuttleFormations.Length ||
                 shipIndex < 0 ||
                 shipIndex >= partySize)
             {
                 return false;
             }
 
-            Transform formation = starterShipFormations[partySize - 1];
+            Transform formation = starterShuttleFormations[partySize - 1];
             Transform anchor = formation != null
                 ? formation.Find($"Ship_{shipIndex + 1}")
                 : null;
@@ -326,7 +327,7 @@ namespace Farion.Multiplayer.Session
                 !TryResolveDryTerrainPose(
                     anchor.position,
                     anchor.forward,
-                    starterShipSurfaceClearance,
+                    starterShuttleSurfaceClearance,
                     out CelestialSurfacePlacementResult placement))
             {
                 return false;
@@ -412,7 +413,7 @@ namespace Farion.Multiplayer.Session
             return true;
         }
 
-        public bool BindOwnedSpacecraft(NetworkStarterShip ship)
+        public bool BindOwnedSpacecraft(NetworkStarterShuttle ship)
         {
             if (ship == null ||
                 ownedPlayer == null ||
@@ -470,7 +471,7 @@ namespace Farion.Multiplayer.Session
                 pilotCameraView);
         }
 
-        public void RestoreOwnedExplorer(NetworkStarterShip ship)
+        public void RestoreOwnedExplorer(NetworkStarterShuttle ship)
         {
             if (!isActiveAndEnabled)
             {

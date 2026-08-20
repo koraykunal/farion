@@ -1,4 +1,4 @@
-using Farion.Audio;
+using Farion.Audio.Direction;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;

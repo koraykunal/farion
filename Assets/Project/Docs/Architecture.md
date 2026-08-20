@@ -68,10 +68,63 @@ folder unreadable; `Gameplay/Runtime/Flight` is the only case today, and its
 `Design` mirrors the same shape: an authoring asset lives under
 `Design/<Area>/<Feature>` matching the namespace of the type it instantiates.
 
-The application layer is `App`, not `Application`, in both the folder and the
-namespace. `Farion.Application` would shadow `UnityEngine.Application` for every
-type under `Farion`, because C# resolves a bare `Application` by walking the
-enclosing namespaces outward.
+Every namespace segment is checked against two collision rules before it is
+used, because C# resolves a bare identifier by walking the enclosing namespaces
+outward, and Unity treats one folder name as reserved anywhere under `Assets`:
+
+| Rejected | Used instead | Why |
+| --- | --- | --- |
+| `Farion.Application` | `Farion.App` | shadows `UnityEngine.Application` |
+| `Farion.Core.Math` | `Farion.Core.Numerics` | shadows `System.Math` |
+| `Farion.Audio.System` | `Farion.Audio.Direction` | shadows `System` |
+| `Farion.Gameplay.Resources` | `Farion.Gameplay.ResourceNodes` | shadows `UnityEngine.Resources`, and a `Resources` folder is force-included in every build |
+
+The last row is the one with a build cost. Unity treats *any* folder named
+`Resources`, at any depth, as a resource folder: its contents ship unstripped
+whether or not anything references them. The ore-and-mineral domain is therefore
+`ResourceNodes` in the folder, the namespace, and the asset tree, so
+`Assets/Project/Resources` stays the single deliberate resource folder.
+
+## Naming Rules
+
+Type prefixes are load-bearing and mechanical, so a reviewer can check them
+without reading the body:
+
+- **`Ui`** — every type in `Farion.UI`, with no exception. It matches the `UI_`
+  token used on the asset side and keeps the UI surface grouped in the
+  Inspector's script picker.
+- **`Network`** — reserved for types that derive from FishNet's
+  `NetworkBehaviour`. Everything else in `Farion.Multiplayer` is `Multiplayer*`.
+  The prefix therefore tells the reader whether a type has an owner, RPCs, and
+  sync state. Wire payload structs (`ExplorerReplicateData`,
+  `WorldOriginBroadcast`) keep their domain names; they are already unambiguous.
+- **`Farion`** — reserved for integration points into the engine or a third
+  party: `ScriptableRendererFeature`, FishNet `Authenticator`, the generated
+  input actions, and the editor tooling. It is not a general namespace stamp.
+- **`Spacecraft`, `Celestial`, `Player`, `Fleet`, `Inventory`, `SurfaceDecoration`**
+  and friends are domain prefixes; they are the default when no rule above
+  applies.
+
+One type per file, named after that type. A file may hold several small related
+types only when its name is the collective noun for them
+(`GameplayCommandRequests`, `ExplorerPredictionData`,
+`CelestialSurfacePatchTypes`). Partial-class parts are named
+`<Type>.<Part>.cs`, as in `FarionProjectValidator.Multiplayer.cs`.
+
+`CreateAssetMenu` and `MenuItem` paths mirror the owning folder exactly:
+`Farion/<Area>/<Feature>/<Display Name>`. A menu entry that cannot be derived
+from a folder path is a sign the type is filed in the wrong place.
+
+The engine-facing token is `UI` and the C# token is `Ui`: `PF_UI_SettingsScreen`
+on disk, `UiSettingsScreenPresenter` in code. Three-letter acronyms are
+PascalCase in both (`Hud`, `Lod`), except inside human-readable menu and display
+strings.
+
+`Controller` owns a lifecycle or state machine that outlives one screen
+(`UiScreenRouter`, `UiFocusController`, `UiMainMenuController`). `Presenter`
+binds exactly one screen or panel to state and owns nothing
+(`UiSettingsScreenPresenter`, `UiInventoryPanelPresenter`). `View` is a leaf
+widget. `Service` is a stateless or process-wide collaborator.
 
 - `Farion.Core.Identity` has `noEngineReferences` and no references at all. It
   owns `IdentifierText`, the single validation rule every Farion identifier
@@ -336,7 +389,7 @@ new schema is allowed only after those runtime owners exist.
   rigs, `PlayerControlLock`, UI composition, flight HUD, post-process rig, star
   dome, LOD controller, orbit lines, and the scene's single directional light and
   `CelestialLightingRig`. `SC_WorldZone` owns world content only and receives
-  those owners through `GameplaySceneShellController`. A second light or
+  those owners through `UiGameplaySceneShellController`. A second light or
   lighting rig in the zone scene fails validation.
 - Multiplayer freezes celestial integration and automatic origin rebasing on
   purpose: every peer must agree on body state, and frozen bodies agree

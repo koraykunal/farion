@@ -127,7 +127,7 @@ namespace Farion.Multiplayer.Session
             else if (rejection == MultiplayerFailureReason.ServerFull)
             {
                 NetworkManager.Log(
-                    $"Rejected a client because the session is full ({NetworkPlayerSpawner.MaximumPlayers} players).");
+                    $"Rejected a client because the session is full ({MultiplayerPlayerSpawner.MaximumPlayers} players).");
             }
 
             OnAuthenticationResult?.Invoke(connection, accepted);
@@ -155,7 +155,7 @@ namespace Farion.Multiplayer.Session
                 }
             }
 
-            return occupied < NetworkPlayerSpawner.MaximumPlayers
+            return occupied < MultiplayerPlayerSpawner.MaximumPlayers
                 ? MultiplayerFailureReason.None
                 : MultiplayerFailureReason.ServerFull;
         }
