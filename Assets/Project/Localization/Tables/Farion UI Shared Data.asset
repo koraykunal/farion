@@ -907,6 +907,90 @@ MonoBehaviour:
     m_Key: coop.session.title
     m_Metadata:
       m_Items: []
+  - m_Id: 8380430157348864
+    m_Key: input.onfoot.move.up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457728
+    m_Key: input.onfoot.move.down
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457729
+    m_Key: input.onfoot.move.left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457730
+    m_Key: input.onfoot.move.right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457731
+    m_Key: input.onfoot.jump
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457732
+    m_Key: input.onfoot.sprint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457733
+    m_Key: input.onfoot.interact
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457734
+    m_Key: input.flight.translate.up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457735
+    m_Key: input.flight.translate.down
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457736
+    m_Key: input.flight.translate.left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457737
+    m_Key: input.flight.translate.right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457738
+    m_Key: input.flight.vertical.negative
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457739
+    m_Key: input.flight.vertical.positive
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457740
+    m_Key: input.flight.roll.negative
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457741
+    m_Key: input.flight.roll.positive
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457742
+    m_Key: input.flight.boost
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457743
+    m_Key: input.flight.brake
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457744
+    m_Key: input.flight.toggleassist
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457745
+    m_Key: input.flight.togglelandinggear
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457746
+    m_Key: input.vehicle.exit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457747
+    m_Key: input.vehicle.togglecamera
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -18,7 +18,6 @@ namespace Farion.UI.Settings
         RefreshRate = 130,
         FieldOfView = 140,
         MouseSensitivity = 150,
-        InvertLookY = 160,
-        ResetBindings = 170
+        InvertLookY = 160
     }
 }

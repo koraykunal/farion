@@ -30,7 +30,6 @@ namespace Farion.UI.Settings
         [SerializeField] GameObject audioGroup;
         [SerializeField] GameObject displayGroup;
         [SerializeField] GameObject controlsGroup;
-        [SerializeField] UiKeyBindingsPanel keyBindingsPanel;
 
         [Header("Header")]
         [SerializeField] TMP_Text titleText;
@@ -380,17 +379,6 @@ namespace Farion.UI.Settings
                 case UiSettingId.InvertLookY:
                     preferences.SetInvertLookY(!preferences.InvertLookY);
                     break;
-                case UiSettingId.ResetBindings:
-                    if (keyBindingsPanel != null)
-                    {
-                        keyBindingsPanel.ResetAll();
-                    }
-                    else
-                    {
-                        preferences.ResetInputBindings();
-                    }
-
-                    break;
             }
         }
 
@@ -624,14 +612,6 @@ namespace Farion.UI.Settings
                         UiLocalization.Get(UiTextKeys.SettingsInvertLookTitle),
                         UiLocalization.Get(UiTextKeys.SettingsInvertLookDescription),
                         ResolveBoolean(preferences.InvertLookY));
-                    option.SetAvailable(true);
-                    break;
-                case UiSettingId.ResetBindings:
-                    option.ConfigureContent(
-                        UiLocalization.Get(UiTextKeys.SettingsResetBindingsTitle),
-                        UiLocalization.Get(
-                            UiTextKeys.SettingsResetBindingsDescription),
-                        UiLocalization.Get(UiTextKeys.CommonApply));
                     option.SetAvailable(true);
                     break;
             }
@@ -914,8 +894,6 @@ namespace Farion.UI.Settings
             applyActionView ??= applyButton != null
                 ? applyButton.GetComponent<UiSettingsActionView>()
                 : null;
-
-            keyBindingsPanel ??= GetComponentInChildren<UiKeyBindingsPanel>(true);
 
             options ??= new List<UiSettingsOptionView>();
             if (options.Count == 0)

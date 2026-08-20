@@ -351,12 +351,6 @@ namespace Farion.UI.Settings
             Changed?.Invoke();
         }
 
-        public void ResetInputBindings()
-        {
-            FarionInputActions.ResetBindingOverrides();
-            Changed?.Invoke();
-        }
-
         public void SetVSyncEnabled(bool value)
         {
             if (vSyncEnabled == value)

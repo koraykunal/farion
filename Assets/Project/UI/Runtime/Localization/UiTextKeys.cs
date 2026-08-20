@@ -150,7 +150,6 @@ namespace Farion.UI.Localization
         public const string SettingsInvertLookTitle = "settings.invert_look.title";
         public const string SettingsMouseSensitivityDescription = "settings.mouse_sensitivity.description";
         public const string SettingsMouseSensitivityTitle = "settings.mouse_sensitivity.title";
-        public const string SettingsResetBindingsDescription = "settings.reset_bindings.description";
         public const string SettingsResetBindingsTitle = "settings.reset_bindings.title";
         public const string SettingsSectionControls = "settings.section.controls";
         public const string SettingsSectionAudio = "settings.section.audio";

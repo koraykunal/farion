@@ -6,6 +6,7 @@ using Farion.UI.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Farion.UI.Settings
 {
@@ -16,22 +17,39 @@ namespace Farion.UI.Settings
 
         readonly struct BindingRow
         {
-            public BindingRow(InputAction action, int bindingIndex, string label)
+            public BindingRow(
+                InputAction action,
+                int bindingIndex,
+                string labelKey,
+                string fallbackLabel)
             {
                 Action = action;
                 BindingIndex = bindingIndex;
-                Label = label;
+                LabelKey = labelKey;
+                FallbackLabel = fallbackLabel;
             }
 
             public InputAction Action { get; }
             public int BindingIndex { get; }
-            public string Label { get; }
+            public string LabelKey { get; }
+            public string FallbackLabel { get; }
+
+            public string Label
+            {
+                get
+                {
+                    string localized = UiLocalization.Get(LabelKey);
+                    return localized == LabelKey ? FallbackLabel : localized;
+                }
+            }
         }
 
         [Header("Composition")]
         [SerializeField] UiKeyBindingRowView rowTemplate;
         [SerializeField] RectTransform rowContainer;
         [SerializeField] TMP_Text statusText;
+        [SerializeField] Button resetButton;
+        [SerializeField] TMP_Text resetLabelText;
 
         readonly List<BindingRow> rows = new();
         readonly List<UiKeyBindingRowView> rowViews = new();
@@ -48,11 +66,28 @@ namespace Farion.UI.Settings
             BuildRows();
             RefreshRows();
             SetStatus(UiTextKeys.SettingsBindingsHint);
+            if (resetButton != null)
+            {
+                resetButton.interactable = true;
+                resetButton.onClick.RemoveListener(ResetAll);
+                resetButton.onClick.AddListener(ResetAll);
+            }
+
+            if (resetLabelText != null)
+            {
+                resetLabelText.SetText(
+                    UiLocalization.ToDisplayUpper(
+                        UiLocalization.Get(UiTextKeys.SettingsResetBindingsTitle)));
+            }
         }
 
         void OnDisable()
         {
             CancelActiveRebind();
+            if (resetButton != null)
+            {
+                resetButton.onClick.RemoveListener(ResetAll);
+            }
         }
 
         public void ResetAll()
@@ -106,7 +141,11 @@ namespace Farion.UI.Settings
                     continue;
                 }
 
-                rows.Add(new BindingRow(action, i, BuildLabel(action, binding)));
+                rows.Add(new BindingRow(
+                    action,
+                    i,
+                    BuildLabelKey(action, binding),
+                    BuildFallbackLabel(action, binding)));
             }
         }
 
@@ -116,7 +155,16 @@ namespace Farion.UI.Settings
                 path.StartsWith("<Keyboard>", StringComparison.Ordinal);
         }
 
-        string BuildLabel(InputAction action, InputBinding binding)
+        static string BuildLabelKey(InputAction action, InputBinding binding)
+        {
+            string key =
+                $"input.{action.actionMap.name}.{action.name}".ToLowerInvariant();
+            return binding.isPartOfComposite && !string.IsNullOrEmpty(binding.name)
+                ? $"{key}.{binding.name.ToLowerInvariant()}"
+                : key;
+        }
+
+        string BuildFallbackLabel(InputAction action, InputBinding binding)
         {
             labelBuilder.Clear();
             AppendSpaced(action.name);

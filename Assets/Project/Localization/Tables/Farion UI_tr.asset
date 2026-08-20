@@ -922,6 +922,90 @@ MonoBehaviour:
     m_Localized: OTURUM
     m_Metadata:
       m_Items: []
+  - m_Id: 8380430157348864
+    m_Localized: "\u0130leri"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457728
+    m_Localized: Geri
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457729
+    m_Localized: Sola
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457730
+    m_Localized: "Sa\u011Fa"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457731
+    m_Localized: "Z\u0131pla"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457732
+    m_Localized: "Ko\u015F"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457733
+    m_Localized: "Etkile\u015Fim"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457734
+    m_Localized: "\u0130leri itki"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457735
+    m_Localized: Geri itki
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457736
+    m_Localized: Sola kayma
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457737
+    m_Localized: "Sa\u011Fa kayma"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457738
+    m_Localized: "Al\xE7al"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457739
+    m_Localized: "Y\xFCksel"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457740
+    m_Localized: "Sola yat\u0131r"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457741
+    m_Localized: "Sa\u011Fa yat\u0131r"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457742
+    m_Localized: "H\u0131zlan"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457743
+    m_Localized: Fren
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457744
+    m_Localized: "U\xE7u\u015F deste\u011Fi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457745
+    m_Localized: "\u0130ni\u015F tak\u0131m\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457746
+    m_Localized: "Ara\xE7tan in"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457747
+    m_Localized: "Kamera g\xF6r\xFCn\xFCm\xFC"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

@@ -913,6 +913,90 @@ MonoBehaviour:
     m_Localized: SESSION
     m_Metadata:
       m_Items: []
+  - m_Id: 8380430157348864
+    m_Localized: Move forward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457728
+    m_Localized: Move back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457729
+    m_Localized: Strafe left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457730
+    m_Localized: Strafe right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457731
+    m_Localized: Jump
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457732
+    m_Localized: Sprint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457733
+    m_Localized: Interact
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457734
+    m_Localized: Thrust forward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457735
+    m_Localized: Thrust back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457736
+    m_Localized: Strafe left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457737
+    m_Localized: Strafe right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457738
+    m_Localized: Descend
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457739
+    m_Localized: Ascend
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457740
+    m_Localized: Roll left
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457741
+    m_Localized: Roll right
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457742
+    m_Localized: Boost
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457743
+    m_Localized: Brake
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457744
+    m_Localized: Flight assist
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457745
+    m_Localized: Landing gear
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457746
+    m_Localized: Exit vehicle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457747
+    m_Localized: Camera view
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
