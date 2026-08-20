@@ -46,6 +46,17 @@ namespace Farion.Editor.Validation
             FarionAssetPaths.UiInventoryPrefab;
         public const string PausePrefabPath =
             FarionAssetPaths.UiPausePrefab;
+        static readonly string[] FlightHudGraphicsBindings =
+        {
+            "speedValueText",
+            "fuelValueText",
+            "fuelArcFillImage",
+            "hullValueText",
+            "hullBarFillImage",
+            "hullBarFrameImage",
+            "shakeTarget"
+        };
+
         public const string FlightHudPrefabPath =
             FarionAssetPaths.UiFlightHudPrefab;
         const string UiPrefabFolder = FarionAssetPaths.UiPrefabRoot;
@@ -225,8 +236,34 @@ namespace Farion.Editor.Validation
                     flightHudPrefab,
                     FlightHudPrefabPath,
                     report);
+                ValidateFlightHudGraphics(flightHudPrefab, report);
             }
             ValidateVisualContracts(systemRootPrefab, report);
+        }
+
+        static void ValidateFlightHudGraphics(
+            GameObject prefab,
+            FarionValidationReport report)
+        {
+            UiSpacecraftFlightHudGraphics graphics =
+                prefab.GetComponentInChildren<UiSpacecraftFlightHudGraphics>(true);
+            if (graphics == null)
+            {
+                report.AddError(
+                    $"{FlightHudPrefabPath}: missing {nameof(UiSpacecraftFlightHudGraphics)}.");
+                return;
+            }
+
+            SerializedObject serialized = new(graphics);
+            foreach (string field in FlightHudGraphicsBindings)
+            {
+                SerializedProperty property = serialized.FindProperty(field);
+                if (property == null || property.objectReferenceValue == null)
+                {
+                    report.AddError(
+                        $"{FlightHudPrefabPath}: {nameof(UiSpacecraftFlightHudGraphics)}.{field} is unassigned.");
+                }
+            }
         }
 
         static GameObject LoadRequiredPrefab(

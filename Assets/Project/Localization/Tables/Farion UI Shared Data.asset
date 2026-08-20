@@ -991,6 +991,10 @@ MonoBehaviour:
     m_Key: input.vehicle.togglecamera
     m_Metadata:
       m_Items: []
+  - m_Id: 8447561943220224
+    m_Key: hud.hull
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

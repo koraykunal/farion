@@ -98,6 +98,26 @@ namespace Farion.UI.Gameplay
         [SerializeField] Image boostIndicatorImage;
         [SerializeField] Image panelFrameImage;
 
+        [Header("Hull Bar")]
+        [SerializeField] TMP_Text hullValueText;
+        [SerializeField] Image hullBarFillImage;
+        [SerializeField] Image hullBarFrameImage;
+
+        [Header("Damage Feedback")]
+        [SerializeField] RectTransform shakeTarget;
+        [Min(0f)]
+        [SerializeField] float minimumShakeOffset = 4f;
+        [Min(0f)]
+        [SerializeField] float maximumShakeOffset = 22f;
+        [Min(0f)]
+        [SerializeField] float shakeDuration = 0.9f;
+        [Min(0f)]
+        [SerializeField] float shakeFrequency = 7.5f;
+        [Min(0f)]
+        [SerializeField] float shakeDecay = 3.4f;
+        [Min(0f)]
+        [SerializeField] float maximumShakeRotation = 1.4f;
+
         [Header("Navigation Marker")]
         [SerializeField] RectTransform navigationArrow;
         [SerializeField] Image navigationArrowImage;
@@ -123,6 +143,13 @@ namespace Farion.UI.Gameplay
         UiTheme Theme => theme = UiTheme.Resolve(theme);
         float targetFuel = 1f;
         float displayedFuel = 1f;
+        float targetHull = 1f;
+        float displayedHull = 1f;
+        bool hullBreached;
+        float shakeAmplitude;
+        float shakeTime;
+        Vector2 shakeRestPosition;
+        bool shakeRestCaptured;
         float targetBoostBlend;
         bool boostActive;
         Vector2 targetLanding;
@@ -130,10 +157,29 @@ namespace Farion.UI.Gameplay
 
         public void SetVisible(bool shouldShow)
         {
+            if (!shouldShow)
+            {
+                StopDamageShake();
+            }
+
             if (gameObject.activeSelf != shouldShow)
             {
                 gameObject.SetActive(shouldShow);
             }
+        }
+
+        public void StopDamageShake()
+        {
+            shakeAmplitude = 0f;
+            shakeTime = 0f;
+            RectTransform target = ShakeTarget;
+            if (target == null || !shakeRestCaptured)
+            {
+                return;
+            }
+
+            target.anchoredPosition = shakeRestPosition;
+            target.localRotation = Quaternion.identity;
         }
 
         public void ApplyTheme(UiTheme value)
@@ -153,6 +199,8 @@ namespace Farion.UI.Gameplay
             SetColor(boostIndicatorImage, Theme.Focus, 0.42f);
             SetColor(fuelArcFillImage, Theme.Focus, 0.88f);
             SetColor(fuelArcGlowImage, Theme.Focus, 0.14f);
+            SetFont(hullValueText, Theme.InstrumentFont);
+            SetColor(hullBarFrameImage, Theme.Focus, 0.18f);
             SetColor(assistFrameImage, Theme.Focus, 0.72f);
             SetColor(navigationArrowImage, Theme.Focus, 0.94f);
             SetColor(navigationArrowGlowImage, Theme.Focus, 0.32f);
@@ -291,7 +339,17 @@ namespace Farion.UI.Gameplay
                 displayedFuel,
                 targetFuel,
                 blend);
+            displayedHull = Mathf.Lerp(
+                displayedHull,
+                targetHull,
+                blend);
             throttle.Tick(blend);
+            TickShake(Time.unscaledDeltaTime);
+
+            if (hullBarFillImage != null)
+            {
+                hullBarFillImage.fillAmount = displayedHull;
+            }
 
             if (velocityVectorGroup != null)
             {
@@ -325,6 +383,108 @@ namespace Farion.UI.Gameplay
             landingSpeedRange = Mathf.Max(0.1f, landingSpeedRange);
         }
 
+        public void RefreshHull(float normalized, bool breached, bool available)
+        {
+            targetHull = Mathf.Clamp01(normalized);
+            hullBreached = breached;
+            SetActive(hullValueText, available);
+            SetActive(hullBarFillImage, available);
+            SetActive(hullBarFrameImage, available);
+            if (!available)
+            {
+                return;
+            }
+
+            if (hullValueText != null)
+            {
+                hullValueText.SetText(
+                    breached ? "BREACH" : "{0:0}%",
+                    targetHull * 100f);
+            }
+
+            ApplyHullColors();
+        }
+
+        public void PlayDamageShake(float severity)
+        {
+            float amplitude = Mathf.Lerp(
+                minimumShakeOffset,
+                maximumShakeOffset,
+                Mathf.Clamp01(severity));
+            shakeAmplitude = Mathf.Max(CurrentShakeEnvelope(), amplitude);
+            shakeTime = 0f;
+        }
+
+        float CurrentShakeEnvelope()
+        {
+            return shakeAmplitude <= 0f
+                ? 0f
+                : shakeAmplitude * Mathf.Exp(-shakeDecay * shakeTime);
+        }
+
+        RectTransform ShakeTarget => shakeTarget != null
+            ? shakeTarget
+            : shakeTarget = transform as RectTransform;
+
+        void TickShake(float deltaTime)
+        {
+            RectTransform target = ShakeTarget;
+            if (target == null)
+            {
+                return;
+            }
+
+            if (!shakeRestCaptured)
+            {
+                shakeRestPosition = target.anchoredPosition;
+                shakeRestCaptured = true;
+            }
+
+            if (shakeAmplitude <= 0f)
+            {
+                return;
+            }
+
+            shakeTime += deltaTime;
+            if (shakeTime >= shakeDuration || shakeDuration <= 0f)
+            {
+                shakeAmplitude = 0f;
+                target.anchoredPosition = shakeRestPosition;
+                target.localRotation = Quaternion.identity;
+                return;
+            }
+
+            float envelope = CurrentShakeEnvelope();
+            float phase = shakeTime * shakeFrequency * Mathf.PI * 2f;
+            target.anchoredPosition = shakeRestPosition + new Vector2(
+                Mathf.Sin(phase) * envelope,
+                Mathf.Sin(phase * 1.37f + 1.1f) * envelope * 0.55f);
+            float roll = Mathf.Sin(phase * 0.83f + 0.4f) *
+                maximumShakeRotation *
+                (maximumShakeOffset > 0f ? envelope / maximumShakeOffset : 0f);
+            target.localRotation = Quaternion.Euler(0f, 0f, roll);
+        }
+
+        void ApplyHullColors()
+        {
+            Color signal = ResolveLevelColor(targetHull);
+            if (hullBreached)
+            {
+                signal = Theme.Critical;
+            }
+
+            SetTextColor(hullValueText, signal);
+            SetColor(hullBarFillImage, signal, 0.9f);
+        }
+
+        static void SetActive(Component target, bool visible)
+        {
+            if (target != null && target.gameObject.activeSelf != visible)
+            {
+                target.gameObject.SetActive(visible);
+            }
+        }
+
         void ApplySignalColors()
         {
             Color signal = ResolveFuelColor();
@@ -352,6 +512,16 @@ namespace Farion.UI.Gameplay
             }
 
             return Color.Lerp(Theme.SupportingText, Theme.Focus, targetBoostBlend);
+        }
+
+        Color ResolveLevelColor(float normalized)
+        {
+            if (normalized <= CriticalFuelLevel)
+            {
+                return Theme.Critical;
+            }
+
+            return normalized <= CautionFuelLevel ? Theme.Caution : Theme.Focus;
         }
 
         static void MoveTowards(

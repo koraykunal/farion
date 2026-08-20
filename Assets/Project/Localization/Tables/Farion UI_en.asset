@@ -997,6 +997,10 @@ MonoBehaviour:
     m_Localized: Camera view
     m_Metadata:
       m_Items: []
+  - m_Id: 8447561943220224
+    m_Localized: HULL
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

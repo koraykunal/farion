@@ -88,6 +88,9 @@ namespace Farion.Gameplay.Flight
         [Tooltip("Hull damage per metre per second of impact speed above the tolerance.")]
         [Min(0f)]
         [SerializeField] float impactDamagePerSpeedUnit = 12f;
+        [Tooltip("Colliding bodies lighter than this fraction of the ship mass cannot damage the hull.")]
+        [Range(0f, 1f)]
+        [SerializeField] float minimumImpactMassRatio = 0.05f;
 
         [Header("Rigidbody")]
         [Min(1f)]
@@ -130,6 +133,7 @@ namespace Farion.Gameplay.Flight
         public float HullIntegrity => hullIntegrity;
         public float ImpactToleranceSpeed => impactToleranceSpeed;
         public float ImpactDamagePerSpeedUnit => impactDamagePerSpeedUnit;
+        public float MinimumImpactMassRatio => Mathf.Clamp01(minimumImpactMassRatio);
         public float RigidbodyMass => rigidbodyMass;
         public bool OverrideCenterOfMass => overrideCenterOfMass;
         public Vector3 CenterOfMass => centerOfMass;
@@ -241,6 +245,7 @@ namespace Farion.Gameplay.Flight
             hullIntegrity = Mathf.Max(0f, hullIntegrity);
             impactToleranceSpeed = Mathf.Max(0f, impactToleranceSpeed);
             impactDamagePerSpeedUnit = Mathf.Max(0f, impactDamagePerSpeedUnit);
+            minimumImpactMassRatio = Mathf.Clamp01(minimumImpactMassRatio);
             rigidbodyMass = Mathf.Max(1f, rigidbodyMass);
             angularDamping = Mathf.Max(0f, angularDamping);
         }

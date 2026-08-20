@@ -385,7 +385,7 @@ namespace Farion.Tests.EditMode
                 SpacecraftMotor motor = shipObject.AddComponent<SpacecraftMotor>();
                 TestFieldAccess.SetField(motor, "flightProfile", profile);
                 SpacecraftHull hull = shipObject.AddComponent<SpacecraftHull>();
-                hull.Restore();
+                hull.RefillIntegrity();
                 motor.RefillFuel();
 
                 Assert.That(hull.ApplyImpact(3f), Is.EqualTo(0f));
@@ -414,7 +414,9 @@ namespace Farion.Tests.EditMode
                     wreck);
 
                 Assert.That(wreck.AccumulatedForce, Is.EqualTo(Vector3.zero));
-                Assert.That(hull.Repair(1000f), Is.EqualTo(100f).Within(0.0001f));
+                hull.RefillIntegrity();
+
+                Assert.That(hull.Normalized, Is.EqualTo(1f));
                 Assert.That(motor.DriveDisabled, Is.False);
 
                 motor.SetModuleBonuses(new ShipModuleBonuses(0f, 0f, 0f, 1f));

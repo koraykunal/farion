@@ -28,8 +28,6 @@ namespace Farion.Gameplay.Flight
         int accumulatedContactCount;
         bool contactReportedSinceLastStep;
         bool externalSimulation;
-        float pendingImpactSpeed;
-        Vector3 preStepLinearVelocity;
 
         public SpacecraftSurfaceContactSample CurrentContact => currentContact;
         public bool HasContact => hasContact;
@@ -38,7 +36,6 @@ namespace Farion.Gameplay.Flight
         void Awake()
         {
             cachedRigidbody = GetComponent<Rigidbody>();
-            preStepLinearVelocity = cachedRigidbody.linearVelocity;
         }
 
         void FixedUpdate()
@@ -52,13 +49,6 @@ namespace Farion.Gameplay.Flight
         public void SetExternalSimulation(bool enabled)
         {
             externalSimulation = enabled;
-        }
-
-        public float ConsumeImpactSpeed()
-        {
-            float speed = pendingImpactSpeed;
-            pendingImpactSpeed = 0f;
-            return speed;
         }
 
         public void BeginSimulationStep(float deltaTime)
@@ -78,7 +68,6 @@ namespace Farion.Gameplay.Flight
             }
 
             contactReportedSinceLastStep = false;
-            preStepLinearVelocity = Rigidbody.linearVelocity;
             ResetAccumulator(null);
         }
 
@@ -127,13 +116,6 @@ namespace Farion.Gameplay.Flight
                 : Vector3.up;
             Vector3 bodyVelocity = body.GetVelocityAtPoint(point);
             Vector3 relativeVelocity = Rigidbody.GetPointVelocity(point) - bodyVelocity;
-            if (!hasContact)
-            {
-                pendingImpactSpeed = Mathf.Max(
-                    pendingImpactSpeed,
-                    (preStepLinearVelocity - bodyVelocity).magnitude);
-            }
-
             currentContact = new SpacecraftSurfaceContactSample(
                 body,
                 point,

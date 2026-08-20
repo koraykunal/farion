@@ -254,7 +254,7 @@ namespace Farion.Multiplayer.Spacecraft
                 hull != null &&
                 hullIntegrity.Value >= 0f)
             {
-                hull.SetIntegrityAmount(hullIntegrity.Value);
+                hull.SetIntegrityAmount(hullIntegrity.Value, notifyDamage: false);
             }
 
             ApplyPilotedState(IsPiloted);
@@ -330,6 +330,7 @@ namespace Farion.Multiplayer.Spacecraft
 
         protected override void TimeManager_OnTick()
         {
+            hull?.BeginSimulationStep();
             SpacecraftInputState current = IsLocalPilot() && input != null
                 ? input.CurrentInput
                 : SpacecraftInputState.None;
@@ -354,7 +355,8 @@ namespace Farion.Multiplayer.Spacecraft
 
             if (!IsServerStarted)
             {
-                surfaceContactProbe?.ConsumeImpactSpeed();
+                hull.SyncCapacity();
+                hull.DiscardPendingImpact();
                 return;
             }
 
@@ -379,7 +381,7 @@ namespace Farion.Multiplayer.Spacecraft
                 return;
             }
 
-            hull.SetIntegrityAmount(next);
+            hull.SetIntegrityAmount(next, notifyDamage: previous >= 0f);
         }
 
         [Replicate]

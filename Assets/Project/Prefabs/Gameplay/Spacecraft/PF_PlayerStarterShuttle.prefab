@@ -1419,7 +1419,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftHull
   motor: {fileID: 3359784979145954321}
-  surfaceContactProbe: {fileID: 4585842710350534113}
   integrityNormalized: 1
 --- !u!1 &2667502354368947228
 GameObject:

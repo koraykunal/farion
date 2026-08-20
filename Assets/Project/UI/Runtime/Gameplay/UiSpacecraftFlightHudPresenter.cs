@@ -18,7 +18,6 @@ namespace Farion.UI.Gameplay
     {
         static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
         const float VelocityVectorProjectionDistance = 1000f;
-        const char NewLineChar = '\n';
 
         [Header("Design")]
         [SerializeField] UiTheme theme;
@@ -98,6 +97,8 @@ namespace Farion.UI.Gameplay
         void OnDisable()
         {
             UnsubscribePilotContext();
+            BindHull(null);
+            motor = null;
             SetVisible(false);
         }
 
@@ -168,12 +169,42 @@ namespace Farion.UI.Gameplay
             }
 
             motor = nextMotor;
-            hull = motor != null ? motor.GetComponent<SpacecraftHull>() : null;
+            BindHull(motor != null ? motor.GetComponent<SpacecraftHull>() : null);
             celestialProbe = motor != null ? motor.GetComponent<CelestialActorProbe>() : null;
             landingComputer = motor != null ? motor.GetComponent<SpacecraftLandingComputer>() : null;
             guidanceComputer = motor != null ? motor.GetComponent<SpacecraftLandingGuidanceComputer>() : null;
             landingGear = motor != null ? motor.GetComponent<SpacecraftLandingGearAnimator>() : null;
             orbitComputer = motor != null ? motor.GetComponent<SpacecraftOrbitComputer>() : null;
+        }
+
+        void BindHull(SpacecraftHull nextHull)
+        {
+            if (hull == nextHull)
+            {
+                return;
+            }
+
+            if (hull != null)
+            {
+                hull.Damaged -= HandleHullDamaged;
+            }
+
+            hull = nextHull;
+            if (hull != null)
+            {
+                hull.Damaged += HandleHullDamaged;
+            }
+        }
+
+        void HandleHullDamaged(float amount)
+        {
+            if (!visible || hull == null || graphics == null)
+            {
+                return;
+            }
+
+            float capacity = hull.Capacity;
+            graphics.PlayDamageShake(capacity > 0f ? amount / capacity : 1f);
         }
 
         void RefreshText()
@@ -184,6 +215,10 @@ namespace Farion.UI.Gameplay
                 motor.CurrentLocalTranslationInput.z,
                 motor.MaxForwardSpeed,
                 motor.MaxReverseSpeed);
+            graphics?.RefreshHull(
+                hull != null ? hull.Normalized : 1f,
+                hull != null && hull.IsBreached,
+                hull != null && hull.Capacity > 0f);
 
             if (phaseText != null)
             {
@@ -232,7 +267,6 @@ namespace Farion.UI.Gameplay
             }
 
             AppendOrbit();
-            AppendHull();
             SetText(navigationText, navigationBuilder);
             RefreshNavigationMarkerText(targetDistance);
 
@@ -248,32 +282,6 @@ namespace Farion.UI.Gameplay
             {
                 advisoryText.text = advisory;
                 advisoryText.color = ResolveAdvisoryColor();
-            }
-        }
-
-        void AppendHull()
-        {
-            if (hull == null ||
-                hull.Capacity <= 0f ||
-                hull.Normalized >= 1f)
-            {
-                return;
-            }
-
-            if (navigationBuilder.Length > 0 &&
-                navigationBuilder[navigationBuilder.Length - 1] != NewLineChar)
-            {
-                navigationBuilder.AppendLine();
-            }
-
-            navigationBuilder
-                .Append("HULL        ")
-                .Append(Mathf.RoundToInt(hull.Normalized * 100f)
-                    .ToString(InvariantCulture))
-                .Append('%');
-            if (hull.IsBreached)
-            {
-                navigationBuilder.Append("  BREACHED");
             }
         }
 
