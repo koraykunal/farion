@@ -298,7 +298,8 @@ namespace Farion.Multiplayer.Spawning
                         owner,
                         pair.Key,
                         ship.Cargo.CaptureContainerSnapshot(),
-                        ship.Motor.Fuel));
+                        ship.Motor.Fuel,
+                        ship.Hull != null ? ship.Hull.Integrity : default));
                 }
             }
 
@@ -356,6 +357,11 @@ namespace Farion.Multiplayer.Spawning
                 if (entry.HasFuel && starterShuttle.Motor != null)
                 {
                     starterShuttle.Motor.RestoreFuel(entry.Fuel);
+                }
+
+                if (entry.HasHull && starterShuttle.Hull != null)
+                {
+                    starterShuttle.Hull.RestoreIntegrity(entry.Hull);
                 }
 
                 shipCargo.RemoveAt(i);
@@ -460,7 +466,8 @@ namespace Farion.Multiplayer.Spawning
                 ResolveSlotOwner(slot),
                 slot,
                 starterShuttle.Cargo.CaptureContainerSnapshot(),
-                starterShuttle.Motor.Fuel);
+                starterShuttle.Motor.Fuel,
+                starterShuttle.Hull != null ? starterShuttle.Hull.Integrity : default);
             if (!entry.IsValid)
             {
                 return;

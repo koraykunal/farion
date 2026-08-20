@@ -5,6 +5,7 @@ using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Persistence;
 using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
+using Farion.Gameplay.Ships;
 using Farion.Simulation.World;
 using NUnit.Framework;
 using UnityEngine;
@@ -45,6 +46,44 @@ namespace Farion.Tests.EditMode
             finally
             {
                 Object.DestroyImmediate(owner);
+            }
+        }
+
+        [Test]
+        public void ShuttleSystemsParticipantAcceptsSavesWrittenBeforeFuelAndHullExisted()
+        {
+            GameplaySaveData legacy =
+                JsonUtility.FromJson<GameplaySaveData>(
+                    "{\"schemaVersion\":6,\"savedAtUtc\":\"2026-07-30T00:00:00Z\"}");
+            GameObject shipObject = new("Shuttle Systems Save Test");
+            try
+            {
+                ShuttleRuntimeBinding shuttle =
+                    shipObject.AddComponent<ShuttleRuntimeBinding>();
+                GameplaySaveContext context = new(
+                    new GameplayRuntimeBindings(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        shuttle,
+                        null));
+                ShuttleSystemsSaveParticipant participant = new();
+
+                shuttle.Motor.RefillFuel();
+
+                Assert.That(legacy.ShuttleFuel.Capacity, Is.EqualTo(0f));
+                Assert.That(legacy.ShuttleHull.Capacity, Is.EqualTo(0f));
+                Assert.That(participant.CanApply(legacy, context), Is.True);
+                Assert.That(participant.Apply(legacy, context), Is.True);
+                Assert.That(shuttle.Motor.FuelNormalized, Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(shipObject);
             }
         }
 

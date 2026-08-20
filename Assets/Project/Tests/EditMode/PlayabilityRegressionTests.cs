@@ -109,11 +109,14 @@ namespace Farion.Tests.EditMode
                 "player-a",
                 2,
                 CreateSnapshot(),
-                ResourcePool.Full(500f));
+                ResourcePool.Full(500f),
+                ResourcePool.Full(300f));
 
             Assert.That(owned.HasOwner, Is.True);
             Assert.That(owned.HasFuel, Is.True);
             Assert.That(owned.Fuel.Current, Is.EqualTo(500f));
+            Assert.That(owned.HasHull, Is.True);
+            Assert.That(owned.Hull.Current, Is.EqualTo(300f));
             Assert.That(owned.PersistentPlayerId, Is.EqualTo("player-a"));
             Assert.That(owned.IsValid, Is.True);
         }
@@ -125,10 +128,12 @@ namespace Farion.Tests.EditMode
                 string.Empty,
                 1,
                 CreateSnapshot(),
+                default,
                 default);
 
             Assert.That(legacy.HasOwner, Is.False);
             Assert.That(legacy.HasFuel, Is.False);
+            Assert.That(legacy.HasHull, Is.False);
             Assert.That(legacy.IsValid, Is.True);
         }
 
@@ -139,6 +144,7 @@ namespace Farion.Tests.EditMode
                 string.Empty,
                 -1,
                 CreateSnapshot(),
+                default,
                 default);
 
             Assert.That(orphan.IsValid, Is.False);

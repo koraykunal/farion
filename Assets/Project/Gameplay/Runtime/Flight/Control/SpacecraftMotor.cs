@@ -106,6 +106,7 @@ namespace Farion.Gameplay.Flight
         readonly SpacecraftBoostController boostController = new();
         ShipModuleBonuses moduleBonuses = ShipModuleBonuses.None;
         ResourcePool fuel;
+        bool driveDisabled;
         Vector3 smoothedTranslation;
         Vector3 smoothedRotationInput;
         Vector3 lastGravityAcceleration;
@@ -139,6 +140,7 @@ namespace Farion.Gameplay.Flight
         public ShipModuleBonuses ModuleBonuses => moduleBonuses;
         public ResourcePool Fuel => fuel;
         public float FuelNormalized => fuel.Normalized;
+        public bool DriveDisabled => driveDisabled;
         public float MaxForwardSpeed => flightProfile != null
             ? flightProfile.EvaluateMaxForwardSpeed(moduleBonuses)
             : DefaultControlSettings.PositiveMaxSpeed.z;
@@ -265,6 +267,11 @@ namespace Farion.Gameplay.Flight
             smoothedRotationInput = state.SmoothedRotationInput;
             boostController.RestoreState(state.Boost);
             fuel = state.Fuel;
+        }
+
+        public void SetDriveDisabled(bool disabled)
+        {
+            driveDisabled = disabled;
         }
 
         public void SetModuleBonuses(in ShipModuleBonuses bonuses)
@@ -424,6 +431,11 @@ namespace Farion.Gameplay.Flight
 
         float ConsumeFuel(float deltaTime, Vector3 localLinearAcceleration)
         {
+            if (driveDisabled)
+            {
+                return 0f;
+            }
+
             if (fuel.Capacity <= 0f)
             {
                 return 1f;
@@ -584,7 +596,7 @@ namespace Farion.Gameplay.Flight
             ? flightProfile.BuildControlSettings(moduleBonuses)
             : DefaultControlSettings;
 
-        bool HasThrust => fuel.Capacity <= 0f || !fuel.IsEmpty;
+        bool HasThrust => !driveDisabled && (fuel.Capacity <= 0f || !fuel.IsEmpty);
 
         float TranslationSpoolRate =>
             flightProfile != null ? flightProfile.TranslationSpoolRate : DefaultTranslationSpoolRate;

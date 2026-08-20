@@ -31,6 +31,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] PlayerPossessionSnapshot playerPossession;
         [SerializeField] FleetKnowledgeSnapshot fleetKnowledge;
         [SerializeField] ResourcePool shuttleFuel;
+        [SerializeField] ResourcePool shuttleHull;
         [SerializeField] List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
         [SerializeField] List<MultiplayerPlayerSaveEntry> multiplayerPlayers = new();
         [SerializeField] List<MultiplayerShipSaveEntry> multiplayerShipCargo = new();
@@ -108,6 +109,7 @@ namespace Farion.Gameplay.Persistence
         public PlayerPossessionSnapshot PlayerPossession => playerPossession;
         public FleetKnowledgeSnapshot FleetKnowledge => fleetKnowledge;
         public ResourcePool ShuttleFuel => shuttleFuel;
+        public ResourcePool ShuttleHull => shuttleHull;
         public IReadOnlyList<ResourceDepositDeltaSnapshot> ResourceDepositDeltas => resourceDepositDeltas;
         public IReadOnlyList<MultiplayerPlayerSaveEntry> MultiplayerPlayers =>
             multiplayerPlayers;
@@ -117,6 +119,11 @@ namespace Farion.Gameplay.Persistence
         public void SetShuttleFuel(ResourcePool fuel)
         {
             shuttleFuel = fuel;
+        }
+
+        public void SetShuttleHull(ResourcePool hull)
+        {
+            shuttleHull = hull;
         }
 
         public void SetMultiplayerState(
@@ -170,6 +177,7 @@ namespace Farion.Gameplay.Persistence
                 fleetKnowledge,
                 source.ResourceDepositDeltas);
             migrated.SetShuttleFuel(source.ShuttleFuel);
+            migrated.SetShuttleHull(source.ShuttleHull);
             migrated.SetMultiplayerState(
                 source.MultiplayerPlayers,
                 source.MultiplayerShipCargo);

@@ -25,7 +25,7 @@ namespace Farion.Gameplay.Persistence
             new PlayerPossessionSaveParticipant(),
             new PlayerInventorySaveParticipant(),
             new ShuttleCargoSaveParticipant(),
-            new ShuttleFuelSaveParticipant(),
+            new ShuttleSystemsSaveParticipant(),
             new FleetStorageSaveParticipant(),
             new FleetKnowledgeSaveParticipant(),
             new ResourceDepositSaveParticipant()

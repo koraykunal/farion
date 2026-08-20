@@ -18,6 +18,7 @@ namespace Farion.UI.Gameplay
     {
         static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
         const float VelocityVectorProjectionDistance = 1000f;
+        const char NewLineChar = '\n';
 
         [Header("Design")]
         [SerializeField] UiTheme theme;
@@ -47,6 +48,7 @@ namespace Farion.UI.Gameplay
         readonly StringBuilder navigationBuilder = new(128);
         readonly StringBuilder markerBuilder = new(64);
         SpacecraftMotor motor;
+        SpacecraftHull hull;
         CelestialActorProbe celestialProbe;
         SpacecraftLandingComputer landingComputer;
         SpacecraftLandingGuidanceComputer guidanceComputer;
@@ -166,6 +168,7 @@ namespace Farion.UI.Gameplay
             }
 
             motor = nextMotor;
+            hull = motor != null ? motor.GetComponent<SpacecraftHull>() : null;
             celestialProbe = motor != null ? motor.GetComponent<CelestialActorProbe>() : null;
             landingComputer = motor != null ? motor.GetComponent<SpacecraftLandingComputer>() : null;
             guidanceComputer = motor != null ? motor.GetComponent<SpacecraftLandingGuidanceComputer>() : null;
@@ -229,6 +232,7 @@ namespace Farion.UI.Gameplay
             }
 
             AppendOrbit();
+            AppendHull();
             SetText(navigationText, navigationBuilder);
             RefreshNavigationMarkerText(targetDistance);
 
@@ -244,6 +248,32 @@ namespace Farion.UI.Gameplay
             {
                 advisoryText.text = advisory;
                 advisoryText.color = ResolveAdvisoryColor();
+            }
+        }
+
+        void AppendHull()
+        {
+            if (hull == null ||
+                hull.Capacity <= 0f ||
+                hull.Normalized >= 1f)
+            {
+                return;
+            }
+
+            if (navigationBuilder.Length > 0 &&
+                navigationBuilder[navigationBuilder.Length - 1] != NewLineChar)
+            {
+                navigationBuilder.AppendLine();
+            }
+
+            navigationBuilder
+                .Append("HULL        ")
+                .Append(Mathf.RoundToInt(hull.Normalized * 100f)
+                    .ToString(InvariantCulture))
+                .Append('%');
+            if (hull.IsBreached)
+            {
+                navigationBuilder.Append("  BREACHED");
             }
         }
 

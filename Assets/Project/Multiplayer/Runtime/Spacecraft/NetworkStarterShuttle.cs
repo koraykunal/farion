@@ -27,6 +27,8 @@ namespace Farion.Multiplayer.Spacecraft
         IInteractable,
         ICelestialSurfaceCollisionObserver
     {
+        const float UnwrittenHullIntegrity = -1f;
+
         const string ClaimPrompt = "Enter ship";
         const string PilotPrompt = "Pilot ship";
 
@@ -35,6 +37,7 @@ namespace Farion.Multiplayer.Spacecraft
         readonly SyncVar<ulong> claimedBySessionPlayerId = new();
         readonly SyncVar<bool> piloted = new();
         readonly SyncVar<bool> landingGearDeployed = new();
+        readonly SyncVar<float> hullIntegrity = new(UnwrittenHullIntegrity);
 
         [Min(0.1f)]
         [SerializeField] float maximumClaimDistance = 6f;
@@ -43,6 +46,7 @@ namespace Farion.Multiplayer.Spacecraft
         VehicleBoardingPoint boardingPoint;
         SpacecraftRig spacecraftRig;
         SpacecraftMotor motor;
+        SpacecraftHull hull;
         KeyboardSpacecraftInput input;
         KeyboardBoardingInput boardingInput;
         CelestialActorProbe celestialProbe;
@@ -94,6 +98,7 @@ namespace Farion.Multiplayer.Spacecraft
         public SpacecraftRig Rig => spacecraftRig;
         public ShuttleCargoInventory Cargo => cargo;
         public SpacecraftMotor Motor => motor;
+        public SpacecraftHull Hull => hull;
         public KeyboardSpacecraftInput Input => input;
         public string InteractionPrompt => CanLocalPilot()
             ? PilotPrompt
@@ -107,6 +112,7 @@ namespace Farion.Multiplayer.Spacecraft
             boardingPoint?.Bind((IInteractable)this);
             spacecraftRig = GetComponent<SpacecraftRig>();
             motor = GetComponent<SpacecraftMotor>();
+            hull = GetComponent<SpacecraftHull>();
             input = GetComponent<KeyboardSpacecraftInput>();
             boardingInput = GetComponent<KeyboardBoardingInput>();
             celestialProbe = GetComponent<CelestialActorProbe>();
@@ -127,6 +133,7 @@ namespace Farion.Multiplayer.Spacecraft
 
             piloted.OnChange += OnPilotedChanged;
             landingGearDeployed.OnChange += OnLandingGearDeployedChanged;
+            hullIntegrity.OnChange += OnHullIntegrityChanged;
         }
 
         void Update()
@@ -219,6 +226,11 @@ namespace Farion.Multiplayer.Spacecraft
             ApplyPersistentId();
         }
 
+        public override void OnStartServer()
+        {
+            PublishHullIntegrity();
+        }
+
         public override void OnStartClient()
         {
             ApplyPersistentId();
@@ -238,6 +250,13 @@ namespace Farion.Multiplayer.Spacecraft
             }
 
             landingGear?.SetCommandedDeployed(landingGearDeployed.Value);
+            if (!IsServerStarted &&
+                hull != null &&
+                hullIntegrity.Value >= 0f)
+            {
+                hull.SetIntegrityAmount(hullIntegrity.Value);
+            }
+
             ApplyPilotedState(IsPiloted);
         }
 
@@ -249,6 +268,7 @@ namespace Farion.Multiplayer.Spacecraft
             oceanInteractor?.SetExternalSimulation(true);
             surfaceContactProbe?.SetExternalSimulation(true);
             surfaceContactStabilizer?.SetExternalSimulation(true);
+            hull?.SetExternalSimulation(true);
             body.interpolation = RigidbodyInterpolation.None;
             SetTickCallbacks(TickCallback.Tick | TickCallback.PostTick);
             ApplyPilotedState(IsPiloted);
@@ -287,6 +307,7 @@ namespace Farion.Multiplayer.Spacecraft
             oceanInteractor?.SetExternalSimulation(false);
             surfaceContactProbe?.SetExternalSimulation(false);
             surfaceContactStabilizer?.SetExternalSimulation(false);
+            hull?.SetExternalSimulation(false);
             ApplyPilotedState(false);
         }
 
@@ -320,7 +341,45 @@ namespace Farion.Multiplayer.Spacecraft
         protected override void TimeManager_OnPostTick()
         {
             SyncPilotBodyToSeat();
+            StepHull();
             CreateReconcile();
+        }
+
+        void StepHull()
+        {
+            if (hull == null)
+            {
+                return;
+            }
+
+            if (!IsServerStarted)
+            {
+                surfaceContactProbe?.ConsumeImpactSpeed();
+                return;
+            }
+
+            hull.Step();
+            PublishHullIntegrity();
+        }
+
+        void PublishHullIntegrity()
+        {
+            if (hull == null || hullIntegrity.Value == hull.Integrity.Current)
+            {
+                return;
+            }
+
+            hullIntegrity.Value = hull.Integrity.Current;
+        }
+
+        void OnHullIntegrityChanged(float previous, float next, bool asServer)
+        {
+            if (asServer || hull == null || next < 0f)
+            {
+                return;
+            }
+
+            hull.SetIntegrityAmount(next);
         }
 
         [Replicate]

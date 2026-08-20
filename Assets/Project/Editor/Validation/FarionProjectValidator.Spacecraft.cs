@@ -57,6 +57,12 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, motor, "surfaceContactProbe", report);
             ValidateShuttleBinding(scenePath, motor, report);
 
+            if (motor.GetComponent<SpacecraftHull>() == null)
+            {
+                report.AddWarning(
+                    $"{scenePath}: {motor.name} has no {nameof(SpacecraftHull)}, so impacts never damage it.");
+            }
+
             SpacecraftFlightProfile profile = motor.FlightProfile;
             if (profile != null)
             {
@@ -95,6 +101,17 @@ namespace Farion.Editor.Validation
                 {
                     report.AddWarning(
                         $"{scenePath}: {motor.name} flight profile carries fuel but never burns it.");
+                }
+
+                if (profile.HullIntegrity <= 0f)
+                {
+                    report.AddWarning(
+                        $"{scenePath}: {motor.name} flight profile has no hull integrity, so impacts never damage it.");
+                }
+                else if (profile.ImpactDamagePerSpeedUnit <= 0f)
+                {
+                    report.AddWarning(
+                        $"{scenePath}: {motor.name} flight profile has a hull but takes no impact damage.");
                 }
             }
 

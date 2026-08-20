@@ -33,6 +33,11 @@ namespace Farion.Gameplay.Persistence
             Bindings?.AssignedShuttle != null
                 ? Bindings.AssignedShuttle.Motor
                 : null;
+        public SpacecraftHull ShuttleHull =>
+            Bindings?.AssignedShuttle != null &&
+            Bindings.AssignedShuttle.Motor != null
+                ? Bindings.AssignedShuttle.Motor.GetComponent<SpacecraftHull>()
+                : null;
         public ShuttleCargoInventory ShuttleCargo =>
             Bindings?.AssignedShuttle != null
                 ? Bindings.AssignedShuttle.Cargo

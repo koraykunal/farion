@@ -10,8 +10,8 @@ namespace Farion.Gameplay.Domain.Systems
 
         public ResourcePool(float capacity, float current)
         {
-            Capacity = Math.Max(0f, capacity);
-            Current = Math.Clamp(current, 0f, Capacity);
+            Capacity = Sanitize(capacity);
+            Current = Math.Min(Sanitize(current), Capacity);
         }
 
         public static ResourcePool Full(float capacity) =>
@@ -28,7 +28,7 @@ namespace Farion.Gameplay.Domain.Systems
 
         public float Drain(float amount)
         {
-            if (amount <= 0f)
+            if (!(amount > 0f))
             {
                 return 0f;
             }
@@ -40,7 +40,7 @@ namespace Farion.Gameplay.Domain.Systems
 
         public float Fill(float amount)
         {
-            if (amount <= 0f)
+            if (!(amount > 0f))
             {
                 return 0f;
             }
@@ -52,13 +52,16 @@ namespace Farion.Gameplay.Domain.Systems
 
         public void SetCapacity(float capacity)
         {
-            Capacity = Math.Max(0f, capacity);
-            Current = Math.Clamp(Current, 0f, Capacity);
+            Capacity = Sanitize(capacity);
+            Current = Math.Min(Sanitize(Current), Capacity);
         }
 
         public void Refill()
         {
             Current = Capacity;
         }
+
+        static float Sanitize(float value) =>
+            float.IsNaN(value) || value < 0f ? 0f : value;
     }
 }

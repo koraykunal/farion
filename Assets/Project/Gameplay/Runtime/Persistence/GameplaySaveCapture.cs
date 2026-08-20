@@ -21,6 +21,7 @@ namespace Farion.Gameplay.Persistence
         FleetKnowledgeSnapshot fleetKnowledge;
         WorldOriginSnapshot worldOrigin;
         ResourcePool shuttleFuel;
+        ResourcePool shuttleHull;
 
         public GameplaySaveCapture(string savedAtUtc)
         {
@@ -72,6 +73,11 @@ namespace Farion.Gameplay.Persistence
             shuttleFuel = fuel;
         }
 
+        public void SetShuttleHull(ResourcePool hull)
+        {
+            shuttleHull = hull;
+        }
+
         public GameplaySaveData CreateSnapshot()
         {
             GameplaySaveData snapshot = new(
@@ -86,6 +92,7 @@ namespace Farion.Gameplay.Persistence
                 fleetKnowledge,
                 resourceDepositDeltas);
             snapshot.SetShuttleFuel(shuttleFuel);
+            snapshot.SetShuttleHull(shuttleHull);
             return snapshot;
         }
     }

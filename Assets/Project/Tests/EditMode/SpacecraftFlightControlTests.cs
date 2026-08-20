@@ -371,6 +371,67 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void HullAbsorbsGentleImpactsAndStopsTheDriveOnceBreached()
+        {
+            GameObject shipObject = new("Hull Test Ship");
+            SpacecraftFlightProfile profile =
+                ScriptableObject.CreateInstance<SpacecraftFlightProfile>();
+            try
+            {
+                TestFieldAccess.SetField(profile, "hullIntegrity", 100f);
+                TestFieldAccess.SetField(profile, "impactToleranceSpeed", 4f);
+                TestFieldAccess.SetField(profile, "impactDamagePerSpeedUnit", 10f);
+
+                SpacecraftMotor motor = shipObject.AddComponent<SpacecraftMotor>();
+                TestFieldAccess.SetField(motor, "flightProfile", profile);
+                SpacecraftHull hull = shipObject.AddComponent<SpacecraftHull>();
+                hull.Restore();
+                motor.RefillFuel();
+
+                Assert.That(hull.ApplyImpact(3f), Is.EqualTo(0f));
+                Assert.That(hull.Normalized, Is.EqualTo(1f));
+
+                Assert.That(hull.ApplyImpact(8f), Is.EqualTo(40f).Within(0.0001f));
+                Assert.That(hull.Normalized, Is.EqualTo(0.6f).Within(0.0001f));
+                Assert.That(hull.IsBreached, Is.False);
+                Assert.That(motor.DriveDisabled, Is.False);
+
+                hull.ApplyImpact(100f);
+
+                Assert.That(hull.IsBreached, Is.True);
+                Assert.That(motor.DriveDisabled, Is.True);
+
+                FakeSpacecraftPhysicsBody wreck = new();
+                motor.Simulate(
+                    new SpacecraftInputState(
+                        new Vector3(0f, 0f, 1f),
+                        Vector2.zero,
+                        roll: 0f,
+                        boost: false,
+                        brake: false,
+                        toggleFlightAssist: false),
+                    0.02f,
+                    wreck);
+
+                Assert.That(wreck.AccumulatedForce, Is.EqualTo(Vector3.zero));
+                Assert.That(hull.Repair(1000f), Is.EqualTo(100f).Within(0.0001f));
+                Assert.That(motor.DriveDisabled, Is.False);
+
+                motor.SetModuleBonuses(new ShipModuleBonuses(0f, 0f, 0f, 1f));
+                hull.SyncCapacity();
+
+                Assert.That(hull.Integrity.Capacity, Is.EqualTo(200f).Within(0.0001f));
+                Assert.That(hull.Integrity.Current, Is.EqualTo(100f).Within(0.0001f));
+                Assert.That(hull.Normalized, Is.EqualTo(0.5f).Within(0.0001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(shipObject);
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
         public void ModuleBonusesRaiseTopSpeedAndFuelCapacityWithoutTouchingTheProfile()
         {
             SpacecraftFlightProfile profile =
@@ -380,11 +441,13 @@ namespace Farion.Tests.EditMode
                 TestFieldAccess.SetField(profile, "maxForwardSpeed", 100f);
                 TestFieldAccess.SetField(profile, "maxBoostForwardSpeed", 150f);
                 TestFieldAccess.SetField(profile, "fuelCapacity", 200f);
+                TestFieldAccess.SetField(profile, "hullIntegrity", 400f);
 
                 ShipModuleBonuses bonuses = new(
                     maxSpeedBonus: 0.5f,
                     boostSpeedBonus: 0.2f,
-                    fuelCapacityBonus: 0.25f);
+                    fuelCapacityBonus: 0.25f,
+                    hullCapacityBonus: 0.4f);
 
                 Assert.That(
                     profile.EvaluateMaxForwardSpeed(bonuses),
@@ -395,8 +458,12 @@ namespace Farion.Tests.EditMode
                 Assert.That(
                     profile.EvaluateFuelCapacity(bonuses),
                     Is.EqualTo(250f).Within(0.0001f));
+                Assert.That(
+                    profile.EvaluateHullIntegrity(bonuses),
+                    Is.EqualTo(560f).Within(0.0001f));
                 Assert.That(profile.MaxForwardSpeed, Is.EqualTo(100f));
                 Assert.That(profile.FuelCapacity, Is.EqualTo(200f));
+                Assert.That(profile.HullIntegrity, Is.EqualTo(400f));
             }
             finally
             {
@@ -417,7 +484,8 @@ namespace Farion.Tests.EditMode
                 ShipModuleBonuses bonuses = new(
                     maxSpeedBonus: 1f,
                     boostSpeedBonus: 0f,
-                    fuelCapacityBonus: 0f);
+                    fuelCapacityBonus: 0f,
+                    hullCapacityBonus: 0f);
 
                 Assert.That(
                     profile.EvaluateMaxBoostForwardSpeed(bonuses),

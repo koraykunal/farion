@@ -43,6 +43,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] int formationSlot = -1;
         [SerializeField] InventoryContainerSnapshot cargo;
         [SerializeField] ResourcePool fuel;
+        [SerializeField] ResourcePool hull;
 
         public MultiplayerShipSaveEntry()
         {
@@ -52,12 +53,14 @@ namespace Farion.Gameplay.Persistence
             string persistentPlayerId,
             int formationSlot,
             InventoryContainerSnapshot cargo,
-            ResourcePool fuel)
+            ResourcePool fuel,
+            ResourcePool hull)
         {
             this.persistentPlayerId = persistentPlayerId;
             this.formationSlot = formationSlot;
             this.cargo = cargo;
             this.fuel = fuel;
+            this.hull = hull;
         }
 
         public string PersistentPlayerId => persistentPlayerId;
@@ -65,6 +68,8 @@ namespace Farion.Gameplay.Persistence
         public InventoryContainerSnapshot Cargo => cargo;
         public ResourcePool Fuel => fuel;
         public bool HasFuel => fuel.Capacity > 0f;
+        public ResourcePool Hull => hull;
+        public bool HasHull => hull.Capacity > 0f;
         public bool HasOwner => !string.IsNullOrWhiteSpace(persistentPlayerId);
         public bool IsValid => HasOwner || formationSlot >= 0;
     }

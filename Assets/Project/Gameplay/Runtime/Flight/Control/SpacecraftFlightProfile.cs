@@ -79,6 +79,16 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float idleFuelPerSecond;
 
+        [Header("Hull")]
+        [Min(0f)]
+        [SerializeField] float hullIntegrity = 500f;
+        [Tooltip("Impact speed the hull absorbs without taking damage.")]
+        [Min(0f)]
+        [SerializeField] float impactToleranceSpeed = 4f;
+        [Tooltip("Hull damage per metre per second of impact speed above the tolerance.")]
+        [Min(0f)]
+        [SerializeField] float impactDamagePerSpeedUnit = 12f;
+
         [Header("Rigidbody")]
         [Min(1f)]
         [SerializeField] float rigidbodyMass = 12000f;
@@ -117,6 +127,9 @@ namespace Farion.Gameplay.Flight
         public float FuelCapacity => fuelCapacity;
         public float FuelPerAccelerationUnit => fuelPerAccelerationUnit;
         public float IdleFuelPerSecond => idleFuelPerSecond;
+        public float HullIntegrity => hullIntegrity;
+        public float ImpactToleranceSpeed => impactToleranceSpeed;
+        public float ImpactDamagePerSpeedUnit => impactDamagePerSpeedUnit;
         public float RigidbodyMass => rigidbodyMass;
         public bool OverrideCenterOfMass => overrideCenterOfMass;
         public Vector3 CenterOfMass => centerOfMass;
@@ -132,6 +145,12 @@ namespace Farion.Gameplay.Flight
 
         public float EvaluateFuelCapacity(in ShipModuleBonuses bonuses) =>
             fuelCapacity * bonuses.FuelCapacityMultiplier;
+
+        public float EvaluateHullIntegrity(in ShipModuleBonuses bonuses) =>
+            hullIntegrity * bonuses.HullCapacityMultiplier;
+
+        public float EvaluateImpactDamage(float impactSpeed) =>
+            Mathf.Max(0f, impactSpeed - impactToleranceSpeed) * impactDamagePerSpeedUnit;
 
         public Vector3 MaxAngularRate()
         {
@@ -219,6 +238,9 @@ namespace Farion.Gameplay.Flight
             fuelCapacity = Mathf.Max(0f, fuelCapacity);
             fuelPerAccelerationUnit = Mathf.Max(0f, fuelPerAccelerationUnit);
             idleFuelPerSecond = Mathf.Max(0f, idleFuelPerSecond);
+            hullIntegrity = Mathf.Max(0f, hullIntegrity);
+            impactToleranceSpeed = Mathf.Max(0f, impactToleranceSpeed);
+            impactDamagePerSpeedUnit = Mathf.Max(0f, impactDamagePerSpeedUnit);
             rigidbodyMass = Mathf.Max(1f, rigidbodyMass);
             angularDamping = Mathf.Max(0f, angularDamping);
         }

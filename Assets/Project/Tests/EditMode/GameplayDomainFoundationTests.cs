@@ -31,6 +31,26 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void ResourcePoolRejectsNotANumberAndNegativeAmounts()
+        {
+            ResourcePool pool = ResourcePool.Full(10f);
+
+            Assert.That(pool.Drain(float.NaN), Is.EqualTo(0f));
+            Assert.That(pool.Fill(float.NaN), Is.EqualTo(0f));
+            Assert.That(pool.Drain(-5f), Is.EqualTo(0f));
+            Assert.That(pool.Current, Is.EqualTo(10f));
+
+            ResourcePool corrupted = new(float.NaN, float.NaN);
+            Assert.That(corrupted.Capacity, Is.EqualTo(0f));
+            Assert.That(corrupted.Current, Is.EqualTo(0f));
+            Assert.That(corrupted.Normalized, Is.EqualTo(0f));
+
+            ResourcePool negative = new(-10f, -5f);
+            Assert.That(negative.Capacity, Is.EqualTo(0f));
+            Assert.That(negative.Current, Is.EqualTo(0f));
+        }
+
+        [Test]
         public void ResourcePoolNeverFillsAboveCapacity()
         {
             ResourcePool pool = ResourcePool.Drained(10f);
@@ -57,14 +77,15 @@ namespace Farion.Tests.EditMode
         [Test]
         public void ModuleBonusesAccumulateAdditivelyAndStayNonNegative()
         {
-            ShipModuleBonuses combined = new ShipModuleBonuses(0.2f, 0.1f, 0.5f)
-                .Combine(new ShipModuleBonuses(0.3f, 0.1f, 0.5f));
+            ShipModuleBonuses combined = new ShipModuleBonuses(0.2f, 0.1f, 0.5f, 0.4f)
+                .Combine(new ShipModuleBonuses(0.3f, 0.1f, 0.5f, 0.6f));
 
             Assert.That(combined.MaxSpeedMultiplier, Is.EqualTo(1.5f).Within(0.0001f));
             Assert.That(combined.BoostSpeedMultiplier, Is.EqualTo(1.2f).Within(0.0001f));
             Assert.That(combined.FuelCapacityMultiplier, Is.EqualTo(2f).Within(0.0001f));
+            Assert.That(combined.HullCapacityMultiplier, Is.EqualTo(2f).Within(0.0001f));
 
-            ShipModuleBonuses crippled = new(-5f, 0f, 0f);
+            ShipModuleBonuses crippled = new(-5f, 0f, 0f, 0f);
             Assert.That(crippled.MaxSpeedMultiplier, Is.EqualTo(0f));
             Assert.That(ShipModuleBonuses.None.MaxSpeedMultiplier, Is.EqualTo(1f));
         }
