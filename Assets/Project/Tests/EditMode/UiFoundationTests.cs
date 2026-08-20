@@ -384,7 +384,7 @@ namespace Farion.Tests.EditMode
                 Is.Not.Null);
             Assert.That(
                 prefab.transform.Find(
-                    "Graphics/FlightCluster/BoostArc"),
+                    "Graphics/FlightCluster/FuelArc"),
                 Is.Not.Null);
             Assert.That(
                 prefab.transform.Find(
@@ -398,7 +398,7 @@ namespace Farion.Tests.EditMode
             SerializedObject graphics = new(
                 prefab.GetComponentInChildren<UiSpacecraftFlightHudGraphics>(true));
             Assert.That(
-                graphics.FindProperty("boostArcFillImage").objectReferenceValue,
+                graphics.FindProperty("fuelArcFillImage").objectReferenceValue,
                 Is.Not.Null);
             Assert.That(
                 graphics.FindProperty("speedValueText").objectReferenceValue,

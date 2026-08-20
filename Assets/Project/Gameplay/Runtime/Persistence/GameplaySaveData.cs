@@ -2,6 +2,7 @@ using System;
 using Farion.Core.Identity;
 using System.Collections.Generic;
 using Farion.Core.Persistence;
+using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
@@ -29,9 +30,10 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] InventoryContainerSnapshot fleetStorage;
         [SerializeField] PlayerPossessionSnapshot playerPossession;
         [SerializeField] FleetKnowledgeSnapshot fleetKnowledge;
+        [SerializeField] ResourcePool shuttleFuel;
         [SerializeField] List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
         [SerializeField] List<MultiplayerPlayerSaveEntry> multiplayerPlayers = new();
-        [SerializeField] List<MultiplayerShipCargoSaveEntry> multiplayerShipCargo = new();
+        [SerializeField] List<MultiplayerShipSaveEntry> multiplayerShipCargo = new();
         [NonSerialized] int sourceSchemaVersion;
 
         public GameplaySaveData(
@@ -105,15 +107,21 @@ namespace Farion.Gameplay.Persistence
         public InventoryContainerSnapshot FleetStorage => fleetStorage;
         public PlayerPossessionSnapshot PlayerPossession => playerPossession;
         public FleetKnowledgeSnapshot FleetKnowledge => fleetKnowledge;
+        public ResourcePool ShuttleFuel => shuttleFuel;
         public IReadOnlyList<ResourceDepositDeltaSnapshot> ResourceDepositDeltas => resourceDepositDeltas;
         public IReadOnlyList<MultiplayerPlayerSaveEntry> MultiplayerPlayers =>
             multiplayerPlayers;
-        public IReadOnlyList<MultiplayerShipCargoSaveEntry> MultiplayerShipCargo =>
+        public IReadOnlyList<MultiplayerShipSaveEntry> MultiplayerShipCargo =>
             multiplayerShipCargo;
+
+        public void SetShuttleFuel(ResourcePool fuel)
+        {
+            shuttleFuel = fuel;
+        }
 
         public void SetMultiplayerState(
             IReadOnlyList<MultiplayerPlayerSaveEntry> players,
-            IReadOnlyList<MultiplayerShipCargoSaveEntry> shipCargo)
+            IReadOnlyList<MultiplayerShipSaveEntry> shipCargo)
         {
             multiplayerPlayers.Clear();
             multiplayerShipCargo.Clear();
@@ -149,7 +157,7 @@ namespace Farion.Gameplay.Persistence
             InventoryContainerSnapshot fleetStorage,
             FleetKnowledgeSnapshot fleetKnowledge)
         {
-            return new GameplaySaveData(
+            GameplaySaveData migrated = new(
                 source.SourceSchemaVersion,
                 source.SavedAtUtc,
                 source.CelestialSimulationTime,
@@ -161,6 +169,11 @@ namespace Farion.Gameplay.Persistence
                 source.PlayerPossession,
                 fleetKnowledge,
                 source.ResourceDepositDeltas);
+            migrated.SetShuttleFuel(source.ShuttleFuel);
+            migrated.SetMultiplayerState(
+                source.MultiplayerPlayers,
+                source.MultiplayerShipCargo);
+            return migrated;
         }
     }
 }

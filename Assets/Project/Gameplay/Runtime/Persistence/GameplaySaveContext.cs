@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Fleet;
+using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.ResourceNodes;
@@ -28,6 +29,10 @@ namespace Farion.Gameplay.Persistence
         public FleetStorageInventory FleetStorage => Bindings?.FleetStorage;
         public FleetKnowledgeRuntime FleetKnowledge => Bindings?.FleetKnowledge;
         public ShuttleRuntimeBinding Shuttle => Bindings?.AssignedShuttle;
+        public SpacecraftMotor ShuttleMotor =>
+            Bindings?.AssignedShuttle != null
+                ? Bindings.AssignedShuttle.Motor
+                : null;
         public ShuttleCargoInventory ShuttleCargo =>
             Bindings?.AssignedShuttle != null
                 ? Bindings.AssignedShuttle.Cargo

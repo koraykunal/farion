@@ -85,6 +85,17 @@ namespace Farion.Editor.Validation
                     report.AddWarning(
                         $"{scenePath}: {motor.name} manual flight has no configured speed envelope.");
                 }
+
+                if (profile.FuelCapacity <= 0f)
+                {
+                    report.AddWarning(
+                        $"{scenePath}: {motor.name} flight profile has no fuel capacity, so the drive never runs dry.");
+                }
+                else if (profile.FuelPerAccelerationUnit <= 0f)
+                {
+                    report.AddWarning(
+                        $"{scenePath}: {motor.name} flight profile carries fuel but never burns it.");
+                }
             }
 
             Rigidbody body = motor.GetComponent<Rigidbody>();

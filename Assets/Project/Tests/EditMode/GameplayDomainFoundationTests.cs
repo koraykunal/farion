@@ -5,6 +5,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Domain.Economy;
 using Farion.Gameplay.Domain.Identity;
+using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Session;
@@ -16,6 +17,58 @@ namespace Farion.Tests.EditMode
 {
     public sealed class GameplayDomainFoundationTests
     {
+        [Test]
+        public void ResourcePoolNeverDrainsBelowEmptyAndReportsWhatItSupplied()
+        {
+            ResourcePool pool = ResourcePool.Full(10f);
+
+            Assert.That(pool.Drain(4f), Is.EqualTo(4f));
+            Assert.That(pool.Current, Is.EqualTo(6f));
+            Assert.That(pool.Drain(100f), Is.EqualTo(6f));
+            Assert.That(pool.IsEmpty, Is.True);
+            Assert.That(pool.Drain(1f), Is.EqualTo(0f));
+            Assert.That(pool.Normalized, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void ResourcePoolNeverFillsAboveCapacity()
+        {
+            ResourcePool pool = ResourcePool.Drained(10f);
+
+            Assert.That(pool.Fill(4f), Is.EqualTo(4f));
+            Assert.That(pool.Fill(100f), Is.EqualTo(6f));
+            Assert.That(pool.IsFull, Is.True);
+            Assert.That(pool.Fill(1f), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void ShrinkingCapacityClampsTheStoredAmount()
+        {
+            ResourcePool pool = ResourcePool.Full(10f);
+            pool.SetCapacity(4f);
+
+            Assert.That(pool.Current, Is.EqualTo(4f));
+            Assert.That(pool.Normalized, Is.EqualTo(1f));
+
+            pool.SetCapacity(0f);
+            Assert.That(pool.Normalized, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void ModuleBonusesAccumulateAdditivelyAndStayNonNegative()
+        {
+            ShipModuleBonuses combined = new ShipModuleBonuses(0.2f, 0.1f, 0.5f)
+                .Combine(new ShipModuleBonuses(0.3f, 0.1f, 0.5f));
+
+            Assert.That(combined.MaxSpeedMultiplier, Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(combined.BoostSpeedMultiplier, Is.EqualTo(1.2f).Within(0.0001f));
+            Assert.That(combined.FuelCapacityMultiplier, Is.EqualTo(2f).Within(0.0001f));
+
+            ShipModuleBonuses crippled = new(-5f, 0f, 0f);
+            Assert.That(crippled.MaxSpeedMultiplier, Is.EqualTo(0f));
+            Assert.That(ShipModuleBonuses.None.MaxSpeedMultiplier, Is.EqualTo(1f));
+        }
+
         [Test]
         public void DefinitionIdsNormalizeOuterWhitespaceAndRejectEmbeddedWhitespace()
         {

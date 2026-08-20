@@ -636,7 +636,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058524
-    m_Key: hud.boost
+    m_Key: hud.fuel
     m_Metadata:
       m_Items: []
   - m_Id: 1264058525

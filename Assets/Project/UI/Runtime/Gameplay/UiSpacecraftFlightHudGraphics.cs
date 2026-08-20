@@ -3,6 +3,7 @@ using Farion.Gameplay.Flight;
 using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Farion.UI.Gameplay
@@ -10,6 +11,9 @@ namespace Farion.UI.Gameplay
     [DisallowMultipleComponent]
     public sealed class UiSpacecraftFlightHudGraphics : MonoBehaviour
     {
+        const float CautionFuelLevel = 0.3f;
+        const float CriticalFuelLevel = 0.1f;
+
         [Serializable]
         sealed class ThrottleGauge
         {
@@ -83,10 +87,13 @@ namespace Farion.UI.Gameplay
         [SerializeField] TMP_Text throttleValueText;
         [SerializeField] ThrottleGauge throttle = new();
 
-        [Header("Boost Arc")]
-        [SerializeField] TMP_Text boostValueText;
-        [SerializeField] Image boostArcFillImage;
-        [SerializeField] Image boostArcGlowImage;
+        [Header("Fuel Arc")]
+        [FormerlySerializedAs("boostValueText")]
+        [SerializeField] TMP_Text fuelValueText;
+        [FormerlySerializedAs("boostArcFillImage")]
+        [SerializeField] Image fuelArcFillImage;
+        [FormerlySerializedAs("boostArcGlowImage")]
+        [SerializeField] Image fuelArcGlowImage;
         [SerializeField] Image boostFrameImage;
         [SerializeField] Image boostIndicatorImage;
         [SerializeField] Image panelFrameImage;
@@ -114,8 +121,8 @@ namespace Farion.UI.Gameplay
         UiTheme theme;
 
         UiTheme Theme => theme = UiTheme.Resolve(theme);
-        float targetBoostCharge = 1f;
-        float displayedBoostCharge = 1f;
+        float targetFuel = 1f;
+        float displayedFuel = 1f;
         float targetBoostBlend;
         bool boostActive;
         Vector2 targetLanding;
@@ -136,16 +143,16 @@ namespace Farion.UI.Gameplay
             SetFont(speedValueText, Theme.InstrumentFont);
             SetFont(speedUnitText, Theme.InstrumentFont);
             SetFont(assistValueText, Theme.InstrumentFont);
-            SetFont(boostValueText, Theme.InstrumentFont);
+            SetFont(fuelValueText, Theme.InstrumentFont);
             SetTextColor(speedValueText, Theme.PrimaryText);
             SetTextColor(speedUnitText, Theme.SupportingText);
-            SetTextColor(boostValueText, Theme.PrimaryText);
+            SetTextColor(fuelValueText, Theme.PrimaryText);
 
             SetColor(panelFrameImage, Color.white, 0.9f);
             SetColor(boostFrameImage, Theme.Focus, 0.68f);
             SetColor(boostIndicatorImage, Theme.Focus, 0.42f);
-            SetColor(boostArcFillImage, Theme.Focus, 0.88f);
-            SetColor(boostArcGlowImage, Theme.Focus, 0.14f);
+            SetColor(fuelArcFillImage, Theme.Focus, 0.88f);
+            SetColor(fuelArcGlowImage, Theme.Focus, 0.14f);
             SetColor(assistFrameImage, Theme.Focus, 0.72f);
             SetColor(navigationArrowImage, Theme.Focus, 0.94f);
             SetColor(navigationArrowGlowImage, Theme.Focus, 0.32f);
@@ -162,7 +169,7 @@ namespace Farion.UI.Gameplay
             float forwardSpeedScale,
             float reverseSpeedScale)
         {
-            targetBoostCharge = telemetry.BoostCharge;
+            targetFuel = telemetry.FuelNormalized;
             targetBoostBlend = telemetry.BoostBlend;
             boostActive = telemetry.BoostActive;
 
@@ -188,11 +195,11 @@ namespace Farion.UI.Gameplay
                     telemetry.FlightAssistEnabled ? "ON" : "OFF");
             }
 
-            if (boostValueText != null)
+            if (fuelValueText != null)
             {
-                boostValueText.SetText(
+                fuelValueText.SetText(
                     "{0:0}%",
-                    telemetry.BoostCharge * 100f);
+                    telemetry.FuelNormalized * 100f);
             }
 
             ApplySignalColors();
@@ -280,9 +287,9 @@ namespace Farion.UI.Gameplay
         void Update()
         {
             float blend = 1f - Mathf.Exp(-14f * Time.unscaledDeltaTime);
-            displayedBoostCharge = Mathf.Lerp(
-                displayedBoostCharge,
-                targetBoostCharge,
+            displayedFuel = Mathf.Lerp(
+                displayedFuel,
+                targetFuel,
                 blend);
             throttle.Tick(blend);
 
@@ -294,18 +301,18 @@ namespace Farion.UI.Gameplay
                     blend);
             }
 
-            if (boostArcFillImage != null)
+            if (fuelArcFillImage != null)
             {
-                boostArcFillImage.fillAmount = displayedBoostCharge;
+                fuelArcFillImage.fillAmount = displayedFuel;
             }
 
-            if (boostArcGlowImage != null)
+            if (fuelArcGlowImage != null)
             {
-                boostArcGlowImage.fillAmount = displayedBoostCharge;
-                Color glow = boostArcGlowImage.color;
+                fuelArcGlowImage.fillAmount = displayedFuel;
+                Color glow = fuelArcGlowImage.color;
                 glow.a = 0.08f + targetBoostBlend * 0.16f +
                     (boostActive ? 0.08f : 0f);
-                boostArcGlowImage.color = glow;
+                fuelArcGlowImage.color = glow;
             }
 
 
@@ -320,20 +327,31 @@ namespace Farion.UI.Gameplay
 
         void ApplySignalColors()
         {
-
-            Color signal = Color.Lerp(
-                Theme.SupportingText,
-                Theme.Focus,
-                targetBoostBlend);
+            Color signal = ResolveFuelColor();
             signal.a = boostActive ? 1f : 0.88f;
-            SetTextColor(boostValueText, signal);
-            SetColor(boostArcFillImage, signal, signal.a);
+            SetTextColor(fuelValueText, signal);
+            SetColor(fuelArcFillImage, signal, signal.a);
 
             Color assist = assistValueText != null &&
                 assistValueText.text == "ON"
                     ? Theme.Nominal
                     : Theme.SupportingText;
             SetTextColor(assistValueText, assist);
+        }
+
+        Color ResolveFuelColor()
+        {
+            if (targetFuel <= CriticalFuelLevel)
+            {
+                return Theme.Critical;
+            }
+
+            if (targetFuel <= CautionFuelLevel)
+            {
+                return Theme.Caution;
+            }
+
+            return Color.Lerp(Theme.SupportingText, Theme.Focus, targetBoostBlend);
         }
 
         static void MoveTowards(

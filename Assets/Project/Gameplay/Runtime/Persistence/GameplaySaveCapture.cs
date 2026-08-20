@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Farion.Core.Identity;
+using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
@@ -19,6 +20,7 @@ namespace Farion.Gameplay.Persistence
         PlayerPossessionSnapshot playerPossession;
         FleetKnowledgeSnapshot fleetKnowledge;
         WorldOriginSnapshot worldOrigin;
+        ResourcePool shuttleFuel;
 
         public GameplaySaveCapture(string savedAtUtc)
         {
@@ -65,9 +67,14 @@ namespace Farion.Gameplay.Persistence
             worldOrigin = snapshot;
         }
 
+        public void SetShuttleFuel(ResourcePool fuel)
+        {
+            shuttleFuel = fuel;
+        }
+
         public GameplaySaveData CreateSnapshot()
         {
-            return new GameplaySaveData(
+            GameplaySaveData snapshot = new(
                 SavedAtUtc,
                 CelestialSimulationTime,
                 celestialBodies,
@@ -78,6 +85,8 @@ namespace Farion.Gameplay.Persistence
                 playerPossession,
                 fleetKnowledge,
                 resourceDepositDeltas);
+            snapshot.SetShuttleFuel(shuttleFuel);
+            return snapshot;
         }
     }
 }

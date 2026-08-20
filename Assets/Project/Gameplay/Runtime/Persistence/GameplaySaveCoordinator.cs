@@ -25,13 +25,14 @@ namespace Farion.Gameplay.Persistence
             new PlayerPossessionSaveParticipant(),
             new PlayerInventorySaveParticipant(),
             new ShuttleCargoSaveParticipant(),
+            new ShuttleFuelSaveParticipant(),
             new FleetStorageSaveParticipant(),
             new FleetKnowledgeSaveParticipant(),
             new ResourceDepositSaveParticipant()
         };
 
         readonly List<MultiplayerPlayerSaveEntry> capturedPlayers = new();
-        readonly List<MultiplayerShipCargoSaveEntry> capturedShipCargo = new();
+        readonly List<MultiplayerShipSaveEntry> capturedShipCargo = new();
         IMultiplayerSaveSource multiplayerSource;
         SaveGameOperationResult lastSaveResult;
         SaveGameOperationResult lastLoadResult;

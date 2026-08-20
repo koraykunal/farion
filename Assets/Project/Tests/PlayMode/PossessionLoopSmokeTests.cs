@@ -38,7 +38,7 @@ namespace Farion.Tests.PlayMode
             Assert.That(
                 motor.Rigidbody.mass,
                 Is.EqualTo(motor.FlightProfile.RigidbodyMass).Within(0.01f));
-            Assert.That(motor.Telemetry.BoostCharge, Is.InRange(0f, 1f));
+            Assert.That(motor.Telemetry.FuelNormalized, Is.InRange(0f, 1f));
 
             SpacecraftLandingGearAnimator landingGear =
                 motor.GetComponent<SpacecraftLandingGearAnimator>();

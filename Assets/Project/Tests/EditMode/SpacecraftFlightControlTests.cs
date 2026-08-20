@@ -1,10 +1,12 @@
 using Farion.Audio.Spacecraft;
 using Farion.Gameplay.Actors;
+using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Presentation.Flight;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
+using Farion.Tests.Support;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -348,29 +350,120 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void BoostRequiresReleaseAfterDepletionAndThenRecharges()
+        public void BoostOnlySpoolsUpWhileForwardThrustIsAvailable()
         {
             SpacecraftBoostController controller = new();
             controller.Step(
                 requested: true,
-                hasForwardThrottle: true,
+                thrustAvailable: false,
                 deltaTime: 1f,
-                spoolRate: 10f,
-                drainPerSecond: 1f,
-                rechargePerSecond: 1f,
-                rechargeDelay: 0f);
+                spoolRate: 10f);
 
-            Assert.That(controller.Charge, Is.EqualTo(0f));
-            Assert.That(controller.IsLocked, Is.True);
+            Assert.That(controller.IsActive, Is.False);
 
-            controller.Step(true, true, 1f, 10f, 1f, 1f, 0f);
-            Assert.That(controller.Charge, Is.EqualTo(1f));
-            Assert.That(controller.IsLocked, Is.True);
-
-            controller.Step(false, true, 0f, 10f, 1f, 1f, 0f);
-            controller.Step(true, true, 0.1f, 10f, 0f, 0f, 0f);
-            Assert.That(controller.IsLocked, Is.False);
+            controller.Step(true, true, 1f, 10f);
             Assert.That(controller.IsActive, Is.True);
+            Assert.That(controller.Authority, Is.EqualTo(1f).Within(0.0001f));
+
+            controller.Step(false, true, 1f, 10f);
+            Assert.That(controller.IsActive, Is.False);
+        }
+
+        [Test]
+        public void DepletedFuelStopsThrustButKeepsAttitudeControl()
+        {
+            GameObject shipObject = new("Fuel Test Ship");
+            try
+            {
+                SpacecraftMotor motor = shipObject.AddComponent<SpacecraftMotor>();
+                SpacecraftInputState input = new(
+                    new Vector3(0f, 0f, 1f),
+                    new Vector2(1f, 0f),
+                    roll: 0f,
+                    boost: false,
+                    brake: false,
+                    toggleFlightAssist: false);
+
+                FakeSpacecraftPhysicsBody fueled = new();
+                motor.RefillFuel();
+                motor.Simulate(input, 0.02f, fueled);
+
+                Assert.That(fueled.AccumulatedForce, Is.Not.EqualTo(Vector3.zero));
+                Assert.That(motor.FuelNormalized, Is.LessThan(1f));
+
+                SpacecraftMotorState drained = motor.CaptureState();
+                drained.Fuel = ResourcePool.Drained(drained.Fuel.Capacity);
+                motor.RestoreState(drained);
+
+                FakeSpacecraftPhysicsBody dry = new();
+                motor.Simulate(input, 0.02f, dry);
+
+                Assert.That(dry.AccumulatedForce, Is.EqualTo(Vector3.zero));
+                Assert.That(dry.AccumulatedTorque, Is.Not.EqualTo(Vector3.zero));
+            }
+            finally
+            {
+                Object.DestroyImmediate(shipObject);
+            }
+        }
+
+        [Test]
+        public void ModuleBonusesRaiseTopSpeedAndFuelCapacityWithoutTouchingTheProfile()
+        {
+            SpacecraftFlightProfile profile =
+                ScriptableObject.CreateInstance<SpacecraftFlightProfile>();
+            try
+            {
+                TestFieldAccess.SetField(profile, "maxForwardSpeed", 100f);
+                TestFieldAccess.SetField(profile, "maxBoostForwardSpeed", 150f);
+                TestFieldAccess.SetField(profile, "fuelCapacity", 200f);
+
+                ShipModuleBonuses bonuses = new(
+                    maxSpeedBonus: 0.5f,
+                    boostSpeedBonus: 0.2f,
+                    fuelCapacityBonus: 0.25f);
+
+                Assert.That(
+                    profile.EvaluateMaxForwardSpeed(bonuses),
+                    Is.EqualTo(150f).Within(0.0001f));
+                Assert.That(
+                    profile.EvaluateMaxBoostForwardSpeed(bonuses),
+                    Is.EqualTo(180f).Within(0.0001f));
+                Assert.That(
+                    profile.EvaluateFuelCapacity(bonuses),
+                    Is.EqualTo(250f).Within(0.0001f));
+                Assert.That(profile.MaxForwardSpeed, Is.EqualTo(100f));
+                Assert.That(profile.FuelCapacity, Is.EqualTo(200f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void BoostSpeedNeverFallsBelowUpgradedCruiseSpeed()
+        {
+            SpacecraftFlightProfile profile =
+                ScriptableObject.CreateInstance<SpacecraftFlightProfile>();
+            try
+            {
+                TestFieldAccess.SetField(profile, "maxForwardSpeed", 100f);
+                TestFieldAccess.SetField(profile, "maxBoostForwardSpeed", 110f);
+
+                ShipModuleBonuses bonuses = new(
+                    maxSpeedBonus: 1f,
+                    boostSpeedBonus: 0f,
+                    fuelCapacityBonus: 0f);
+
+                Assert.That(
+                    profile.EvaluateMaxBoostForwardSpeed(bonuses),
+                    Is.EqualTo(200f).Within(0.0001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+            }
         }
 
         [Test]
@@ -606,6 +699,47 @@ namespace Farion.Tests.EditMode
                 limitManualFlightEnvelope: true,
                 manualEnvelopeStart: 0.85f,
                 boostSurgeStrength: 0f);
+        }
+
+        sealed class FakeSpacecraftPhysicsBody : ISpacecraftPhysicsBody
+        {
+            public Vector3 AccumulatedForce { get; private set; }
+            public Vector3 AccumulatedTorque { get; private set; }
+            public Vector3 Position => Vector3.zero;
+            public Vector3 WorldCenterOfMass => Vector3.zero;
+            public Vector3 LinearVelocity => Vector3.zero;
+            public Vector3 AngularVelocity => Vector3.zero;
+
+            public void SetLinearVelocity(Vector3 velocity)
+            {
+            }
+
+            public void SetAngularVelocity(Vector3 velocity)
+            {
+            }
+
+            public void MovePosition(Vector3 position)
+            {
+            }
+
+            public void AddForce(Vector3 force, ForceMode mode)
+            {
+                AccumulatedForce += force;
+            }
+
+            public void AddForceAtPosition(Vector3 force, Vector3 worldPosition, ForceMode mode)
+            {
+                AccumulatedForce += force;
+            }
+
+            public void AddRelativeTorque(Vector3 torque, ForceMode mode)
+            {
+                AccumulatedTorque += torque;
+            }
+
+            public void Commit()
+            {
+            }
         }
     }
 }

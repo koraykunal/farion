@@ -1,4 +1,5 @@
 using System;
+using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Inventory;
 using UnityEngine;
 
@@ -36,29 +37,34 @@ namespace Farion.Gameplay.Persistence
     }
 
     [Serializable]
-    public sealed class MultiplayerShipCargoSaveEntry
+    public sealed class MultiplayerShipSaveEntry
     {
         [SerializeField] string persistentPlayerId;
         [SerializeField] int formationSlot = -1;
         [SerializeField] InventoryContainerSnapshot cargo;
+        [SerializeField] ResourcePool fuel;
 
-        public MultiplayerShipCargoSaveEntry()
+        public MultiplayerShipSaveEntry()
         {
         }
 
-        public MultiplayerShipCargoSaveEntry(
+        public MultiplayerShipSaveEntry(
             string persistentPlayerId,
             int formationSlot,
-            InventoryContainerSnapshot cargo)
+            InventoryContainerSnapshot cargo,
+            ResourcePool fuel)
         {
             this.persistentPlayerId = persistentPlayerId;
             this.formationSlot = formationSlot;
             this.cargo = cargo;
+            this.fuel = fuel;
         }
 
         public string PersistentPlayerId => persistentPlayerId;
         public int FormationSlot => formationSlot;
         public InventoryContainerSnapshot Cargo => cargo;
+        public ResourcePool Fuel => fuel;
+        public bool HasFuel => fuel.Capacity > 0f;
         public bool HasOwner => !string.IsNullOrWhiteSpace(persistentPlayerId);
         public bool IsValid => HasOwner || formationSlot >= 0;
     }

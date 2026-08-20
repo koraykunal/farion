@@ -1,4 +1,5 @@
 using Farion.Gameplay.Actors;
+using Farion.Gameplay.Domain.Systems;
 using Farion.Simulation.Physics;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -34,6 +35,7 @@ namespace Farion.Gameplay.Flight
         public Vector3 SmoothedTranslation;
         public Vector3 SmoothedRotationInput;
         public SpacecraftBoostState Boost;
+        public ResourcePool Fuel;
     }
 
     sealed class RigidbodySpacecraftPhysicsBody : ISpacecraftPhysicsBody
@@ -67,10 +69,9 @@ namespace Farion.Gameplay.Flight
         const float DefaultTranslationSpoolRate = 7f;
         const float DefaultRotationSpoolRate = 8f;
         const float DefaultBoostSpoolRate = 3.5f;
-        const float DefaultBoostDrainPerSecond = 0.28f;
-        const float DefaultBoostRechargePerSecond = 0.16f;
-        const float DefaultBoostRechargeDelay = 1.2f;
         const float DefaultInputDeadZone = 0.04f;
+        const float DefaultFuelCapacity = 1000f;
+        const float DefaultFuelPerAccelerationUnit = 0.05f;
 
         [Header("Input")]
         [SerializeField] KeyboardSpacecraftInput inputSource;
@@ -103,6 +104,8 @@ namespace Farion.Gameplay.Flight
         SpacecraftThrusterCommand currentThrusterCommand = SpacecraftThrusterCommand.None;
         SpacecraftMovementTelemetry telemetry = SpacecraftMovementTelemetry.Empty;
         readonly SpacecraftBoostController boostController = new();
+        ShipModuleBonuses moduleBonuses = ShipModuleBonuses.None;
+        ResourcePool fuel;
         Vector3 smoothedTranslation;
         Vector3 smoothedRotationInput;
         Vector3 lastGravityAcceleration;
@@ -132,8 +135,16 @@ namespace Farion.Gameplay.Flight
         public bool FlightAssistEnabled => flightAssistEnabled;
         public bool BoostActive => boostController.IsActive;
         public float BoostAuthority => boostController.Authority;
-        public float BoostCharge => boostController.Charge;
         public float CurrentBoostMultiplier => 1f + boostController.Authority;
+        public ShipModuleBonuses ModuleBonuses => moduleBonuses;
+        public ResourcePool Fuel => fuel;
+        public float FuelNormalized => fuel.Normalized;
+        public float MaxForwardSpeed => flightProfile != null
+            ? flightProfile.EvaluateMaxForwardSpeed(moduleBonuses)
+            : DefaultControlSettings.PositiveMaxSpeed.z;
+        public float MaxReverseSpeed => flightProfile != null
+            ? flightProfile.MaxReverseSpeed
+            : DefaultControlSettings.NegativeMaxSpeed.z;
         public Vector3 Velocity => Rigidbody.linearVelocity;
         public Vector3 RelativeVelocity => Rigidbody.linearVelocity - ResolveFlightReferenceVelocity();
         public float Speed => Velocity.magnitude;
@@ -148,6 +159,7 @@ namespace Farion.Gameplay.Flight
             offlinePhysicsBody = new RigidbodySpacecraftPhysicsBody(Rigidbody);
             ResolveReferences();
             boostController.Reset();
+            RefillFuel();
             RefreshTelemetry();
         }
 
@@ -202,7 +214,7 @@ namespace Farion.Gameplay.Flight
             ApplyGravity(physicsBody);
             UpdateSmoothedCommand(deltaTime);
             UpdateBoost(deltaTime);
-            ApplyFlightControl(physicsBody);
+            ApplyFlightControl(deltaTime, physicsBody);
             physicsBody.Commit();
             RefreshTelemetry(physicsBody);
         }
@@ -230,7 +242,8 @@ namespace Farion.Gameplay.Flight
             CurrentBrake = currentCommand.Brake,
             SmoothedTranslation = smoothedTranslation,
             SmoothedRotationInput = smoothedRotationInput,
-            Boost = boostController.CaptureState()
+            Boost = boostController.CaptureState(),
+            Fuel = fuel
         };
 
         public void RestoreState(SpacecraftMotorState state)
@@ -251,6 +264,23 @@ namespace Farion.Gameplay.Flight
             smoothedTranslation = state.SmoothedTranslation;
             smoothedRotationInput = state.SmoothedRotationInput;
             boostController.RestoreState(state.Boost);
+            fuel = state.Fuel;
+        }
+
+        public void SetModuleBonuses(in ShipModuleBonuses bonuses)
+        {
+            moduleBonuses = bonuses;
+            fuel.SetCapacity(FuelCapacity);
+        }
+
+        public void RefillFuel()
+        {
+            fuel = ResourcePool.Full(FuelCapacity);
+        }
+
+        public void RestoreFuel(ResourcePool saved)
+        {
+            fuel = new ResourcePool(FuelCapacity, saved.Current);
         }
 
         public void SetInputSource(KeyboardSpacecraftInput source)
@@ -387,15 +417,32 @@ namespace Farion.Gameplay.Flight
         {
             boostController.Step(
                 currentCommand.Boost,
-                currentCommand.Translation.z > InputDeadZone,
+                currentCommand.Translation.z > InputDeadZone && HasThrust,
                 deltaTime,
-                BoostSpoolRate,
-                BoostDrainPerSecond,
-                BoostRechargePerSecond,
-                BoostRechargeDelay);
+                BoostSpoolRate);
         }
 
-        void ApplyFlightControl(ISpacecraftPhysicsBody physicsBody)
+        float ConsumeFuel(float deltaTime, Vector3 localLinearAcceleration)
+        {
+            if (fuel.Capacity <= 0f)
+            {
+                return 1f;
+            }
+
+            fuel.Drain(IdleFuelPerSecond * deltaTime);
+
+            float demand = localLinearAcceleration.magnitude *
+                FuelPerAccelerationUnit *
+                deltaTime;
+            if (demand <= 0f)
+            {
+                return 1f;
+            }
+
+            return fuel.Drain(demand) / demand;
+        }
+
+        void ApplyFlightControl(float deltaTime, ISpacecraftPhysicsBody physicsBody)
         {
             Vector3 relativeVelocity = physicsBody.LinearVelocity -
                 ResolveFlightReferenceVelocity(physicsBody.WorldCenterOfMass);
@@ -414,11 +461,13 @@ namespace Farion.Gameplay.Flight
                 frame,
                 ControlSettings);
 
-            lastLocalLinearAcceleration = output.LocalLinearAcceleration;
-            lastThrustAcceleration = transform.TransformDirection(output.LocalLinearAcceleration);
-            lastFlightAssistAcceleration = transform.TransformDirection(output.LocalAssistAcceleration);
+            float thrustScale = ConsumeFuel(deltaTime, output.LocalLinearAcceleration);
+            lastLocalLinearAcceleration = output.LocalLinearAcceleration * thrustScale;
+            lastThrustAcceleration = transform.TransformDirection(lastLocalLinearAcceleration);
+            lastFlightAssistAcceleration =
+                transform.TransformDirection(output.LocalAssistAcceleration * thrustScale);
             lastGravityCompensationAcceleration =
-                transform.TransformDirection(output.LocalGravityCompensation);
+                transform.TransformDirection(output.LocalGravityCompensation * thrustScale);
 
             if (lastThrustAcceleration.sqrMagnitude > 0.000001f)
             {
@@ -504,7 +553,7 @@ namespace Farion.Gameplay.Flight
                 boostController.IsActive,
                 boostController.Authority,
                 boostController.Surge,
-                boostController.Charge);
+                fuel.Normalized);
         }
 
         Vector3 ResolveFlightReferenceVelocity() =>
@@ -532,8 +581,10 @@ namespace Farion.Gameplay.Flight
         }
 
         SpacecraftFlightControlSettings ControlSettings => flightProfile != null
-            ? flightProfile.BuildControlSettings()
+            ? flightProfile.BuildControlSettings(moduleBonuses)
             : DefaultControlSettings;
+
+        bool HasThrust => fuel.Capacity <= 0f || !fuel.IsEmpty;
 
         float TranslationSpoolRate =>
             flightProfile != null ? flightProfile.TranslationSpoolRate : DefaultTranslationSpoolRate;
@@ -541,14 +592,16 @@ namespace Farion.Gameplay.Flight
             flightProfile != null ? flightProfile.RotationSpoolRate : DefaultRotationSpoolRate;
         float BoostSpoolRate =>
             flightProfile != null ? flightProfile.BoostSpoolRate : DefaultBoostSpoolRate;
-        float BoostDrainPerSecond =>
-            flightProfile != null ? flightProfile.BoostDrainPerSecond : DefaultBoostDrainPerSecond;
-        float BoostRechargePerSecond =>
-            flightProfile != null ? flightProfile.BoostRechargePerSecond : DefaultBoostRechargePerSecond;
-        float BoostRechargeDelay =>
-            flightProfile != null ? flightProfile.BoostRechargeDelay : DefaultBoostRechargeDelay;
         float InputDeadZone =>
             flightProfile != null ? flightProfile.InputDeadZone : DefaultInputDeadZone;
+        float FuelCapacity => flightProfile != null
+            ? flightProfile.EvaluateFuelCapacity(moduleBonuses)
+            : DefaultFuelCapacity * moduleBonuses.FuelCapacityMultiplier;
+        float FuelPerAccelerationUnit => flightProfile != null
+            ? flightProfile.FuelPerAccelerationUnit
+            : DefaultFuelPerAccelerationUnit;
+        float IdleFuelPerSecond =>
+            flightProfile != null ? flightProfile.IdleFuelPerSecond : 0f;
 
         static SpacecraftFlightControlSettings DefaultControlSettings => new(
             new Vector3(45f, 40f, 180f),

@@ -7,11 +7,11 @@ namespace Farion.Gameplay.Persistence
     {
         void Capture(
             List<MultiplayerPlayerSaveEntry> players,
-            List<MultiplayerShipCargoSaveEntry> shipCargo);
+            List<MultiplayerShipSaveEntry> shipCargo);
 
         void Apply(
             IReadOnlyList<MultiplayerPlayerSaveEntry> players,
-            IReadOnlyList<MultiplayerShipCargoSaveEntry> shipCargo,
+            IReadOnlyList<MultiplayerShipSaveEntry> shipCargo,
             GameplayDefinitionRegistry definitions);
     }
 }

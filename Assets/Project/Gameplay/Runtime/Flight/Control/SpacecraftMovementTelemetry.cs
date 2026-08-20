@@ -16,7 +16,7 @@ namespace Farion.Gameplay.Flight
             bool boostActive,
             float boostBlend,
             float boostSurge,
-            float boostCharge)
+            float fuelNormalized)
         {
             AssistMode = assistMode;
             Command = command;
@@ -29,7 +29,7 @@ namespace Farion.Gameplay.Flight
             BoostActive = boostActive;
             BoostBlend = Mathf.Clamp01(boostBlend);
             BoostSurge = Mathf.Clamp01(boostSurge);
-            BoostCharge = Mathf.Clamp01(boostCharge);
+            FuelNormalized = Mathf.Clamp01(fuelNormalized);
         }
 
         public SpacecraftFlightAssistMode AssistMode { get; }
@@ -43,7 +43,7 @@ namespace Farion.Gameplay.Flight
         public bool BoostActive { get; }
         public float BoostBlend { get; }
         public float BoostSurge { get; }
-        public float BoostCharge { get; }
+        public float FuelNormalized { get; }
 
         public float RelativeSpeed => WorldRelativeVelocity.magnitude;
         public bool FlightAssistEnabled => AssistMode == SpacecraftFlightAssistMode.Assisted;
@@ -60,6 +60,6 @@ namespace Farion.Gameplay.Flight
             boostActive: false,
             boostBlend: 0f,
             boostSurge: 0f,
-            boostCharge: 1f);
+            fuelNormalized: 1f);
     }
 }

@@ -1,3 +1,4 @@
+using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Persistence;
@@ -115,12 +116,15 @@ namespace Farion.Tests.EditMode
         [Test]
         public void ShipCargoEntryKeepsItsOwnerAcrossFormationSlots()
         {
-            MultiplayerShipCargoSaveEntry owned = new(
+            MultiplayerShipSaveEntry owned = new(
                 "player-a",
                 2,
-                CreateSnapshot());
+                CreateSnapshot(),
+                ResourcePool.Full(500f));
 
             Assert.That(owned.HasOwner, Is.True);
+            Assert.That(owned.HasFuel, Is.True);
+            Assert.That(owned.Fuel.Current, Is.EqualTo(500f));
             Assert.That(owned.PersistentPlayerId, Is.EqualTo("player-a"));
             Assert.That(owned.IsValid, Is.True);
         }
@@ -128,22 +132,25 @@ namespace Farion.Tests.EditMode
         [Test]
         public void LegacyShipCargoEntryWithoutOwnerStaysValidThroughItsSlot()
         {
-            MultiplayerShipCargoSaveEntry legacy = new(
+            MultiplayerShipSaveEntry legacy = new(
                 string.Empty,
                 1,
-                CreateSnapshot());
+                CreateSnapshot(),
+                default);
 
             Assert.That(legacy.HasOwner, Is.False);
+            Assert.That(legacy.HasFuel, Is.False);
             Assert.That(legacy.IsValid, Is.True);
         }
 
         [Test]
         public void ShipCargoEntryWithoutOwnerOrSlotIsRejected()
         {
-            MultiplayerShipCargoSaveEntry orphan = new(
+            MultiplayerShipSaveEntry orphan = new(
                 string.Empty,
                 -1,
-                CreateSnapshot());
+                CreateSnapshot(),
+                default);
 
             Assert.That(orphan.IsValid, Is.False);
         }

@@ -176,12 +176,11 @@ namespace Farion.UI.Gameplay
         void RefreshText()
         {
             SpacecraftMovementTelemetry telemetry = motor.Telemetry;
-            SpacecraftFlightProfile profile = motor.FlightProfile;
             graphics?.RefreshTelemetry(
                 telemetry,
                 motor.CurrentLocalTranslationInput.z,
-                profile != null ? profile.MaxForwardSpeed : 180f,
-                profile != null ? profile.MaxReverseSpeed : 70f);
+                motor.MaxForwardSpeed,
+                motor.MaxReverseSpeed);
 
             if (phaseText != null)
             {

@@ -75,14 +75,14 @@ namespace Farion.Multiplayer.Session
 
         public void Capture(
             List<MultiplayerPlayerSaveEntry> players,
-            List<MultiplayerShipCargoSaveEntry> shipCargo)
+            List<MultiplayerShipSaveEntry> shipCargo)
         {
             playerSpawner?.CaptureState(players, shipCargo);
         }
 
         public void Apply(
             IReadOnlyList<MultiplayerPlayerSaveEntry> players,
-            IReadOnlyList<MultiplayerShipCargoSaveEntry> shipCargo,
+            IReadOnlyList<MultiplayerShipSaveEntry> shipCargo,
             GameplayDefinitionRegistry definitions)
         {
             if (playerSpawner == null)

@@ -1,3 +1,4 @@
+using Farion.Gameplay.Domain.Systems;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -68,13 +69,15 @@ namespace Farion.Gameplay.Flight
         [Range(0f, 0.5f)]
         [SerializeField] float inputDeadZone = 0.04f;
 
-        [Header("Boost Energy")]
+        [Header("Fuel")]
         [Min(0f)]
-        [SerializeField] float boostDrainPerSecond = 0.28f;
+        [SerializeField] float fuelCapacity = 1000f;
+        [Tooltip("Fuel burned per unit of commanded linear acceleration per second. Boost burns faster because it commands more acceleration.")]
         [Min(0f)]
-        [SerializeField] float boostRechargePerSecond = 0.16f;
+        [SerializeField] float fuelPerAccelerationUnit = 0.05f;
+        [Tooltip("Fuel burned per second while the drive is powered but not thrusting.")]
         [Min(0f)]
-        [SerializeField] float boostRechargeDelay = 1.2f;
+        [SerializeField] float idleFuelPerSecond;
 
         [Header("Rigidbody")]
         [Min(1f)]
@@ -111,37 +114,24 @@ namespace Farion.Gameplay.Flight
         public bool CompensateGravityInAssistedMode => compensateGravityInAssistedMode;
         public bool LimitManualFlightEnvelope => limitManualFlightEnvelope;
         public float ManualEnvelopeStart => manualEnvelopeStart;
-        public float BoostDrainPerSecond => boostDrainPerSecond;
-        public float BoostRechargePerSecond => boostRechargePerSecond;
-        public float BoostRechargeDelay => boostRechargeDelay;
+        public float FuelCapacity => fuelCapacity;
+        public float FuelPerAccelerationUnit => fuelPerAccelerationUnit;
+        public float IdleFuelPerSecond => idleFuelPerSecond;
         public float RigidbodyMass => rigidbodyMass;
         public bool OverrideCenterOfMass => overrideCenterOfMass;
         public Vector3 CenterOfMass => centerOfMass;
         public float AngularDamping => angularDamping;
 
-        public Vector3 AssistedMaxSpeed(bool boostActive)
-        {
-            return new Vector3(
-                maxStrafeSpeed,
-                maxVerticalSpeed,
-                boostActive ? maxBoostForwardSpeed : maxForwardSpeed);
-        }
+        public float EvaluateMaxForwardSpeed(in ShipModuleBonuses bonuses) =>
+            maxForwardSpeed * bonuses.MaxSpeedMultiplier;
 
-        public Vector3 MaxPositiveAcceleration(bool boostActive)
-        {
-            return new Vector3(
-                strafeAcceleration,
-                verticalAcceleration,
-                boostActive ? boostForwardAcceleration : forwardAcceleration);
-        }
+        public float EvaluateMaxBoostForwardSpeed(in ShipModuleBonuses bonuses) =>
+            Mathf.Max(
+                EvaluateMaxForwardSpeed(bonuses),
+                maxBoostForwardSpeed * bonuses.BoostSpeedMultiplier);
 
-        public Vector3 MaxNegativeAcceleration()
-        {
-            return new Vector3(
-                strafeAcceleration,
-                verticalAcceleration,
-                reverseAcceleration);
-        }
+        public float EvaluateFuelCapacity(in ShipModuleBonuses bonuses) =>
+            fuelCapacity * bonuses.FuelCapacityMultiplier;
 
         public Vector3 MaxAngularRate()
         {
@@ -150,16 +140,23 @@ namespace Farion.Gameplay.Flight
 
         public Vector3 MaxAngularAcceleration()
         {
-            return new Vector3(PitchAccelerationRad, YawAccelerationRad, RollAccelerationRad);
+            return new Vector3(
+                PitchAccelerationRad,
+                YawAccelerationRad,
+                RollAccelerationRad);
         }
 
-        internal SpacecraftFlightControlSettings BuildControlSettings()
+        internal SpacecraftFlightControlSettings BuildControlSettings(
+            in ShipModuleBonuses bonuses)
         {
-            Vector3 positiveMaxSpeed = new(maxStrafeSpeed, maxVerticalSpeed, maxForwardSpeed);
+            Vector3 positiveMaxSpeed = new(
+                maxStrafeSpeed,
+                maxVerticalSpeed,
+                EvaluateMaxForwardSpeed(bonuses));
             Vector3 boostedPositiveMaxSpeed = new(
                 maxStrafeSpeed,
                 maxVerticalSpeed,
-                maxBoostForwardSpeed);
+                EvaluateMaxBoostForwardSpeed(bonuses));
             Vector3 negativeMaxSpeed = new(maxStrafeSpeed, maxVerticalSpeed, maxReverseSpeed);
             Vector3 positiveAcceleration = new(
                 strafeAcceleration,
@@ -219,9 +216,9 @@ namespace Farion.Gameplay.Flight
             boostSurgeStrength = Mathf.Max(0f, boostSurgeStrength);
             inputDeadZone = Mathf.Clamp(inputDeadZone, 0f, 0.5f);
             manualEnvelopeStart = Mathf.Clamp(manualEnvelopeStart, 0.1f, 0.99f);
-            boostDrainPerSecond = Mathf.Max(0f, boostDrainPerSecond);
-            boostRechargePerSecond = Mathf.Max(0f, boostRechargePerSecond);
-            boostRechargeDelay = Mathf.Max(0f, boostRechargeDelay);
+            fuelCapacity = Mathf.Max(0f, fuelCapacity);
+            fuelPerAccelerationUnit = Mathf.Max(0f, fuelPerAccelerationUnit);
+            idleFuelPerSecond = Mathf.Max(0f, idleFuelPerSecond);
             rigidbodyMass = Mathf.Max(1f, rigidbodyMass);
             angularDamping = Mathf.Max(0f, angularDamping);
         }

@@ -36,7 +36,7 @@ namespace Farion.Multiplayer.Spawning
         readonly Dictionary<SceneHandle, MultiplayerSceneContext> contexts = new();
         readonly Dictionary<SceneHandle, Dictionary<int, NetworkObject>> starterShuttles = new();
         readonly Dictionary<string, MultiplayerPlayerSaveEntry> restoredPlayers = new();
-        readonly List<MultiplayerShipCargoSaveEntry> restoredShipCargo = new();
+        readonly List<MultiplayerShipSaveEntry> restoredShipCargo = new();
         ulong nextSessionPlayerId;
         MultiplayerWorldOriginAuthority originAuthority;
         GameplayDefinitionRegistry definitions;
@@ -245,7 +245,7 @@ namespace Farion.Multiplayer.Spawning
 
         public void CaptureState(
             List<MultiplayerPlayerSaveEntry> players,
-            List<MultiplayerShipCargoSaveEntry> shipCargo)
+            List<MultiplayerShipSaveEntry> shipCargo)
         {
             if (players == null || shipCargo == null)
             {
@@ -282,7 +282,7 @@ namespace Farion.Multiplayer.Spawning
                     NetworkStarterShuttle ship = pair.Value != null
                         ? pair.Value.GetComponent<NetworkStarterShuttle>()
                         : null;
-                    if (ship == null || ship.Cargo == null)
+                    if (ship == null || ship.Cargo == null || ship.Motor == null)
                     {
                         continue;
                     }
@@ -294,16 +294,17 @@ namespace Farion.Multiplayer.Spawning
                     }
 
                     capturedSlots.Add(pair.Key);
-                    shipCargo.Add(new MultiplayerShipCargoSaveEntry(
+                    shipCargo.Add(new MultiplayerShipSaveEntry(
                         owner,
                         pair.Key,
-                        ship.Cargo.CaptureContainerSnapshot()));
+                        ship.Cargo.CaptureContainerSnapshot(),
+                        ship.Motor.Fuel));
                 }
             }
 
             for (int i = 0; i < restoredShipCargo.Count; i++)
             {
-                MultiplayerShipCargoSaveEntry pending = restoredShipCargo[i];
+                MultiplayerShipSaveEntry pending = restoredShipCargo[i];
                 bool alreadyCaptured = pending.HasOwner
                     ? capturedOwners.Contains(pending.PersistentPlayerId)
                     : capturedSlots.Contains(pending.FormationSlot);
@@ -315,7 +316,7 @@ namespace Farion.Multiplayer.Spawning
         }
 
         public void LoadRestoredShipCargo(
-            IReadOnlyList<MultiplayerShipCargoSaveEntry> shipCargo)
+            IReadOnlyList<MultiplayerShipSaveEntry> shipCargo)
         {
             restoredShipCargo.Clear();
             if (shipCargo == null)
@@ -334,7 +335,7 @@ namespace Farion.Multiplayer.Spawning
             ApplyRestoredShipCargo(restoredShipCargo);
         }
 
-        void ApplyRestoredShipCargo(List<MultiplayerShipCargoSaveEntry> shipCargo)
+        void ApplyRestoredShipCargo(List<MultiplayerShipSaveEntry> shipCargo)
         {
             if (shipCargo.Count == 0 ||
                 !TryResolveDefinitions(out GameplayDefinitionRegistry registry))
@@ -344,7 +345,7 @@ namespace Farion.Multiplayer.Spawning
 
             for (int i = shipCargo.Count - 1; i >= 0; i--)
             {
-                MultiplayerShipCargoSaveEntry entry = shipCargo[i];
+                MultiplayerShipSaveEntry entry = shipCargo[i];
                 if (!TryResolveCargoSlot(entry, out int slot) ||
                     !TryGetStarterShuttleInSlot(slot, out NetworkStarterShuttle starterShuttle))
                 {
@@ -352,12 +353,17 @@ namespace Farion.Multiplayer.Spawning
                 }
 
                 starterShuttle.Cargo.ApplyContainerSnapshot(entry.Cargo, registry);
+                if (entry.HasFuel && starterShuttle.Motor != null)
+                {
+                    starterShuttle.Motor.RestoreFuel(entry.Fuel);
+                }
+
                 shipCargo.RemoveAt(i);
             }
         }
 
         bool TryResolveCargoSlot(
-            MultiplayerShipCargoSaveEntry entry,
+            MultiplayerShipSaveEntry entry,
             out int slot)
         {
             if (entry.HasOwner)
@@ -441,17 +447,20 @@ namespace Farion.Multiplayer.Spawning
             return false;
         }
 
-        void PreserveStarterShuttleCargo(NetworkStarterShuttle starterShuttle, int slot)
+        void PreserveStarterShuttleState(NetworkStarterShuttle starterShuttle, int slot)
         {
-            if (starterShuttle == null || starterShuttle.Cargo == null)
+            if (starterShuttle == null ||
+                starterShuttle.Cargo == null ||
+                starterShuttle.Motor == null)
             {
                 return;
             }
 
-            MultiplayerShipCargoSaveEntry entry = new(
+            MultiplayerShipSaveEntry entry = new(
                 ResolveSlotOwner(slot),
                 slot,
-                starterShuttle.Cargo.CaptureContainerSnapshot());
+                starterShuttle.Cargo.CaptureContainerSnapshot(),
+                starterShuttle.Motor.Fuel);
             if (!entry.IsValid)
             {
                 return;
@@ -459,7 +468,7 @@ namespace Farion.Multiplayer.Spawning
 
             for (int i = restoredShipCargo.Count - 1; i >= 0; i--)
             {
-                MultiplayerShipCargoSaveEntry existing = restoredShipCargo[i];
+                MultiplayerShipSaveEntry existing = restoredShipCargo[i];
                 bool duplicate = entry.HasOwner && existing.HasOwner
                     ? existing.PersistentPlayerId == entry.PersistentPlayerId
                     : existing.FormationSlot == slot;
@@ -1017,7 +1026,7 @@ namespace Farion.Multiplayer.Spawning
 
             NetworkStarterShuttle starterShuttle =
                 ship.GetComponent<NetworkStarterShuttle>();
-            PreserveStarterShuttleCargo(starterShuttle, slot);
+            PreserveStarterShuttleState(starterShuttle, slot);
             if (starterShuttle != null && starterShuttle.IsClaimed)
             {
                 ulong claimedSessionPlayerId =
