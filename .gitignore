@@ -16,6 +16,7 @@
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
+/[Ll]inux_build/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
@@ -137,3 +138,5 @@ InitTestScene*.unity*
 # Third-party Asset Store packages, reinstalled from the store rather than tracked
 /Assets/Toby Fredson/
 /Assets/Toby Fredson.meta
+/Assets/Realistic Cliffs and Rocks/
+/Assets/Realistic Cliffs and Rocks.meta
