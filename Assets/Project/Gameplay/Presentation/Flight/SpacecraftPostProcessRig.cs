@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Gameplay.Flight;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -94,10 +95,11 @@ namespace Farion.Gameplay.Presentation.Flight
                     atmosphereInteractor.CurrentInteraction.AerodynamicStress * reentryResponse);
             }
 
-            responseBlend = Mathf.Lerp(
+            responseBlend = FarionMath.Smooth(
                 responseBlend,
                 target,
-                1f - Mathf.Exp(-Mathf.Max(0f, responseSharpness) * Time.deltaTime));
+                responseSharpness,
+                Time.deltaTime);
 
             vignette.intensity.value = Mathf.Lerp(restVignette, maximumVignette, responseBlend);
             chromaticAberration.intensity.value = maximumChromaticAberration * responseBlend;

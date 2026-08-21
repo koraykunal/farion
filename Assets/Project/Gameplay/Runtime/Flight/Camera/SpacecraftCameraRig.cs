@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Core.Physics;
 using Farion.Gameplay.Input;
 using UnityEngine;
@@ -212,8 +213,8 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            float positionT = ResponsivenessToLerp(positionResponsiveness);
-            float rotationT = ResponsivenessToLerp(rotationResponsiveness);
+            float positionT = FarionMath.SmoothFactor(positionResponsiveness, UnityEngine.Time.deltaTime);
+            float rotationT = FarionMath.SmoothFactor(rotationResponsiveness, UnityEngine.Time.deltaTime);
 
             Vector3 currentOffset = transform.position - targetPosition;
             Vector3 desiredOffset = desiredPosition - targetPosition;
@@ -444,7 +445,7 @@ namespace Farion.Gameplay.Flight
             smoothedFlightOffset = Vector3.Lerp(
                 smoothedFlightOffset,
                 targetOffset,
-                ResponsivenessToLerp(flightOffsetResponsiveness));
+                FarionMath.SmoothFactor(flightOffsetResponsiveness, UnityEngine.Time.deltaTime));
 
             if (smoothedFlightOffset.sqrMagnitude < 0.000001f)
             {
@@ -492,7 +493,7 @@ namespace Farion.Gameplay.Flight
             payloadCamera.fieldOfView = Mathf.Lerp(
                 payloadCamera.fieldOfView,
                 targetFov,
-                ResponsivenessToLerp(fovResponsiveness));
+                FarionMath.SmoothFactor(fovResponsiveness, UnityEngine.Time.deltaTime));
         }
 
         void CacheBaseFov()
@@ -517,11 +518,5 @@ namespace Farion.Gameplay.Flight
             cameraTransform.localRotation = Quaternion.identity;
         }
 
-        static float ResponsivenessToLerp(float responsiveness)
-        {
-            return responsiveness <= 0f
-                ? 1f
-                : 1f - Mathf.Exp(-responsiveness * UnityEngine.Time.deltaTime);
-        }
     }
 }

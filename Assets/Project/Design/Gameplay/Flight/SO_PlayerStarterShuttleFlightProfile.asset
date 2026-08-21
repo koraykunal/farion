@@ -24,11 +24,14 @@ MonoBehaviour:
   verticalAcceleration: 16
   brakeGain: 3.2
   pitchRateDeg: 65
-  yawRateDeg: 42
-  rollRateDeg: 95
+  yawRateDeg: 22
+  rollRateDeg: 110
   pitchAccelerationDeg: 180
-  yawAccelerationDeg: 140
-  rollAccelerationDeg: 240
+  yawAccelerationDeg: 75
+  rollAccelerationDeg: 280
+  optimalSpeedBandStart: 0.4
+  optimalSpeedBandEnd: 0.75
+  offBandAngularScale: 0.55
   velocityGain: {x: 2.8, y: 2.8, z: 2.2}
   angularVelocityGain: {x: 7, y: 7, z: 9}
   compensateGravityInAssistedMode: 1

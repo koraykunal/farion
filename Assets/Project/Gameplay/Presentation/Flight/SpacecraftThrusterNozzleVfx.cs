@@ -325,7 +325,7 @@ namespace Farion.Gameplay.Presentation.Flight
             }
 
             Vector3 targetSteering = CalculateTargetSteering(frame) * Mathf.SmoothStep(0f, 1f, currentNozzleLoad);
-            float responseT = steeringResponse <= 0f ? 1f : 1f - Mathf.Exp(-steeringResponse * deltaTime);
+            float responseT = FarionMath.SmoothFactor(steeringResponse, deltaTime);
             currentSteeringEuler = Vector3.Lerp(currentSteeringEuler, targetSteering, responseT);
             steeringRoot.localRotation = initialSteeringRotation * Quaternion.Euler(currentSteeringEuler);
         }

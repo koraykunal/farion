@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using UnityEngine;
 
 namespace Farion.Gameplay.Flight
@@ -119,7 +120,7 @@ namespace Farion.Gameplay.Flight
             {
                 Vector3 normalVelocity = Vector3.Project(relativeVelocity, normal);
                 Vector3 tangentialVelocity = relativeVelocity - normalVelocity;
-                float damping = 1f - Mathf.Exp(-tangentialDamping * deltaTime);
+                float damping = FarionMath.SmoothFactor(tangentialDamping, deltaTime);
                 relativeVelocity = normalVelocity + Vector3.Lerp(tangentialVelocity, Vector3.zero, damping);
                 stabilizingContact |= tangentialVelocity.sqrMagnitude > 0.000001f;
             }
@@ -128,7 +129,7 @@ namespace Farion.Gameplay.Flight
 
             if (angularDamping > 0f)
             {
-                float damping = 1f - Mathf.Exp(-angularDamping * deltaTime);
+                float damping = FarionMath.SmoothFactor(angularDamping, deltaTime);
                 Vector3 angularVelocity = Vector3.Lerp(
                     physicsBody.AngularVelocity,
                     Vector3.zero,

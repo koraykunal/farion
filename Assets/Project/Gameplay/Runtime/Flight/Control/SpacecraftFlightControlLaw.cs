@@ -48,9 +48,23 @@ namespace Farion.Gameplay.Flight
                     settings);
             }
 
+            float manoeuvreAuthority = settings.ManoeuvreAuthority(
+                frame.LocalRelativeVelocity.z,
+                settings.PositiveMaxSpeed.z);
+            Vector3 maxAngularRate = settings.MaxAngularRate * manoeuvreAuthority;
+            Vector3 maxAngularAcceleration =
+                settings.MaxAngularAcceleration * manoeuvreAuthority;
             Vector3 localAngularAcceleration = frame.FlightAssistEnabled
-                ? CalculateAssistedAngularAcceleration(frame, settings)
-                : CalculateManualAngularAcceleration(frame, settings);
+                ? CalculateAssistedAngularAcceleration(
+                    frame,
+                    settings,
+                    maxAngularRate,
+                    maxAngularAcceleration)
+                : CalculateManualAngularAcceleration(
+                    frame,
+                    settings,
+                    maxAngularRate,
+                    maxAngularAcceleration);
 
             return new SpacecraftFlightControlOutput(
                 localLinearAcceleration,
@@ -126,24 +140,28 @@ namespace Farion.Gameplay.Flight
 
         static Vector3 CalculateAssistedAngularAcceleration(
             SpacecraftFlightControlFrame frame,
-            SpacecraftFlightControlSettings settings)
+            SpacecraftFlightControlSettings settings,
+            Vector3 maxAngularRate,
+            Vector3 maxAngularAcceleration)
         {
             Vector3 targetAngularVelocity = Vector3.Scale(
                 frame.Command.Rotation,
-                settings.MaxAngularRate);
+                maxAngularRate);
             Vector3 acceleration = Vector3.Scale(
                 targetAngularVelocity - frame.LocalAngularVelocity,
                 settings.AngularVelocityGain);
-            return ClampSymmetric(acceleration, settings.MaxAngularAcceleration);
+            return ClampSymmetric(acceleration, maxAngularAcceleration);
         }
 
         static Vector3 CalculateManualAngularAcceleration(
             SpacecraftFlightControlFrame frame,
-            SpacecraftFlightControlSettings settings)
+            SpacecraftFlightControlSettings settings,
+            Vector3 maxAngularRate,
+            Vector3 maxAngularAcceleration)
         {
             Vector3 acceleration = Vector3.Scale(
                 frame.Command.Rotation,
-                settings.MaxAngularAcceleration);
+                maxAngularAcceleration);
             if (!settings.LimitManualFlightEnvelope)
             {
                 return acceleration;
@@ -154,19 +172,19 @@ namespace Farion.Gameplay.Flight
                     acceleration.x,
                     frame.Command.Rotation.x,
                     frame.LocalAngularVelocity.x,
-                    settings.MaxAngularRate.x,
+                    maxAngularRate.x,
                     settings.ManualEnvelopeStart),
                 ApplyDirectionalEnvelope(
                     acceleration.y,
                     frame.Command.Rotation.y,
                     frame.LocalAngularVelocity.y,
-                    settings.MaxAngularRate.y,
+                    maxAngularRate.y,
                     settings.ManualEnvelopeStart),
                 ApplyDirectionalEnvelope(
                     acceleration.z,
                     frame.Command.Rotation.z,
                     frame.LocalAngularVelocity.z,
-                    settings.MaxAngularRate.z,
+                    maxAngularRate.z,
                     settings.ManualEnvelopeStart));
         }
 

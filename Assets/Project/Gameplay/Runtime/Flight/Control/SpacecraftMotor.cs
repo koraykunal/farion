@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Domain.Systems;
 using Farion.Simulation.Physics;
@@ -403,13 +404,13 @@ namespace Farion.Gameplay.Flight
             smoothedTranslation = Vector3.Lerp(
                 smoothedTranslation,
                 targetTranslation,
-                ResponsivenessToLerp(TranslationSpoolRate, deltaTime));
+                FarionMath.SmoothFactor(TranslationSpoolRate, deltaTime));
             smoothedTranslation = DeadZone(smoothedTranslation, 0.001f);
 
             smoothedRotationInput = Vector3.Lerp(
                 smoothedRotationInput,
                 requestedCommand.Rotation,
-                ResponsivenessToLerp(RotationSpoolRate, deltaTime));
+                FarionMath.SmoothFactor(RotationSpoolRate, deltaTime));
             smoothedRotationInput = DeadZone(smoothedRotationInput, 0.001f);
 
             currentCommand = new SpacecraftPilotCommand(
@@ -622,15 +623,18 @@ namespace Farion.Gameplay.Flight
             new Vector3(12f, 16f, 20f),
             new Vector3(12f, 16f, 34f),
             new Vector3(12f, 16f, 18f),
-            new Vector3(65f, 42f, 95f) * Mathf.Deg2Rad,
-            new Vector3(180f, 140f, 240f) * Mathf.Deg2Rad,
+            new Vector3(65f, 22f, 110f) * Mathf.Deg2Rad,
+            new Vector3(180f, 75f, 280f) * Mathf.Deg2Rad,
             new Vector3(2.8f, 2.8f, 2.2f),
             new Vector3(7f, 7f, 9f),
             3.2f,
             compensateGravity: true,
             limitManualFlightEnvelope: true,
             manualEnvelopeStart: 0.85f,
-            boostSurgeStrength: 0.8f);
+            boostSurgeStrength: 0.8f,
+            optimalSpeedBandStart: 0.4f,
+            optimalSpeedBandEnd: 0.75f,
+            offBandAngularScale: 0.55f);
 
         static Vector3 DeadZone(Vector3 value, float deadZone)
         {
@@ -647,11 +651,5 @@ namespace Farion.Gameplay.Flight
             return limit <= 0f ? 0f : Mathf.Clamp01(Mathf.Max(0f, -value) / limit);
         }
 
-        static float ResponsivenessToLerp(float responsiveness, float deltaTime)
-        {
-            return responsiveness <= 0f
-                ? 1f
-                : 1f - Mathf.Exp(-responsiveness * deltaTime);
-        }
     }
 }

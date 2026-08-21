@@ -36,17 +36,25 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float pitchRateDeg = 65f;
         [Min(0f)]
-        [SerializeField] float yawRateDeg = 42f;
+        [SerializeField] float yawRateDeg = 22f;
         [Min(0f)]
-        [SerializeField] float rollRateDeg = 95f;
+        [SerializeField] float rollRateDeg = 110f;
 
         [Header("Angular Acceleration")]
         [Min(0f)]
         [SerializeField] float pitchAccelerationDeg = 180f;
         [Min(0f)]
-        [SerializeField] float yawAccelerationDeg = 140f;
+        [SerializeField] float yawAccelerationDeg = 75f;
         [Min(0f)]
-        [SerializeField] float rollAccelerationDeg = 240f;
+        [SerializeField] float rollAccelerationDeg = 280f;
+
+        [Header("Manoeuvre Envelope")]
+        [Range(0f, 1f)]
+        [SerializeField] float optimalSpeedBandStart = 0.4f;
+        [Range(0f, 1f)]
+        [SerializeField] float optimalSpeedBandEnd = 0.75f;
+        [Range(0.1f, 1f)]
+        [SerializeField] float offBandAngularScale = 0.55f;
 
         [Header("Assist")]
         [SerializeField] Vector3 velocityGain = new(2.8f, 2.8f, 2.2f);
@@ -138,6 +146,9 @@ namespace Farion.Gameplay.Flight
         public bool OverrideCenterOfMass => overrideCenterOfMass;
         public Vector3 CenterOfMass => centerOfMass;
         public float AngularDamping => angularDamping;
+        public float OptimalSpeedBandStart => optimalSpeedBandStart;
+        public float OptimalSpeedBandEnd => optimalSpeedBandEnd;
+        public float OffBandAngularScale => offBandAngularScale;
 
         public float EvaluateMaxForwardSpeed(in ShipModuleBonuses bonuses) =>
             maxForwardSpeed * bonuses.MaxSpeedMultiplier;
@@ -209,7 +220,10 @@ namespace Farion.Gameplay.Flight
                 compensateGravityInAssistedMode,
                 limitManualFlightEnvelope,
                 manualEnvelopeStart,
-                boostSurgeStrength);
+                boostSurgeStrength,
+                optimalSpeedBandStart,
+                optimalSpeedBandEnd,
+                offBandAngularScale);
         }
 
         void OnValidate()
@@ -225,6 +239,9 @@ namespace Farion.Gameplay.Flight
             strafeAcceleration = Mathf.Max(0f, strafeAcceleration);
             verticalAcceleration = Mathf.Max(0f, verticalAcceleration);
             brakeGain = Mathf.Max(0f, brakeGain);
+            optimalSpeedBandStart = Mathf.Clamp01(optimalSpeedBandStart);
+            optimalSpeedBandEnd = Mathf.Clamp(optimalSpeedBandEnd, optimalSpeedBandStart, 1f);
+            offBandAngularScale = Mathf.Clamp(offBandAngularScale, 0.1f, 1f);
             pitchRateDeg = Mathf.Max(0f, pitchRateDeg);
             yawRateDeg = Mathf.Max(0f, yawRateDeg);
             rollRateDeg = Mathf.Max(0f, rollRateDeg);
