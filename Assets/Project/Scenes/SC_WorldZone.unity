@@ -1144,7 +1144,8 @@ MonoBehaviour:
   generationProfile: {fileID: 11400000, guid: dfcdb85c483641668d1217535da4ccc2, type: 2}
   shapeProfile: {fileID: 11400000, guid: c93f6b21e40d4a8fb27c58e1d6094a3e, type: 2}
   primaryRadiationSource: {fileID: 651725579}
-  surfaceNormalSampleStep: 0.004
+  surfaceNormalSampleMeters: 2.5
+  surfaceSampleFootprint: 0.001534
 --- !u!4 &1148478147
 Transform:
   m_ObjectHideFlags: 0
@@ -1768,7 +1769,8 @@ MonoBehaviour:
   generationProfile: {fileID: 11400000, guid: 6d2813a2700548129c0c6d18e8009f6d, type: 2}
   shapeProfile: {fileID: 11400000, guid: a71c4e08d5b34f2b9c6e1d73f0a25b48, type: 2}
   primaryRadiationSource: {fileID: 651725579}
-  surfaceNormalSampleStep: 0.004
+  surfaceNormalSampleMeters: 2.5
+  surfaceSampleFootprint: 0.001534
 --- !u!114 &1477076289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2456,7 +2458,8 @@ MonoBehaviour:
   generationProfile: {fileID: 11400000, guid: a9d263dcb6044288a2c0c264ca7a5880, type: 2}
   shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
   primaryRadiationSource: {fileID: 651725579}
-  surfaceNormalSampleStep: 0.004
+  surfaceNormalSampleMeters: 2.5
+  surfaceSampleFootprint: 0.001534
 --- !u!114 &1772746498
 MonoBehaviour:
   m_ObjectHideFlags: 0

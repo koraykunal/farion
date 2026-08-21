@@ -49,7 +49,6 @@ namespace Farion.Rendering.Celestial
         public SurfaceFormationProfile Profile => profile;
         public int ActiveFormationCount => activeFormationCount;
         public int ActivePieceCount => activePieceCount;
-        public int PendingCellCount => pendingCellCount;
         public int ActiveColliderCount => activeColliderCount;
         public bool PlacementSuspended => placementSuspended;
 

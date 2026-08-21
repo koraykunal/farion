@@ -35,11 +35,8 @@ namespace Farion.Rendering.Celestial
         [SerializeField] Vector2 volcanismRange = new(0f, 1f);
         [SerializeField, Range(0f, 0.5f)] float volcanismFeather = 0.05f;
 
-        public IReadOnlyList<BiomeDefinition> AllowedBiomes => allowedBiomes;
-        public bool HasBiomeRestriction => allowedBiomes.Count > 0;
         public bool RequireDryLand => requireDryLand;
         public Vector2 SlopeRange => slopeRange;
-        public Vector2 AltitudeRange => altitudeRange;
 
         public bool AllowsBiome(BiomeDefinition biome)
         {

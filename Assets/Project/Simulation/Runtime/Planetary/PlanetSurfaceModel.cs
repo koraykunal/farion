@@ -27,8 +27,6 @@ namespace Farion.Simulation.Planetary
         public CelestialBody Body => ResolveBody();
         public PlanetaryGenerationProfile GenerationProfile => generationProfile;
         public CelestialShapeProfile ShapeProfile => ResolveShapeProfile();
-        public float SurfaceNormalSampleMeters => surfaceNormalSampleMeters;
-        public float SurfaceSampleFootprint => surfaceSampleFootprint;
         public event System.Action Changed;
 
         const int TerrainRangeSampleCount = 512;
