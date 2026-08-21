@@ -2,6 +2,9 @@ namespace Farion.Gameplay.Persistence
 {
     public sealed class ShuttleCargoSaveParticipant : IGameplaySaveParticipant
     {
+        public GameplaySaveParticipantScope Scope =>
+            GameplaySaveParticipantScope.LocalPlayer;
+
         public bool CanCapture(GameplaySaveContext context)
         {
             return context.Definitions != null &&

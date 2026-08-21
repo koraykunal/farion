@@ -49,6 +49,15 @@ namespace Farion.Core.Persistence
             return Capture(transformTarget);
         }
 
+        public TransformPoseSnapshot Translated(Vector3 delta)
+        {
+            return new TransformPoseSnapshot(
+                position + delta,
+                rotation,
+                linearVelocity,
+                angularVelocity);
+        }
+
         public void ApplyTo(Transform target)
         {
             if (target != null)

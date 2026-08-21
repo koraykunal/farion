@@ -30,6 +30,16 @@ namespace Farion.Core.Persistence
             out int version,
             out DateTime? savedAtUtc)
         {
+            return TryReadHeader(payload, out version, out savedAtUtc, out _);
+        }
+
+        public static bool TryReadHeader(
+            string payload,
+            out int version,
+            out DateTime? savedAtUtc,
+            out bool multiplayerSession)
+        {
+            multiplayerSession = false;
             if (string.IsNullOrWhiteSpace(payload))
             {
                 version = 0;
@@ -42,6 +52,7 @@ namespace Farion.Core.Persistence
                 SaveGameHeader header = JsonUtility.FromJson<SaveGameHeader>(payload);
                 version = header != null ? header.SchemaVersion : 0;
                 savedAtUtc = ParseUtcTimestamp(header?.SavedAtUtc);
+                multiplayerSession = header != null && header.MultiplayerSession;
                 return version > 0;
             }
             catch (ArgumentException)
@@ -71,9 +82,11 @@ namespace Farion.Core.Persistence
         {
             [SerializeField] int schemaVersion;
             [SerializeField] string savedAtUtc;
+            [SerializeField] bool multiplayerSession;
 
             public int SchemaVersion => schemaVersion;
             public string SavedAtUtc => savedAtUtc;
+            public bool MultiplayerSession => multiplayerSession;
         }
     }
 }

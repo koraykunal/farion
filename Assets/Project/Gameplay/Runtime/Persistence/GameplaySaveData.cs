@@ -7,6 +7,7 @@ using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.ResourceNodes;
+using Farion.Gameplay.Session;
 using Farion.Simulation.Physics;
 using Farion.Simulation.World;
 using UnityEngine;
@@ -35,6 +36,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
         [SerializeField] List<MultiplayerPlayerSaveEntry> multiplayerPlayers = new();
         [SerializeField] List<MultiplayerShipSaveEntry> multiplayerShipCargo = new();
+        [SerializeField] bool multiplayerSession;
         [NonSerialized] int sourceSchemaVersion;
 
         public GameplaySaveData(
@@ -116,6 +118,15 @@ namespace Farion.Gameplay.Persistence
         public IReadOnlyList<MultiplayerShipSaveEntry> MultiplayerShipCargo =>
             multiplayerShipCargo;
 
+        public GameplaySessionMode SessionMode => multiplayerSession
+            ? GameplaySessionMode.Multiplayer
+            : GameplaySessionMode.Offline;
+
+        public void SetSessionMode(GameplaySessionMode mode)
+        {
+            multiplayerSession = mode == GameplaySessionMode.Multiplayer;
+        }
+
         public void SetShuttleFuel(ResourcePool fuel)
         {
             shuttleFuel = fuel;
@@ -181,6 +192,7 @@ namespace Farion.Gameplay.Persistence
             migrated.SetMultiplayerState(
                 source.MultiplayerPlayers,
                 source.MultiplayerShipCargo);
+            migrated.SetSessionMode(source.SessionMode);
             return migrated;
         }
     }

@@ -5,6 +5,9 @@ namespace Farion.Gameplay.Persistence
 {
     public sealed class ResourceDepositSaveParticipant : IGameplaySaveParticipant
     {
+        public GameplaySaveParticipantScope Scope =>
+            GameplaySaveParticipantScope.World;
+
         public bool CanCapture(GameplaySaveContext context)
         {
             return context.ResourceStreamers != null;

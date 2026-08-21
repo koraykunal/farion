@@ -115,7 +115,8 @@ namespace Farion.Core.Persistence
             if (!SaveGameSchema.TryReadHeader(
                     payload,
                     out int schemaVersion,
-                    out DateTime? savedAtUtc))
+                    out DateTime? savedAtUtc,
+                    out bool multiplayerSession))
             {
                 return new SaveGameSlotSummary(
                     slotName,
@@ -137,7 +138,8 @@ namespace Farion.Core.Persistence
                 state,
                 schemaVersion,
                 savedAtUtc,
-                TryGetLastWriteTimeUtc(readResult.Path));
+                TryGetLastWriteTimeUtc(readResult.Path),
+                multiplayerSession);
         }
 
         static DateTime ResolveTimestamp(SaveGameSlotSummary summary)

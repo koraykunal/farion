@@ -3,6 +3,9 @@ namespace Farion.Gameplay.Persistence
     public sealed class FleetKnowledgeSaveParticipant :
         IGameplaySaveParticipant
     {
+        public GameplaySaveParticipantScope Scope =>
+            GameplaySaveParticipantScope.World;
+
         public bool CanCapture(GameplaySaveContext context)
         {
             return context.FleetKnowledge != null;

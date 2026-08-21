@@ -19,7 +19,8 @@ namespace Farion.Core.Persistence
             SaveGameSlotState state,
             int schemaVersion,
             DateTime? savedAtUtc,
-            DateTime? fileUpdatedAtUtc)
+            DateTime? fileUpdatedAtUtc,
+            bool multiplayerSession = false)
         {
             SlotName = slotName ?? string.Empty;
             Path = path ?? string.Empty;
@@ -27,6 +28,7 @@ namespace Farion.Core.Persistence
             SchemaVersion = schemaVersion;
             SavedAtUtc = savedAtUtc;
             FileUpdatedAtUtc = fileUpdatedAtUtc;
+            MultiplayerSession = multiplayerSession;
         }
 
         public string SlotName { get; }
@@ -35,6 +37,7 @@ namespace Farion.Core.Persistence
         public int SchemaVersion { get; }
         public DateTime? SavedAtUtc { get; }
         public DateTime? FileUpdatedAtUtc { get; }
+        public bool MultiplayerSession { get; }
         public DateTime? BestTimestampUtc => SavedAtUtc ?? FileUpdatedAtUtc;
         public bool HasData => State != SaveGameSlotState.Empty;
         public bool IsLoadable =>

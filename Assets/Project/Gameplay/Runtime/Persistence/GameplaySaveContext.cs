@@ -14,12 +14,17 @@ namespace Farion.Gameplay.Persistence
 {
     public readonly struct GameplaySaveContext
     {
-        public GameplaySaveContext(GameplayRuntimeBindings bindings)
+        public GameplaySaveContext(
+            GameplayRuntimeBindings bindings,
+            GameplaySessionMode mode = GameplaySessionMode.Offline)
         {
             Bindings = bindings;
+            Mode = mode;
         }
 
         public GameplayRuntimeBindings Bindings { get; }
+        public GameplaySessionMode Mode { get; }
+        public bool IsMultiplayer => Mode == GameplaySessionMode.Multiplayer;
         public GameplayDefinitionRegistry Definitions => Bindings?.Definitions;
         public GravitySimulation GravitySimulation => Bindings?.GravitySimulation;
         public WorldOriginRebaser OriginRebaser => Bindings?.OriginRebaser;
