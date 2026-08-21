@@ -43,6 +43,7 @@ namespace Farion.Rendering.Celestial
         [Range(0f, 2f)] [SerializeField] float phaseStrength = 0.65f;
         [Range(0f, 1f)] [SerializeField] float multipleScattering = 0.7f;
         [Range(0f, 2f)] [SerializeField] float starAngularRadius = 0.55f;
+        [Min(0f)] [SerializeField] float terrainClearance = 25f;
         [ColorUsage(false, true)] [SerializeField] Color ambientLight = new(0.07f, 0.1f, 0.15f, 1f);
 
         [Header("Motion")]
@@ -86,12 +87,28 @@ namespace Farion.Rendering.Celestial
         public int LightSteps => lightSteps;
         public float DitherStrength => ditherStrength;
 
-        public void GetLayerRadii(float surfaceRadius, float atmosphereRadius, out float innerRadius, out float outerRadius)
+        public float TerrainClearance => Mathf.Max(0f, terrainClearance);
+
+        public void GetLayerRadii(
+            float surfaceRadius,
+            float atmosphereRadius,
+            float terrainCeilingRadius,
+            out float innerRadius,
+            out float outerRadius)
         {
             surfaceRadius = Mathf.Max(0.01f, surfaceRadius);
             atmosphereRadius = Mathf.Max(surfaceRadius + 0.001f, atmosphereRadius);
-            innerRadius = Mathf.Lerp(surfaceRadius, atmosphereRadius, layerBottom);
-            outerRadius = Mathf.Max(innerRadius + 0.001f, Mathf.Lerp(surfaceRadius, atmosphereRadius, layerTop));
+            float floorRadius = Mathf.Max(surfaceRadius, terrainCeilingRadius + TerrainClearance);
+            innerRadius = Mathf.Clamp(
+                Mathf.Max(floorRadius, Mathf.Lerp(surfaceRadius, atmosphereRadius, layerBottom)),
+                surfaceRadius,
+                atmosphereRadius);
+            float thickness = Mathf.Max(
+                0.001f,
+                (Mathf.Lerp(surfaceRadius, atmosphereRadius, layerTop) -
+                    Mathf.Lerp(surfaceRadius, atmosphereRadius, layerBottom)));
+            outerRadius = Mathf.Min(atmosphereRadius, innerRadius + thickness);
+            outerRadius = Mathf.Max(innerRadius + 0.001f, outerRadius);
         }
 
         void OnValidate()

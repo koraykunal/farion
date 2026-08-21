@@ -70,6 +70,8 @@ namespace Farion.Rendering.Celestial
         [System.NonSerialized] SurfaceVisualProfile subscribedSurfaceVisualProfile;
 
         public override Material Material => material;
+        public Color SteepLow => steepLow;
+        public Color SteepHigh => steepHigh;
         public SurfaceVisualProfile SurfaceVisualProfile => surfaceVisualProfile;
 
         void OnEnable()

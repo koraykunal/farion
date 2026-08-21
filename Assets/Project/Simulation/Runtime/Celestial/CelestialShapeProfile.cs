@@ -37,6 +37,15 @@ namespace Farion.Simulation.Celestial
 
         public abstract float EvaluateDisplacement(float baseRadius, Vector3 unitDirection);
 
+        public virtual bool TrySampleGeology(
+            float baseRadius,
+            Vector3 unitDirection,
+            out CelestialGeologySample sample)
+        {
+            sample = CelestialGeologySample.None;
+            return false;
+        }
+
         protected void NotifyChanged()
         {
             Changed?.Invoke();

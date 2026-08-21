@@ -21,12 +21,14 @@ namespace Farion.Simulation.Planetary
         [SerializeField] CelestialRadiationSource primaryRadiationSource;
 
         [Header("Sampling")]
-        [SerializeField, Range(0.0005f, 0.05f)] float surfaceNormalSampleStep = 0.004f;
+        [SerializeField, Range(0.25f, 64f)] float surfaceNormalSampleMeters = 2.5f;
+        [SerializeField, Range(0f, 0.05f)] float surfaceSampleFootprint = 0.001534f;
 
         public CelestialBody Body => ResolveBody();
         public PlanetaryGenerationProfile GenerationProfile => generationProfile;
         public CelestialShapeProfile ShapeProfile => ResolveShapeProfile();
-        public float SurfaceNormalSampleStep => surfaceNormalSampleStep;
+        public float SurfaceNormalSampleMeters => surfaceNormalSampleMeters;
+        public float SurfaceSampleFootprint => surfaceSampleFootprint;
         public event System.Action Changed;
 
         const int TerrainRangeSampleCount = 512;
@@ -107,7 +109,8 @@ namespace Farion.Simulation.Planetary
                 {
                     float radius = shape.EvaluateRadius(
                         baseRadius,
-                        FibonacciDirection(i, TerrainRangeSampleCount));
+                        FibonacciDirection(i, TerrainRangeSampleCount),
+                        surfaceSampleFootprint);
                     min = Mathf.Min(min, radius);
                     max = Mathf.Max(max, radius);
                 }
@@ -135,7 +138,8 @@ namespace Farion.Simulation.Planetary
         void OnValidate()
         {
             ResolveBody();
-            surfaceNormalSampleStep = Mathf.Clamp(surfaceNormalSampleStep, 0.0005f, 0.05f);
+            surfaceNormalSampleMeters = Mathf.Clamp(surfaceNormalSampleMeters, 0.25f, 64f);
+            surfaceSampleFootprint = Mathf.Clamp(surfaceSampleFootprint, 0f, 0.05f);
             Changed?.Invoke();
         }
 
@@ -147,6 +151,19 @@ namespace Farion.Simulation.Planetary
             }
 
             shapeProfile = shape;
+            Changed?.Invoke();
+        }
+
+        public void SetSampleFootprint(float angularFootprint)
+        {
+            float clamped = Mathf.Clamp(angularFootprint, 0f, 0.05f);
+            if (Mathf.Approximately(surfaceSampleFootprint, clamped))
+            {
+                return;
+            }
+
+            surfaceSampleFootprint = clamped;
+            terrainRangeBaseRadius = -1f;
             Changed?.Invoke();
         }
 
@@ -166,6 +183,24 @@ namespace Farion.Simulation.Planetary
 
             sample = default;
             return false;
+        }
+
+        public bool TrySampleGeology(
+            Vector3 localDirection,
+            out CelestialGeologySample geology)
+        {
+            CelestialShapeProfile shape = ResolveShapeProfile();
+            CelestialBody sourceBody = ResolveBody();
+            if (shape == null || sourceBody == null)
+            {
+                geology = CelestialGeologySample.None;
+                return false;
+            }
+
+            return shape.TrySampleGeology(
+                sourceBody.Radius,
+                localDirection.normalized,
+                out geology);
         }
 
         public bool TrySamplePlanetSurface(CelestialBody sourceBody, Vector3 position, out PlanetSurfaceSample sample)
@@ -373,7 +408,7 @@ namespace Farion.Simulation.Planetary
         float EvaluateSurfaceRadius(float bodyRadius, Vector3 localDirection, CelestialShapeProfile shape)
         {
             return shape != null
-                ? shape.EvaluateSample(bodyRadius, localDirection).Radius
+                ? shape.EvaluateSample(bodyRadius, localDirection, surfaceSampleFootprint).Radius
                 : Mathf.Max(0.01f, bodyRadius);
         }
 
@@ -392,7 +427,10 @@ namespace Farion.Simulation.Planetary
 
             tangentA.Normalize();
             Vector3 tangentB = Vector3.Cross(localDirection, tangentA).normalized;
-            float step = Mathf.Clamp(surfaceNormalSampleStep, 0.0005f, 0.05f);
+            float step = Mathf.Clamp(
+                Mathf.Clamp(surfaceNormalSampleMeters, 0.25f, 64f) / Mathf.Max(0.01f, bodyRadius),
+                0.00002f,
+                0.05f);
 
             Vector3 pointA0 = EvaluateRelativeSurfacePoint(bodyRadius, (localDirection - tangentA * step).normalized, shape);
             Vector3 pointA1 = EvaluateRelativeSurfacePoint(bodyRadius, (localDirection + tangentA * step).normalized, shape);

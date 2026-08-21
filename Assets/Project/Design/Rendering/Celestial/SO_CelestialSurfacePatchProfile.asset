@@ -16,9 +16,9 @@ MonoBehaviour:
   exitAltitudeRatio: 0.9
   patchResolution: 16
   maxSubdivisionLevel: 6
-  splitDistanceMultiplier: 1.5
+  splitDistanceMultiplier: 2.2
   splitHysteresisRatio: 0.15
-  maxActivePatches: 384
+  maxActivePatches: 640
   skirtDepthRatio: 0.0025
   collisionRadiusRatio: 0.16
   minimumCollisionLevel: 6

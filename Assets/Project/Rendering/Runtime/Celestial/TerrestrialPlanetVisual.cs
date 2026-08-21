@@ -196,7 +196,12 @@ namespace Farion.Rendering.Celestial
 
             float surfaceRadius = environment.AtmosphereBaseRadius;
             float atmosphereRadius = environment.AtmosphereRadius;
-            profile.CloudProfile.GetLayerRadii(surfaceRadius, atmosphereRadius, out float innerRadius, out float outerRadius);
+            profile.CloudProfile.GetLayerRadii(
+                surfaceRadius,
+                atmosphereRadius,
+                environment.TerrainRadiusMinMax.y,
+                out float innerRadius,
+                out float outerRadius);
             ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
 
             data = new CelestialCloudEffectData(

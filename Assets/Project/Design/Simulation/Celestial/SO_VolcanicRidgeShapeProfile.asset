@@ -24,7 +24,7 @@ MonoBehaviour:
     Octaves: 6
     Lacunarity: 2
     Persistence: 0.5
-    Scale: 1.35
+    Scale: 0.35
     Elevation: 1.9
     VerticalShift: -0.15
     Offset: {x: 3.4, y: -1.7, z: 2.9}
@@ -32,7 +32,7 @@ MonoBehaviour:
     Octaves: 4
     Lacunarity: 1.66
     Persistence: 0.55
-    Scale: 1.42
+    Scale: 0.45
     Elevation: 1
     VerticalShift: 0.25
     Offset: {x: -2.1, y: 4.8, z: 0.6}
@@ -40,13 +40,38 @@ MonoBehaviour:
     Octaves: 4
     Lacunarity: 2.1
     Persistence: 0.52
-    Scale: 1.9
+    Scale: 0.79
     Power: 2.15
-    Elevation: 5.2
+    Elevation: 7.0
     Gain: 0.8
     VerticalShift: 0.05
     SpatialSmoothing: 0.03
     Offset: {x: 1.9, y: 2.3, z: -3.6}
+  detailRidgeNoise:
+    Octaves: 6
+    Lacunarity: 2.15
+    Persistence: 0.62
+    Scale: 14.4
+    Power: 1.9
+    Elevation: 1.05
+    Gain: 0.75
+    VerticalShift: 0
+    SpatialSmoothing: 0
+    FadeFootprint: 0.006
+    Offset: {x: 37, y: -19, z: 8}
+  detailFieldNoise:
+    Octaves: 4
+    Lacunarity: 2.3
+    Persistence: 0.6
+    Scale: 24.4
+    Elevation: 0.55
+    VerticalShift: 0
+    FadeFootprint: 0.006
+    Offset: {x: -11, y: 26, z: 41}
+  detailStrength: 1
+  geologySpanMeters: 12
+  featureSpanMeters: 800
+  featureSlopeReference: 0.12
   detailWarpNoise:
     Octaves: 4
     Lacunarity: 2

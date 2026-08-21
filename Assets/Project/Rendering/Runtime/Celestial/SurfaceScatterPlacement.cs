@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    internal readonly struct SurfaceDecorationCell : IEquatable<SurfaceDecorationCell>
+    internal readonly struct SurfaceScatterCell : IEquatable<SurfaceScatterCell>
     {
-        public SurfaceDecorationCell(CelestialCubeFace face, int resolution, int x, int y)
+        public SurfaceScatterCell(CelestialCubeFace face, int resolution, int x, int y)
         {
             Face = face;
             Resolution = resolution;
@@ -19,14 +19,14 @@ namespace Farion.Rendering.Celestial
         public int X { get; }
         public int Y { get; }
 
-        public bool Equals(SurfaceDecorationCell other)
+        public bool Equals(SurfaceScatterCell other)
         {
             return Face == other.Face && Resolution == other.Resolution && X == other.X && Y == other.Y;
         }
 
         public override bool Equals(object obj)
         {
-            return obj is SurfaceDecorationCell other && Equals(other);
+            return obj is SurfaceScatterCell other && Equals(other);
         }
 
         public override int GetHashCode()
@@ -35,7 +35,7 @@ namespace Farion.Rendering.Celestial
         }
     }
 
-    internal static class SurfaceDecorationPlacement
+    internal static class SurfaceScatterPlacement
     {
         public static int CalculateResolution(float radius, float spacingMeters)
         {
@@ -43,17 +43,17 @@ namespace Farion.Rendering.Celestial
             return Mathf.Clamp(Mathf.CeilToInt(faceArcLength / Mathf.Max(0.25f, spacingMeters)), 1, 1048576);
         }
 
-        public static SurfaceDecorationCell CellFromDirection(Vector3 direction, int resolution)
+        public static SurfaceScatterCell CellFromDirection(Vector3 direction, int resolution)
         {
             CelestialCubeProjection.Project(direction, out CelestialCubeFace face, out float u, out float v);
             int safeResolution = Mathf.Max(1, resolution);
             int x = Mathf.Clamp(Mathf.FloorToInt((u + 1f) * 0.5f * safeResolution), 0, safeResolution - 1);
             int y = Mathf.Clamp(Mathf.FloorToInt((v + 1f) * 0.5f * safeResolution), 0, safeResolution - 1);
-            return new SurfaceDecorationCell(face, safeResolution, x, y);
+            return new SurfaceScatterCell(face, safeResolution, x, y);
         }
 
         public static Vector3 CandidateDirection(
-            SurfaceDecorationCell cell,
+            SurfaceScatterCell cell,
             int planetSeed,
             string ruleId)
         {
@@ -66,7 +66,7 @@ namespace Farion.Rendering.Celestial
         public static float Hash01(
             int planetSeed,
             string ruleId,
-            SurfaceDecorationCell cell,
+            SurfaceScatterCell cell,
             int channel)
         {
             unchecked
@@ -89,25 +89,40 @@ namespace Farion.Rendering.Celestial
         public static float EvaluateCluster(
             Vector3 direction,
             float planetRadius,
-            SurfaceDecorationRule rule,
-            int planetSeed)
+            SurfaceScatterDistribution distribution,
+            int planetSeed,
+            string ruleId,
+            string channel)
         {
             float circumference = Mathf.PI * 2f * Mathf.Max(0.01f, planetRadius);
-            float noiseScale = circumference / Mathf.Max(0.01f, rule.ClusterScaleMeters);
+            float noiseScale = circumference / distribution.ClusterScaleMeters;
             float noise = PlanetarySampling.SampleFractal01(
                 direction,
                 noiseScale,
                 3,
                 2f,
                 0.5f,
-                SeedUtility.Derive(planetSeed, $"surface.decoration.cluster.{rule.StableId}"));
+                SeedUtility.Derive(planetSeed, $"{channel}.{ruleId}"));
             return Mathf.SmoothStep(
                 0f,
                 1f,
                 Mathf.InverseLerp(
-                    rule.ClusterCutoff - rule.ClusterFeather,
-                    rule.ClusterCutoff + rule.ClusterFeather,
+                    distribution.ClusterCutoff - distribution.ClusterFeather,
+                    distribution.ClusterCutoff + distribution.ClusterFeather,
                     noise));
+        }
+
+        public static float ResolveVisibilityDistance(
+            SurfaceScatterDistribution distribution,
+            int planetSeed,
+            string ruleId,
+            SurfaceScatterCell cell)
+        {
+            float importance = Hash01(planetSeed, ruleId, cell, 11);
+            return Mathf.Lerp(
+                distribution.NearVisibilityDistance,
+                distribution.FarVisibilityDistance,
+                importance * importance);
         }
 
         public static Vector3 ResolvePlacementUp(

@@ -373,6 +373,53 @@ new schema is allowed only after those runtime owners exist.
   consumes that sample for its ocean, atmosphere, and cloud shells instead of
   computing geometry of its own, so a headless server keeps a complete
   environment. Rendering profiles hold appearance only.
+- Surface scatter has one placement core and two consumers. The shared types
+  carry the `SurfaceScatter` prefix: `SurfaceScatterPlacement` owns cell hashing
+  and the candidate direction, `SurfaceScatterSuitability` owns every biome,
+  material, terrain-feature, and climate gate, `SurfaceScatterDistribution` owns
+  spacing, cluster noise, and the visibility ladder, and
+  `SurfaceScatterShaderBinding` maps surface state onto the rock shader.
+  `SurfaceDecorationRenderer` draws instanced meshes with no colliders,
+  `SurfaceFormationSpawner` pools collider-bearing prefabs, and both read the
+  same authoring types instead of duplicating rule fields.
+- Scatter content is observer-independent. There is no active-instance ceiling;
+  each cell derives its own visibility distance from `(planetSeed, ruleId, cell)`
+  and is realised whenever an observer is inside it. Far rings therefore carry
+  only the cells that hashed high, and the same approach direction is not
+  required to see the same world. Frame cost is bounded by cells evaluated per
+  frame, never by the result.
+- `SurfaceFormationRole` names a geological chain, not a visual tier: `Outcrop`
+  is in-place rock on a convex break, `Buttress` flanks it, `Talus` runs
+  downhill from each outcrop with the grade resampled per piece, and `Debris`
+  scatters past the talus apron. `CelestialShapeProfile.TrySampleGeology`
+  supplies the break strength, local relief, downhill direction, and convexity
+  those roles key off.
+- The shape profile carries a detail band that only patch geometry resolves.
+  `FadeFootprint` on a noise layer silences it once the angular sample footprint
+  grows past the threshold, so scaled-space spheres stay smooth while adaptive
+  patches carry metre-scale relief, and no level-dependent branch reintroduces
+  split/merge popping.
+- `CelestialSurfacePatchSystem` publishes its angular sample footprint to
+  `PlanetSurfaceModel` on enable. Collision, placement, and rendered geometry
+  therefore resolve the same octaves, so scattered props sit on the mesh the
+  player actually walks on.
+- Formation pieces are seated on their mesh base, not their pivot.
+  `SurfaceFormationSpawner` measures each prefab's lowest mesh bound once and
+  offsets by it, so `embedFraction` means the same thing whatever the source
+  art centred its pivot on.
+- Formation colliders are distance-gated. A cliff kit carries hundreds of convex
+  mesh colliders per formation, so `SurfaceFormationRule.CollisionDistance`
+  keeps only the nearby ones enabled; everything further out renders without
+  taking physics cost. Spawned pieces live under one `Surface Formations`
+  container on the body, classified to `FarionLayers.CelestialSurface`.
+- Rock appearance is driven, not authored per biome. `SurfaceScatterShaderBinding`
+  reads the terrain's own `SurfaceVisualProfile` steep colours plus the sampled
+  snow cover and moisture, and pushes them into the rock shader through a
+  `MaterialPropertyBlock`. A desert cliff and a glacial cliff are the same
+  prefab with different surface state, not two asset sets.
+- Cloud decks clear the terrain. `CelestialCloudProfile.GetLayerRadii` takes the
+  body's terrain ceiling and lifts its floor above it, so ridges never intersect
+  the volumetric layer.
 - Local presentation binding is shared: `LocalPlayerCameraBinding` owns which
   camera rig follows which actor and the cursor capture state, and
   `WorldFocusTracking` owns the origin-rebase and resource-streaming target.

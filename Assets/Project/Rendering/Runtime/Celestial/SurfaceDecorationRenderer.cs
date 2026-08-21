@@ -17,21 +17,27 @@ namespace Farion.Rendering.Celestial
         [SerializeField] CelestialBody body;
         [SerializeField] PlanetSurfaceModel surfaceModel;
         [SerializeField] CelestialSurfacePatchSystem patchSystem;
+        [SerializeField] SurfaceFormationSpawner formationSpawner;
+
+        [Header("Runtime State")]
+        [SerializeField] bool placementSuspended;
+        [SerializeField] int activeInstanceCount;
+        [SerializeField] int pendingCandidateCount;
+        [SerializeField] int drawBatchCount;
 
         readonly List<RuleRuntime> ruleRuntimes = new();
         readonly List<BiomeWeight> biomeWeights = new();
         MonoBehaviour environmentSource;
+        MaterialPropertyBlock shadingBlock;
+        CelestialBodyVisual bodyVisual;
         bool warnedUnsupportedInstancing;
         bool runtimeDirty = true;
         int nextRuleIndex;
         int nextRefreshRuleIndex;
-        int activeInstanceCount;
-        int pendingCandidateCount;
-        int drawBatchCount;
         bool hasPreviousCameraPosition;
         Vector3 previousCameraLocalPosition;
+        Vector3 observerLocalVelocity;
         float placementObserverSpeed;
-        bool placementSuspended;
 
         public SurfaceDecorationProfile Profile => profile;
         public int ActiveInstanceCount => activeInstanceCount;
@@ -100,7 +106,9 @@ namespace Farion.Rendering.Celestial
             placementSuspended = ShouldSuspendPlacement(placementObserverSpeed, altitude, profile);
             if (!placementSuspended)
             {
-                RefreshDesiredCells(cameraLocalPosition);
+                RefreshDesiredCells(
+                    cameraLocalPosition,
+                    cameraLocalPosition + observerLocalVelocity * profile.PrefetchSeconds);
                 ProcessCandidates(hasOcean, oceanRadius);
             }
 
@@ -131,17 +139,21 @@ namespace Farion.Rendering.Celestial
             return false;
         }
 
-        void RefreshDesiredCells(Vector3 cameraLocalPosition)
+        void RefreshDesiredCells(Vector3 cameraLocalPosition, Vector3 scanCenter)
         {
-            Vector3 cameraDirection = cameraLocalPosition.normalized;
+            Vector3 cameraDirection = scanCenter.sqrMagnitude > 0.0001f
+                ? scanCenter.normalized
+                : cameraLocalPosition.normalized;
             BuildTangentBasis(cameraDirection, out Vector3 tangent, out Vector3 bitangent);
             float radius = Mathf.Max(0.01f, body.Radius);
+            int planetSeed = surfaceModel.CreateContext(body).PlanetSeed;
 
             for (int offset = 0; offset < ruleRuntimes.Count; offset++)
             {
                 int i = (nextRefreshRuleIndex + offset) % ruleRuntimes.Count;
                 RuleRuntime runtime = ruleRuntimes[i];
-                float refreshDistance = Mathf.Max(runtime.Rule.SpacingMeters * 2f, 4f);
+                SurfaceScatterDistribution distribution = runtime.Rule.Distribution;
+                float refreshDistance = Mathf.Max(distribution.SpacingMeters * 2f, 12f);
                 if (runtime.HasAnchor &&
                     Vector3.Distance(runtime.AnchorLocalPosition, cameraLocalPosition) < refreshDistance)
                 {
@@ -153,17 +165,17 @@ namespace Farion.Rendering.Celestial
                 runtime.DesiredCells.Clear();
                 runtime.PendingCells.Clear();
 
-                float step = runtime.Rule.SpacingMeters * 0.75f;
-                float drawDistance = runtime.Rule.DrawDistance;
-                int radiusSteps = Mathf.CeilToInt(drawDistance / step);
-                float drawDistanceSquared = drawDistance * drawDistance;
+                float step = distribution.SpacingMeters * 0.75f;
+                float searchDistance = distribution.FarVisibilityDistance;
+                int radiusSteps = Mathf.CeilToInt(searchDistance / step);
+                float searchDistanceSquared = searchDistance * searchDistance;
                 for (int y = -radiusSteps; y <= radiusSteps; y++)
                 {
                     float offsetY = y * step;
                     for (int x = -radiusSteps; x <= radiusSteps; x++)
                     {
                         float offsetX = x * step;
-                        if (offsetX * offsetX + offsetY * offsetY > drawDistanceSquared)
+                        if (offsetX * offsetX + offsetY * offsetY > searchDistanceSquared)
                         {
                             continue;
                         }
@@ -171,9 +183,32 @@ namespace Farion.Rendering.Celestial
                         Vector3 direction = (cameraDirection +
                             tangent * (offsetX / radius) +
                             bitangent * (offsetY / radius)).normalized;
-                        SurfaceDecorationCell cell =
-                            SurfaceDecorationPlacement.CellFromDirection(direction, runtime.Resolution);
-                        if (runtime.DesiredCells.Add(cell) && !runtime.EvaluatedCells.Contains(cell))
+                        SurfaceScatterCell cell =
+                            SurfaceScatterPlacement.CellFromDirection(direction, runtime.Resolution);
+                        if (!runtime.DesiredCells.Add(cell))
+                        {
+                            continue;
+                        }
+
+                        float visibility = SurfaceScatterPlacement.ResolveVisibilityDistance(
+                            distribution,
+                            planetSeed,
+                            runtime.Rule.StableId,
+                            cell);
+                        Vector3 cellCenter = SurfaceScatterPlacement.CandidateDirection(
+                            cell,
+                            planetSeed,
+                            runtime.Rule.StableId) * radius;
+                        float reach = Mathf.Min(
+                            Vector3.Distance(cellCenter, cameraLocalPosition),
+                            Vector3.Distance(cellCenter, scanCenter));
+                        if (reach > visibility)
+                        {
+                            runtime.DesiredCells.Remove(cell);
+                            continue;
+                        }
+
+                        if (!runtime.EvaluatedCells.Contains(cell))
                         {
                             runtime.PendingCells.Enqueue(cell);
                         }
@@ -181,7 +216,7 @@ namespace Farion.Rendering.Celestial
                 }
 
                 runtime.StaleCells.Clear();
-                foreach (SurfaceDecorationCell cell in runtime.EvaluatedCells)
+                foreach (SurfaceScatterCell cell in runtime.EvaluatedCells)
                 {
                     if (!runtime.DesiredCells.Contains(cell))
                     {
@@ -191,7 +226,7 @@ namespace Farion.Rendering.Celestial
 
                 for (int staleIndex = 0; staleIndex < runtime.StaleCells.Count; staleIndex++)
                 {
-                    SurfaceDecorationCell staleCell = runtime.StaleCells[staleIndex];
+                    SurfaceScatterCell staleCell = runtime.StaleCells[staleIndex];
                     runtime.EvaluatedCells.Remove(staleCell);
                     runtime.Instances.Remove(staleCell);
                 }
@@ -218,7 +253,7 @@ namespace Farion.Rendering.Celestial
             {
                 RuleRuntime runtime = ruleRuntimes[nextRuleIndex];
                 nextRuleIndex = (nextRuleIndex + 1) % ruleRuntimes.Count;
-                if (runtime.PendingCells.Count == 0 || runtime.Instances.Count >= runtime.Rule.MaxInstances)
+                if (runtime.PendingCells.Count == 0)
                 {
                     emptyRulePasses++;
                     continue;
@@ -226,7 +261,7 @@ namespace Farion.Rendering.Celestial
 
                 emptyRulePasses = 0;
                 remainingBudget--;
-                SurfaceDecorationCell cell = runtime.PendingCells.Dequeue();
+                SurfaceScatterCell cell = runtime.PendingCells.Dequeue();
                 if (!runtime.DesiredCells.Contains(cell))
                 {
                     continue;
@@ -239,41 +274,68 @@ namespace Farion.Rendering.Celestial
 
         void TryCreateInstance(
             RuleRuntime runtime,
-            SurfaceDecorationCell cell,
+            SurfaceScatterCell cell,
             bool hasOcean,
             float oceanRadius)
         {
             SurfaceDecorationRule rule = runtime.Rule;
             PlanetGenerationContext context = surfaceModel.CreateContext(body);
-            Vector3 direction = SurfaceDecorationPlacement.CandidateDirection(
+            Vector3 direction = SurfaceScatterPlacement.CandidateDirection(
                 cell,
                 context.PlanetSeed,
                 rule.StableId);
+            float cluster = SurfaceScatterPlacement.EvaluateCluster(
+                direction,
+                context.Radius,
+                rule.Distribution,
+                context.PlanetSeed,
+                rule.StableId,
+                "surface.decoration.cluster");
+            if (cluster <= 0f)
+            {
+                return;
+            }
+
             if (!surfaceModel.TrySamplePlanetSurface(direction, out PlanetSurfaceSample sample))
             {
                 return;
             }
 
-            float biomeWeight = ResolveAllowedBiomeWeight(rule, sample);
-            float suitability = rule.EvaluateSuitability(sample, biomeWeight, hasOcean, oceanRadius);
+            if (rule.Suitability.EvaluateCoarse(sample, hasOcean, oceanRadius) <= 0f)
+            {
+                return;
+            }
+
+            float biomeWeight = rule.Suitability.ResolveAllowedBiomeWeight(
+                surfaceModel,
+                sample,
+                biomeWeights);
+            float suitability = rule.Suitability.Evaluate(
+                sample,
+                biomeWeight,
+                hasOcean,
+                oceanRadius);
             if (suitability <= 0f)
             {
                 return;
             }
 
-            float cluster = SurfaceDecorationPlacement.EvaluateCluster(
-                direction,
-                context.Radius,
-                rule,
-                context.PlanetSeed);
-            float probability = rule.SpawnChance * suitability * cluster;
-            if (SurfaceDecorationPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 2) >= probability)
+            suitability = rule.ApplyFormationAffinity(
+                suitability,
+                ResolveFormationInfluence(direction * sample.SurfaceRadius));
+            if (suitability <= 0f)
+            {
+                return;
+            }
+
+            float probability = rule.Distribution.SpawnChance * suitability * cluster;
+            if (SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 2) >= probability)
             {
                 return;
             }
 
             int variantIndex = rule.ChooseVariant(
-                SurfaceDecorationPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 3));
+                SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 3));
             if (variantIndex < 0 || variantIndex >= rule.Variants.Count)
             {
                 return;
@@ -281,70 +343,63 @@ namespace Farion.Rendering.Celestial
 
             SurfaceDecorationVariant variant = rule.Variants[variantIndex];
             Vector3 normalLocal = transform.InverseTransformDirection(sample.Surface.Normal).normalized;
-            Vector3 placementUp = SurfaceDecorationPlacement.ResolvePlacementUp(
+            Vector3 placementUp = SurfaceScatterPlacement.ResolvePlacementUp(
                 direction,
                 normalLocal,
                 rule.NormalAlignment);
             Quaternion alignment = Quaternion.FromToRotation(Vector3.up, placementUp);
-            float yaw = SurfaceDecorationPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 4) * 360f;
+            float yaw = SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 4) * 360f;
             Quaternion rotation = Quaternion.AngleAxis(yaw, placementUp) * alignment *
                 Quaternion.Euler(variant.RotationOffset);
             Vector2 scaleRange = rule.UniformScaleRange;
             float scale = Mathf.Lerp(
                 Mathf.Min(scaleRange.x, scaleRange.y),
                 Mathf.Max(scaleRange.x, scaleRange.y),
-                SurfaceDecorationPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 5));
+                SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 5));
             scale *= variant.BaseScale;
             Vector3 position = direction * sample.SurfaceRadius + normalLocal * rule.SurfaceOffset;
             Matrix4x4 localMatrix = Matrix4x4.TRS(position, rotation, Vector3.one * scale);
-            runtime.Instances[cell] = new DecorationInstance(variantIndex, position, localMatrix);
+            runtime.Instances[cell] = new DecorationInstance(
+                variantIndex,
+                position,
+                localMatrix,
+                SurfaceScatterPlacement.ResolveVisibilityDistance(
+                    rule.Distribution,
+                    context.PlanetSeed,
+                    rule.StableId,
+                    cell));
         }
 
-        float ResolveAllowedBiomeWeight(SurfaceDecorationRule rule, PlanetSurfaceSample sample)
+        float ResolveFormationInfluence(Vector3 localPosition)
         {
-            if (surfaceModel.GenerationProfile == null ||
-                surfaceModel.GenerationProfile.BiomeDistribution == null)
-            {
-                return rule.AllowsBiome(sample.Biome.Biome) ? sample.Biome.Suitability : 0f;
-            }
-
-            biomeWeights.Clear();
-            surfaceModel.GenerationProfile.BiomeDistribution.SampleBiomeWeights(
-                sample.Context,
-                sample.Climate,
-                sample.LocalDirection,
-                sample.TerrainAltitude,
-                sample.Surface.SlopeAngleDegrees,
-                biomeWeights);
-            float total = 0f;
-            for (int i = 0; i < biomeWeights.Count; i++)
-            {
-                BiomeWeight weight = biomeWeights[i];
-                if (rule.AllowsBiome(weight.Biome))
-                {
-                    total += weight.Weight;
-                }
-            }
-
-            return Mathf.Clamp01(total);
+            return formationSpawner != null
+                ? formationSpawner.SampleFormationInfluence(localPosition)
+                : 0f;
         }
 
         void RenderInstances(Camera camera, Vector3 cameraLocalPosition)
         {
             drawBatchCount = 0;
             Matrix4x4 rootMatrix = transform.localToWorldMatrix;
+            SurfaceScatterShaderBinding binding = profile.ShaderBinding;
+            PlanetSurfaceSample shadingSample = default;
+            bool hasShading = binding != null &&
+                binding.IsBound &&
+                surfaceModel.TrySamplePlanetSurface(
+                    cameraLocalPosition.normalized,
+                    out shadingSample);
+            SurfaceVisualProfile visualProfile = ResolveVisualProfile();
             for (int runtimeIndex = 0; runtimeIndex < ruleRuntimes.Count; runtimeIndex++)
             {
                 RuleRuntime runtime = ruleRuntimes[runtimeIndex];
                 runtime.ClearRenderLists();
-                float drawDistanceSquared = runtime.Rule.DrawDistance * runtime.Rule.DrawDistance;
                 float shadowDistanceSquared = runtime.Rule.ShadowDistance * runtime.Rule.ShadowDistance;
                 float farLodDistanceSquared =
                     runtime.Rule.FarLodStartDistance * runtime.Rule.FarLodStartDistance;
                 foreach (DecorationInstance instance in runtime.Instances.Values)
                 {
                     float distanceSquared = (instance.LocalPosition - cameraLocalPosition).sqrMagnitude;
-                    if (distanceSquared > drawDistanceSquared)
+                    if (distanceSquared > instance.VisibilityDistance * instance.VisibilityDistance)
                     {
                         continue;
                     }
@@ -353,6 +408,21 @@ namespace Farion.Rendering.Celestial
                     bool castsShadow = runtime.Rule.ShadowDistance > 0f && distanceSquared <= shadowDistanceSquared;
                     bool usesFarLod = distanceSquared >= farLodDistanceSquared;
                     runtime.GetRenderList(instance.VariantIndex, castsShadow, usesFarLod).Add(worldMatrix);
+                }
+
+                MaterialPropertyBlock ruleBlock = null;
+                if (hasShading && runtime.Rule.SurfaceTintStrength > 0f)
+                {
+                    shadingBlock ??= new MaterialPropertyBlock();
+                    shadingBlock.Clear();
+                    binding.Apply(
+                        shadingBlock,
+                        visualProfile,
+                        shadingSample,
+                        runtime.Rule.SurfaceTintStrength,
+                        runtime.Rule.SnowResponse,
+                        runtime.Rule.MossResponse);
+                    ruleBlock = shadingBlock;
                 }
 
                 for (int variantIndex = 0; variantIndex < runtime.Rule.Variants.Count; variantIndex++)
@@ -368,21 +438,32 @@ namespace Farion.Rendering.Celestial
                         variant,
                         variant.NearMesh,
                         runtime.NearShadowMatrices[variantIndex],
-                        true);
+                        true,
+                        ruleBlock);
                     DrawVariant(
                         camera,
                         variant,
                         variant.NearMesh,
                         runtime.NearMatrices[variantIndex],
-                        false);
+                        false,
+                        ruleBlock);
                     DrawVariant(
                         camera,
                         variant,
                         variant.FarMesh,
                         runtime.FarMatrices[variantIndex],
-                        false);
+                        false,
+                        ruleBlock);
                 }
             }
+        }
+
+        SurfaceVisualProfile ResolveVisualProfile()
+        {
+            return bodyVisual != null &&
+                bodyVisual.SurfaceProfile is TerrestrialSurfaceProfile terrestrial
+                    ? terrestrial.SurfaceVisualProfile
+                    : null;
         }
 
         void DrawVariant(
@@ -390,7 +471,8 @@ namespace Farion.Rendering.Celestial
             SurfaceDecorationVariant variant,
             Mesh mesh,
             List<Matrix4x4> matrices,
-            bool castsShadows)
+            bool castsShadows,
+            MaterialPropertyBlock propertyBlock)
         {
             if (matrices.Count == 0)
             {
@@ -412,7 +494,8 @@ namespace Farion.Rendering.Celestial
                     layer = gameObject.layer,
                     lightProbeUsage = LightProbeUsage.Off,
                     receiveShadows = true,
-                    shadowCastingMode = castsShadows ? ShadowCastingMode.On : ShadowCastingMode.Off
+                    shadowCastingMode = castsShadows ? ShadowCastingMode.On : ShadowCastingMode.Off,
+                    matProps = propertyBlock
                 };
                 for (int start = 0; start < matrices.Count; start += MaximumInstancesPerDraw)
                 {
@@ -477,7 +560,9 @@ namespace Farion.Rendering.Celestial
                 {
                     ruleRuntimes.Add(new RuleRuntime(
                         rule,
-                        SurfaceDecorationPlacement.CalculateResolution(body.Radius, rule.SpacingMeters)));
+                        SurfaceScatterPlacement.CalculateResolution(
+                            body.Radius,
+                            rule.Distribution.SpacingMeters)));
                 }
             }
 
@@ -512,9 +597,18 @@ namespace Farion.Rendering.Celestial
 
         float ResolvePlacementObserverSpeed(Vector3 cameraLocalPosition)
         {
-            float cameraSpeed = hasPreviousCameraPosition && Time.unscaledDeltaTime > 0.0001f
-                ? Vector3.Distance(cameraLocalPosition, previousCameraLocalPosition) / Time.unscaledDeltaTime
-                : 0f;
+            float cameraSpeed = 0f;
+            if (hasPreviousCameraPosition && Time.unscaledDeltaTime > 0.0001f)
+            {
+                Vector3 velocity =
+                    (cameraLocalPosition - previousCameraLocalPosition) / Time.unscaledDeltaTime;
+                observerLocalVelocity = Vector3.Lerp(
+                    observerLocalVelocity,
+                    velocity,
+                    1f - Mathf.Exp(-6f * Time.unscaledDeltaTime));
+                cameraSpeed = observerLocalVelocity.magnitude;
+            }
+
             previousCameraLocalPosition = cameraLocalPosition;
             hasPreviousCameraPosition = true;
 
@@ -551,6 +645,8 @@ namespace Farion.Rendering.Celestial
             body ??= GetComponent<CelestialBody>();
             surfaceModel ??= GetComponent<PlanetSurfaceModel>();
             patchSystem ??= GetComponent<CelestialSurfacePatchSystem>();
+            formationSpawner ??= GetComponent<SurfaceFormationSpawner>();
+            bodyVisual ??= GetComponent<CelestialBodyVisual>();
         }
 
         void HandleSurfaceChanged()
@@ -569,16 +665,22 @@ namespace Farion.Rendering.Celestial
 
         readonly struct DecorationInstance
         {
-            public DecorationInstance(int variantIndex, Vector3 localPosition, Matrix4x4 localMatrix)
+            public DecorationInstance(
+                int variantIndex,
+                Vector3 localPosition,
+                Matrix4x4 localMatrix,
+                float visibilityDistance)
             {
                 VariantIndex = variantIndex;
                 LocalPosition = localPosition;
                 LocalMatrix = localMatrix;
+                VisibilityDistance = visibilityDistance;
             }
 
             public int VariantIndex { get; }
             public Vector3 LocalPosition { get; }
             public Matrix4x4 LocalMatrix { get; }
+            public float VisibilityDistance { get; }
         }
 
         sealed class RuleRuntime
@@ -603,11 +705,11 @@ namespace Farion.Rendering.Celestial
             public int Resolution { get; }
             public bool HasAnchor { get; set; }
             public Vector3 AnchorLocalPosition { get; set; }
-            public HashSet<SurfaceDecorationCell> DesiredCells { get; } = new();
-            public HashSet<SurfaceDecorationCell> EvaluatedCells { get; } = new();
-            public Queue<SurfaceDecorationCell> PendingCells { get; } = new();
-            public Dictionary<SurfaceDecorationCell, DecorationInstance> Instances { get; } = new();
-            public List<SurfaceDecorationCell> StaleCells { get; } = new();
+            public HashSet<SurfaceScatterCell> DesiredCells { get; } = new();
+            public HashSet<SurfaceScatterCell> EvaluatedCells { get; } = new();
+            public Queue<SurfaceScatterCell> PendingCells { get; } = new();
+            public Dictionary<SurfaceScatterCell, DecorationInstance> Instances { get; } = new();
+            public List<SurfaceScatterCell> StaleCells { get; } = new();
             public List<Matrix4x4>[] NearShadowMatrices { get; }
             public List<Matrix4x4>[] NearMatrices { get; }
             public List<Matrix4x4>[] FarMatrices { get; }

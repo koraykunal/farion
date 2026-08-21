@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Farion.Core.Physics;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
+using Farion.Simulation.Planetary;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -130,6 +131,7 @@ namespace Farion.Rendering.Celestial
 
         void OnEnable()
         {
+            PublishSampleFootprint();
             ResolveSources();
             Subscribe();
             forceRefresh = true;
@@ -157,6 +159,22 @@ namespace Farion.Rendering.Celestial
         void OnDestroy()
         {
             DestroyAllPatches();
+        }
+
+        void PublishSampleFootprint()
+        {
+            if (profile == null)
+            {
+                return;
+            }
+
+            PlanetSurfaceModel surfaceModel = GetComponent<PlanetSurfaceModel>();
+            if (surfaceModel != null)
+            {
+                surfaceModel.SetSampleFootprint(CalculatePatchAngularFootprint(
+                    profile.MaxSubdivisionLevel,
+                    profile.PatchResolution));
+            }
         }
 
         void OnValidate()

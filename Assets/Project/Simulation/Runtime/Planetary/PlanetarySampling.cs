@@ -39,7 +39,26 @@ namespace Farion.Simulation.Planetary
             float persistence,
             int seed)
         {
-            Vector3 point = NormalizeDirection(direction) * Mathf.Max(0.001f, scale);
+            return SampleFractal01(
+                direction,
+                scale,
+                octaves,
+                lacunarity,
+                persistence,
+                seed,
+                Vector3.zero);
+        }
+
+        public static float SampleFractal01(
+            Vector3 direction,
+            float scale,
+            int octaves,
+            float lacunarity,
+            float persistence,
+            int seed,
+            Vector3 domainOffset)
+        {
+            Vector3 point = NormalizeDirection(direction) * Mathf.Max(0.001f, scale) + domainOffset;
             int layerCount = Mathf.Clamp(octaves, 1, 8);
             float amplitude = 1f;
             float amplitudeSum = 0f;
@@ -69,6 +88,25 @@ namespace Farion.Simulation.Planetary
             return SampleFractal01(direction, scale, octaves, lacunarity, persistence, seed) * 2f - 1f;
         }
 
+        public static float SampleFractalSigned(
+            Vector3 direction,
+            float scale,
+            int octaves,
+            float lacunarity,
+            float persistence,
+            int seed,
+            Vector3 domainOffset)
+        {
+            return SampleFractal01(
+                direction,
+                scale,
+                octaves,
+                lacunarity,
+                persistence,
+                seed,
+                domainOffset) * 2f - 1f;
+        }
+
         public static float SampleRidged01(
             Vector3 direction,
             float scale,
@@ -79,7 +117,30 @@ namespace Farion.Simulation.Planetary
             float gain,
             int seed)
         {
-            Vector3 point = NormalizeDirection(direction) * Mathf.Max(0.001f, scale);
+            return SampleRidged01(
+                direction,
+                scale,
+                octaves,
+                lacunarity,
+                persistence,
+                power,
+                gain,
+                seed,
+                Vector3.zero);
+        }
+
+        public static float SampleRidged01(
+            Vector3 direction,
+            float scale,
+            int octaves,
+            float lacunarity,
+            float persistence,
+            float power,
+            float gain,
+            int seed,
+            Vector3 domainOffset)
+        {
+            Vector3 point = NormalizeDirection(direction) * Mathf.Max(0.001f, scale) + domainOffset;
             int layerCount = Mathf.Clamp(octaves, 1, 8);
             float amplitude = 1f;
             float amplitudeSum = 0f;

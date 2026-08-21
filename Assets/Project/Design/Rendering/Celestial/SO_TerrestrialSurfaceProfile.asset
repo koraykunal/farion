@@ -53,9 +53,9 @@ MonoBehaviour:
   noiseTexture: {fileID: 2800000, guid: 6b95ad4431700b440b34db2c4fc0378e, type: 3}
   rockNormal: {fileID: 2800000, guid: 91953f100d69a394c8bc744423b684fa, type: 3}
   noiseScale: 10
-  noiseScale2: 24
-  rockNormalTileSize: 10
-  normalStrength: 0.28
+  noiseScale2: 36
+  rockNormalTileSize: 9
+  normalStrength: 0.42
   flatColorBlend: 1.95
   flatColorBlendNoise: 1
   shoreHeight: 0.058
@@ -63,8 +63,8 @@ MonoBehaviour:
   oceanEdgeBlend: 0.04
   shoreWetness: 0.42
   maxFlatHeight: 0.52
-  steepBands: 4
-  steepBandStrength: 0
+  steepBands: 5
+  steepBandStrength: 0.12
   steepnessThreshold: 0.232
   flatToSteepBlend: 0.141
   flatToSteepNoise: 0.116

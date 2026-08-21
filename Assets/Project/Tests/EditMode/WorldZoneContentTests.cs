@@ -97,8 +97,12 @@ namespace Farion.Tests.EditMode
             int suitableRuleCount = 0;
             foreach (SurfaceDecorationRule rule in renderer.Profile.Rules)
             {
-                if (rule.AllowsBiome(sample.Biome.Biome) &&
-                    rule.EvaluateSuitability(sample, sample.Biome.Suitability, hasOcean, oceanRadius) > 0f)
+                if (rule.Suitability.AllowsBiome(sample.Biome.Biome) &&
+                    rule.Suitability.Evaluate(
+                        sample,
+                        sample.Biome.Suitability,
+                        hasOcean,
+                        oceanRadius) > 0f)
                 {
                     suitableRuleCount++;
                 }

@@ -16,14 +16,14 @@ namespace Farion.Tests.EditMode
         [Test]
         public void SurfaceCellPlacement_IsDeterministicAndSeeded()
         {
-            int resolution = SurfaceDecorationPlacement.CalculateResolution(1600f, 11f);
-            SurfaceDecorationCell cell = SurfaceDecorationPlacement.CellFromDirection(
+            int resolution = SurfaceScatterPlacement.CalculateResolution(1600f, 11f);
+            SurfaceScatterCell cell = SurfaceScatterPlacement.CellFromDirection(
                 new Vector3(0.63f, 0.71f, -0.31f),
                 resolution);
 
-            Vector3 first = SurfaceDecorationPlacement.CandidateDirection(cell, 4065, "surfaceflora.birch");
-            Vector3 repeated = SurfaceDecorationPlacement.CandidateDirection(cell, 4065, "surfaceflora.birch");
-            Vector3 otherSeed = SurfaceDecorationPlacement.CandidateDirection(cell, 4066, "surfaceflora.birch");
+            Vector3 first = SurfaceScatterPlacement.CandidateDirection(cell, 4065, "surfaceflora.birch");
+            Vector3 repeated = SurfaceScatterPlacement.CandidateDirection(cell, 4065, "surfaceflora.birch");
+            Vector3 otherSeed = SurfaceScatterPlacement.CandidateDirection(cell, 4066, "surfaceflora.birch");
 
             Assert.That(repeated, Is.EqualTo(first));
             Assert.That(Vector3.Distance(first, otherSeed), Is.GreaterThan(0.000001f));
@@ -37,10 +37,10 @@ namespace Farion.Tests.EditMode
             Vector3 surfaceNormal = new Vector3(1f, 1f, 0f).normalized;
 
             Assert.That(
-                SurfaceDecorationPlacement.ResolvePlacementUp(radialUp, surfaceNormal, 0f),
+                SurfaceScatterPlacement.ResolvePlacementUp(radialUp, surfaceNormal, 0f),
                 Is.EqualTo(radialUp).Using(Vector3EqualityComparer.Instance));
             Assert.That(
-                SurfaceDecorationPlacement.ResolvePlacementUp(radialUp, surfaceNormal, 1f),
+                SurfaceScatterPlacement.ResolvePlacementUp(radialUp, surfaceNormal, 1f),
                 Is.EqualTo(surfaceNormal).Using(Vector3EqualityComparer.Instance));
         }
 
@@ -128,9 +128,9 @@ namespace Farion.Tests.EditMode
                     new PlanetSurfaceStateSample(0f, 0f, 0.7f),
                     default);
 
-                Assert.That(birch.EvaluateSuitability(sample, 1f, false, 0f), Is.GreaterThan(0f));
-                Assert.That(birch.EvaluateSuitability(sample, 1f, true, 1610f), Is.EqualTo(0f));
-                Assert.That(birch.EvaluateSuitability(sample, 0f, false, 0f), Is.EqualTo(0f));
+                Assert.That(birch.Suitability.Evaluate(sample, 1f, false, 0f), Is.GreaterThan(0f));
+                Assert.That(birch.Suitability.Evaluate(sample, 1f, true, 1610f), Is.EqualTo(0f));
+                Assert.That(birch.Suitability.Evaluate(sample, 0f, false, 0f), Is.EqualTo(0f));
             }
             finally
             {
