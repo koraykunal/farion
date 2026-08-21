@@ -1,3 +1,4 @@
+using System;
 using Farion.Simulation.World;
 using FishNet.Connection;
 using FishNet.Managing;
@@ -17,6 +18,8 @@ namespace Farion.Multiplayer.World
         Transform serverTrackingTarget;
 
         public uint CurrentSequence => state.Sequence;
+
+        public event Action<Vector3> OriginShifted;
 
         void Awake()
         {
@@ -40,12 +43,18 @@ namespace Farion.Multiplayer.World
 
         public void BindRebaser(WorldOriginRebaser nextRebaser)
         {
+            if (rebaser != null)
+            {
+                rebaser.Rebased -= HandleRebased;
+            }
+
             rebaser = nextRebaser;
             if (rebaser == null)
             {
                 return;
             }
 
+            rebaser.Rebased += HandleRebased;
             rebaser.SetAutomaticRebasing(false);
             Vector3 pendingDelta =
                 state.AccumulatedOrigin - rebaser.AccumulatedOriginOffset;
@@ -68,7 +77,38 @@ namespace Farion.Multiplayer.World
         {
             state.Reset();
             serverTrackingTarget = null;
+            if (rebaser != null)
+            {
+                rebaser.Rebased -= HandleRebased;
+            }
+
             rebaser = null;
+        }
+
+        void HandleRebased(Vector3 originOffset)
+        {
+            OriginShifted?.Invoke(originOffset);
+        }
+
+        public bool AdoptRestoredOrigin()
+        {
+            if (!networkManager.IsServerStarted || rebaser == null)
+            {
+                return false;
+            }
+
+            if ((rebaser.AccumulatedOriginOffset - state.AccumulatedOrigin)
+                .sqrMagnitude <= Mathf.Epsilon)
+            {
+                return true;
+            }
+
+            state.RecordServerShift(rebaser.AccumulatedOriginOffset);
+            networkManager.ServerManager.Broadcast(
+                CreateBroadcast(),
+                requireAuthenticated: true,
+                channel: Channel.Reliable);
+            return true;
         }
 
         public void SendCurrentOrigin(NetworkConnection connection)

@@ -36,6 +36,9 @@ namespace Farion.Multiplayer.Player
         public void MoveRotation(Quaternion rotation) =>
             predictionRigidbody.MoveRotation(rotation);
 
+        public void SetPosition(Vector3 position) =>
+            Rigidbody.position = position;
+
         public void Commit() => predictionRigidbody.Simulate();
     }
 }

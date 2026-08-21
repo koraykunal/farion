@@ -1,8 +1,10 @@
 using Farion.Core.Identity;
+using Farion.Gameplay.Actors;
 using System.Collections.Generic;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
+using Farion.Core.Persistence;
 using Farion.Gameplay.Persistence;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
@@ -39,6 +41,7 @@ namespace Farion.Multiplayer.Spawning
         readonly List<MultiplayerShipSaveEntry> restoredShipCargo = new();
         ulong nextSessionPlayerId;
         MultiplayerWorldOriginAuthority originAuthority;
+        ZonePhysicsTickDriver physicsTickDriver;
         GameplayDefinitionRegistry definitions;
 
         public int SpawnedPlayerCount => players.Count;
@@ -127,7 +130,7 @@ namespace Farion.Multiplayer.Spawning
             MultiplayerWorldOriginAuthority worldOriginAuthority)
         {
             contexts[sceneContext.gameObject.scene.handle] = sceneContext;
-            originAuthority = worldOriginAuthority;
+            BindOriginAuthority(worldOriginAuthority);
             foreach (NetworkConnection connection in
                      networkManager.ServerManager.Clients.Values)
             {
@@ -240,6 +243,11 @@ namespace Farion.Multiplayer.Spawning
                 sessionPlayer.DisplayName,
                 slots.TryGetReserved(connectionId, out int slot) ? slot : -1,
                 inventory != null ? inventory.CaptureContainerSnapshot() : null);
+            entry.SetExplorerPose(
+                TransformPoseSnapshot.Capture(
+                    explorer.GetComponent<Rigidbody>(),
+                    explorer.transform));
+            entry.SetPossessionMode(sessionPlayer.PossessionMode);
             return true;
         }
 
@@ -294,12 +302,17 @@ namespace Farion.Multiplayer.Spawning
                     }
 
                     capturedSlots.Add(pair.Key);
-                    shipCargo.Add(new MultiplayerShipSaveEntry(
+                    MultiplayerShipSaveEntry shipEntry = new(
                         owner,
                         pair.Key,
                         ship.Cargo.CaptureContainerSnapshot(),
                         ship.Motor.Fuel,
-                        ship.Hull != null ? ship.Hull.Integrity : default));
+                        ship.Hull != null ? ship.Hull.Integrity : default);
+                    shipEntry.SetShipPose(
+                        TransformPoseSnapshot.Capture(
+                            ship.GetComponent<Rigidbody>(),
+                            ship.transform));
+                    shipCargo.Add(shipEntry);
                 }
             }
 
@@ -488,6 +501,129 @@ namespace Farion.Multiplayer.Spawning
             restoredShipCargo.Add(entry);
         }
 
+        void BindOriginAuthority(MultiplayerWorldOriginAuthority authority)
+        {
+            if (originAuthority == authority)
+            {
+                return;
+            }
+
+            if (originAuthority != null)
+            {
+                originAuthority.OriginShifted -= HandleOriginShifted;
+            }
+
+            originAuthority = authority;
+            if (originAuthority != null)
+            {
+                originAuthority.OriginShifted += HandleOriginShifted;
+            }
+        }
+
+        void HandleOriginShifted(Vector3 originOffset)
+        {
+            foreach (MultiplayerPlayerSaveEntry entry in restoredPlayers.Values)
+            {
+                entry?.ShiftPose(originOffset);
+            }
+
+            for (int i = 0; i < restoredShipCargo.Count; i++)
+            {
+                restoredShipCargo[i]?.ShiftPose(originOffset);
+            }
+        }
+
+        bool TryResolveRestoredSpawnPose(
+            NetworkSessionPlayer sessionPlayer,
+            out Vector3 position,
+            out Quaternion rotation)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+            if (sessionPlayer == null ||
+                string.IsNullOrEmpty(sessionPlayer.PersistentPlayerId) ||
+                !restoredPlayers.TryGetValue(
+                    sessionPlayer.PersistentPlayerId,
+                    out MultiplayerPlayerSaveEntry entry) ||
+                entry == null)
+            {
+                return false;
+            }
+
+            if (entry.PossessionMode != PlayerPossessionMode.OnFoot &&
+                TryResolveRestoredShipPose(
+                    entry.PersistentPlayerId,
+                    out TransformPoseSnapshot shipPose))
+            {
+                position = shipPose.Position;
+                rotation = shipPose.Rotation;
+                return true;
+            }
+
+            if (!entry.HasExplorerPose)
+            {
+                return false;
+            }
+
+            position = entry.ExplorerPose.Position;
+            rotation = entry.ExplorerPose.Rotation;
+            return true;
+        }
+
+        bool TryResolveRestoredSlotShipPose(
+            int slot,
+            out TransformPoseSnapshot pose)
+        {
+            string owner = ResolveSlotOwner(slot);
+            for (int i = 0; i < restoredShipCargo.Count; i++)
+            {
+                MultiplayerShipSaveEntry entry = restoredShipCargo[i];
+                if (entry == null || !entry.HasShipPose)
+                {
+                    continue;
+                }
+
+                bool matches = entry.HasOwner && !string.IsNullOrEmpty(owner)
+                    ? entry.PersistentPlayerId == owner
+                    : entry.FormationSlot == slot;
+                if (matches)
+                {
+                    pose = entry.ShipPose;
+                    return true;
+                }
+            }
+
+            pose = default;
+            return false;
+        }
+
+        bool TryResolveRestoredShipPose(
+            string persistentPlayerId,
+            out TransformPoseSnapshot pose)
+        {
+            for (int i = 0; i < restoredShipCargo.Count; i++)
+            {
+                MultiplayerShipSaveEntry entry = restoredShipCargo[i];
+                if (entry != null &&
+                    entry.HasShipPose &&
+                    entry.PersistentPlayerId == persistentPlayerId)
+                {
+                    pose = entry.ShipPose;
+                    return true;
+                }
+            }
+
+            pose = default;
+            return false;
+        }
+
+        ZonePhysicsTickDriver ResolvePhysicsTickDriver()
+        {
+            return physicsTickDriver != null
+                ? physicsTickDriver
+                : physicsTickDriver = GetComponent<ZonePhysicsTickDriver>();
+        }
+
         public void ResetSession()
         {
             sessionPlayers.Clear();
@@ -499,7 +635,7 @@ namespace Farion.Multiplayer.Spawning
             restoredPlayers.Clear();
             restoredShipCargo.Clear();
             definitions = null;
-            originAuthority = null;
+            BindOriginAuthority(null);
         }
 
         void OnClientPresenceChangeEnd(
@@ -576,13 +712,23 @@ namespace Farion.Multiplayer.Spawning
                 return;
             }
 
-            originAuthority?.SendCurrentOrigin(connection);
-            NetworkObject player = Instantiate(playerPrefab, position, rotation);
-            NetworkExplorerController explorer =
-                player.GetComponent<NetworkExplorerController>();
             NetworkSessionPlayer sessionPlayer =
                 sessionPlayers[connection.ClientId]
                     .GetComponent<NetworkSessionPlayer>();
+            if (TryResolveRestoredSpawnPose(
+                    sessionPlayer,
+                    out Vector3 restoredPosition,
+                    out Quaternion restoredRotation))
+            {
+                position = restoredPosition;
+                rotation = restoredRotation;
+            }
+
+            originAuthority?.SendCurrentOrigin(connection);
+            ResolvePhysicsTickDriver()?.SendSimulationEpoch(connection);
+            NetworkObject player = Instantiate(playerPrefab, position, rotation);
+            NetworkExplorerController explorer =
+                player.GetComponent<NetworkExplorerController>();
             explorer?.InitializeIdentity(sessionPlayer.SessionPlayerId);
             explorer?.BindScene(
                 sceneContext.CelestialFrameProvider,
@@ -697,22 +843,37 @@ namespace Farion.Multiplayer.Spawning
                 }
 
                 if (!sceneContext.TryGetStarterShuttlePose(
-                        MaximumPlayers,
                         slot,
                         out Vector3 position,
                         out Quaternion rotation))
                 {
                     Debug.LogError(
-                        $"Starter ship formation {MaximumPlayers} slot {slot + 1} is invalid.",
+                        $"Starter ship formation slot {slot + 1} is invalid.",
                         sceneContext);
                     failedConnections.Add(connection);
                     continue;
+                }
+
+                bool restoredPose = TryResolveRestoredSlotShipPose(
+                    slot,
+                    out TransformPoseSnapshot restoredShipPose);
+                if (restoredPose)
+                {
+                    position = restoredShipPose.Position;
+                    rotation = restoredShipPose.Rotation;
                 }
 
                 NetworkObject ship = Instantiate(
                     starterShuttlePrefab,
                     position,
                     rotation);
+                if (!restoredPose)
+                {
+                    CelestialSurfaceSettling.TrySettle(
+                        sceneContext.CelestialFrameProvider,
+                        ship.transform);
+                }
+
                 GeneratedEntityId shipId = GeneratedEntityId.FromHash(
                     StableHashUtility.Combine(
                         sceneContext.ZoneId.Value,

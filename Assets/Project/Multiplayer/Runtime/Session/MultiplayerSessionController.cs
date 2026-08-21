@@ -38,6 +38,7 @@ namespace Farion.Multiplayer.Session
         [SerializeField] MultiplayerZoneCoordinator zoneCoordinator;
         [SerializeField] MultiplayerStatusReporter statusReporter;
         [SerializeField] MultiplayerSaveBridge saveBridge;
+        [SerializeField] ZonePhysicsTickDriver physicsTickDriver;
         [SerializeField] string presentationSceneName = DefaultPresentationScene;
         [SerializeField] string startingZoneSceneName = DefaultStartingZoneScene;
 
@@ -90,6 +91,7 @@ namespace Farion.Multiplayer.Session
             zoneCoordinator ??= GetComponent<MultiplayerZoneCoordinator>();
             statusReporter ??= GetComponent<MultiplayerStatusReporter>();
             saveBridge ??= GetComponent<MultiplayerSaveBridge>();
+            physicsTickDriver ??= GetComponent<ZonePhysicsTickDriver>();
             DontDestroyOnLoad(gameObject);
             Subscribe();
         }
@@ -524,13 +526,24 @@ namespace Farion.Multiplayer.Session
                 out SaveGameStartupMode startupMode,
                 out string requestedSlotName);
             saveBridge.SetSlot(requestedSlotName);
+            if (startupMode == SaveGameStartupMode.LoadGame)
+            {
+                SaveGameOperationResult loadResult =
+                    saveBridge.Load(saveBridge.SlotName);
+                if (!loadResult.Succeeded)
+                {
+                    Debug.LogError(
+                        $"Co-op load failed for slot '{saveBridge.SlotName}': {loadResult.Status}.",
+                        this);
+                    FailAndReturnToMainMenu(
+                        MultiplayerFailureReason.SaveLoadFailed);
+                    return;
+                }
+            }
+
             presentation?.GameplayUi?.SetSaveAction(
                 saveBridge.Save,
                 saveBridge.SlotName);
-            if (startupMode == SaveGameStartupMode.LoadGame)
-            {
-                saveBridge.Load(saveBridge.SlotName);
-            }
         }
 
         internal void NotifyOwnedPlayerReady()
@@ -670,6 +683,7 @@ namespace Farion.Multiplayer.Session
             presentation = null;
             worldOriginAuthority?.ResetSession();
             playerSpawner?.ResetSession();
+            physicsTickDriver?.ResetSession();
         }
 
         void TryCompleteStartup()

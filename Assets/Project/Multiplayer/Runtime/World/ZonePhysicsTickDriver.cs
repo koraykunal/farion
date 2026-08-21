@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Farion.Multiplayer.Session;
+using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Predicting;
 using FishNet.Managing.Timing;
+using FishNet.Transporting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -17,8 +19,10 @@ namespace Farion.Multiplayer.World
         readonly List<MultiplayerSceneContext> zoneSceneContexts = new();
         PredictionManager predictionManager;
         bool subscribed;
+        double simulationEpochSeconds;
 
         public int RegisteredZoneCount => zones.Count;
+        public double SimulationEpochSeconds => simulationEpochSeconds;
 
         void Awake()
         {
@@ -26,6 +30,8 @@ namespace Farion.Multiplayer.World
             if (networkManager != null)
             {
                 predictionManager = networkManager.GetComponent<PredictionManager>();
+                networkManager.ClientManager
+                    .RegisterBroadcast<SimulationEpochBroadcast>(OnEpochBroadcast);
             }
         }
 
@@ -36,6 +42,8 @@ namespace Farion.Multiplayer.World
 
         void OnDestroy()
         {
+            networkManager?.ClientManager
+                .UnregisterBroadcast<SimulationEpochBroadcast>(OnEpochBroadcast);
             Unsubscribe();
             for (int i = zones.Count - 1; i >= 0; i--)
             {
@@ -68,7 +76,7 @@ namespace Farion.Multiplayer.World
             }
 
             zones.Add(context);
-            zoneSceneContexts.Add(MultiplayerSceneContext.FindIn(context.Scene));
+            zoneSceneContexts.Add(null);
             context.BindPhysicsDriver(this);
             return true;
         }
@@ -152,6 +160,86 @@ namespace Farion.Multiplayer.World
             SimulateRegisteredZones(deltaTime);
         }
 
+        public void ResetSession()
+        {
+            simulationEpochSeconds = 0d;
+        }
+
+        public void AdoptRestoredSimulationTime()
+        {
+            if (networkManager == null || !networkManager.IsServerStarted)
+            {
+                return;
+            }
+
+            double restored = ResolveRestoredSimulationTime();
+            simulationEpochSeconds = System.Math.Max(
+                0d,
+                restored - ResolveSimulationTick() * networkManager.TimeManager.TickDelta);
+            BroadcastEpoch();
+        }
+
+        public void SendSimulationEpoch(NetworkConnection connection)
+        {
+            if (connection == null || networkManager?.ServerManager == null)
+            {
+                return;
+            }
+
+            networkManager.ServerManager.Broadcast(
+                connection,
+                new SimulationEpochBroadcast(simulationEpochSeconds),
+                requireAuthenticated: true,
+                channel: Channel.Reliable);
+        }
+
+        double ResolveRestoredSimulationTime()
+        {
+            for (int i = 0; i < zones.Count; i++)
+            {
+                MultiplayerSceneContext context = ResolveSceneContext(i);
+                if (context?.GravitySimulation != null)
+                {
+                    return context.GravitySimulation.SimulationTime;
+                }
+            }
+
+            return 0d;
+        }
+
+        void BroadcastEpoch()
+        {
+            networkManager.ServerManager.Broadcast(
+                new SimulationEpochBroadcast(simulationEpochSeconds),
+                requireAuthenticated: true,
+                channel: Channel.Reliable);
+        }
+
+        void OnEpochBroadcast(SimulationEpochBroadcast message, Channel channel)
+        {
+            if (networkManager != null && networkManager.IsServerStarted)
+            {
+                return;
+            }
+
+            simulationEpochSeconds = message.EpochSeconds >= 0d
+                ? message.EpochSeconds
+                : 0d;
+        }
+
+        MultiplayerSceneContext ResolveSceneContext(int index)
+        {
+            MultiplayerSceneContext context = zoneSceneContexts[index];
+            if (context != null)
+            {
+                return context;
+            }
+
+            context = MultiplayerSceneContext.FindIn(zones[index].Scene);
+            zoneSceneContexts[index] = context;
+            return context;
+        }
+
         void ApplyNetworkSimulationTime()
         {
             if (networkManager?.TimeManager == null)
@@ -159,11 +247,11 @@ namespace Farion.Multiplayer.World
                 return;
             }
 
-            double seconds =
+            double seconds = simulationEpochSeconds +
                 ResolveSimulationTick() * networkManager.TimeManager.TickDelta;
             for (int i = 0; i < zoneSceneContexts.Count; i++)
             {
-                zoneSceneContexts[i]?.ApplyNetworkSimulationTime(seconds);
+                ResolveSceneContext(i)?.ApplyNetworkSimulationTime(seconds);
             }
         }
 

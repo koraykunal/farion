@@ -55,7 +55,7 @@ namespace Farion.Tests.PlayMode
 
             Assert.That(MultiplayerSessionController.Active, Is.Null);
             Assert.That(
-                GameplaySessionModeRequest.ConsumeOrDefault(),
+                GameplaySessionModeRequest.RequestedOrDefault,
                 Is.EqualTo(GameplaySessionMode.Offline));
         }
 

@@ -141,6 +141,11 @@ namespace Farion.Multiplayer.Player
             ApplyPossessionState(possessionActive.Value);
             SetOwnerRendererVisibility(
                 appliedPossessionActive && !IsOwner);
+            if (sceneContext != null && (IsServerStarted || IsOwner))
+            {
+                sceneContext.RegisterFormationObserver(transform);
+            }
+
             if (!IsOwner)
             {
                 return;
@@ -158,6 +163,11 @@ namespace Farion.Multiplayer.Player
 
         public override void OnStopClient()
         {
+            if (sceneContext != null)
+            {
+                sceneContext.UnregisterFormationObserver(transform);
+            }
+
             if (IsOwner && sceneContext != null)
             {
                 sceneContext.UnbindOwnedPlayer(this);

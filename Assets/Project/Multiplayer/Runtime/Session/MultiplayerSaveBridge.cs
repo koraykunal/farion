@@ -3,6 +3,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Persistence;
 using Farion.Multiplayer.Spawning;
+using Farion.Multiplayer.World;
 using FishNet.Managing;
 using UnityEngine;
 
@@ -14,6 +15,8 @@ namespace Farion.Multiplayer.Session
     {
         [SerializeField] NetworkManager networkManager;
         [SerializeField] MultiplayerPlayerSpawner playerSpawner;
+        [SerializeField] MultiplayerWorldOriginAuthority originAuthority;
+        [SerializeField] ZonePhysicsTickDriver physicsTickDriver;
 
         GameplaySaveCoordinator coordinator;
         string slotName = SaveGameSlotCatalog.DefaultSlotName;
@@ -28,6 +31,8 @@ namespace Farion.Multiplayer.Session
         {
             networkManager ??= GetComponent<NetworkManager>();
             playerSpawner ??= GetComponent<MultiplayerPlayerSpawner>();
+            originAuthority ??= GetComponent<MultiplayerWorldOriginAuthority>();
+            physicsTickDriver ??= GetComponent<ZonePhysicsTickDriver>();
         }
 
         public void SetSlot(string requestedSlotName)
@@ -85,13 +90,14 @@ namespace Farion.Multiplayer.Session
             IReadOnlyList<MultiplayerShipSaveEntry> shipCargo,
             GameplayDefinitionRegistry definitions)
         {
-            if (playerSpawner == null)
+            if (playerSpawner != null)
             {
-                return;
+                playerSpawner.LoadRestoredState(players, definitions);
+                playerSpawner.LoadRestoredShipCargo(shipCargo);
             }
 
-            playerSpawner.LoadRestoredState(players, definitions);
-            playerSpawner.LoadRestoredShipCargo(shipCargo);
+            originAuthority?.AdoptRestoredOrigin();
+            physicsTickDriver?.AdoptRestoredSimulationTime();
         }
     }
 }

@@ -207,6 +207,8 @@ namespace Farion.Multiplayer.Session
                     UiTextKeys.CoopErrorHostLeft,
                 MultiplayerFailureReason.ServerFull =>
                     UiTextKeys.CoopErrorServerFull,
+                MultiplayerFailureReason.SaveLoadFailed =>
+                    UiTextKeys.CoopErrorSaveLoad,
                 _ => UiTextKeys.CoopErrorConnection
             };
         }

@@ -122,8 +122,10 @@ namespace Farion.Tests.PlayMode
 
             GameObject actor = new("GroundProbeActor");
             UnitySceneManager.MoveGameObjectToScene(actor, firstScene);
-            actor.transform.position = Vector3.up;
             FirstPersonMotor motor = actor.AddComponent<FirstPersonMotor>();
+            CapsuleCollider capsule = actor.GetComponent<CapsuleCollider>();
+            actor.transform.position = Vector3.up *
+                Mathf.Max(capsule.height * 0.5f, capsule.radius);
             FirstPersonMotorProfile profile =
                 ScriptableObject.CreateInstance<FirstPersonMotorProfile>();
             TestFieldAccess.SetField(motor, "profile", profile);

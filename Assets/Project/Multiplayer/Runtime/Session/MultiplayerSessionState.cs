@@ -17,6 +17,7 @@ namespace Farion.Multiplayer.Session
         ProtocolMismatch = 3,
         SessionSetup = 4,
         InvalidAddress = 5,
-        ServerFull = 6
+        ServerFull = 6,
+        SaveLoadFailed = 7
     }
 }

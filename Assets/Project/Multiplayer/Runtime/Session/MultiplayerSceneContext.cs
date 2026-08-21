@@ -49,6 +49,7 @@ namespace Farion.Multiplayer.Session
         [SerializeField] SimulationZoneContext simulationZoneContext;
         [SerializeField] List<ResourceDepositRuntimeSpawner> resourceStreamers = new();
         [SerializeField] List<CelestialSurfacePatchSystem> surfacePatchSystems = new();
+        [SerializeField] List<SurfaceFormationSpawner> formationSpawners = new();
 
         [Header("Local Presentation")]
         [SerializeField] SpacecraftCameraRig spacecraftCameraRig;
@@ -60,11 +61,9 @@ namespace Farion.Multiplayer.Session
 
         [Header("Spawn")]
         [SerializeField] Transform[] spawnPoints = new Transform[4];
-        [SerializeField] Transform[] starterShuttleFormations = new Transform[4];
+        [SerializeField] Transform starterShuttleFormation;
         [Min(0f)]
         [SerializeField] float surfaceClearance = 1.02f;
-        [Min(0f)]
-        [SerializeField] float starterShuttleSurfaceClearance = 3f;
 
         MultiplayerPlayerSpawner playerSpawner;
         MultiplayerWorldOriginAuthority originAuthority;
@@ -102,7 +101,22 @@ namespace Farion.Multiplayer.Session
         public GeneratedEntityId ZoneId => simulationZoneContext != null
             ? simulationZoneContext.ZoneId
             : GeneratedEntityId.None;
-        public int SpawnPointCount => spawnPoints?.Length ?? 0;
+
+        public void RegisterFormationObserver(Transform observer)
+        {
+            for (int i = 0; i < formationSpawners.Count; i++)
+            {
+                formationSpawners[i]?.AddObserver(observer);
+            }
+        }
+
+        public void UnregisterFormationObserver(Transform observer)
+        {
+            for (int i = 0; i < formationSpawners.Count; i++)
+            {
+                formationSpawners[i]?.RemoveObserver(observer);
+            }
+        }
 
         public void ApplyNetworkSimulationTime(double seconds)
         {
@@ -219,20 +233,56 @@ namespace Farion.Multiplayer.Session
             }
 
             Transform point = spawnPoints[slot];
+            return TryResolveFormationPose(
+                ResolveSpawnGroupCenter(),
+                point.parent != null ? point.parent.rotation : Quaternion.identity,
+                point,
+                surfaceClearance,
+                out position,
+                out rotation);
+        }
+
+        bool TryResolveFormationPose(
+            Vector3 groupPosition,
+            Quaternion groupRotation,
+            Transform anchor,
+            float clearance,
+            out Vector3 position,
+            out Quaternion rotation)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
             if (!TryResolveDryTerrainPose(
-                    point.position,
-                    point.forward,
-                    surfaceClearance,
-                    out CelestialSurfacePlacementResult placement))
+                    groupPosition,
+                    groupRotation * Vector3.forward,
+                    clearance,
+                    out CelestialSurfacePlacementResult groupPlacement))
             {
                 return false;
             }
 
-            Vector3 authoredOffset = Vector3.ProjectOnPlane(
-                point.position - ResolveSpawnGroupCenter(),
-                placement.PlacementUp);
-            position = placement.Position + authoredOffset;
-            rotation = placement.Rotation;
+            Quaternion groupToPlacement =
+                groupPlacement.Rotation * Quaternion.Inverse(groupRotation);
+            position = groupPlacement.Position +
+                groupToPlacement * (anchor.position - groupPosition);
+            rotation = groupToPlacement * anchor.rotation;
+            CelestialSurfacePlacementOptions options = new(
+                clearance,
+                clearance,
+                CelestialSurfacePlacementMode.TerrainSurface);
+            if (CelestialSurfacePlacement.TryResolvePose(
+                    celestialFrameProvider,
+                    position,
+                    Vector3.zero,
+                    rotation * Vector3.forward,
+                    options,
+                    out CelestialSurfacePlacementResult anchorPlacement) &&
+                IsDryLand(anchorPlacement))
+            {
+                position = anchorPlacement.Position;
+                rotation = anchorPlacement.Rotation;
+            }
+
             return true;
         }
 
@@ -303,39 +353,27 @@ namespace Farion.Multiplayer.Session
         }
 
         public bool TryGetStarterShuttlePose(
-            int partySize,
-            int shipIndex,
+            int slot,
             out Vector3 position,
             out Quaternion rotation)
         {
             position = Vector3.zero;
             rotation = Quaternion.identity;
-            if (starterShuttleFormations == null ||
-                partySize < 1 ||
-                partySize > starterShuttleFormations.Length ||
-                shipIndex < 0 ||
-                shipIndex >= partySize)
-            {
-                return false;
-            }
-
-            Transform formation = starterShuttleFormations[partySize - 1];
-            Transform anchor = formation != null
-                ? formation.Find($"Ship_{shipIndex + 1}")
+            Transform anchor = starterShuttleFormation != null && slot >= 0
+                ? starterShuttleFormation.Find($"Ship_{slot + 1}")
                 : null;
-            if (anchor == null ||
-                !TryResolveDryTerrainPose(
-                    anchor.position,
-                    anchor.forward,
-                    starterShuttleSurfaceClearance,
-                    out CelestialSurfacePlacementResult placement))
+            if (anchor == null)
             {
                 return false;
             }
 
-            position = placement.Position;
-            rotation = placement.Rotation;
-            return true;
+            return TryResolveFormationPose(
+                starterShuttleFormation.position,
+                starterShuttleFormation.rotation,
+                anchor,
+                0f,
+                out position,
+                out rotation);
         }
 
         bool IsDryLand(CelestialSurfacePlacementResult placement)
@@ -647,6 +685,11 @@ namespace Farion.Multiplayer.Session
                 possession.enabled = false;
             }
 
+            if (spacecraftMotor != null)
+            {
+                spacecraftMotor.gameObject.SetActive(false);
+            }
+
             ApplyLocalPresentationMode();
 
             if (spacecraftRigidbody != null &&
@@ -665,9 +708,6 @@ namespace Farion.Multiplayer.Session
             originRebaser?.SetAutomaticRebasing(false);
             for (int i = 0; i < surfacePatchSystems.Count; i++)
             {
-                // Multiplayer collision must be identical for every peer. The
-                // adaptive local patch remains visual-only; the global planet
-                // collider is the shared authoritative collision baseline.
                 surfacePatchSystems[i]?.SetCollisionObserverSource(null);
             }
         }
