@@ -14,33 +14,20 @@ namespace Farion.Tests.EditMode
         [TearDown]
         public void TearDown()
         {
-            GameplaySessionModeRequest.ConsumeOrDefault();
+            GameplaySessionModeRequest.Cancel();
         }
 
         [Test]
-        public void SessionModeRequestIsConsumedOnce()
+        public void SessionModeSurvivesRepeatedSceneComposition()
         {
             GameplaySessionModeRequest.Request(
                 GameplaySessionMode.Multiplayer);
 
             Assert.That(
-                GameplaySessionModeRequest.ConsumeOrDefault(),
-                Is.EqualTo(GameplaySessionMode.Multiplayer));
-            Assert.That(
-                GameplaySessionModeRequest.ConsumeOrDefault(),
-                Is.EqualTo(GameplaySessionMode.Offline));
-        }
-
-        [Test]
-        public void SessionModeCanBeInspectedWithoutConsumingIt()
-        {
-            GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
-
-            Assert.That(
                 GameplaySessionModeRequest.RequestedOrDefault,
                 Is.EqualTo(GameplaySessionMode.Multiplayer));
             Assert.That(
-                GameplaySessionModeRequest.ConsumeOrDefault(),
+                GameplaySessionModeRequest.RequestedOrDefault,
                 Is.EqualTo(GameplaySessionMode.Multiplayer));
         }
 
@@ -53,7 +40,7 @@ namespace Farion.Tests.EditMode
             GameplaySessionModeRequest.Cancel();
 
             Assert.That(
-                GameplaySessionModeRequest.ConsumeOrDefault(),
+                GameplaySessionModeRequest.RequestedOrDefault,
                 Is.EqualTo(GameplaySessionMode.Offline));
         }
 

@@ -995,6 +995,14 @@ MonoBehaviour:
     m_Key: hud.hull
     m_Metadata:
       m_Items: []
+  - m_Id: 8691678301904896
+    m_Key: coop.error.save_load
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8691678398373888
+    m_Key: save_load.state.coop
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -297,11 +297,6 @@ namespace Farion.Editor.Validation
                     ValidateGameplaySession(scenePath, sessionController, report);
                 }
 
-                if (gameObject.TryGetComponent(out GravityActor gravityActor))
-                {
-                    ValidateRequiredReference(scenePath, gravityActor, "simulation", report);
-                }
-
                 if (gameObject.TryGetComponent(out CelestialFrameProvider frameProvider))
                 {
                     ValidateRequiredReference(scenePath, frameProvider, "simulation", report);

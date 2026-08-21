@@ -28,16 +28,5 @@ namespace Farion.Gameplay.Session
 
         public static GameplaySessionMode RequestedOrDefault =>
             pending ? requestedMode : GameplaySessionMode.Offline;
-
-        public static GameplaySessionMode ConsumeOrDefault()
-        {
-            if (!pending)
-            {
-                return GameplaySessionMode.Offline;
-            }
-
-            pending = false;
-            return requestedMode;
-        }
     }
 }

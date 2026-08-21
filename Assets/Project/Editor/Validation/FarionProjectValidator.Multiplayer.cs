@@ -123,33 +123,22 @@ namespace Farion.Editor.Validation
                 return;
             }
 
-            SerializedProperty formations = new SerializedObject(contexts[0])
-                .FindProperty("starterShuttleFormations");
-            if (formations == null || formations.arraySize != 4)
+            Transform formation = new SerializedObject(contexts[0])
+                .FindProperty("starterShuttleFormation")
+                ?.objectReferenceValue as Transform;
+            if (formation == null)
             {
                 report.AddError(
-                    $"{scenePath}: starter ship formations must contain Count_1 through Count_4.");
+                    $"{scenePath}: starter ship formation root is missing.");
                 return;
             }
 
-            for (int i = 0; i < formations.arraySize; i++)
+            for (int slot = 0; slot < MultiplayerPlayerSpawner.MaximumPlayers; slot++)
             {
-                Transform formation = formations.GetArrayElementAtIndex(i)
-                    .objectReferenceValue as Transform;
-                if (formation == null || formation.name != $"Count_{i + 1}")
+                if (formation.Find($"Ship_{slot + 1}") == null)
                 {
                     report.AddError(
-                        $"{scenePath}: starter ship formation {i + 1} is missing or misordered.");
-                    continue;
-                }
-
-                for (int shipIndex = 0; shipIndex <= i; shipIndex++)
-                {
-                    if (formation.Find($"Ship_{shipIndex + 1}") == null)
-                    {
-                        report.AddError(
-                            $"{scenePath}: {formation.name}/Ship_{shipIndex + 1} is missing.");
-                    }
+                        $"{scenePath}: {formation.name}/Ship_{slot + 1} is missing.");
                 }
             }
         }

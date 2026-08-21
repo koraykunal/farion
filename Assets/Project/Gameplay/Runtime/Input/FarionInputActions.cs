@@ -9,6 +9,8 @@ namespace Farion.Gameplay.Input
         public const float MaximumMouseSensitivity = 3f;
 
         const string BindingOverridesKey = "farion.input.binding-overrides";
+        const string BindingSchemeVersionKey = "farion.input.binding-scheme";
+        const int BindingSchemeVersion = 2;
         const string MouseSensitivityKey = "farion.input.mouse-sensitivity";
         const string InvertLookKey = "farion.input.invert-look";
         const float ReferenceGamepadLookRate = 120f;
@@ -199,6 +201,13 @@ namespace Farion.Gameplay.Input
             BuildVehicleMap(asset);
             BuildUiMap(asset);
 
+            if (PlayerPrefs.GetInt(BindingSchemeVersionKey, 1) != BindingSchemeVersion)
+            {
+                PlayerPrefs.DeleteKey(BindingOverridesKey);
+                PlayerPrefs.SetInt(BindingSchemeVersionKey, BindingSchemeVersion);
+                PlayerPrefs.Save();
+            }
+
             string overrides = PlayerPrefs.GetString(BindingOverridesKey, string.Empty);
             if (!string.IsNullOrEmpty(overrides))
             {
@@ -228,14 +237,18 @@ namespace Farion.Gameplay.Input
         {
             InputActionMap map = inputAsset.AddActionMap("Flight");
             InputAction translate = map.AddAction("Translate", InputActionType.Value, expectedControlLayout: "Vector2");
-            AddWasd(translate);
+            translate.AddCompositeBinding("2DVector")
+                .With("Up", "<Keyboard>/w")
+                .With("Down", "<Keyboard>/s")
+                .With("Left", "<Keyboard>/q")
+                .With("Right", "<Keyboard>/e");
             translate.AddBinding("<Gamepad>/leftStick")
                 .WithProcessor("stickDeadzone(min=0.12,max=0.95)");
 
             InputAction vertical = map.AddAction("Vertical", InputActionType.Value, expectedControlLayout: "Axis");
             vertical.AddCompositeBinding("1DAxis")
-                .With("Negative", "<Keyboard>/leftCtrl")
-                .With("Positive", "<Keyboard>/space");
+                .With("Negative", "<Keyboard>/f")
+                .With("Positive", "<Keyboard>/r");
             vertical.AddCompositeBinding("1DAxis")
                 .With("Negative", "<Gamepad>/leftTrigger")
                 .With("Positive", "<Gamepad>/rightTrigger");
@@ -247,13 +260,13 @@ namespace Farion.Gameplay.Input
 
             InputAction roll = map.AddAction("Roll", InputActionType.Value, expectedControlLayout: "Axis");
             roll.AddCompositeBinding("1DAxis")
-                .With("Negative", "<Keyboard>/q")
-                .With("Positive", "<Keyboard>/e");
+                .With("Negative", "<Keyboard>/a")
+                .With("Positive", "<Keyboard>/d");
             roll.AddCompositeBinding("1DAxis")
                 .With("Negative", "<Gamepad>/leftShoulder")
                 .With("Positive", "<Gamepad>/rightShoulder");
 
-            AddButton(map, "Boost", "<Keyboard>/leftShift", "<Gamepad>/leftStickPress");
+            AddButton(map, "Boost", "<Keyboard>/space", "<Gamepad>/leftStickPress");
             AddButton(map, "Brake", "<Keyboard>/x", "<Gamepad>/buttonSouth");
             AddButton(map, "ToggleAssist", "<Keyboard>/z", "<Gamepad>/buttonEast");
             AddButton(map, "ToggleLandingGear", "<Keyboard>/g", "<Gamepad>/dpad/down");
@@ -262,7 +275,7 @@ namespace Farion.Gameplay.Input
         static void BuildVehicleMap(InputActionAsset inputAsset)
         {
             InputActionMap map = inputAsset.AddActionMap("Vehicle");
-            AddButton(map, "Exit", "<Keyboard>/f", "<Gamepad>/buttonNorth");
+            AddButton(map, "Exit", "<Keyboard>/v", "<Gamepad>/buttonNorth");
             AddButton(map, "ToggleCamera", "<Keyboard>/c", "<Gamepad>/rightStickPress");
         }
 

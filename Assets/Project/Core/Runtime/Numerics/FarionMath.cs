@@ -13,10 +13,17 @@ namespace Farion.Core.Numerics
         /// </summary>
         public static float Smooth(float current, float target, float response, float deltaTime)
         {
-            float amount = response <= 0f
+            return Mathf.Lerp(current, target, SmoothFactor(response, deltaTime));
+        }
+
+        /// <summary>
+        /// Frame-rate independent interpolation factor for a given response rate.
+        /// </summary>
+        public static float SmoothFactor(float response, float deltaTime)
+        {
+            return response <= 0f
                 ? 1f
                 : 1f - Mathf.Exp(-response * Mathf.Max(0f, deltaTime));
-            return Mathf.Lerp(current, target, amount);
         }
 
         /// <summary>Polynomial smooth minimum; <paramref name="k"/> is the blend width.</summary>

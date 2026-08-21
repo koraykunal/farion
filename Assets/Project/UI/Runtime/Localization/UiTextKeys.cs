@@ -28,6 +28,7 @@ namespace Farion.UI.Localization
         public const string CoopSaveCompleted = "coop.save.completed";
         public const string CoopSaveFailed = "coop.save.failed";
         public const string CoopErrorProtocol = "coop.error.protocol";
+        public const string CoopErrorSaveLoad = "coop.error.save_load";
         public const string CoopErrorSession = "coop.error.session";
         public const string CoopStatusConnecting = "coop.status.connecting";
         public const string CoopStatusHosting = "coop.status.hosting";
@@ -106,6 +107,7 @@ namespace Farion.UI.Localization
         public const string SaveLoadStateEmpty = "save_load.state.empty";
         public const string SaveLoadStateInvalid = "save_load.state.invalid";
         public const string SaveLoadStateReady = "save_load.state.ready";
+        public const string SaveLoadStateCoop = "save_load.state.coop";
         public const string SaveLoadStateUnsupported = "save_load.state.unsupported";
         public const string SaveLoadHostCoop = "save_load.host_coop";
         public const string SaveLoadTitleLoad = "save_load.title.load";

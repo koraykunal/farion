@@ -1001,6 +1001,14 @@ MonoBehaviour:
     m_Localized: HULL
     m_Metadata:
       m_Items: []
+  - m_Id: 8691678301904896
+    m_Localized: The selected save could not be loaded for co-op.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8691678398373888
+    m_Localized: CO-OP
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

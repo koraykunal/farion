@@ -56,10 +56,20 @@ namespace Farion.Gameplay.Session
 
         void Awake()
         {
-            Mode = GameplaySessionModeRequest.ConsumeOrDefault();
+            Mode = GameplaySessionModeRequest.RequestedOrDefault;
             if (Mode == GameplaySessionMode.Offline)
             {
                 ApplySimulationAuthority();
+            }
+        }
+
+        void Start()
+        {
+            if (Mode == GameplaySessionMode.Offline && assignedShuttle != null)
+            {
+                CelestialSurfaceSettling.TrySettle(
+                    celestialFrameProvider,
+                    assignedShuttle.transform);
             }
         }
 

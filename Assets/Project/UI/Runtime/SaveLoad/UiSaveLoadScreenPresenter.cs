@@ -290,7 +290,7 @@ namespace Farion.UI.SaveLoad
                     i + 1,
                     GetSlotTitle(summary.SlotName, i),
                     GetTimestamp(summary),
-                    GetStateLabel(summary.State));
+                    GetStateLabel(summary));
             }
 
             RefreshCurrentSlot();
@@ -699,6 +699,14 @@ namespace Farion.UI.SaveLoad
                 .ToLocalTime()
                 .ToString("dd MMM yyyy · HH:mm", culture)
                 .ToUpper(culture);
+        }
+
+        static string GetStateLabel(SaveGameSlotSummary summary)
+        {
+            string label = GetStateLabel(summary.State);
+            return summary.MultiplayerSession && summary.IsLoadable
+                ? $"{label} · {UiLocalization.Get(UiTextKeys.SaveLoadStateCoop)}"
+                : label;
         }
 
         static string GetStateLabel(SaveGameSlotState state)

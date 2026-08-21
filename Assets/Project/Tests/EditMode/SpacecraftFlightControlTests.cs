@@ -644,6 +644,97 @@ namespace Farion.Tests.EditMode
             }
         }
 
+        [Test]
+        public void OptimalSpeedBandKeepsFullTurnAuthority()
+        {
+            SpacecraftPilotCommand command = new(
+                Vector3.zero,
+                Vector3.up,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    command,
+                    new Vector3(0f, 0f, 108f),
+                    Vector3.zero,
+                    Vector3.zero,
+                    assisted: false),
+                Settings(0.4f, 0.75f, 0.55f));
+
+            Assert.That(
+                output.LocalAngularAcceleration.y,
+                Is.EqualTo(140f * Mathf.Deg2Rad).Within(0.0001f));
+        }
+
+        [Test]
+        public void FullThrottleReducesTurnAuthorityToOffBandScale()
+        {
+            SpacecraftPilotCommand command = new(
+                Vector3.zero,
+                Vector3.up,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    command,
+                    new Vector3(0f, 0f, 180f),
+                    Vector3.zero,
+                    Vector3.zero,
+                    assisted: false),
+                Settings(0.4f, 0.75f, 0.55f));
+
+            Assert.That(
+                output.LocalAngularAcceleration.y,
+                Is.EqualTo(140f * Mathf.Deg2Rad * 0.55f).Within(0.0001f));
+        }
+
+        [Test]
+        public void StationaryShipTurnsAtOffBandScale()
+        {
+            SpacecraftPilotCommand command = new(
+                Vector3.zero,
+                Vector3.up,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(command, Vector3.zero, Vector3.zero, Vector3.zero, assisted: false),
+                Settings(0.4f, 0.75f, 0.55f));
+
+            Assert.That(
+                output.LocalAngularAcceleration.y,
+                Is.EqualTo(140f * Mathf.Deg2Rad * 0.55f).Within(0.0001f));
+        }
+
+        [Test]
+        public void NeutralSpeedBandLeavesTurnAuthorityUnscaled()
+        {
+            SpacecraftPilotCommand command = new(
+                Vector3.zero,
+                Vector3.up,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    command,
+                    new Vector3(0f, 0f, 180f),
+                    Vector3.zero,
+                    Vector3.zero,
+                    assisted: false),
+                Settings());
+
+            Assert.That(
+                output.LocalAngularAcceleration.y,
+                Is.EqualTo(140f * Mathf.Deg2Rad).Within(0.0001f));
+        }
+
         static SpacecraftFlightControlFrame Frame(
             SpacecraftPilotCommand command,
             Vector3 localVelocity,
@@ -692,7 +783,10 @@ namespace Farion.Tests.EditMode
                 environment);
         }
 
-        static SpacecraftFlightControlSettings Settings()
+        static SpacecraftFlightControlSettings Settings(
+            float optimalSpeedBandStart = 0f,
+            float optimalSpeedBandEnd = 1f,
+            float offBandAngularScale = 1f)
         {
             return new SpacecraftFlightControlSettings(
                 new Vector3(45f, 40f, 180f),
@@ -709,7 +803,10 @@ namespace Farion.Tests.EditMode
                 compensateGravity: true,
                 limitManualFlightEnvelope: true,
                 manualEnvelopeStart: 0.85f,
-                boostSurgeStrength: 0f);
+                boostSurgeStrength: 0f,
+                optimalSpeedBandStart,
+                optimalSpeedBandEnd,
+                offBandAngularScale);
         }
 
         sealed class FakeSpacecraftPhysicsBody : ISpacecraftPhysicsBody

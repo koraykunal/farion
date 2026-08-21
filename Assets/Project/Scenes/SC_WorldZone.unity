@@ -119,6 +119,166 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &101437577
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1266854583}
+    m_Modifications:
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -4.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: castRadius
+      value: 0.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: controlLock
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: maxDistance
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: viewReference
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4695914025171897078, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_Name
+      value: Player Explorer
+      objectReference: {fileID: 0}
+    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_Constraints
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_Interpolate
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: m_CollisionDetection
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: controlLock
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: mouseSensitivity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8714087835574942023, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: frameProvider
+      value: 
+      objectReference: {fileID: 1996413350}
+    - target: {fileID: 9022320798132655451, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+      propertyPath: viewReference
+      value: 
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+--- !u!114 &101437578 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
+--- !u!114 &101437579 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
+--- !u!114 &101437580 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9022320798132655451, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
+--- !u!54 &101437581 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &101437582 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4695914025171897078, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &101437583 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1784853116956105904, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101437582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
+--- !u!4 &101437584 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
+  m_PrefabInstance: {fileID: 101437577}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &109862163
 GameObject:
   m_ObjectHideFlags: 0
@@ -259,7 +419,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95d640a070df466ba096c4ca7c188997, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.World.Zones.SimulationZoneContext
   zoneId: 0
 --- !u!4 &155198653
@@ -312,99 +472,6 @@ Transform:
   - {fileID: 1477076276}
   - {fileID: 1148478147}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &247757151
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 247757152}
-  m_Layer: 0
-  m_Name: Ship_3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &247757152
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 247757151}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 8, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 412401546}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &273285935
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 273285936}
-  m_Layer: 0
-  m_Name: Ship_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &273285936
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 273285935}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -9, y: 0, z: -3}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 463113332}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &293640255
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 293640256}
-  m_Layer: 0
-  m_Name: Ship_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &293640256
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 293640255}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 6, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1796747984}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &349922871
 GameObject:
@@ -496,7 +563,7 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1 &412401545
+--- !u!1 &476402689
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -504,41 +571,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 412401546}
-  m_Layer: 0
-  m_Name: Count_3
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &412401546
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 412401545}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1360247370}
-  - {fileID: 1296337465}
-  - {fileID: 247757152}
-  m_Father: {fileID: 1930953937}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &432754974
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 432754975}
+  - component: {fileID: 476402690}
   m_Layer: 0
   m_Name: Ship_3
   m_TagString: Untagged
@@ -546,54 +579,19 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &432754975
+--- !u!4 &476402690
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 432754974}
+  m_GameObject: {fileID: 476402689}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3, y: 0, z: 3}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 13, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 463113332}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &463113331
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 463113332}
-  m_Layer: 0
-  m_Name: Count_4
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &463113332
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 463113331}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 273285936}
-  - {fileID: 1830693548}
-  - {fileID: 432754975}
-  - {fileID: 957673602}
   m_Father: {fileID: 1930953937}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &485509867
@@ -626,6 +624,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1043416902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &518239067
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 518239068}
+  m_Layer: 0
+  m_Name: Ship_2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &518239068
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 518239067}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -13, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1930953937}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &651725576
 GameObject:
@@ -661,7 +690,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 49367193ace64547a9bbfe5a80876247, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialStarVisual
   profile: {fileID: 11400000, guid: 80bfee7118864b1db71aa07fc0508041, type: 2}
   scaledSpaceProfile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
@@ -681,7 +710,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: body.starting_system.star
 --- !u!114 &651725579
@@ -694,7 +723,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e485273ad23c4c778982d5d5829118f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialRadiationSource
   body: {fileID: 651725582}
   profile: {fileID: 11400000, guid: 076a8bd9b2ab4b3f818b8c563a906a44, type: 2}
@@ -708,7 +737,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 614eb7b496224fbd82ffa684591be353, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Lighting.CelestialLightSource
   body: {fileID: 651725582}
   radiationSource: {fileID: 651725579}
@@ -722,7 +751,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 31f48b91e2fb43619076b6afd6b936cb, type: 2}
   applyInEditMode: 1
@@ -738,7 +767,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Starting Star
   bodyType: 0
@@ -846,7 +875,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1043416902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &957673601
+--- !u!1 &961083789
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -854,28 +883,28 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 957673602}
+  - component: {fileID: 961083790}
   m_Layer: 0
-  m_Name: Ship_4
+  m_Name: Ship_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &957673602
+--- !u!4 &961083790
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 957673601}
+  m_GameObject: {fileID: 961083789}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 9, y: 0, z: -3}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -39, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 463113332}
+  m_Father: {fileID: 1930953937}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &985521777
 GameObject:
@@ -990,69 +1019,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 985521777}
   m_Mesh: {fileID: 0}
---- !u!1 &1008928209
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1008928210}
-  m_Layer: 0
-  m_Name: Ship_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1008928210
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1008928209}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1796747984}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1009712690
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1009712691}
-  m_Layer: 0
-  m_Name: Count_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1009712691
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1009712690}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1432313128}
-  m_Father: {fileID: 1930953937}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1043416901
 GameObject:
   m_ObjectHideFlags: 0
@@ -1100,7 +1066,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f86a6826ed049948a83468be53ec764, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Session.MultiplayerSceneContext
   runtimeRoot: {fileID: 1829898725}
   offlineExplorer: {fileID: 101437582}
@@ -1116,6 +1082,10 @@ MonoBehaviour:
   - {fileID: 1772746496}
   surfacePatchSystems:
   - {fileID: 1772746494}
+  formationSpawners:
+  - {fileID: 8800000000000000006}
+  - {fileID: 8800000000000000007}
+  - {fileID: 8800000000000000005}
   spacecraftCameraRig: {fileID: 0}
   firstPersonCameraRig: {fileID: 0}
   viewReference: {fileID: 0}
@@ -1126,13 +1096,8 @@ MonoBehaviour:
   - {fileID: 796783953}
   - {fileID: 1684625538}
   - {fileID: 1313707470}
-  starterShuttleFormations:
-  - {fileID: 1009712691}
-  - {fileID: 1796747984}
-  - {fileID: 412401546}
-  - {fileID: 463113332}
+  starterShuttleFormation: {fileID: 1930953937}
   surfaceClearance: 1.02
-  starterShuttleSurfaceClearance: 3
 --- !u!1 &1148478145
 GameObject:
   m_ObjectHideFlags: 0
@@ -1155,6 +1120,7 @@ GameObject:
   - component: {fileID: 1148478151}
   - component: {fileID: 1148478149}
   - component: {fileID: 8800000000000000003}
+  - component: {fileID: 8800000000000000006}
   m_Layer: 6
   m_Name: Rime
   m_TagString: Untagged
@@ -1172,7 +1138,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1148478148}
   generationProfile: {fileID: 11400000, guid: dfcdb85c483641668d1217535da4ccc2, type: 2}
@@ -1205,7 +1171,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Rime
   bodyType: 1
@@ -1228,7 +1194,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1148478153}
@@ -1244,7 +1210,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: body.starting_system.planet_03
 --- !u!114 &1148478152
@@ -1257,7 +1223,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.ResourceNodes.ResourceDepositRuntimeSpawner
   body: {fileID: 1148478148}
   surfaceModel: {fileID: 1148478146}
@@ -1285,7 +1251,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 1148478148}
   surfaceModel: {fileID: 1148478146}
@@ -1314,7 +1280,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 80a115bde9b54ef1a418fa41eef1ffab, type: 2}
   applyInEditMode: 1
@@ -1435,7 +1401,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
   profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
   terrainVisual: {fileID: 1148478153}
@@ -1479,37 +1445,6 @@ Transform:
   - {fileID: 8000000000000000002}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1296337464
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1296337465}
-  m_Layer: 0
-  m_Name: Ship_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1296337465
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1296337464}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 4}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 412401546}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1313707469
 GameObject:
   m_ObjectHideFlags: 0
@@ -1541,68 +1476,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1043416902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1360247369
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1360247370}
-  m_Layer: 0
-  m_Name: Ship_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1360247370
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1360247369}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 412401546}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1432313127
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1432313128}
-  m_Layer: 0
-  m_Name: Ship_1
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1432313128
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1432313127}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1009712691}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1477076275
 GameObject:
   m_ObjectHideFlags: 0
@@ -1625,6 +1498,7 @@ GameObject:
   - component: {fileID: 1477076279}
   - component: {fileID: 1477076277}
   - component: {fileID: 8800000000000000004}
+  - component: {fileID: 8800000000000000007}
   m_Layer: 6
   m_Name: Ember
   m_TagString: Untagged
@@ -1658,7 +1532,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1477076281}
@@ -1674,7 +1548,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: body.starting_system.planet_02
 --- !u!114 &1477076280
@@ -1687,7 +1561,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.ResourceNodes.ResourceDepositRuntimeSpawner
   body: {fileID: 1477076283}
   surfaceModel: {fileID: 1477076288}
@@ -1715,7 +1589,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 1477076283}
   surfaceModel: {fileID: 1477076288}
@@ -1744,7 +1618,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 71b9609693f94ff6be299ba823334dad, type: 2}
   applyInEditMode: 1
@@ -1760,7 +1634,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Ember
   bodyType: 1
@@ -1888,7 +1762,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1477076283}
   generationProfile: {fileID: 11400000, guid: 6d2813a2700548129c0c6d18e8009f6d, type: 2}
@@ -1905,7 +1779,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
   profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
   terrainVisual: {fileID: 1477076281}
@@ -2025,6 +1899,285 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1487326491}
   m_Mesh: {fileID: 0}
+--- !u!1001 &1678406296
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1266854583}
+    m_Modifications:
+    - target: {fileID: 214599163261050350, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.88912314
+      objectReference: {fileID: 0}
+    - target: {fileID: 214599163261050350, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.88912314
+      objectReference: {fileID: 0}
+    - target: {fileID: 1735546013325418580, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5801001
+      objectReference: {fileID: 0}
+    - target: {fileID: 1735546013325418580, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5801001
+      objectReference: {fileID: 0}
+    - target: {fileID: 1974132133099151291, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.49623626
+      objectReference: {fileID: 0}
+    - target: {fileID: 1974132133099151291, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.49623626
+      objectReference: {fileID: 0}
+    - target: {fileID: 2441852034644142768, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Name
+      value: PF_PlayerStarterShuttle
+      objectReference: {fileID: 0}
+    - target: {fileID: 2637545842290408703, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.4194199
+      objectReference: {fileID: 0}
+    - target: {fileID: 2637545842290408703, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.4194199
+      objectReference: {fileID: 0}
+    - target: {fileID: 3756892544726139654, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4289152935129214295, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.49830204
+      objectReference: {fileID: 0}
+    - target: {fileID: 4289152935129214295, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.49830204
+      objectReference: {fileID: 0}
+    - target: {fileID: 4488009981222792894, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.67588913
+      objectReference: {fileID: 0}
+    - target: {fileID: 4488009981222792894, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.67588913
+      objectReference: {fileID: 0}
+    - target: {fileID: 4723914796334302878, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.67344236
+      objectReference: {fileID: 0}
+    - target: {fileID: 4723914796334302878, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.67344236
+      objectReference: {fileID: 0}
+    - target: {fileID: 4918412385370244340, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5383031462875425764, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7954598089249100686, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.42432165
+      objectReference: {fileID: 0}
+    - target: {fileID: 7954598089249100686, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.42432165
+      objectReference: {fileID: 0}
+    - target: {fileID: 8070389999196084472, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.5941283
+      objectReference: {fileID: 0}
+    - target: {fileID: 8070389999196084472, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.5941283
+      objectReference: {fileID: 0}
+    - target: {fileID: 8165542165073250860, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8579063232482358793, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.88128835
+      objectReference: {fileID: 0}
+    - target: {fileID: 8579063232482358793, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.88128835
+      objectReference: {fileID: 0}
+    - target: {fileID: 8607803184205426111, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: celestialProbe
+      value: 
+      objectReference: {fileID: 1678406324}
+    - target: {fileID: 8607803184205426111, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: oceanInteractor
+      value: 
+      objectReference: {fileID: 1678406317}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+--- !u!4 &1678406297 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1678406298 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7591439062830295501, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a37fae9001c495cbc8611c85c486f84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftRig
+--- !u!114 &1678406299 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7247907982008486530, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 240ea934eebc42bf9fd3088b670f8e90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
+--- !u!114 &1678406301 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3359784979145954321, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bd89b4c96f34fd4e9d670f2eb2c0a02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftMotor
+--- !u!114 &1678406302 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1430296848504241019, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
+--- !u!54 &1678406309 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 7057908404667551272, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1678406317 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 789528504066411760, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbe3b10ddd4148a4a6ef589ef2108d17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftOceanInteractor
+--- !u!114 &1678406324 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7190813019005924918, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d25fd99b97c4ca48f4aebe4425840b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Actors.CelestialActorProbe
+--- !u!114 &1678406330 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 291845060493645677, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+  m_PrefabInstance: {fileID: 1678406296}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee3ff7f66b694542bf9062bbb6cba7cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.ShuttleRuntimeBinding
+--- !u!1 &1682824524
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1682824525}
+  m_Layer: 0
+  m_Name: Ship_4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1682824525
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1682824524}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 39, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1930953937}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1684625537
 GameObject:
   m_ObjectHideFlags: 0
@@ -2192,6 +2345,7 @@ GameObject:
   - component: {fileID: 1772746494}
   - component: {fileID: 1772746493}
   - component: {fileID: 8800000000000000002}
+  - component: {fileID: 8800000000000000005}
   m_Layer: 0
   m_Name: Starting Planet
   m_TagString: Untagged
@@ -2209,7 +2363,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1772746499}
@@ -2225,7 +2379,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d24e35f46a784b89ab12c3d4e5f60718, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialSurfacePatchSystem
   profile: {fileID: 11400000, guid: a34f56b78c904d12ae34f56b78c90d12, type: 2}
   bodyVisual: {fileID: 1772746499}
@@ -2255,7 +2409,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: body.starting_system.planet_01
 --- !u!114 &1772746496
@@ -2268,7 +2422,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b812a12afea1404cbc13183162fd6096, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.ResourceNodes.ResourceDepositRuntimeSpawner
   body: {fileID: 1772746501}
   surfaceModel: {fileID: 1772746497}
@@ -2296,7 +2450,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1772746501}
   generationProfile: {fileID: 11400000, guid: a9d263dcb6044288a2c0c264ca7a5880, type: 2}
@@ -2313,7 +2467,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
   profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
   terrainVisual: {fileID: 1772746499}
@@ -2330,7 +2484,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 1772746501}
   surfaceModel: {fileID: 1772746497}
@@ -2359,7 +2513,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 3b3b9eebb8934d32b3cf27907080c8b9, type: 2}
   applyInEditMode: 1
@@ -2375,7 +2529,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Starting Planet
   bodyType: 1
@@ -2544,7 +2698,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cca359eabb86423f96be7fcb6f6d7ec4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1781217931}
@@ -2560,7 +2714,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: body.starting_system.moon_01
 --- !u!114 &1781217931
@@ -2573,7 +2727,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7575f0fe8f9c0c04ea39c5ff90dd7679, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 1781217933}
   surfaceModel: {fileID: 0}
@@ -2602,7 +2756,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 201e06af91d00534895f3b2456dc13c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialBodyDefinitionAuthoring
   definition: {fileID: 11400000, guid: 6071a6b3071e4d16bff80d8d3442ac77, type: 2}
   applyInEditMode: 1
@@ -2618,7 +2772,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe8c1231570c96a4bbc35a0e5cc7a752, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Starting Moon
   bodyType: 2
@@ -2752,39 +2906,6 @@ Transform:
   - {fileID: 109862164}
   m_Father: {fileID: 246392134}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1796747983
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1796747984}
-  m_Layer: 0
-  m_Name: Count_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1796747984
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1796747983}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1008928210}
-  - {fileID: 293640256}
-  m_Father: {fileID: 1930953937}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1829898721
 GameObject:
   m_ObjectHideFlags: 0
@@ -2818,7 +2939,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf72c30c488a495d8af233a25426ebb0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetRuntime
   persistentId: {fileID: 1829898724}
   knowledge: {fileID: 1829898727}
@@ -2833,7 +2954,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 956b9c04405f48bb8f8f30abad89adf4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetStorageInventory
   fallbackContainerId: inventory.local
   slotCapacity: 48
@@ -2848,7 +2969,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0f0d6d5dc8ab4b01a0fb0d50f74f03f3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Core.Runtime::Farion.Core.Persistence.PersistentObjectId
   persistentId: fleet.local
 --- !u!114 &1829898725
@@ -2861,7 +2982,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c34405800644338b4dcd45a09e2e686, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Session.GameplayRuntimeRoot
   definitions: {fileID: 11400000, guid: e1f437824dc54f30a15891d3a77e3217, type: 2}
   gravitySimulation: {fileID: 1996413352}
@@ -2883,7 +3004,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71b1c94751624c24ae13a79cce587eb6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.App.Runtime::Farion.App.Flow.GameplaySessionController
   localPlayerId: player.local
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
@@ -2899,7 +3020,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 501e0ea991a147569d712701c20e56e0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetKnowledgeRuntime
 --- !u!114 &1829898728
 MonoBehaviour:
@@ -2911,7 +3032,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 05a0c010b8cca7f4283fe3fc6a17d3b6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Persistence.GameplaySaveCoordinator
   slotName: autosave
   consumeStartupRequestOnStart: 1
@@ -2931,648 +3052,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1830693547
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1830693548}
-  m_Layer: 0
-  m_Name: Ship_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1830693548
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1830693547}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3, y: 0, z: 3}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 463113332}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1930953936
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1930953937}
-  m_Layer: 0
-  m_Name: StarterShipFormations
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1930953937
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1930953936}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 6, z: 80}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1009712691}
-  - {fileID: 1796747984}
-  - {fileID: 412401546}
-  - {fileID: 463113332}
-  m_Father: {fileID: 1043416902}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
---- !u!1 &1996413349
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1996413353}
-  - component: {fileID: 1996413352}
-  - component: {fileID: 1996413351}
-  - component: {fileID: 1996413350}
-  m_Layer: 0
-  m_Name: Simulation
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1996413350
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1996413349}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b4d1f8c2a6b4ab3aa5591e6b0db57f1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialFrameProvider
-  simulation: {fileID: 1996413352}
-  environmentSources:
-  - {fileID: 1772746497}
-  - {fileID: 1477076288}
-  - {fileID: 1148478146}
-  surfaceSources:
-  - {fileID: 1772746497}
-  - {fileID: 1477076288}
-  - {fileID: 1148478146}
---- !u!114 &1996413351
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1996413349}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e3fa050e50a4743a3992d022eca79f6, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.World.WorldOriginRebaser
-  settings: {fileID: 11400000, guid: 6799d7f003dd4eacb53a2104a65fbba1, type: 2}
-  trackingTarget: {fileID: 0}
-  shiftedRoots:
-  - {fileID: 246392134}
-  - {fileID: 1266854583}
-  accumulatedOriginOffset: {x: 0, y: 0, z: 0}
-  lastOriginOffset: {x: 0, y: 0, z: 0}
-  shiftCount: 0
-  lastShiftFrame: -1
-  trackingDistanceFromOrigin: 0
---- !u!114 &1996413352
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1996413349}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b0c6fcab710c8e94c902e2f6d8590e62, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.GravitySimulation
-  settings: {fileID: 11400000, guid: 2edfb3b296b04fc4d9f69762ba589d6a, type: 2}
-  physicsReferenceBody: {fileID: 1772746501}
-  autoDiscoverBodies: 0
-  registeredBodies:
-  - {fileID: 651725582}
-  - {fileID: 1772746501}
-  - {fileID: 1781217933}
-  - {fileID: 1477076283}
-  - {fileID: 1148478148}
-  referenceFrameVelocity: {x: 0, y: 0, z: 0}
-  referenceFrameAcceleration: {x: 0, y: 0, z: 0}
---- !u!4 &1996413353
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1996413349}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8800000000000000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1772746492}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
-  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
-  body: {fileID: 1772746501}
-  surfaceModel: {fileID: 1772746497}
-  patchSystem: {fileID: 1772746494}
---- !u!114 &8800000000000000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1148478145}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
-  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
-  body: {fileID: 1148478148}
-  surfaceModel: {fileID: 1148478146}
-  patchSystem: {fileID: 0}
---- !u!114 &8800000000000000004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1477076275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
-  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
-  body: {fileID: 1477076283}
-  surfaceModel: {fileID: 1477076288}
-  patchSystem: {fileID: 0}
---- !u!1660057539 &9223372036854775807
-SceneRoots:
-  m_ObjectHideFlags: 0
-  m_Roots:
-  - {fileID: 155198653}
-  - {fileID: 1266854583}
-  - {fileID: 246392134}
-  - {fileID: 1996413353}
-  - {fileID: 1829898729}
---- !u!1001 &101437577
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1266854583}
-    m_Modifications:
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 2158.53
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 5.7
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 2.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: castRadius
-      value: 0.45
-      objectReference: {fileID: 0}
-    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: controlLock
-      value:
-      objectReference: {fileID: 0}
-    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: maxDistance
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: viewReference
-      value:
-      objectReference: {fileID: 0}
-    - target: {fileID: 4695914025171897078, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_Name
-      value: Player Explorer
-      objectReference: {fileID: 0}
-    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_Constraints
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_Interpolate
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: m_CollisionDetection
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: controlLock
-      value:
-      objectReference: {fileID: 0}
-    - target: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: mouseSensitivity
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8714087835574942023, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: frameProvider
-      value:
-      objectReference: {fileID: 1996413350}
-    - target: {fileID: 9022320798132655451, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-      propertyPath: viewReference
-      value:
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
---- !u!114 &101437578 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6026398833783421529, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-  m_PrefabInstance: {fileID: 101437577}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 101437582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
---- !u!114 &101437579 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4112231222536447658, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-  m_PrefabInstance: {fileID: 101437577}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 101437582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91c38219102d4ddfa14c412563d507ce, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerInteractionRaycaster
---- !u!114 &101437580 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 9022320798132655451, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-  m_PrefabInstance: {fileID: 101437577}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 101437582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1e0cdd2c0074ea59de2adad6e72120a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.FirstPersonMotor
---- !u!54 &101437581 stripped
-Rigidbody:
-  m_CorrespondingSourceObject: {fileID: 4948331618803746770, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-  m_PrefabInstance: {fileID: 101437577}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &101437582 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4695914025171897078, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-  m_PrefabInstance: {fileID: 101437577}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &101437583 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1784853116956105904, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-  m_PrefabInstance: {fileID: 101437577}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 101437582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 242be1b40e994b518d3dd942b5f7f1a0, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Inventory.PlayerInventory
---- !u!4 &101437584 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 3974627057371545358, guid: 81d22e05cbc41e548910985a82d76184, type: 3}
-  m_PrefabInstance: {fileID: 101437577}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &910000020 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1701556989748357691, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d21395da21a408e41a3ae3858ccb4878, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.Spacecraft.ShipAudioTelemetryProvider
---- !u!1001 &1678406296
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1266854583}
-    m_Modifications:
-    - target: {fileID: 214599163261050350, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.88912314
-      objectReference: {fileID: 0}
-    - target: {fileID: 214599163261050350, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.88912314
-      objectReference: {fileID: 0}
-    - target: {fileID: 1735546013325418580, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.5801001
-      objectReference: {fileID: 0}
-    - target: {fileID: 1735546013325418580, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.5801001
-      objectReference: {fileID: 0}
-    - target: {fileID: 1974132133099151291, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.49623626
-      objectReference: {fileID: 0}
-    - target: {fileID: 1974132133099151291, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.49623626
-      objectReference: {fileID: 0}
-    - target: {fileID: 2441852034644142768, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_Name
-      value: PF_PlayerStarterShuttle
-      objectReference: {fileID: 0}
-    - target: {fileID: 2637545842290408703, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.4194199
-      objectReference: {fileID: 0}
-    - target: {fileID: 2637545842290408703, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.4194199
-      objectReference: {fileID: 0}
-    - target: {fileID: 3756892544726139654, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_Mesh
-      value:
-      objectReference: {fileID: 0}
-    - target: {fileID: 4289152935129214295, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.49830204
-      objectReference: {fileID: 0}
-    - target: {fileID: 4289152935129214295, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.49830204
-      objectReference: {fileID: 0}
-    - target: {fileID: 4488009981222792894, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.67588913
-      objectReference: {fileID: 0}
-    - target: {fileID: 4488009981222792894, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.67588913
-      objectReference: {fileID: 0}
-    - target: {fileID: 4723914796334302878, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.67344236
-      objectReference: {fileID: 0}
-    - target: {fileID: 4723914796334302878, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.67344236
-      objectReference: {fileID: 0}
-    - target: {fileID: 4918412385370244340, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_Mesh
-      value:
-      objectReference: {fileID: 0}
-    - target: {fileID: 5383031462875425764, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_Mesh
-      value:
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7954598089249100686, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.42432165
-      objectReference: {fileID: 0}
-    - target: {fileID: 7954598089249100686, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.42432165
-      objectReference: {fileID: 0}
-    - target: {fileID: 8070389999196084472, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.5941283
-      objectReference: {fileID: 0}
-    - target: {fileID: 8070389999196084472, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.5941283
-      objectReference: {fileID: 0}
-    - target: {fileID: 8165542165073250860, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_Mesh
-      value:
-      objectReference: {fileID: 0}
-    - target: {fileID: 8579063232482358793, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.88128835
-      objectReference: {fileID: 0}
-    - target: {fileID: 8579063232482358793, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.88128835
-      objectReference: {fileID: 0}
-    - target: {fileID: 8607803184205426111, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: celestialProbe
-      value:
-      objectReference: {fileID: 1678406324}
-    - target: {fileID: 8607803184205426111, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-      propertyPath: oceanInteractor
-      value:
-      objectReference: {fileID: 1678406317}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
---- !u!4 &1678406297 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6534604987873499861, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1678406298 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7591439062830295501, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a37fae9001c495cbc8611c85c486f84, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftRig
---- !u!114 &1678406299 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7247907982008486530, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 240ea934eebc42bf9fd3088b670f8e90, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
---- !u!114 &1678406301 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3359784979145954321, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9bd89b4c96f34fd4e9d670f2eb2c0a02, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftMotor
---- !u!114 &1678406302 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1430296848504241019, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5f6e10d267632843baa86b9d4d60c5c, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.KeyboardSpacecraftInput
---- !u!54 &1678406309 stripped
-Rigidbody:
-  m_CorrespondingSourceObject: {fileID: 7057908404667551272, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1678406317 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 789528504066411760, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bbe3b10ddd4148a4a6ef589ef2108d17, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftOceanInteractor
---- !u!114 &1678406324 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7190813019005924918, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d25fd99b97c4ca48f4aebe4425840b2, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Actors.CelestialActorProbe
---- !u!114 &1678406330 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 291845060493645677, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
-  m_PrefabInstance: {fileID: 1678406296}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ee3ff7f66b694542bf9062bbb6cba7cd, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Ships.ShuttleRuntimeBinding
 --- !u!1 &1917591032
 GameObject:
   m_ObjectHideFlags: 0
@@ -3600,7 +3079,7 @@ Transform:
   m_GameObject: {fileID: 1917591032}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2160.83, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3616,7 +3095,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6f51b22b953e42e9a984584a2737ed88, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.KeyboardBoardingInput
 --- !u!114 &1917591035
 MonoBehaviour:
@@ -3628,7 +3107,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27301337013f42f48461e2c5149285d9, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PlayerPossessionController
   initialMode: 0
   currentMode: 0
@@ -3666,6 +3145,41 @@ MonoBehaviour:
   resourceStreamers:
   - {fileID: 1772746496}
   updateResourceStreamingTarget: 1
+--- !u!1 &1930953936
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1930953937}
+  m_Layer: 0
+  m_Name: StarterShipFormations
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1930953937
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1930953936}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0, y: 6, z: 80}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 961083790}
+  - {fileID: 518239068}
+  - {fileID: 476402690}
+  - {fileID: 1682824525}
+  m_Father: {fileID: 1043416902}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1001 &1975656742
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3676,15 +3190,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4914366421490911164, guid: 1eeede7cb6675c447984b780ae142923, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1
+      value: 174
       objectReference: {fileID: 0}
     - target: {fileID: 4914366421490911164, guid: 1eeede7cb6675c447984b780ae142923, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.5
+      value: 12000
       objectReference: {fileID: 0}
     - target: {fileID: 4914366421490911164, guid: 1eeede7cb6675c447984b780ae142923, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -71
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4914366421490911164, guid: 1eeede7cb6675c447984b780ae142923, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3728,17 +3242,106 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4914366421490911164, guid: 1eeede7cb6675c447984b780ae142923, type: 3}
   m_PrefabInstance: {fileID: 1975656742}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2047954382 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 161026891945350363, guid: 1eeede7cb6675c447984b780ae142923, type: 3}
-  m_PrefabInstance: {fileID: 1975656742}
+--- !u!1 &1996413349
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1996413353}
+  - component: {fileID: 1996413352}
+  - component: {fileID: 1996413351}
+  - component: {fileID: 1996413350}
+  m_Layer: 0
+  m_Name: Simulation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1996413350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1996413349}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d67c9c8b5fd740a09fa057541ae55d54, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Navigation.FlightNavigationTarget
+  m_Script: {fileID: 11500000, guid: 7b4d1f8c2a6b4ab3aa5591e6b0db57f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.CelestialFrameProvider
+  simulation: {fileID: 1996413352}
+  environmentSources:
+  - {fileID: 1772746497}
+  - {fileID: 1477076288}
+  - {fileID: 1148478146}
+  surfaceSources:
+  - {fileID: 1772746497}
+  - {fileID: 1477076288}
+  - {fileID: 1148478146}
+--- !u!114 &1996413351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1996413349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e3fa050e50a4743a3992d022eca79f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.World.WorldOriginRebaser
+  settings: {fileID: 11400000, guid: 6799d7f003dd4eacb53a2104a65fbba1, type: 2}
+  trackingTarget: {fileID: 0}
+  shiftedRoots:
+  - {fileID: 246392134}
+  - {fileID: 1266854583}
+  accumulatedOriginOffset: {x: 0, y: 0, z: 0}
+  lastOriginOffset: {x: 0, y: 0, z: 0}
+  shiftCount: 0
+  lastShiftFrame: -1
+  trackingDistanceFromOrigin: 0
+--- !u!114 &1996413352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1996413349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0c6fcab710c8e94c902e2f6d8590e62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.GravitySimulation
+  settings: {fileID: 11400000, guid: 2edfb3b296b04fc4d9f69762ba589d6a, type: 2}
+  physicsReferenceBody: {fileID: 1772746501}
+  autoDiscoverBodies: 0
+  registeredBodies:
+  - {fileID: 651725582}
+  - {fileID: 1772746501}
+  - {fileID: 1781217933}
+  - {fileID: 1477076283}
+  - {fileID: 1148478148}
+  referenceFrameVelocity: {x: 0, y: 0, z: 0}
+  referenceFrameAcceleration: {x: 0, y: 0, z: 0}
+--- !u!4 &1996413353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1996413349}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8000000000000000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -3781,7 +3384,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d62d1ba6f5ac485b96dec06c9d2ca7ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Space.NebulaVolume
   radius: 8000
   edgeFade: 0.5
@@ -3796,3 +3399,111 @@ MonoBehaviour:
   seed: 314.8
   driftDirection: {x: 0.7, y: 0.15, z: 0.45}
   driftSpeed: 0.2
+--- !u!114 &8800000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772746492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
+  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
+  body: {fileID: 1772746501}
+  surfaceModel: {fileID: 1772746497}
+  patchSystem: {fileID: 1772746494}
+  formationSpawner: {fileID: 8800000000000000005}
+--- !u!114 &8800000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
+  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
+  body: {fileID: 1148478148}
+  surfaceModel: {fileID: 1148478146}
+  patchSystem: {fileID: 0}
+  formationSpawner: {fileID: 8800000000000000006}
+--- !u!114 &8800000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d650965649554cfa8f0ee9c0ea54e319, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationRenderer
+  profile: {fileID: 11400000, guid: 18fbc458e27e4334c87e6d5b30ba6fb0, type: 2}
+  body: {fileID: 1477076283}
+  surfaceModel: {fileID: 1477076288}
+  patchSystem: {fileID: 0}
+  formationSpawner: {fileID: 8800000000000000007}
+--- !u!114 &8800000000000000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1772746492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62ef1007fa133fb45bd8b59d3cd235f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceFormationSpawner
+  profile: {fileID: 11400000, guid: a647070e20662c64d8a12d401f819def, type: 2}
+  body: {fileID: 1772746501}
+  surfaceModel: {fileID: 1772746497}
+  formationRoot: {fileID: 1772746506}
+--- !u!114 &8800000000000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148478145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62ef1007fa133fb45bd8b59d3cd235f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceFormationSpawner
+  profile: {fileID: 11400000, guid: a647070e20662c64d8a12d401f819def, type: 2}
+  body: {fileID: 1148478148}
+  surfaceModel: {fileID: 1148478146}
+  formationRoot: {fileID: 1148478147}
+--- !u!114 &8800000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1477076275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62ef1007fa133fb45bd8b59d3cd235f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceFormationSpawner
+  profile: {fileID: 11400000, guid: a647070e20662c64d8a12d401f819def, type: 2}
+  body: {fileID: 1477076283}
+  surfaceModel: {fileID: 1477076288}
+  formationRoot: {fileID: 1477076276}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 155198653}
+  - {fileID: 1266854583}
+  - {fileID: 246392134}
+  - {fileID: 1996413353}
+  - {fileID: 1829898729}

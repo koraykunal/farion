@@ -1010,6 +1010,14 @@ MonoBehaviour:
     m_Localized: "G\xD6VDE"
     m_Metadata:
       m_Items: []
+  - m_Id: 8691678301904896
+    m_Localized: "Se\xE7ilen kay\u0131t co-op i\xE7in y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8691678398373888
+    m_Localized: CO-OP
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
