@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Core.Physics;
 using Farion.Gameplay.Actors;
 using Farion.Simulation.Celestial;
@@ -14,6 +15,8 @@ namespace Farion.Gameplay.Character
     public sealed class FirstPersonMotor : MonoBehaviour
     {
         const int MaxGroundHits = 8;
+        const float ProbeRadiusRatio = 0.9f;
+        const float ProbeClearanceRatio = 0.1f;
 
         [Header("Profile")]
         [SerializeField] FirstPersonMotorProfile profile;
@@ -156,7 +159,18 @@ namespace Farion.Gameplay.Character
                 : celestialFrame;
             RefreshWaterState(environmentFrame);
 
-            RefreshGrounding(localUp, physicsBody, deltaTime);
+            RefreshGrounding(
+                localUp,
+                physicsBody,
+                celestialFrame,
+                hasArtificialGravity,
+                deltaTime);
+            ResolveSurfacePenetration(
+                physicsBody,
+                celestialFrame,
+                referenceVelocity,
+                hasArtificialGravity,
+                localUp);
             ApplyGravity(physicsBody, gravityAcceleration, hasArtificialGravity || (applyCelestialGravity && celestialFrame.HasBody));
             StabilizeGroundContact(physicsBody, gravityAcceleration, referenceVelocity, localUp, deltaTime);
             ApplyMovement(physicsBody, referenceVelocity, localUp, input.Movement, input.Sprint, deltaTime);
@@ -297,6 +311,8 @@ namespace Farion.Gameplay.Character
         void RefreshGrounding(
             Vector3 up,
             IFirstPersonPhysicsBody physicsBody,
+            CelestialFrameSample frame,
+            bool hasArtificialGravity,
             float deltaTime)
         {
             grounded = false;
@@ -318,12 +334,19 @@ namespace Farion.Gameplay.Character
             }
 
             float capsuleHalfHeight = Mathf.Max(Capsule.height * 0.5f, Capsule.radius);
-            Vector3 castOrigin = physicsBody.Position + up * Mathf.Max(0.02f, Capsule.radius * 0.25f);
-            float castDistance = capsuleHalfHeight + profile.GroundProbeDistance;
+            float probeRadius = Mathf.Min(
+                profile.GroundProbeRadius,
+                Capsule.radius * ProbeRadiusRatio);
+            float probeClearance = probeRadius + Capsule.radius * ProbeClearanceRatio;
+            float contactDistance =
+                capsuleHalfHeight * 2f + probeClearance - probeRadius;
+            Vector3 castOrigin =
+                physicsBody.Position + up * (capsuleHalfHeight + probeClearance);
+            float castDistance = contactDistance + profile.GroundProbeDistance;
             PhysicsScene physicsScene = gameObject.scene.GetPhysicsScene();
             int hitCount = physicsScene.SphereCast(
                 castOrigin,
-                profile.GroundProbeRadius,
+                probeRadius,
                 -up,
                 groundHits,
                 castDistance,
@@ -334,21 +357,37 @@ namespace Farion.Gameplay.Character
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit hit = groundHits[i];
-                if (hit.collider == null || hit.collider == Capsule)
-                {
-                    continue;
-                }
-
-                if (hit.distance >= closestDistance)
+                if (hit.collider == null ||
+                    hit.collider.attachedRigidbody == Rigidbody ||
+                    hit.distance <= 0f ||
+                    hit.normal.sqrMagnitude <= 0.0001f ||
+                    hit.distance >= closestDistance)
                 {
                     continue;
                 }
 
                 closestDistance = hit.distance;
-                detectedGroundNormal = hit.normal.sqrMagnitude > 0.0001f ? hit.normal.normalized : up;
+                detectedGroundNormal = hit.normal.normalized;
             }
 
-            grounded = closestDistance < float.PositiveInfinity;
+            float closestGap = closestDistance < float.PositiveInfinity
+                ? closestDistance - contactDistance
+                : float.PositiveInfinity;
+
+            if (!hasArtificialGravity &&
+                TrySampleSurfaceContact(
+                    physicsBody.Position,
+                    frame,
+                    up,
+                    out float surfaceGap,
+                    out Vector3 surfaceNormal) &&
+                surfaceGap < closestGap)
+            {
+                closestGap = surfaceGap;
+                detectedGroundNormal = surfaceNormal;
+            }
+
+            grounded = closestGap <= profile.GroundProbeDistance;
             if (!grounded)
             {
                 hasSmoothedGroundNormal = false;
@@ -364,6 +403,65 @@ namespace Farion.Gameplay.Character
             }
         }
 
+        bool TrySampleSurfaceContact(
+            Vector3 position,
+            CelestialFrameSample frame,
+            Vector3 up,
+            out float gap,
+            out Vector3 normal)
+        {
+            gap = float.PositiveInfinity;
+            normal = up;
+            if (!frame.HasBody)
+            {
+                return false;
+            }
+
+            normal = frame.SurfaceNormal.sqrMagnitude > 0.0001f
+                ? frame.SurfaceNormal.normalized
+                : up;
+            gap = Vector3.Dot(position - frame.SurfacePoint, normal) -
+                CalculateCapsuleSupportOffset(up, normal);
+            return true;
+        }
+
+        float CalculateCapsuleSupportOffset(Vector3 up, Vector3 normal)
+        {
+            float radius = Capsule.radius;
+            float cylinderHalfHeight = Mathf.Max(0f, Capsule.height * 0.5f - radius);
+            return cylinderHalfHeight * Mathf.Abs(Vector3.Dot(up, normal)) + radius;
+        }
+
+        void ResolveSurfacePenetration(
+            IFirstPersonPhysicsBody physicsBody,
+            CelestialFrameSample frame,
+            Vector3 referenceVelocity,
+            bool hasArtificialGravity,
+            Vector3 up)
+        {
+            if (hasArtificialGravity ||
+                !TrySampleSurfaceContact(
+                    physicsBody.Position,
+                    frame,
+                    up,
+                    out float gap,
+                    out Vector3 normal) ||
+                gap >= 0f)
+            {
+                return;
+            }
+
+            physicsBody.SetPosition(physicsBody.Position - normal * gap);
+            float approachSpeed = Vector3.Dot(
+                physicsBody.LinearVelocity - referenceVelocity,
+                normal);
+            if (approachSpeed < 0f)
+            {
+                physicsBody.LinearVelocity =
+                    physicsBody.LinearVelocity - normal * approachSpeed;
+            }
+        }
+
         void ApplyGravity(IFirstPersonPhysicsBody physicsBody, Vector3 gravityAcceleration, bool shouldApply)
         {
             if (!shouldApply)
@@ -372,9 +470,24 @@ namespace Farion.Gameplay.Character
             }
 
             float gravityScale = profile != null
-                ? Mathf.Lerp(1f, profile.UnderwaterGravityScale, Smooth01(waterSubmergedFraction))
+                ? Mathf.Lerp(1f, profile.UnderwaterGravityScale, Mathf.SmoothStep(0f, 1f, waterSubmergedFraction))
                 : 1f;
-            physicsBody.AddForce(gravityAcceleration * gravityScale, ForceMode.Acceleration);
+            physicsBody.AddForce(
+                ResolveEffectiveGravity(gravityAcceleration) * gravityScale,
+                ForceMode.Acceleration);
+        }
+
+        Vector3 ResolveEffectiveGravity(Vector3 gravityAcceleration)
+        {
+            if (!grounded ||
+                !walkableGround ||
+                waterSubmergedFraction >= 0.5f ||
+                groundNormal.sqrMagnitude <= 0.0001f)
+            {
+                return gravityAcceleration;
+            }
+
+            return Vector3.Project(gravityAcceleration, groundNormal);
         }
 
         void ApplyMovement(
@@ -392,7 +505,7 @@ namespace Farion.Gameplay.Character
 
             Vector3 movementPlaneNormal = ResolveMovementPlaneNormal(up);
             Vector3 desiredDirection = BuildMoveDirection(movementPlaneNormal, movement);
-            float waterControl = Smooth01(waterSubmergedFraction);
+            float waterControl = Mathf.SmoothStep(0f, 1f, waterSubmergedFraction);
             float drySpeed = sprint ? profile.SprintSpeed : profile.WalkSpeed;
             float speed = Mathf.Lerp(drySpeed, profile.UnderwaterMoveSpeed, waterControl);
             Vector3 desiredSurfaceVelocity = desiredDirection * speed;
@@ -457,20 +570,27 @@ namespace Farion.Gameplay.Character
                 return;
             }
 
+            Vector3 contactNormal = groundNormal.sqrMagnitude > 0.0001f
+                ? groundNormal
+                : up;
             Vector3 relativeVelocity = physicsBody.LinearVelocity - referenceVelocity;
-            float currentVerticalSpeed = Vector3.Dot(relativeVelocity, up);
-            verticalSpeed = currentVerticalSpeed;
+            verticalSpeed = Vector3.Dot(relativeVelocity, up);
+            float normalSpeed = Vector3.Dot(relativeVelocity, contactNormal);
 
-            if (!jumpQueued && profile.GroundedVerticalDamping > 0f && Mathf.Abs(currentVerticalSpeed) > 0.001f)
+            if (!jumpQueued && profile.GroundedVerticalDamping > 0f && Mathf.Abs(normalSpeed) > 0.001f)
             {
-                float damping = 1f - Mathf.Exp(-profile.GroundedVerticalDamping * deltaTime);
-                physicsBody.AddForce(-up * (currentVerticalSpeed * damping), ForceMode.VelocityChange);
+                float damping = FarionMath.SmoothFactor(profile.GroundedVerticalDamping, deltaTime);
+                physicsBody.AddForce(
+                    -contactNormal * (normalSpeed * damping),
+                    ForceMode.VelocityChange);
             }
 
             float stickAcceleration = CalculateGroundStickAcceleration(gravityAcceleration);
             if (!jumpQueued && stickAcceleration > 0f)
             {
-                physicsBody.AddForce(-up * stickAcceleration, ForceMode.Acceleration);
+                physicsBody.AddForce(
+                    -contactNormal * stickAcceleration,
+                    ForceMode.Acceleration);
             }
         }
 
@@ -591,7 +711,7 @@ namespace Farion.Gameplay.Character
                 return smoothedGroundNormal;
             }
 
-            float t = 1f - Mathf.Exp(-profile.GroundNormalResponsiveness * deltaTime);
+            float t = FarionMath.SmoothFactor(profile.GroundNormalResponsiveness, deltaTime);
             smoothedGroundNormal = Vector3.Slerp(smoothedGroundNormal, targetNormal, t).normalized;
             return smoothedGroundNormal.sqrMagnitude > 0.0001f ? smoothedGroundNormal : targetNormal;
         }
@@ -627,7 +747,7 @@ namespace Farion.Gameplay.Character
                 return;
             }
 
-            float t = 1f - Mathf.Exp(-profile.UprightResponsiveness * deltaTime);
+            float t = FarionMath.SmoothFactor(profile.UprightResponsiveness, deltaTime);
             physicsBody.MoveRotation(Quaternion.Slerp(physicsBody.Rotation, targetRotation, t));
         }
 
@@ -683,7 +803,7 @@ namespace Farion.Gameplay.Character
                 return;
             }
 
-            float waterControl = Smooth01(waterSubmergedFraction);
+            float waterControl = Mathf.SmoothStep(0f, 1f, waterSubmergedFraction);
             Vector3 bodyVelocity = frame.HasBody ? frame.BodyPointVelocity : Vector3.zero;
             Vector3 relativeVelocity = physicsBody.LinearVelocity - bodyVelocity;
 
@@ -698,10 +818,5 @@ namespace Farion.Gameplay.Character
             }
         }
 
-        static float Smooth01(float value)
-        {
-            float t = Mathf.Clamp01(value);
-            return t * t * (3f - 2f * t);
-        }
     }
 }

@@ -10,6 +10,7 @@ namespace Farion.Gameplay.Character
         Vector3 AngularVelocity { get; set; }
         void AddForce(Vector3 force, ForceMode mode);
         void MoveRotation(Quaternion rotation);
+        void SetPosition(Vector3 position);
         void Commit();
     }
 }

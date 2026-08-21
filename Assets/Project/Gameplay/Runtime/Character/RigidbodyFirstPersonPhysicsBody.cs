@@ -30,6 +30,9 @@ namespace Farion.Gameplay.Character
         public void MoveRotation(Quaternion rotation) =>
             rigidbody.MoveRotation(rotation);
 
+        public void SetPosition(Vector3 position) =>
+            rigidbody.position = position;
+
         public void Commit()
         {
         }

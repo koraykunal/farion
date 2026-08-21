@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Gameplay.Input;
 using UnityEngine;
 
@@ -84,8 +85,8 @@ namespace Farion.Gameplay.Character
                 return;
             }
 
-            float positionT = ResponsivenessToLerp(positionResponsiveness);
-            float rotationT = ResponsivenessToLerp(rotationResponsiveness);
+            float positionT = FarionMath.SmoothFactor(positionResponsiveness, UnityEngine.Time.deltaTime);
+            float rotationT = FarionMath.SmoothFactor(rotationResponsiveness, UnityEngine.Time.deltaTime);
             Vector3 smoothedLocalOffset = Vector3.Lerp(
                 currentLocalOffset,
                 desiredLocalOffset,
@@ -151,11 +152,5 @@ namespace Farion.Gameplay.Character
             }
         }
 
-        static float ResponsivenessToLerp(float responsiveness)
-        {
-            return responsiveness <= 0f
-                ? 1f
-                : 1f - Mathf.Exp(-responsiveness * UnityEngine.Time.deltaTime);
-        }
     }
 }
