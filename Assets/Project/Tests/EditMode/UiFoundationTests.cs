@@ -1,3 +1,4 @@
+using Farion.Audio.Direction;
 using Farion.Gameplay.Input;
 using Farion.UI.Common;
 using Farion.UI.Feedback;
@@ -24,6 +25,26 @@ namespace Farion.Tests.EditMode
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        [Test]
+        public void AudioSceneMixKeepsMenuAndGameplayMusicExclusive()
+        {
+            AudioDirector.ResolveSceneMix(
+                AudioSceneContextId.MainMenu,
+                1f,
+                out float menu,
+                out float gameplay);
+            Assert.That(menu, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(gameplay, Is.EqualTo(0f).Within(0.0001f));
+
+            AudioDirector.ResolveSceneMix(
+                AudioSceneContextId.Gameplay,
+                1f,
+                out menu,
+                out gameplay);
+            Assert.That(menu, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(gameplay, Is.EqualTo(1f).Within(0.0001f));
         }
 
         [Test]

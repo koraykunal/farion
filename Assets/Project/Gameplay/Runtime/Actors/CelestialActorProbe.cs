@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Actors
 {
-    [DefaultExecutionOrder(40)]
+    [DefaultExecutionOrder(-40)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     public class CelestialActorProbe : MonoBehaviour
@@ -83,7 +83,8 @@ namespace Farion.Gameplay.Actors
             currentSample = provider.Sample(
                 Rigidbody.position,
                 Rigidbody.linearVelocity,
-                simulationTime);
+                simulationTime,
+                currentSample.Body);
             ApplyRuntimeState();
         }
 

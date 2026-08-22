@@ -636,6 +636,7 @@ namespace Farion.Editor.Validation
             SerializedObject serialized = new(patchSystem);
             ValidateObjectReference(serialized, "profile", scope, report);
             ValidateObjectReference(serialized, "bodyVisual", scope, report);
+            ValidateObjectReference(serialized, "gravitySimulation", scope, report);
             if (!isSimulationZone)
             {
                 ValidateObjectReference(serialized, "targetCamera", scope, report);
@@ -697,13 +698,16 @@ namespace Farion.Editor.Validation
                 report.AddError(
                     $"{scope} has no GravitySimulation in its scene.");
             }
-            else if (ownerVisual.Body != null &&
-                sceneSimulation.PhysicsReferenceBody != ownerVisual.Body)
+            else
             {
-                report.AddError(
-                    $"{scope} owns local terrain collision but its body is not " +
-                    "the GravitySimulation physics reference body. Moving a " +
-                    "non-convex planetary surface under actors is unsupported.");
+                GravitySimulation assignedSimulation =
+                    serialized.FindProperty("gravitySimulation")?.objectReferenceValue
+                        as GravitySimulation;
+                if (assignedSimulation != null && assignedSimulation != sceneSimulation)
+                {
+                    report.AddError(
+                        $"{scope} must reference the GravitySimulation in its own scene.");
+                }
             }
         }
 

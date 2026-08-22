@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4584539620017091101}
   - component: {fileID: 6709507102894675828}
+  - component: {fileID: 6709507102894675829}
   m_Layer: 0
   m_Name: PF_AudioDirector
   m_TagString: Untagged
@@ -42,8 +43,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb424ab67a4246b29aa93fbc73e7d755, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.AudioDirector
   atmosphereAttackSeconds: 0.8
   atmosphereReleaseSeconds: 1.8
   interiorBlendSeconds: 0.35
+  musicFadeInSeconds: 2
+--- !u!114 &6709507102894675829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 997753878406949556}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
+  nonRigidbodyVelocity: 1
+  attenuationObject: {fileID: 0}

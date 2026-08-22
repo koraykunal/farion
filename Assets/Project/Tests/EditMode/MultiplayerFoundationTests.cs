@@ -4,6 +4,7 @@ using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.Spawning;
 using Farion.Multiplayer.World;
+using Farion.Simulation.Physics;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -126,6 +127,37 @@ namespace Farion.Tests.EditMode
                 Is.True);
             Assert.That(delta, Is.EqualTo(new Vector3(450f, -20f, 8f)));
             Assert.That(state.Sequence, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void CollectiveOriginCentersPlayersInsteadOfFollowingHost()
+        {
+            GameObject first = new("First Origin Observer");
+            GameObject second = new("Second Origin Observer");
+            try
+            {
+                Rigidbody firstBody = first.AddComponent<Rigidbody>();
+                Rigidbody secondBody = second.AddComponent<Rigidbody>();
+                firstBody.position = new Vector3(-100f, 20f, 40f);
+                secondBody.position = new Vector3(300f, 60f, -80f);
+                CelestialSurfaceCollisionObserverState[] observers =
+                {
+                    new(firstBody),
+                    new(secondBody)
+                };
+
+                Assert.That(
+                    MultiplayerWorldOriginAuthority.TryResolveCollectiveTrackingPosition(
+                        observers,
+                        out Vector3 center),
+                    Is.True);
+                Assert.That(center, Is.EqualTo(new Vector3(100f, 40f, -20f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+            }
         }
 
         [Test]

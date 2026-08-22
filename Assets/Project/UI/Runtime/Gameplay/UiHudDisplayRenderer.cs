@@ -235,25 +235,25 @@ namespace Farion.UI.Gameplay
             if (hudCamera != null)
             {
                 hudCamera.targetTexture = null;
-                Destroy(hudCamera.gameObject);
+                DestroyOwnedObject(hudCamera.gameObject);
                 hudCamera = null;
             }
 
             if (hudCanvas != null)
             {
-                Destroy(hudCanvas.gameObject);
+                DestroyOwnedObject(hudCanvas.gameObject);
                 hudCanvas = null;
             }
 
             if (output != null)
             {
-                Destroy(output.gameObject);
+                DestroyOwnedObject(output.gameObject);
                 output = null;
             }
 
             if (runtimeMaterial != null)
             {
-                Destroy(runtimeMaterial);
+                DestroyOwnedObject(runtimeMaterial);
                 runtimeMaterial = null;
             }
 
@@ -268,8 +268,25 @@ namespace Farion.UI.Gameplay
             }
 
             texture.Release();
-            Destroy(texture);
+            DestroyOwnedObject(texture);
             texture = null;
+        }
+
+        static void DestroyOwnedObject(Object target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(target);
+            }
+            else
+            {
+                DestroyImmediate(target);
+            }
         }
     }
 }

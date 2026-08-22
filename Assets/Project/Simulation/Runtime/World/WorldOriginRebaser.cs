@@ -25,6 +25,8 @@ namespace Farion.Simulation.World
         [SerializeField] float trackingDistanceFromOrigin;
 
         readonly List<Transform> uniqueShiftRoots = new();
+        readonly List<Transform> runtimeShiftRoots = new();
+        readonly List<Rigidbody> shiftedRigidbodies = new();
 
         public bool AutomaticRebasing { get; private set; } = true;
 
@@ -93,6 +95,38 @@ namespace Farion.Simulation.World
             {
                 AddShiftRoot(root);
             }
+
+            for (int i = runtimeShiftRoots.Count - 1; i >= 0; i--)
+            {
+                Transform root = runtimeShiftRoots[i];
+                if (root == null)
+                {
+                    runtimeShiftRoots.RemoveAt(i);
+                }
+                else
+                {
+                    AddShiftRoot(root);
+                }
+            }
+        }
+
+        public void RegisterShiftRoot(Transform root)
+        {
+            if (root == null || runtimeShiftRoots.Contains(root))
+            {
+                return;
+            }
+
+            runtimeShiftRoots.Add(root);
+            RefreshShiftRoots();
+        }
+
+        public void UnregisterShiftRoot(Transform root)
+        {
+            if (runtimeShiftRoots.Remove(root))
+            {
+                RefreshShiftRoots();
+            }
         }
 
 #if UNITY_EDITOR
@@ -130,7 +164,12 @@ namespace Farion.Simulation.World
                 return false;
             }
 
-            Vector3 offset = GetTrackingPosition();
+            return RebaseIfNeeded(GetTrackingPosition());
+        }
+
+        public bool RebaseIfNeeded(Vector3 trackingPosition)
+        {
+            Vector3 offset = trackingPosition;
             if (settings != null && !settings.RebaseAllAxes)
             {
                 offset.y = 0f;
@@ -165,6 +204,7 @@ namespace Farion.Simulation.World
             }
 
             UnityEngine.Physics.SyncTransforms();
+            ResetShiftedInterpolation();
 
             accumulatedOriginOffset += originOffset;
             lastOriginOffset = originOffset;
@@ -172,6 +212,30 @@ namespace Farion.Simulation.World
             lastShiftFrame = Time.frameCount;
             trackingDistanceFromOrigin = 0f;
             Rebased?.Invoke(originOffset);
+        }
+
+        void ResetShiftedInterpolation()
+        {
+            foreach (Transform root in uniqueShiftRoots)
+            {
+                if (root == null)
+                {
+                    continue;
+                }
+
+                root.GetComponentsInChildren(false, shiftedRigidbodies);
+                foreach (Rigidbody body in shiftedRigidbodies)
+                {
+                    RigidbodyInterpolation interpolation = body.interpolation;
+                    if (interpolation != RigidbodyInterpolation.None)
+                    {
+                        body.interpolation = RigidbodyInterpolation.None;
+                        body.interpolation = interpolation;
+                    }
+                }
+            }
+
+            shiftedRigidbodies.Clear();
         }
 
         public void SetTrackingTarget(Transform target)

@@ -1,4 +1,5 @@
 using Farion.Rendering.Celestial;
+using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
 using NUnit.Framework;
@@ -45,17 +46,102 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void PlacementSuspendsAboveSpeedAndAltitudeThresholds()
+        public void TerrestrialPlacementStaysActiveDuringLowAltitudeFlight()
         {
             SurfaceDecorationProfile profile = LoadProfile();
 
             Assert.That(SurfaceDecorationRenderer.ShouldSuspendPlacement(0f, 0f, profile), Is.False);
             Assert.That(
-                SurfaceDecorationRenderer.ShouldSuspendPlacement(profile.PlacementPauseSpeed, 0f, profile),
-                Is.True);
+                SurfaceDecorationRenderer.ShouldSuspendPlacement(120f, 0f, profile),
+                Is.False);
             Assert.That(
                 SurfaceDecorationRenderer.ShouldSuspendPlacement(0f, profile.PlacementPauseAltitude, profile),
                 Is.True);
+        }
+
+        [Test]
+        public void VisibilityAndLodTransitionsHaveStableBands()
+        {
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveVisibilityScale(100f, 100f, 120f),
+                Is.EqualTo(1f));
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveVisibilityScale(120f, 100f, 120f),
+                Is.EqualTo(0f));
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveVisibilityScale(110f, 100f, 120f),
+                Is.InRange(0f, 1f));
+
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveFarLod(false, 105f, 100f),
+                Is.False);
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveFarLod(false, 111f, 100f),
+                Is.True);
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveFarLod(true, 95f, 100f),
+                Is.True);
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveFarLod(true, 89f, 100f),
+                Is.False);
+        }
+
+        [Test]
+        public void MeshGroundingPlacesTheRotatedBoundsOnTheSurface()
+        {
+            Bounds bounds = new(new Vector3(0f, 1f, 0f), new Vector3(2f, 2f, 2f));
+
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveMeshGroundingOffset(
+                    bounds,
+                    Quaternion.identity,
+                    Vector3.up,
+                    2f),
+                Is.EqualTo(0f).Within(0.000001f));
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveMeshGroundingOffset(
+                    bounds,
+                    Quaternion.Euler(0f, 0f, 90f),
+                    Vector3.up,
+                    2f),
+                Is.EqualTo(2f).Within(0.000001f));
+        }
+
+        [Test]
+        public void GlobalLodMeshesCanShareOneSurfaceSamplingFootprint()
+        {
+            FootprintShapeProfile shape = ScriptableObject.CreateInstance<FootprintShapeProfile>();
+            float footprint = CelestialSphereMeshBuilder.CalculateAngularSampleFootprint(80);
+            Mesh coarse = null;
+            Mesh detailed = null;
+            try
+            {
+                coarse = CelestialSphereMeshBuilder.Build(
+                    120f,
+                    20,
+                    "Coarse LOD",
+                    shape,
+                    angularSampleFootprint: footprint);
+                detailed = CelestialSphereMeshBuilder.Build(
+                    120f,
+                    80,
+                    "Detailed LOD",
+                    shape,
+                    angularSampleFootprint: footprint);
+
+                Assert.That(
+                    coarse.vertices[0].magnitude,
+                    Is.EqualTo(detailed.vertices[0].magnitude).Within(0.000001f));
+                Assert.That(
+                    coarse.vertices[0].magnitude,
+                    Is.EqualTo(120f + footprint).Within(0.000001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(coarse);
+                Object.DestroyImmediate(detailed);
+                Object.DestroyImmediate(shape);
+            }
         }
 
         [Test]
@@ -144,6 +230,23 @@ namespace Farion.Tests.EditMode
                 AssetDatabase.LoadAssetAtPath<SurfaceDecorationProfile>(ProfilePath);
             Assert.That(profile, Is.Not.Null, ProfilePath);
             return profile;
+        }
+
+        sealed class FootprintShapeProfile : CelestialShapeProfile
+        {
+            public override float EvaluateDisplacement(
+                float baseRadius,
+                Vector3 unitDirection) => 0f;
+
+            public override CelestialShapeSample EvaluateSample(
+                float baseRadius,
+                Vector3 unitDirection,
+                float angularSampleFootprint)
+            {
+                return new CelestialShapeSample(
+                    baseRadius + angularSampleFootprint,
+                    Vector4.zero);
+            }
         }
     }
 }

@@ -78,7 +78,8 @@ namespace Farion.Gameplay.Flight
                 FarionInputActions.FlightBoost.IsPressed(),
                 brake,
                 FarionInputActions.FlightToggleAssist.WasPressedThisFrame(),
-                FarionInputActions.FlightToggleLandingGear.WasPressedThisFrame());
+                FarionInputActions.FlightToggleLandingGear.WasPressedThisFrame(),
+                FarionInputActions.FlightToggleFloodlights.WasPressedThisFrame());
         }
 
         void OnValidate()

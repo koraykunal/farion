@@ -25,7 +25,6 @@ namespace Farion.Simulation.Celestial
             Velocity = velocity;
             BodyPosition = bodyPosition;
             BodyVelocity = bodyVelocity;
-            BodyLinearVelocity = bodyVelocity;
             BodyAngularVelocity = bodyAngularVelocity;
             SurfacePoint = surfacePoint;
             SurfaceNormal = surfaceNormal.sqrMagnitude > 0.0001f ? surfaceNormal.normalized : Vector3.up;
@@ -80,7 +79,6 @@ namespace Farion.Simulation.Celestial
         public Vector3 Velocity { get; }
         public Vector3 BodyPosition { get; }
         public Vector3 BodyVelocity { get; }
-        public Vector3 BodyLinearVelocity { get; }
         public Vector3 BodyAngularVelocity { get; }
         public Vector3 BodyPointVelocity { get; }
         public Vector3 RelativePosition { get; }

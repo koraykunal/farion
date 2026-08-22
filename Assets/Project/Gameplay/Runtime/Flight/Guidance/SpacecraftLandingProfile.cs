@@ -94,8 +94,9 @@ namespace Farion.Gameplay.Flight
             }
 
             float descendingSpeed = Mathf.Max(0f, -frame.SurfaceNormalVelocity);
-            float verticalLimit = EvaluateVerticalSpeedLimit(frame.SurfaceAltitude);
-            float tangentialLimit = EvaluateTangentialSpeedLimit(frame.SurfaceAltitude);
+            float gravityScale = EvaluateGravitySpeedScale(frame);
+            float verticalLimit = EvaluateVerticalSpeedLimit(frame.SurfaceAltitude) * gravityScale;
+            float tangentialLimit = EvaluateTangentialSpeedLimit(frame.SurfaceAltitude) * gravityScale;
 
             SpacecraftLandingRiskFlags risks = SpacecraftLandingRiskFlags.None;
             if (frame.IsApproachingSurface)
@@ -152,6 +153,14 @@ namespace Farion.Gameplay.Flight
                 tangentialLimit,
                 safeTouchdownSlopeAngle,
                 stress);
+        }
+
+        public float EvaluateGravitySpeedScale(CelestialFrameSample frame)
+        {
+            float gravity = frame.GravityAcceleration.magnitude;
+            return gravity > 0.01f
+                ? Mathf.Clamp(Mathf.Sqrt(gravity / 9.81f), 0.5f, 2f)
+                : 1f;
         }
 
         public bool IsSurfaceFrameRelevant(CelestialFrameSample frame)

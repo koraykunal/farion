@@ -166,7 +166,8 @@ namespace Farion.Rendering.Celestial
                 runtime.PendingCells.Clear();
 
                 float step = distribution.SpacingMeters * 0.75f;
-                float searchDistance = distribution.FarVisibilityDistance;
+                float searchDistance = distribution.ResolveReleaseDistance(
+                    distribution.FarVisibilityDistance);
                 int radiusSteps = Mathf.CeilToInt(searchDistance / step);
                 float searchDistanceSquared = searchDistance * searchDistance;
                 for (int y = -radiusSteps; y <= radiusSteps; y++)
@@ -202,18 +203,24 @@ namespace Farion.Rendering.Celestial
                         float reach = Mathf.Min(
                             Vector3.Distance(cellCenter, cameraLocalPosition),
                             Vector3.Distance(cellCenter, scanCenter));
-                        if (reach > visibility)
+                        bool alreadyEvaluated = runtime.EvaluatedCells.Contains(cell);
+                        float retentionDistance =
+                            distribution.ResolveReleaseDistance(visibility);
+                        if (reach > retentionDistance)
                         {
                             runtime.DesiredCells.Remove(cell);
                             continue;
                         }
 
-                        if (!runtime.EvaluatedCells.Contains(cell))
+                        if (!alreadyEvaluated)
                         {
-                            runtime.PendingCells.Enqueue(cell);
+                            runtime.PendingCells.Add(new PendingCell(cell, reach * reach));
                         }
                     }
                 }
+
+                runtime.PendingCells.Sort(static (left, right) =>
+                    right.ReachSquared.CompareTo(left.ReachSquared));
 
                 runtime.StaleCells.Clear();
                 foreach (SurfaceScatterCell cell in runtime.EvaluatedCells)
@@ -222,13 +229,6 @@ namespace Farion.Rendering.Celestial
                     {
                         runtime.StaleCells.Add(cell);
                     }
-                }
-
-                for (int staleIndex = 0; staleIndex < runtime.StaleCells.Count; staleIndex++)
-                {
-                    SurfaceScatterCell staleCell = runtime.StaleCells[staleIndex];
-                    runtime.EvaluatedCells.Remove(staleCell);
-                    runtime.Instances.Remove(staleCell);
                 }
 
                 nextRefreshRuleIndex = (i + 1) % ruleRuntimes.Count;
@@ -261,7 +261,9 @@ namespace Farion.Rendering.Celestial
 
                 emptyRulePasses = 0;
                 remainingBudget--;
-                SurfaceScatterCell cell = runtime.PendingCells.Dequeue();
+                int pendingIndex = runtime.PendingCells.Count - 1;
+                SurfaceScatterCell cell = runtime.PendingCells[pendingIndex].Cell;
+                runtime.PendingCells.RemoveAt(pendingIndex);
                 if (!runtime.DesiredCells.Contains(cell))
                 {
                     continue;
@@ -270,6 +272,27 @@ namespace Farion.Rendering.Celestial
                 runtime.EvaluatedCells.Add(cell);
                 TryCreateInstance(runtime, cell, hasOcean, oceanRadius);
             }
+
+            for (int i = 0; i < ruleRuntimes.Count; i++)
+            {
+                RuleRuntime runtime = ruleRuntimes[i];
+                if (runtime.PendingCells.Count == 0)
+                {
+                    RemoveStaleCells(runtime);
+                }
+            }
+        }
+
+        static void RemoveStaleCells(RuleRuntime runtime)
+        {
+            for (int i = 0; i < runtime.StaleCells.Count; i++)
+            {
+                SurfaceScatterCell cell = runtime.StaleCells[i];
+                runtime.EvaluatedCells.Remove(cell);
+                runtime.Instances.Remove(cell);
+            }
+
+            runtime.StaleCells.Clear();
         }
 
         void TryCreateInstance(
@@ -358,6 +381,11 @@ namespace Farion.Rendering.Celestial
                 SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 5));
             scale *= variant.BaseScale;
             Vector3 position = direction * sample.SurfaceRadius + normalLocal * rule.SurfaceOffset;
+            position += placementUp * ResolveMeshGroundingOffset(
+                variant.NearMesh.bounds,
+                rotation,
+                placementUp,
+                scale);
             Matrix4x4 localMatrix = Matrix4x4.TRS(position, rotation, Vector3.one * scale);
             runtime.Instances[cell] = new DecorationInstance(
                 variantIndex,
@@ -394,19 +422,32 @@ namespace Farion.Rendering.Celestial
                 RuleRuntime runtime = ruleRuntimes[runtimeIndex];
                 runtime.ClearRenderLists();
                 float shadowDistanceSquared = runtime.Rule.ShadowDistance * runtime.Rule.ShadowDistance;
-                float farLodDistanceSquared =
-                    runtime.Rule.FarLodStartDistance * runtime.Rule.FarLodStartDistance;
                 foreach (DecorationInstance instance in runtime.Instances.Values)
                 {
                     float distanceSquared = (instance.LocalPosition - cameraLocalPosition).sqrMagnitude;
-                    if (distanceSquared > instance.VisibilityDistance * instance.VisibilityDistance)
+                    float retentionDistance = runtime.Rule.Distribution
+                        .ResolveReleaseDistance(instance.VisibilityDistance);
+                    if (distanceSquared > retentionDistance * retentionDistance)
                     {
                         continue;
                     }
 
-                    Matrix4x4 worldMatrix = rootMatrix * instance.LocalMatrix;
+                    float distance = Mathf.Sqrt(distanceSquared);
+                    float visibilityScale = ResolveVisibilityScale(
+                        distance,
+                        instance.VisibilityDistance,
+                        retentionDistance);
+                    if (visibilityScale <= 0.001f)
+                    {
+                        continue;
+                    }
+
+                    Matrix4x4 worldMatrix = rootMatrix * instance.LocalMatrix *
+                        Matrix4x4.Scale(Vector3.one * visibilityScale);
                     bool castsShadow = runtime.Rule.ShadowDistance > 0f && distanceSquared <= shadowDistanceSquared;
-                    bool usesFarLod = distanceSquared >= farLodDistanceSquared;
+                    bool usesFarLod = instance.ResolveFarLod(
+                        distance,
+                        runtime.Rule.FarLodStartDistance);
                     runtime.GetRenderList(instance.VariantIndex, castsShadow, usesFarLod).Add(worldMatrix);
                 }
 
@@ -640,6 +681,53 @@ namespace Farion.Rendering.Celestial
             return speedLimited || altitudeLimited;
         }
 
+        internal static float ResolveVisibilityScale(
+            float distance,
+            float visibilityDistance,
+            float releaseDistance)
+        {
+            if (distance <= visibilityDistance || releaseDistance <= visibilityDistance)
+            {
+                return 1f;
+            }
+
+            return Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(releaseDistance, visibilityDistance, distance));
+        }
+
+        internal static bool ResolveFarLod(
+            bool currentlyFar,
+            float distance,
+            float switchDistance)
+        {
+            if (switchDistance <= 0f)
+            {
+                return true;
+            }
+
+            return currentlyFar
+                ? distance >= switchDistance * 0.9f
+                : distance >= switchDistance * 1.1f;
+        }
+
+        internal static float ResolveMeshGroundingOffset(
+            Bounds bounds,
+            Quaternion rotation,
+            Vector3 placementUp,
+            float scale)
+        {
+            Vector3 localUp = Quaternion.Inverse(rotation) * placementUp.normalized;
+            Vector3 absoluteUp = new(
+                Mathf.Abs(localUp.x),
+                Mathf.Abs(localUp.y),
+                Mathf.Abs(localUp.z));
+            float lowestPoint = Vector3.Dot(bounds.center, localUp) -
+                Vector3.Dot(bounds.extents, absoluteUp);
+            return -lowestPoint * Mathf.Max(0f, scale);
+        }
+
         void ResolveComponents()
         {
             body ??= GetComponent<CelestialBody>();
@@ -663,7 +751,19 @@ namespace Farion.Rendering.Celestial
             bitangent = Vector3.Cross(normal, tangent).normalized;
         }
 
-        readonly struct DecorationInstance
+        readonly struct PendingCell
+        {
+            public PendingCell(SurfaceScatterCell cell, float reachSquared)
+            {
+                Cell = cell;
+                ReachSquared = reachSquared;
+            }
+
+            public SurfaceScatterCell Cell { get; }
+            public float ReachSquared { get; }
+        }
+
+        sealed class DecorationInstance
         {
             public DecorationInstance(
                 int variantIndex,
@@ -681,6 +781,17 @@ namespace Farion.Rendering.Celestial
             public Vector3 LocalPosition { get; }
             public Matrix4x4 LocalMatrix { get; }
             public float VisibilityDistance { get; }
+
+            public bool ResolveFarLod(float distance, float switchDistance)
+            {
+                usesFarLod = SurfaceDecorationRenderer.ResolveFarLod(
+                    usesFarLod,
+                    distance,
+                    switchDistance);
+                return usesFarLod;
+            }
+
+            bool usesFarLod;
         }
 
         sealed class RuleRuntime
@@ -707,7 +818,7 @@ namespace Farion.Rendering.Celestial
             public Vector3 AnchorLocalPosition { get; set; }
             public HashSet<SurfaceScatterCell> DesiredCells { get; } = new();
             public HashSet<SurfaceScatterCell> EvaluatedCells { get; } = new();
-            public Queue<SurfaceScatterCell> PendingCells { get; } = new();
+            internal List<PendingCell> PendingCells { get; } = new();
             public Dictionary<SurfaceScatterCell, DecorationInstance> Instances { get; } = new();
             public List<SurfaceScatterCell> StaleCells { get; } = new();
             public List<Matrix4x4>[] NearShadowMatrices { get; }

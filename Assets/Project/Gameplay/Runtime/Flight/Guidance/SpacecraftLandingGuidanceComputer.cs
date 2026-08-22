@@ -11,6 +11,7 @@ namespace Farion.Gameplay.Flight
         [Header("Source")]
         [SerializeField] SpacecraftLandingComputer landingComputer;
         [SerializeField] CelestialActorProbe celestialProbe;
+        [SerializeField] SpacecraftMotor motor;
 
         [Header("Runtime Guidance")]
         [SerializeField] SpacecraftLandingGuidanceLevel level = SpacecraftLandingGuidanceLevel.Offline;
@@ -93,9 +94,14 @@ namespace Farion.Gameplay.Flight
             {
                 celestialProbe = GetComponent<CelestialActorProbe>();
             }
+
+            if (motor == null)
+            {
+                motor = GetComponent<SpacecraftMotor>();
+            }
         }
 
-        static SpacecraftLandingGuidanceCommand EvaluateCommand(
+        SpacecraftLandingGuidanceCommand EvaluateCommand(
             SpacecraftLandingComputer computer,
             SpacecraftLandingAssessment assessment,
             float verticalRatio,
@@ -104,6 +110,11 @@ namespace Farion.Gameplay.Flight
             if (computer.UnsafeSurfaceContact || assessment.HasImpactRisk)
             {
                 return SpacecraftLandingGuidanceCommand.AbortLanding;
+            }
+
+            if (motor != null && motor.GravityExceedsThrust)
+            {
+                return SpacecraftLandingGuidanceCommand.ThrustDeficit;
             }
 
             if (computer.TouchdownConfirmed)
@@ -144,7 +155,7 @@ namespace Farion.Gameplay.Flight
             };
         }
 
-        static SpacecraftLandingGuidanceLevel EvaluateLevel(
+        SpacecraftLandingGuidanceLevel EvaluateLevel(
             SpacecraftLandingComputer computer,
             SpacecraftLandingAssessment assessment,
             float verticalRatio,
@@ -153,6 +164,11 @@ namespace Farion.Gameplay.Flight
             if (computer.UnsafeSurfaceContact || assessment.HasImpactRisk)
             {
                 return SpacecraftLandingGuidanceLevel.Critical;
+            }
+
+            if (motor != null && motor.GravityExceedsThrust)
+            {
+                return SpacecraftLandingGuidanceLevel.Warning;
             }
 
             if (computer.TouchdownConfirmed || assessment.IsSafeTouchdownWindow)
@@ -195,6 +211,7 @@ namespace Farion.Gameplay.Flight
                 SpacecraftLandingGuidanceCommand.HoldAttitude => "HOLD ATTITUDE",
                 SpacecraftLandingGuidanceCommand.CommitTouchdown => "TOUCHDOWN WINDOW",
                 SpacecraftLandingGuidanceCommand.AbortLanding => "ABORT LANDING",
+                SpacecraftLandingGuidanceCommand.ThrustDeficit => "THRUST BELOW GRAVITY",
                 _ => "MONITOR"
             };
         }

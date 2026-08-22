@@ -31,9 +31,12 @@ matching reference-frame acceleration correction to actors. This keeps the
 explorable non-convex terrain collider stationary under the ship and explorer
 without falsifying relative orbits.
 
-Only the active reference body may own adaptive terrain collision. Switching
-exploration to another planet must be an explicit reference-frame transition,
-not a second moving terrain collider.
+Offline surface observers drive the explicit reference-frame transition. The
+transition converts dynamic Rigidbody velocities into the new frame. In
+multiplayer every peer retains the same authored reference frame; surface
+observers select adaptive collision coverage per body but never choose a local
+network physics frame. This keeps FishNet prediction and reconciliation in one
+coordinate contract when players land on different bodies.
 
 ### Celestial Frame Provider
 
@@ -223,7 +226,8 @@ disables. Unsafe speed, missing coverage, a visual rebuild, ascent, or an
 observer change restores the global collider first. At no point may collision
 authority be empty.
 
-Each local collider shares its renderer's exact mesh. Entry/exit hysteresis
+Each local collider copies the renderer's exact surface vertices and triangles
+into a dedicated mesh without visual skirts. Entry/exit hysteresis
 prevents rapid whole-system toggling; ghost border normals and patch skirts
 prevent lighting seams and visible cracks. Split/merge hysteresis prevents a
 branch from oscillating at its LOD boundary, and every adaptive level uses the
@@ -1273,9 +1277,9 @@ For the authored explorable test planet, also use the adaptive surface patch
 setup above. Near the ground, the global renderer is disabled. Its collider
 remains the fallback until local patch colliders have complete predicted
 coverage, then collision ownership transfers without an empty authority frame.
-Dynamic N-body bodies must leave `Generate Mesh Collider` disabled. Project
-validation rejects an adaptive collision body that is not the scene
-simulation's physics reference body.
+Dynamic N-body bodies must leave `Generate Mesh Collider` disabled. Local patch
+collision activates only while that body is the simulation's current physics
+reference body; other bodies keep the global fallback collider.
 
 Tune `SO_PlayerStarterShuttleLandingProfile` only after confirming the sample
 values make sense in Play Mode. Its touchdown altitude includes the current

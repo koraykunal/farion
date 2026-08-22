@@ -64,7 +64,9 @@ namespace Farion.Simulation.Physics
         public Vector3 InitialAngularVelocityDegreesPerSecond => initialAngularVelocityDegreesPerSecond;
         public Vector3 InertialVelocity => simulatedVelocity;
         public Vector3 Velocity => ResolvedInertialVelocity - physicsReferenceFrameVelocity;
-        public Vector3 AngularVelocity => simulatedAngularVelocity;
+        public Vector3 AngularVelocity => hasAnalyticReference
+            ? referenceRotation * simulatedAngularVelocity
+            : transform.rotation * simulatedAngularVelocity;
         public float Mass => mass;
         public bool ParticipatesInNBody => participatesInNBody;
         public CelestialBodyMotionMode MotionMode => motionMode;
@@ -77,6 +79,7 @@ namespace Farion.Simulation.Physics
         public OrbitalElements Orbit => orbit;
         public Vector3 SystemPosition => systemPosition;
         public Vector3 SystemVelocity => systemVelocity;
+        public Vector3 EpochLocalOffset => localOffsetAtEpoch;
         public float OrbitPeriodSeconds => hasOrbit ? (float)orbit.PeriodSeconds : 0f;
         public Vector3 Position => Rigidbody.position;
 
@@ -93,7 +96,9 @@ namespace Farion.Simulation.Physics
             }
         }
 
-        public void ApplyDefinition(CelestialBodyDefinition definition)
+        public void ApplyDefinition(
+            CelestialBodyDefinition definition,
+            float gravitationalConstant = GravitySimulation.DefaultGravitationalConstant)
         {
             if (definition == null)
             {
@@ -121,7 +126,9 @@ namespace Farion.Simulation.Physics
                 cachedRigidbody = rb;
             }
 
-            RecalculateMass(GravitySimulation.DefaultGravitationalConstant);
+            RecalculateMass(gravitationalConstant > 0f
+                ? gravitationalConstant
+                : GravitySimulation.DefaultGravitationalConstant);
             ConfigureRigidbody();
         }
 
@@ -208,6 +215,12 @@ namespace Farion.Simulation.Physics
                 driftVelocity,
                 gravitationalParameter,
                 out orbit);
+            if (!hasOrbit)
+            {
+                Debug.LogWarning(
+                    $"Celestial body '{bodyName}' could not fit a Kepler orbit around '{attractor.BodyName}' (offset {localOffsetAtEpoch}, velocity {driftVelocity}); it will drift linearly without gravity.",
+                    this);
+            }
         }
 
         public void EvaluateAnalyticMotion(double timeSeconds, Vector3 attractorSystemPosition, Vector3 attractorSystemVelocity)
@@ -345,7 +358,7 @@ namespace Farion.Simulation.Physics
 
         public Vector3 GetVelocityAtPoint(Vector3 point)
         {
-            return Velocity + Vector3.Cross(simulatedAngularVelocity, point - Position);
+            return Velocity + Vector3.Cross(AngularVelocity, point - Position);
         }
 
         public CelestialBodySnapshot CaptureSnapshot()

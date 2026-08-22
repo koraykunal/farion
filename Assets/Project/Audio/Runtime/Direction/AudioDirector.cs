@@ -33,9 +33,11 @@ namespace Farion.Audio.Direction
 
     [DefaultExecutionOrder(-1000)]
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(StudioListener))]
     public sealed class AudioDirector : MonoBehaviour
     {
-        const string ScoreEvent = "event:/Music/AdaptiveScore";
+        const string MenuScoreEvent = "event:/Music/AdaptiveScore";
+        const string SpaceAmbientEvent = "event:/Music/SpaceAmbient";
         const string AmbienceEvent = "event:/Ambience/World";
         const string GameContextParameter = "GameContext";
         const string AtmosphereParameter = "Atmosphere";
@@ -81,11 +83,18 @@ namespace Farion.Audio.Direction
         [Min(0f)] [SerializeField] float atmosphereReleaseSeconds = 1.8f;
         [Min(0f)] [SerializeField] float interiorBlendSeconds = 0.35f;
 
+        [Header("Scene Mix")]
+        [Min(0f)] [SerializeField] float musicFadeInSeconds = 2f;
+
         readonly float[] busVolumes = { 1f, 1f, 1f, 1f, 1f };
         readonly bool[] missingBusWarnings = new bool[5];
         EventInstance scoreInstance;
+        EventInstance spaceAmbientInstance;
         EventInstance ambienceInstance;
+        Camera listenerCamera;
         bool ownsRuntime;
+        AudioSceneContextId sceneContext;
+        float activeMusicFade = 1f;
         float atmosphere;
         float targetAtmosphere;
         float interior;
@@ -108,15 +117,24 @@ namespace Farion.Audio.Direction
             Current = this;
             ownsRuntime = true;
             DontDestroyOnLoad(gameObject);
+            SyncListenerToCamera();
             LoadVolumes();
-            StartPersistentEvent(ScoreEvent, out scoreInstance);
+            StartPersistentEvent(MenuScoreEvent, out scoreInstance);
+            StartPersistentEvent(SpaceAmbientEvent, out spaceAmbientInstance);
             StartPersistentEvent(AmbienceEvent, out ambienceInstance);
+            ApplySceneMix();
             ApplyAllBusVolumes();
         }
 
         void Update()
         {
             float deltaTime = Time.unscaledDeltaTime;
+            SyncListenerToCamera();
+            activeMusicFade = MoveTowards(
+                activeMusicFade,
+                1f,
+                musicFadeInSeconds,
+                deltaTime);
             atmosphere = MoveTowards(
                 atmosphere,
                 targetAtmosphere,
@@ -124,6 +142,7 @@ namespace Farion.Audio.Direction
                 deltaTime);
             interior = MoveTowards(interior, targetInterior, interiorBlendSeconds, deltaTime);
 
+            ApplySceneMix();
             SetGlobalParameter(AtmosphereParameter, atmosphere);
             SetGlobalParameter(InteriorParameter, interior);
         }
@@ -133,6 +152,7 @@ namespace Farion.Audio.Direction
             atmosphereAttackSeconds = Mathf.Max(0f, atmosphereAttackSeconds);
             atmosphereReleaseSeconds = Mathf.Max(0f, atmosphereReleaseSeconds);
             interiorBlendSeconds = Mathf.Max(0f, interiorBlendSeconds);
+            musicFadeInSeconds = Mathf.Max(0f, musicFadeInSeconds);
         }
 
         void OnDestroy()
@@ -143,12 +163,16 @@ namespace Farion.Audio.Direction
             }
 
             StopAndRelease(ref ambienceInstance, immediate: false);
+            StopAndRelease(ref spaceAmbientInstance, immediate: false);
             StopAndRelease(ref scoreInstance, immediate: false);
             Current = null;
         }
 
         public void SetSceneContext(AudioSceneContextId context)
         {
+            sceneContext = context;
+            activeMusicFade = 0f;
+            ApplySceneMix();
             SetGlobalParameter(GameContextParameter, (float)context);
         }
 
@@ -226,6 +250,17 @@ namespace Farion.Audio.Direction
             return normalized * normalized;
         }
 
+        internal static void ResolveSceneMix(
+            AudioSceneContextId context,
+            float fade,
+            out float menuVolume,
+            out float gameplayVolume)
+        {
+            fade = Mathf.Clamp01(fade);
+            menuVolume = context == AudioSceneContextId.MainMenu ? fade : 0f;
+            gameplayVolume = context == AudioSceneContextId.Gameplay ? fade : 0f;
+        }
+
         void LoadVolumes()
         {
             for (int i = 0; i < busVolumes.Length; i++)
@@ -278,6 +313,40 @@ namespace Farion.Audio.Direction
             {
                 instance = default;
                 WarnMissingEventOnce(path);
+            }
+        }
+
+        void ApplySceneMix()
+        {
+            ResolveSceneMix(
+                sceneContext,
+                activeMusicFade,
+                out float menuVolume,
+                out float gameplayVolume);
+            SetInstanceVolume(scoreInstance, menuVolume);
+            SetInstanceVolume(spaceAmbientInstance, gameplayVolume);
+        }
+
+        void SyncListenerToCamera()
+        {
+            if (listenerCamera == null || !listenerCamera.isActiveAndEnabled)
+            {
+                listenerCamera = Camera.main;
+            }
+
+            if (listenerCamera != null)
+            {
+                transform.SetPositionAndRotation(
+                    listenerCamera.transform.position,
+                    listenerCamera.transform.rotation);
+            }
+        }
+
+        static void SetInstanceVolume(EventInstance instance, float volume)
+        {
+            if (instance.isValid())
+            {
+                instance.setVolume(volume);
             }
         }
 

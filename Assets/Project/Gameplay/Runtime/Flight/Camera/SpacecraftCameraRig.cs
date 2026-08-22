@@ -190,7 +190,11 @@ namespace Farion.Gameplay.Flight
             Vector3 targetPosition = exteriorTarget.position;
             if (hasExteriorTargetPosition)
             {
-                transform.position += targetPosition - lastExteriorTargetPosition;
+                Vector3 targetDelta = targetPosition - lastExteriorTargetPosition;
+                if (targetDelta.sqrMagnitude < snapDistance * snapDistance)
+                {
+                    transform.position += targetDelta;
+                }
             }
 
             lastExteriorTargetPosition = targetPosition;

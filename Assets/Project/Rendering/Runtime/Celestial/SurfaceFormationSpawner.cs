@@ -80,7 +80,7 @@ namespace Farion.Rendering.Celestial
 
         void OnValidate()
         {
-            ResolveComponents();
+            ResolveComponents(createRuntimeRoot: false);
             runtimeDirty = true;
         }
 
@@ -216,7 +216,7 @@ namespace Farion.Rendering.Celestial
             return influence;
         }
 
-        void ResolveComponents()
+        void ResolveComponents(bool createRuntimeRoot = true)
         {
             body ??= GetComponent<CelestialBody>();
             surfaceModel ??= GetComponent<PlanetSurfaceModel>();
@@ -224,23 +224,20 @@ namespace Farion.Rendering.Celestial
             bodyVisual ??= GetComponent<CelestialBodyVisual>();
             if (formationRoot == null || formationRoot == transform)
             {
-                formationRoot = ResolveFormationRoot();
+                Transform existing = transform.Find(FormationContainerName);
+                if (existing != null)
+                {
+                    formationRoot = existing;
+                }
+                else if (createRuntimeRoot && Application.isPlaying)
+                {
+                    formationRoot = CreateFormationRoot();
+                }
             }
         }
 
-        Transform ResolveFormationRoot()
+        Transform CreateFormationRoot()
         {
-            Transform existing = transform.Find(FormationContainerName);
-            if (existing != null)
-            {
-                return existing;
-            }
-
-            if (!Application.isPlaying)
-            {
-                return transform;
-            }
-
             GameObject container = new(FormationContainerName);
             container.transform.SetParent(transform, false);
             container.layer = FarionLayers.CelestialSurface;

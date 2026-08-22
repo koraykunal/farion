@@ -29,6 +29,32 @@ namespace Farion.Simulation.Celestial
             surfaceSources ??= new List<MonoBehaviour>();
         }
 
+        public void AddEnvironmentSource(MonoBehaviour source)
+        {
+            if (source is ICelestialEnvironmentProvider && !environmentSources.Contains(source))
+            {
+                environmentSources.Add(source);
+            }
+        }
+
+        public void AddSurfaceSource(MonoBehaviour source)
+        {
+            if (source is ICelestialSurfaceProvider && !surfaceSources.Contains(source))
+            {
+                surfaceSources.Add(source);
+            }
+        }
+
+        public void RemoveEnvironmentSource(MonoBehaviour source)
+        {
+            environmentSources.Remove(source);
+        }
+
+        public void RemoveSurfaceSource(MonoBehaviour source)
+        {
+            surfaceSources.Remove(source);
+        }
+
         public CelestialFrameSample Sample(Vector3 position, Vector3 velocity)
         {
             GravitySimulation source = Simulation;
@@ -40,7 +66,8 @@ namespace Farion.Simulation.Celestial
         public CelestialFrameSample Sample(
             Vector3 position,
             Vector3 velocity,
-            double simulationTime)
+            double simulationTime,
+            CelestialBody incumbent = null)
         {
             GravitySimulation source = Simulation;
             if (source == null)
@@ -48,7 +75,11 @@ namespace Farion.Simulation.Celestial
                 return CelestialFrameSample.Empty(position, velocity);
             }
 
-            GravitySample gravitySample = source.FindDominantBody(position);
+            GravitySample gravitySample = source.FindDominantBody(
+                position,
+                null,
+                incumbent,
+                GravitySimulation.DominanceHysteresisBias);
             if (!gravitySample.HasBody)
             {
                 return CelestialFrameSample.Empty(position, velocity);

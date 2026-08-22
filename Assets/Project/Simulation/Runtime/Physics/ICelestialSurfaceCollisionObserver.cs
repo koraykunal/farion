@@ -8,6 +8,12 @@ namespace Farion.Simulation.Physics
             out CelestialSurfaceCollisionObserverState observer);
     }
 
+    public interface ICelestialSurfaceCollisionObserverGroup
+    {
+        void GetSurfaceCollisionObservers(
+            System.Collections.Generic.List<CelestialSurfaceCollisionObserverState> results);
+    }
+
     public readonly struct CelestialSurfaceCollisionObserverState
     {
         public CelestialSurfaceCollisionObserverState(Rigidbody rigidbody)

@@ -343,6 +343,19 @@ new schema is allowed only after those runtime owners exist.
 - Bodies are positioned relative to the physics reference body, which is the
   anchor local space is built around. That keeps analytic motion compatible
   with world-origin rebasing without either system knowing about the other.
+- Offline possession binds its surface observer to `GravitySimulation`. A
+  reference transition preserves world poses and converts every dynamic
+  Rigidbody velocity into the new translating frame, so the explored body keeps
+  its terrain collider stationary without launching the actor.
+- Multiplayer keeps the authored translating frame on every peer. Prediction
+  and reconciliation therefore never depend on a locally chosen body. Each
+  actor still samples its own dominant body's point velocity, and adaptive
+  terrain collision gathers every active explorer or piloted ship.
+- One multiplayer zone has one translating physics frame and one replicated
+  origin. The server rebases around the bounds center of all active observers,
+  minimizing the worst local coordinate instead of privileging the host. A
+  later multi-zone design is required only when player separation exceeds the
+  precision budget of the current starting-system scene.
 - `DynamicNBody` remains the only integrated mode and is unused by authored
   content.
 - `CelestialBody` owns runtime physical body state.
@@ -350,7 +363,9 @@ new schema is allowed only after those runtime owners exist.
   terrain-feature sampling.
 - `WorldOriginRebaser` is a local Unity-space precision adapter, not a universe
   coordinate authority. No universe coordinate type exists; one will be added
-  only when a workflow needs to address positions outside a single zone.
+  only when a workflow needs to address positions outside a single zone. Camera
+  rigs shift in the same transaction, then the presentation shell snaps follow
+  state and invalidates URP temporal history before the next rendered frame.
 - `SpacecraftMotor` owns spacecraft motion and publishes telemetry.
 - Camera, HUD, FMOD, and thruster VFX consume telemetry and do not feed state
   back into flight physics.

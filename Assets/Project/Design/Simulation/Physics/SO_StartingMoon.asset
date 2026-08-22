@@ -16,7 +16,7 @@ MonoBehaviour:
   bodyType: 2
   radius: 120
   surfaceGravity: 1.62
-  initialVelocity: {x: 0, y: 0, z: 183.14578}
+  initialVelocity: {x: 0, y: 0, z: 135.60394}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9

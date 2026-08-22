@@ -229,7 +229,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
 --- !u!114 &101437579 stripped
 MonoBehaviour:
@@ -1082,6 +1082,7 @@ MonoBehaviour:
   - {fileID: 1772746496}
   surfacePatchSystems:
   - {fileID: 1772746494}
+  - {fileID: 1781217940}
   formationSpawners:
   - {fileID: 8800000000000000006}
   - {fileID: 8800000000000000007}
@@ -1138,14 +1139,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1148478148}
   generationProfile: {fileID: 11400000, guid: dfcdb85c483641668d1217535da4ccc2, type: 2}
   shapeProfile: {fileID: 11400000, guid: c93f6b21e40d4a8fb27c58e1d6094a3e, type: 2}
   primaryRadiationSource: {fileID: 651725579}
   surfaceNormalSampleMeters: 2.5
-  surfaceSampleFootprint: 0.001534
+  surfaceSampleFootprint: 0.016193777
 --- !u!4 &1148478147
 Transform:
   m_ObjectHideFlags: 0
@@ -1763,14 +1764,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1477076283}
   generationProfile: {fileID: 11400000, guid: 6d2813a2700548129c0c6d18e8009f6d, type: 2}
   shapeProfile: {fileID: 11400000, guid: a71c4e08d5b34f2b9c6e1d73f0a25b48, type: 2}
   primaryRadiationSource: {fileID: 651725579}
   surfaceNormalSampleMeters: 2.5
-  surfaceSampleFootprint: 0.001534
+  surfaceSampleFootprint: 0.016193777
 --- !u!114 &1477076289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2452,7 +2453,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1772746501}
   generationProfile: {fileID: 11400000, guid: a9d263dcb6044288a2c0c264ca7a5880, type: 2}
@@ -2684,6 +2685,8 @@ GameObject:
   - component: {fileID: 1781217931}
   - component: {fileID: 1781217930}
   - component: {fileID: 1781217929}
+  - component: {fileID: 1781217939}
+  - component: {fileID: 1781217940}
   m_Layer: 0
   m_Name: Starting Moon
   m_TagString: Untagged
@@ -2781,7 +2784,7 @@ MonoBehaviour:
   bodyType: 2
   radius: 120
   surfaceGravity: 1.62
-  initialVelocity: {x: 0, y: 0, z: 183.14578}
+  initialVelocity: {x: 0, y: 0, z: 135.60394}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
@@ -2902,13 +2905,61 @@ Transform:
   m_GameObject: {fileID: 1781217928}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3000, y: -1600, z: 0}
+  m_LocalPosition: {x: 13000, y: -1600, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 109862164}
   m_Father: {fileID: 246392134}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1781217939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1781217928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
+  body: {fileID: 1781217933}
+  generationProfile: {fileID: 0}
+  shapeProfile: {fileID: 11400000, guid: 81fcf92b2cd8c1f4eaabc9ad0ad4cb10, type: 2}
+  primaryRadiationSource: {fileID: 651725579}
+  surfaceNormalSampleMeters: 2.5
+  surfaceSampleFootprint: 0.019392548
+--- !u!114 &1781217940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1781217928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d24e35f46a784b89ab12c3d4e5f60718, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialSurfacePatchSystem
+  profile: {fileID: 11400000, guid: a34f56b78c904d12ae34f56b78c90d12, type: 2}
+  bodyVisual: {fileID: 1781217931}
+  targetCamera: {fileID: 0}
+  collisionObserverSource: {fileID: 0}
+  surfaceModeActive: 0
+  collisionAuthority: 0
+  localCollisionCoverageReady: 0
+  collisionObserverSpeed: 0
+  predictedCollisionTravelDistance: 0
+  activePatchCount: 0
+  activeColliderCount: 0
+  deepestActiveLevel: 0
+  patchTransitionPending: 0
+  pendingPatchBuildCount: 0
+  committedTransitionCount: 0
+  skippedUnchangedRefreshCount: 0
+  lastTransitionBuildCount: 0
+  lastTransitionCommitFrame: -1
 --- !u!1 &1829898721
 GameObject:
   m_ObjectHideFlags: 0
@@ -3285,6 +3336,7 @@ MonoBehaviour:
   - {fileID: 1772746497}
   - {fileID: 1477076288}
   - {fileID: 1148478146}
+  - {fileID: 1781217939}
 --- !u!114 &1996413351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3419,6 +3471,10 @@ MonoBehaviour:
   surfaceModel: {fileID: 1772746497}
   patchSystem: {fileID: 1772746494}
   formationSpawner: {fileID: 8800000000000000005}
+  placementSuspended: 0
+  activeInstanceCount: 0
+  pendingCandidateCount: 0
+  drawBatchCount: 0
 --- !u!114 &8800000000000000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3436,6 +3492,10 @@ MonoBehaviour:
   surfaceModel: {fileID: 1148478146}
   patchSystem: {fileID: 0}
   formationSpawner: {fileID: 8800000000000000006}
+  placementSuspended: 0
+  activeInstanceCount: 0
+  pendingCandidateCount: 0
+  drawBatchCount: 0
 --- !u!114 &8800000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3453,6 +3513,10 @@ MonoBehaviour:
   surfaceModel: {fileID: 1477076288}
   patchSystem: {fileID: 0}
   formationSpawner: {fileID: 8800000000000000007}
+  placementSuspended: 0
+  activeInstanceCount: 0
+  pendingCandidateCount: 0
+  drawBatchCount: 0
 --- !u!114 &8800000000000000005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3468,7 +3532,13 @@ MonoBehaviour:
   profile: {fileID: 11400000, guid: a647070e20662c64d8a12d401f819def, type: 2}
   body: {fileID: 1772746501}
   surfaceModel: {fileID: 1772746497}
+  patchSystem: {fileID: 1772746494}
   formationRoot: {fileID: 1772746506}
+  placementSuspended: 0
+  activeFormationCount: 0
+  activePieceCount: 0
+  pendingCellCount: 0
+  activeColliderCount: 0
 --- !u!114 &8800000000000000006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3484,7 +3554,13 @@ MonoBehaviour:
   profile: {fileID: 11400000, guid: a647070e20662c64d8a12d401f819def, type: 2}
   body: {fileID: 1148478148}
   surfaceModel: {fileID: 1148478146}
+  patchSystem: {fileID: 0}
   formationRoot: {fileID: 1148478147}
+  placementSuspended: 0
+  activeFormationCount: 0
+  activePieceCount: 0
+  pendingCellCount: 0
+  activeColliderCount: 0
 --- !u!114 &8800000000000000007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3500,7 +3576,13 @@ MonoBehaviour:
   profile: {fileID: 11400000, guid: a647070e20662c64d8a12d401f819def, type: 2}
   body: {fileID: 1477076283}
   surfaceModel: {fileID: 1477076288}
+  patchSystem: {fileID: 0}
   formationRoot: {fileID: 1477076276}
+  placementSuspended: 0
+  activeFormationCount: 0
+  activePieceCount: 0
+  pendingCellCount: 0
+  activeColliderCount: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

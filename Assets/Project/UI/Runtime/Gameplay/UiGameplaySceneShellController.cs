@@ -8,6 +8,7 @@ using Farion.Gameplay.Presentation.Flight;
 using Farion.Gameplay.Session;
 using Farion.Rendering.Celestial;
 using Farion.Rendering.Lighting;
+using Farion.Simulation.World;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -30,6 +31,8 @@ namespace Farion.UI.Gameplay
         [SerializeField] CelestialLightingRig lightingRig;
         [SerializeField] CelestialLodController lodController;
         [SerializeField] CelestialOrbitLineRenderer orbitLines;
+
+        WorldOriginRebaser boundOriginRebaser;
 
         public SpacecraftCameraRig SpacecraftCameraRig => spacecraftCameraRig;
         public FirstPersonCameraRig FirstPersonCameraRig => firstPersonCameraRig;
@@ -64,6 +67,11 @@ namespace Farion.UI.Gameplay
         void Awake()
         {
             ResolvePresentation();
+        }
+
+        void OnDestroy()
+        {
+            BindWorldOrigin(null);
         }
 
         IEnumerator Start()
@@ -126,6 +134,8 @@ namespace Farion.UI.Gameplay
             postProcessRig.SetMotor(possession.SpacecraftMotor);
             lightingRig.SetPrimarySource(FindInScene<CelestialLightSource>(world));
             orbitLines?.SetSimulation(runtimeRoot.Bindings.GravitySimulation);
+            runtimeRoot.Bindings.GravitySimulation.SetPhysicsReferenceObserverSource(possession);
+            BindWorldOrigin(runtimeRoot.Bindings.OriginRebaser);
 
             foreach (CelestialSurfacePatchSystem patch in
                      FindAllInScene<CelestialSurfacePatchSystem>(world))
@@ -143,6 +153,38 @@ namespace Farion.UI.Gameplay
 
             lodController.ApplyLods();
             return true;
+        }
+
+        public void BindWorldOrigin(WorldOriginRebaser rebaser)
+        {
+            if (boundOriginRebaser == rebaser)
+            {
+                return;
+            }
+
+            if (boundOriginRebaser != null)
+            {
+                boundOriginRebaser.Rebased -= OnWorldOriginRebased;
+                boundOriginRebaser.UnregisterShiftRoot(spacecraftCameraRig?.transform);
+                boundOriginRebaser.UnregisterShiftRoot(firstPersonCameraRig?.transform);
+            }
+
+            boundOriginRebaser = rebaser;
+            if (boundOriginRebaser == null)
+            {
+                return;
+            }
+
+            boundOriginRebaser.RegisterShiftRoot(spacecraftCameraRig?.transform);
+            boundOriginRebaser.RegisterShiftRoot(firstPersonCameraRig?.transform);
+            boundOriginRebaser.Rebased += OnWorldOriginRebased;
+        }
+
+        void OnWorldOriginRebased(Vector3 _)
+        {
+            spacecraftCameraRig?.SnapToTarget();
+            firstPersonCameraRig?.SnapToTarget();
+            postProcessRig?.ResetCameraHistory(gameplayCamera);
         }
 
         void ResolvePresentation()

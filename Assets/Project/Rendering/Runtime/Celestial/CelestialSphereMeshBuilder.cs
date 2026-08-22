@@ -13,9 +13,17 @@ namespace Farion.Rendering.Celestial
             int resolution,
             string meshName,
             CelestialShapeProfile shapeProfile = null,
-            CelestialSurfaceProfileBase surfaceProfile = null)
+            CelestialSurfaceProfileBase surfaceProfile = null,
+            float angularSampleFootprint = 0f)
         {
-            return Build(radius, resolution, meshName, out _, shapeProfile, surfaceProfile);
+            return Build(
+                radius,
+                resolution,
+                meshName,
+                out _,
+                shapeProfile,
+                surfaceProfile,
+                angularSampleFootprint);
         }
 
         public static Mesh Build(
@@ -24,11 +32,14 @@ namespace Farion.Rendering.Celestial
             string meshName,
             out Vector2 radiusMinMax,
             CelestialShapeProfile shapeProfile = null,
-            CelestialSurfaceProfileBase surfaceProfile = null)
+            CelestialSurfaceProfileBase surfaceProfile = null,
+            float angularSampleFootprint = 0f)
         {
             radius = Mathf.Max(0.01f, radius);
             SphereData data = GetSphereData(resolution);
-            float angularSampleFootprint = CalculateAngularSampleFootprint(resolution);
+            angularSampleFootprint = angularSampleFootprint > 0f
+                ? angularSampleFootprint
+                : CalculateAngularSampleFootprint(resolution);
 
             Vector3[] vertices = new Vector3[data.Vertices.Length];
             Vector4[] shadingData = new Vector4[data.Vertices.Length];

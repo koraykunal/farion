@@ -30,12 +30,18 @@ namespace Farion.Gameplay.Persistence
 
         public string SavedAtUtc { get; }
         public double CelestialSimulationTime { get; private set; }
+        public int CelestialLayoutHash { get; private set; }
         public List<CelestialBodySnapshot> CelestialBodies => celestialBodies;
         public List<ResourceDepositDeltaSnapshot> ResourceDepositDeltas => resourceDepositDeltas;
 
         public void SetCelestialSimulationTime(double seconds)
         {
             CelestialSimulationTime = seconds >= 0d ? seconds : 0d;
+        }
+
+        public void SetCelestialLayoutHash(int layoutHash)
+        {
+            CelestialLayoutHash = layoutHash;
         }
 
         public void SetPlayerInventory(PlayerInventorySnapshot snapshot)
@@ -93,6 +99,7 @@ namespace Farion.Gameplay.Persistence
                 resourceDepositDeltas);
             snapshot.SetShuttleFuel(shuttleFuel);
             snapshot.SetShuttleHull(shuttleHull);
+            snapshot.SetCelestialLayoutHash(CelestialLayoutHash);
             return snapshot;
         }
     }

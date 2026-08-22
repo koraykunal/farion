@@ -107,6 +107,11 @@ namespace Farion.Gameplay.Character
             snapNextFrame = true;
         }
 
+        public void SnapToTarget()
+        {
+            snapNextFrame = true;
+        }
+
         public void SetInputSource(KeyboardFirstPersonInput source)
         {
             resolvedInput = source;

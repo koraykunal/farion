@@ -19,6 +19,7 @@ namespace Farion.Gameplay.Interaction
     public sealed class PlayerPossessionController :
         MonoBehaviour,
         ICelestialSurfaceCollisionObserver,
+        ICelestialSurfaceCollisionObserverGroup,
         ILocalPilotContext
     {
         [Header("Mode")]
@@ -150,6 +151,21 @@ namespace Farion.Gameplay.Interaction
 
             observer = new CelestialSurfaceCollisionObserverState(target);
             return true;
+        }
+
+        public void GetSurfaceCollisionObservers(
+            List<CelestialSurfaceCollisionObserverState> results)
+        {
+            ResolveReferences();
+            if (explorerRigidbody != null && explorerRigidbody.gameObject.activeInHierarchy)
+            {
+                results.Add(new CelestialSurfaceCollisionObserverState(explorerRigidbody));
+            }
+
+            if (spacecraftRigidbody != null && spacecraftRigidbody.gameObject.activeInHierarchy)
+            {
+                results.Add(new CelestialSurfaceCollisionObserverState(spacecraftRigidbody));
+            }
         }
 
         public bool HasPersistentSpacecraftTarget

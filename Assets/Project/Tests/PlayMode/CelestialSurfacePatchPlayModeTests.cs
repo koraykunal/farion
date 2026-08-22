@@ -1,5 +1,6 @@
 using System.Collections;
 using Farion.Rendering.Celestial;
+using Farion.Simulation.Physics;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,7 +11,7 @@ namespace Farion.Tests.PlayMode
     public sealed class CelestialSurfacePatchPlayModeTests
     {
         [UnityTest]
-        public IEnumerator GameplayShellHandsCollisionOffWithoutAnAuthorityGap()
+        public IEnumerator GameplayShellHandsNonReferenceSurfaceCollisionOffWithoutAnAuthorityGap()
         {
             AsyncOperation load = SceneManager.LoadSceneAsync(
                 "SC_GameplayShell",
@@ -31,8 +32,25 @@ namespace Farion.Tests.PlayMode
             Assert.That(SceneManager.GetSceneByName("SC_WorldZone").isLoaded, Is.True);
             yield return null;
 
-            CelestialSurfacePatchSystem patchSystem =
-                Object.FindAnyObjectByType<CelestialSurfacePatchSystem>();
+            GravitySimulation simulation =
+                Object.FindAnyObjectByType<GravitySimulation>();
+            Assert.That(simulation, Is.Not.Null);
+
+            CelestialSurfacePatchSystem patchSystem = null;
+            CelestialSurfacePatchSystem[] patchSystems =
+                Object.FindObjectsByType<CelestialSurfacePatchSystem>();
+            for (int i = 0; i < patchSystems.Length; i++)
+            {
+                CelestialBodyVisual candidateVisual =
+                    patchSystems[i].GetComponent<CelestialBodyVisual>();
+                if (candidateVisual != null &&
+                    candidateVisual.Body != simulation.PhysicsReferenceBody)
+                {
+                    patchSystem = patchSystems[i];
+                    break;
+                }
+            }
+
             Assert.That(patchSystem, Is.Not.Null);
 
             CelestialBodyVisual bodyVisual =
@@ -40,6 +58,7 @@ namespace Farion.Tests.PlayMode
             Assert.That(bodyVisual, Is.Not.Null);
             Assert.That(bodyVisual.Body, Is.Not.Null);
             Assert.That(bodyVisual.Body.SupportsNonConvexSurfaceCollider, Is.True);
+            Assert.That(bodyVisual.Body, Is.Not.SameAs(simulation.PhysicsReferenceBody));
 
             Camera camera = patchSystem.TargetCamera;
             Assert.That(camera, Is.Not.Null);
@@ -178,7 +197,10 @@ namespace Farion.Tests.PlayMode
                 MeshFilter patchFilter = patchCollider.GetComponent<MeshFilter>();
                 Assert.That(patchFilter, Is.Not.Null);
                 Assert.That(patchCollider.sharedMesh, Is.Not.Null);
-                Assert.That(patchCollider.sharedMesh, Is.SameAs(patchFilter.sharedMesh));
+                Assert.That(patchCollider.sharedMesh, Is.Not.SameAs(patchFilter.sharedMesh));
+                Assert.That(
+                    patchCollider.sharedMesh.vertexCount,
+                    Is.LessThan(patchFilter.sharedMesh.vertexCount));
             }
 
             Assert.That(

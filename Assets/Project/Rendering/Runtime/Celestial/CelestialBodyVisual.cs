@@ -374,6 +374,9 @@ namespace Farion.Rendering.Celestial
         {
             int lodCount = GetLodCount();
             renderMeshes = new Mesh[lodCount];
+            float angularSampleFootprint =
+                CelestialSphereMeshBuilder.CalculateAngularSampleFootprint(
+                    GetLodResolution(0));
 
             for (int i = 0; i < lodCount; i++)
             {
@@ -384,7 +387,8 @@ namespace Farion.Rendering.Celestial
                     $"{sourceBody.BodyName} LOD{i} Render Mesh",
                     out Vector2 lodRadiusMinMax,
                     shapeProfile,
-                    surfaceProfile);
+                    surfaceProfile,
+                    angularSampleFootprint);
 
                 if (i == 0)
                 {
@@ -399,13 +403,17 @@ namespace Farion.Rendering.Celestial
             renderMeshes = new Mesh[lodCount];
             int previewIndex = Mathf.Clamp(editModePreviewLod, 0, lodCount - 1);
             int resolution = GetLodResolution(previewIndex);
+            float angularSampleFootprint =
+                CelestialSphereMeshBuilder.CalculateAngularSampleFootprint(
+                    GetLodResolution(0));
             renderMeshes[previewIndex] = CelestialSphereMeshBuilder.Build(
                 sourceBody.Radius,
                 resolution,
                 $"{sourceBody.BodyName} Editor Preview Mesh",
                 out renderRadiusMinMax,
                 shapeProfile,
-                surfaceProfile);
+                surfaceProfile,
+                angularSampleFootprint);
         }
 
         int FindAvailableLodIndex()

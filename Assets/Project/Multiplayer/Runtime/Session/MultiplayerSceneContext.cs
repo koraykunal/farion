@@ -71,6 +71,7 @@ namespace Farion.Multiplayer.Session
         UiGameplayController gameplayUi;
         UiSpacecraftFlightHudPresenter flightHud;
         SpacecraftPostProcessRig postProcessRig;
+        MultiplayerSurfaceCollisionObserverSource surfaceCollisionObservers;
         bool multiplayerConfigured;
         NetworkStarterShuttle ownedSpacecraft;
 
@@ -185,6 +186,8 @@ namespace Farion.Multiplayer.Session
             originAuthority = worldOriginAuthority;
             BindOriginRebaser(originRebaser);
             originAuthority?.BindRebaser(originRebaser);
+            originAuthority?.SetServerTrackingObserverSource(
+                surfaceCollisionObservers);
             playerSpawner?.BindContext(this, originAuthority);
         }
 
@@ -205,6 +208,7 @@ namespace Farion.Multiplayer.Session
             flightHud?.SetPilotContext(this);
             bindings.LightingRig?.SetPrimarySource(FindInScene<CelestialLightSource>());
             bindings.OrbitLines?.SetSimulation(gravitySimulation);
+            bindings.BindWorldOrigin(originRebaser);
             for (int i = 0; i < surfacePatchSystems.Count; i++)
             {
                 surfacePatchSystems[i]?.SetCamera(bindings.Camera);
@@ -706,9 +710,22 @@ namespace Farion.Multiplayer.Session
             gravitySimulation?.SetIntegrationEnabled(false);
             gravitySimulation?.SetExternalTimeSource(true);
             originRebaser?.SetAutomaticRebasing(false);
+            surfaceCollisionObservers =
+                GetComponent<MultiplayerSurfaceCollisionObserverSource>();
+            if (surfaceCollisionObservers == null)
+            {
+                surfaceCollisionObservers =
+                    gameObject.AddComponent<MultiplayerSurfaceCollisionObserverSource>();
+            }
+
+            // Network prediction and reconciliation share one authored frame.
+            // A local observer-driven frame switch would diverge between peers.
+            gravitySimulation?.SetPhysicsReferenceObserverSource(null);
+
             for (int i = 0; i < surfacePatchSystems.Count; i++)
             {
-                surfacePatchSystems[i]?.SetCollisionObserverSource(null);
+                surfacePatchSystems[i]?.SetCollisionObserverSource(
+                    surfaceCollisionObservers);
             }
         }
     }

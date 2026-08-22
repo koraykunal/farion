@@ -511,6 +511,12 @@ namespace Farion.Editor.Validation
             {
                 report.AddError($"{scenePath}: expected one FMOD StudioListener, found {studioListeners.Length}.");
             }
+            else if (directors.Length == 1 &&
+                     studioListeners[0].gameObject != directors[0].gameObject)
+            {
+                report.AddError(
+                    $"{scenePath}: FMOD StudioListener must be owned by the persistent AudioDirector.");
+            }
 
             if (unityListeners.Length > 0 || unitySources.Length > 0)
             {

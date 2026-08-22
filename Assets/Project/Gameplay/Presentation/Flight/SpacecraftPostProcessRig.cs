@@ -49,6 +49,15 @@ namespace Farion.Gameplay.Presentation.Flight
                 : null;
         }
 
+        public void ResetCameraHistory(Camera camera)
+        {
+            if (camera != null &&
+                camera.TryGetComponent(out UniversalAdditionalCameraData cameraData))
+            {
+                cameraData.resetHistory = true;
+            }
+        }
+
         void OnValidate()
         {
             motor ??= GetComponentInParent<SpacecraftMotor>();

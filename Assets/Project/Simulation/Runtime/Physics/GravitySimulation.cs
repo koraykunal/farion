@@ -10,6 +10,7 @@ namespace Farion.Simulation.Physics
     public sealed class GravitySimulation : MonoBehaviour
     {
         public const float DefaultGravitationalConstant = 0.0001f;
+        public const float DominanceHysteresisBias = 1.1f;
 
         [SerializeField] GravitySettings settings;
 
@@ -27,6 +28,10 @@ namespace Farion.Simulation.Physics
 
         readonly List<CelestialBody> simulationBodies = new();
         readonly List<CelestialBody> analyticOrder = new();
+        readonly List<CelestialSurfaceCollisionObserverState> referenceObservers = new();
+        MonoBehaviour physicsReferenceObserverSource;
+        ICelestialSurfaceCollisionObserver physicsReferenceObserver;
+        ICelestialSurfaceCollisionObserverGroup physicsReferenceObserverGroup;
         double simulationTime;
         bool externalTimeSource;
 
@@ -65,9 +70,12 @@ namespace Farion.Simulation.Physics
                 return;
             }
 
+            RefreshPhysicsReferenceBody();
             if (!externalTimeSource)
             {
-                simulationTime += UnityEngine.Time.fixedDeltaTime;
+                simulationTime += System.Math.Round(
+                    (double)UnityEngine.Time.fixedDeltaTime,
+                    6);
             }
 
             ApplyAnalyticMotion();
@@ -108,11 +116,124 @@ namespace Farion.Simulation.Physics
             }
         }
 
+        public void RegisterBody(CelestialBody body)
+        {
+            if (body == null || simulationBodies.Contains(body))
+            {
+                return;
+            }
+
+            if (!registeredBodies.Contains(body))
+            {
+                registeredBodies.Add(body);
+            }
+
+            simulationBodies.Add(body);
+            body.RecalculateMass(GravitationalConstant);
+            body.ConfigureRigidbody();
+            body.ResetSimulationState();
+            RebuildAnalyticOrder();
+            UpdateReferenceFrameAcceleration();
+            UpdateReferenceFrameVelocity();
+        }
+
+        public void UnregisterBody(CelestialBody body)
+        {
+            if (body == null)
+            {
+                return;
+            }
+
+            registeredBodies.Remove(body);
+            simulationBodies.Remove(body);
+            RebuildAnalyticOrder();
+            UpdateReferenceFrameAcceleration();
+            UpdateReferenceFrameVelocity();
+        }
+
+        public void SetPhysicsReferenceBody(CelestialBody body)
+        {
+            if (body == physicsReferenceBody)
+            {
+                return;
+            }
+
+            if (body != null &&
+                (!simulationBodies.Contains(body) || !body.UsesAnalyticMotion))
+            {
+                Debug.LogWarning(
+                    $"Celestial body '{body.BodyName}' cannot become the physics reference because it is not a registered analytic body.",
+                    body);
+                return;
+            }
+
+            Vector3 previousFrameVelocity = referenceFrameVelocity;
+            physicsReferenceBody = body;
+            UpdateReferenceFrameAcceleration();
+            UpdateReferenceFrameVelocity();
+            ShiftDynamicBodyVelocities(referenceFrameVelocity - previousFrameVelocity);
+        }
+
+        public void SetPhysicsReferenceObserverSource(MonoBehaviour source)
+        {
+            physicsReferenceObserverSource = source;
+            physicsReferenceObserver = source as ICelestialSurfaceCollisionObserver;
+            physicsReferenceObserverGroup = source as ICelestialSurfaceCollisionObserverGroup;
+            referenceObservers.Clear();
+        }
+
+        public bool RefreshPhysicsReferenceBody()
+        {
+            GatherPhysicsReferenceObservers();
+            if (referenceObservers.Count == 0)
+            {
+                return false;
+            }
+
+            CelestialBody candidate = null;
+            for (int i = 0; i < referenceObservers.Count; i++)
+            {
+                CelestialSurfaceCollisionObserverState observer = referenceObservers[i];
+                if (!observer.IsValid || observer.Rigidbody.gameObject.scene != gameObject.scene)
+                {
+                    continue;
+                }
+
+                GravitySample sample = FindDominantBody(
+                    observer.Position,
+                    null,
+                    ResolvedPhysicsReferenceBody,
+                    DominanceHysteresisBias);
+                if (!sample.HasBody)
+                {
+                    return false;
+                }
+
+                if (candidate == null)
+                {
+                    candidate = sample.Body;
+                }
+                else if (candidate != sample.Body)
+                {
+                    return false;
+                }
+            }
+
+            if (candidate == null || candidate == ResolvedPhysicsReferenceBody)
+            {
+                return false;
+            }
+
+            SetPhysicsReferenceBody(candidate);
+            return candidate == ResolvedPhysicsReferenceBody;
+        }
+
         public void SetSimulationTime(double seconds)
         {
             simulationTime = seconds >= 0d ? seconds : 0d;
             if (simulationBodies.Count > 0)
             {
+                RefreshPhysicsReferenceBody();
                 ApplyAnalyticMotion();
             }
         }
@@ -144,6 +265,28 @@ namespace Farion.Simulation.Physics
                     {
                         analyticOrder.Add(body);
                     }
+                }
+            }
+
+            for (int i = 0; i < simulationBodies.Count; i++)
+            {
+                CelestialBody body = simulationBodies[i];
+                if (body == null || !body.UsesAnalyticMotion)
+                {
+                    continue;
+                }
+
+                if (!analyticOrder.Contains(body))
+                {
+                    Debug.LogWarning(
+                        $"Celestial body '{body.BodyName}' could not join the analytic order (attractor cycle or unresolved attractor); it will stay frozen at its epoch pose.",
+                        body);
+                }
+                else if (body.OrbitAttractor != null && !body.OrbitAttractor.UsesAnalyticMotion)
+                {
+                    Debug.LogWarning(
+                        $"Celestial body '{body.BodyName}' orbits dynamic body '{body.OrbitAttractor.BodyName}'; dynamic attractors carry no system position and are unsupported for analytic children.",
+                        body);
                 }
             }
 
@@ -202,6 +345,7 @@ namespace Farion.Simulation.Physics
                 body.ApplyAnalyticPose(worldPosition, body.EvaluateAnalyticRotation(simulationTime));
             }
 
+            UpdateReferenceFrameAcceleration();
             UpdateReferenceFrameVelocity();
         }
 
@@ -272,10 +416,18 @@ namespace Farion.Simulation.Physics
 
         public GravitySample FindDominantBody(Vector3 point, CelestialBody ignoredBody = null)
         {
+            return FindDominantBody(point, ignoredBody, null, DominanceHysteresisBias);
+        }
+
+        public GravitySample FindDominantBody(
+            Vector3 point,
+            CelestialBody ignoredBody,
+            CelestialBody incumbent,
+            float incumbentBias)
+        {
             CelestialBody dominantBody = null;
-            Vector3 dominantAcceleration = Vector3.zero;
+            float dominantSoiRadius = float.PositiveInfinity;
             float dominantAccelerationSqr = 0f;
-            CelestialSurfaceSample dominantSurface = default;
 
             foreach (CelestialBody body in simulationBodies)
             {
@@ -284,27 +436,69 @@ namespace Farion.Simulation.Physics
                     continue;
                 }
 
-                Vector3 acceleration = CalculateAccelerationFromBody(point, body);
-                float accelerationSqr = acceleration.sqrMagnitude;
-                if (accelerationSqr <= dominantAccelerationSqr)
+                float soiRadius = CalculateSphereOfInfluenceRadius(body);
+                if (!float.IsPositiveInfinity(soiRadius))
+                {
+                    float effectiveSoi = body == incumbent
+                        ? soiRadius * Mathf.Max(1f, incumbentBias)
+                        : soiRadius;
+                    if ((point - body.Position).sqrMagnitude > effectiveSoi * effectiveSoi)
+                    {
+                        continue;
+                    }
+                }
+
+                bool wins;
+                if (dominantBody == null || soiRadius < dominantSoiRadius)
+                {
+                    wins = true;
+                }
+                else if (float.IsPositiveInfinity(soiRadius) && float.IsPositiveInfinity(dominantSoiRadius))
+                {
+                    wins = CalculateAccelerationFromBody(point, body).sqrMagnitude > dominantAccelerationSqr;
+                }
+                else
+                {
+                    wins = false;
+                }
+
+                if (!wins)
                 {
                     continue;
                 }
 
                 dominantBody = body;
-                dominantAcceleration = acceleration;
-                dominantAccelerationSqr = accelerationSqr;
-                dominantSurface = body.SampleSurface(point);
+                dominantSoiRadius = soiRadius;
+                dominantAccelerationSqr = CalculateAccelerationFromBody(point, body).sqrMagnitude;
             }
 
-            return dominantBody != null
-                ? new GravitySample(
-                    dominantBody,
-                    dominantAcceleration,
-                    dominantSurface.CenterDistance,
-                    dominantSurface.SurfaceDistance,
-                    dominantSurface.Normal)
-                : GravitySample.Empty;
+            if (dominantBody == null)
+            {
+                return GravitySample.Empty;
+            }
+
+            CelestialSurfaceSample dominantSurface = dominantBody.SampleSurface(point);
+            return new GravitySample(
+                dominantBody,
+                CalculateAccelerationFromBody(point, dominantBody),
+                dominantSurface.CenterDistance,
+                dominantSurface.SurfaceDistance,
+                dominantSurface.Normal);
+        }
+
+        public float CalculateSphereOfInfluenceRadius(CelestialBody body)
+        {
+            CelestialBody attractor = body != null ? body.OrbitAttractor : null;
+            if (attractor == null ||
+                !attractor.ParticipatesInNBody ||
+                attractor.Mass <= 0f ||
+                body.Mass <= 0f)
+            {
+                return float.PositiveInfinity;
+            }
+
+            float distance = Vector3.Distance(body.Position, attractor.Position);
+            return distance * Mathf.Pow(body.Mass / attractor.Mass, 0.4f);
         }
 
         public GravitySample FindNearestSurface(Vector3 point)
@@ -350,7 +544,11 @@ namespace Farion.Simulation.Physics
                 return;
             }
 
-            RefreshBodies();
+            if (autoDiscoverBodies)
+            {
+                RefreshBodies();
+            }
+
             for (int i = 0; i < simulationBodies.Count; i++)
             {
                 CelestialBody body = simulationBodies[i];
@@ -361,6 +559,51 @@ namespace Farion.Simulation.Physics
             }
         }
 
+        public int ComputeLayoutHash()
+        {
+            unchecked
+            {
+                int hash = 17;
+                for (int i = 0; i < simulationBodies.Count; i++)
+                {
+                    CelestialBody body = simulationBodies[i];
+                    if (body == null)
+                    {
+                        continue;
+                    }
+
+                    hash = hash * 31 + StableHash(body.BodyName);
+                    hash = hash * 31 + StableHash(body.OrbitAttractor != null ? body.OrbitAttractor.BodyName : string.Empty);
+                    hash = hash * 31 + body.Radius.GetHashCode();
+                    hash = hash * 31 + body.SurfaceGravity.GetHashCode();
+                    hash = hash * 31 + body.InitialVelocity.GetHashCode();
+                    hash = hash * 31 + body.InitialAngularVelocityDegreesPerSecond.GetHashCode();
+                    hash = hash * 31 + body.EpochLocalOffset.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+
+        static int StableHash(string value)
+        {
+            unchecked
+            {
+                int hash = 23;
+                if (string.IsNullOrEmpty(value))
+                {
+                    return hash;
+                }
+
+                for (int i = 0; i < value.Length; i++)
+                {
+                    hash = hash * 31 + value[i];
+                }
+
+                return hash;
+            }
+        }
+
         public bool ApplySnapshots(IReadOnlyList<CelestialBodySnapshot> snapshots)
         {
             if (!CanApplySnapshots(snapshots))
@@ -368,7 +611,6 @@ namespace Farion.Simulation.Physics
                 return false;
             }
 
-            RefreshBodies();
             for (int i = 0; i < snapshots.Count; i++)
             {
                 CelestialBodySnapshot snapshot = snapshots[i];
@@ -397,7 +639,11 @@ namespace Farion.Simulation.Physics
                 return false;
             }
 
-            RefreshBodies();
+            if (autoDiscoverBodies)
+            {
+                RefreshBodies();
+            }
+
             for (int i = 0; i < snapshots.Count; i++)
             {
                 CelestialBodySnapshot snapshot = snapshots[i];
@@ -495,6 +741,56 @@ namespace Farion.Simulation.Physics
                 if (body != null)
                 {
                     body.SetPhysicsReferenceFrameVelocity(referenceFrameVelocity);
+                }
+            }
+        }
+
+        void GatherPhysicsReferenceObservers()
+        {
+            referenceObservers.Clear();
+            if (physicsReferenceObserverSource == null)
+            {
+                physicsReferenceObserver = null;
+                physicsReferenceObserverGroup = null;
+                return;
+            }
+
+            physicsReferenceObserverGroup ??=
+                physicsReferenceObserverSource as ICelestialSurfaceCollisionObserverGroup;
+            if (physicsReferenceObserverGroup != null)
+            {
+                physicsReferenceObserverGroup.GetSurfaceCollisionObservers(referenceObservers);
+                return;
+            }
+
+            physicsReferenceObserver ??=
+                physicsReferenceObserverSource as ICelestialSurfaceCollisionObserver;
+            if (physicsReferenceObserver != null &&
+                physicsReferenceObserver.TryGetSurfaceCollisionObserver(
+                    out CelestialSurfaceCollisionObserverState observer) &&
+                observer.IsValid)
+            {
+                referenceObservers.Add(observer);
+            }
+        }
+
+        void ShiftDynamicBodyVelocities(Vector3 frameVelocityDelta)
+        {
+            if (frameVelocityDelta.sqrMagnitude <= 0.00000001f || !gameObject.scene.IsValid())
+            {
+                return;
+            }
+
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                Rigidbody[] bodies = root.GetComponentsInChildren<Rigidbody>(true);
+                for (int i = 0; i < bodies.Length; i++)
+                {
+                    Rigidbody body = bodies[i];
+                    if (body != null && !body.isKinematic)
+                    {
+                        body.linearVelocity -= frameVelocityDelta;
+                    }
                 }
             }
         }

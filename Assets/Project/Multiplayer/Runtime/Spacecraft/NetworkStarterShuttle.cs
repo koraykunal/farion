@@ -4,6 +4,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Presentation.Flight;
 using Farion.Gameplay.Ships;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.World;
@@ -37,6 +38,7 @@ namespace Farion.Multiplayer.Spacecraft
         readonly SyncVar<ulong> claimedBySessionPlayerId = new();
         readonly SyncVar<bool> piloted = new();
         readonly SyncVar<bool> landingGearDeployed = new();
+        readonly SyncVar<bool> floodlightsOn = new();
         readonly SyncVar<float> hullIntegrity = new(UnwrittenHullIntegrity);
 
         [Min(0.1f)]
@@ -55,12 +57,17 @@ namespace Farion.Multiplayer.Spacecraft
         SpacecraftSurfaceContactProbe surfaceContactProbe;
         SpacecraftSurfaceContactStabilizer surfaceContactStabilizer;
         SpacecraftLandingGearAnimator landingGear;
+        SpacecraftFloodlights floodlights;
         Rigidbody body;
         Rigidbody pilotBody;
         readonly PredictionRigidbody predictionRigidbody = new();
         PredictionRigidbodySpacecraftPhysicsBody physicsBody;
         MultiplayerWorldOriginAuthority originAuthority;
         MultiplayerSceneContext sceneContext;
+        ZonePhysicsTickDriver tickDriver;
+        CelestialBody parkedBody;
+        Vector3 parkedLocalPosition;
+        Quaternion parkedLocalRotation;
         int claimedConnectionId = -1;
         bool localPiloting;
 
@@ -122,6 +129,7 @@ namespace Farion.Multiplayer.Spacecraft
             surfaceContactStabilizer =
                 GetComponent<SpacecraftSurfaceContactStabilizer>();
             landingGear = GetComponent<SpacecraftLandingGearAnimator>();
+            floodlights = GetComponentInChildren<SpacecraftFloodlights>(true);
             body = GetComponent<Rigidbody>();
             predictionRigidbody.Initialize(body);
             physicsBody = new PredictionRigidbodySpacecraftPhysicsBody(
@@ -133,6 +141,7 @@ namespace Farion.Multiplayer.Spacecraft
 
             piloted.OnChange += OnPilotedChanged;
             landingGearDeployed.OnChange += OnLandingGearDeployedChanged;
+            floodlightsOn.OnChange += OnFloodlightsOnChanged;
             hullIntegrity.OnChange += OnHullIntegrityChanged;
         }
 
@@ -181,6 +190,11 @@ namespace Farion.Multiplayer.Spacecraft
                 RequestToggleLandingGear();
             }
 
+            if (input != null && input.CurrentInput.ToggleFloodlights)
+            {
+                RequestToggleFloodlights();
+            }
+
             if (boarding.ExitVehicle)
             {
                 NetworkSessionPlayer.Local?.RequestExitStarterShuttle(EntityId);
@@ -196,9 +210,23 @@ namespace Farion.Multiplayer.Spacecraft
             }
         }
 
+        [ServerRpc]
+        void RequestToggleFloodlights()
+        {
+            if (IsPiloted)
+            {
+                floodlightsOn.Value = !floodlightsOn.Value;
+            }
+        }
+
         void OnLandingGearDeployedChanged(bool previous, bool next, bool asServer)
         {
             landingGear?.SetCommandedDeployed(next);
+        }
+
+        void OnFloodlightsOnChanged(bool previous, bool next, bool asServer)
+        {
+            floodlights?.SetOn(next);
         }
 
         protected override void OnValidate()
@@ -223,6 +251,7 @@ namespace Farion.Multiplayer.Spacecraft
             formationSlot.Value = (byte)slot;
             landingGearDeployed.Value =
                 landingGear != null && landingGear.IsCommandedDeployed;
+            floodlightsOn.Value = floodlights != null && floodlights.IsOn;
             ApplyPersistentId();
         }
 
@@ -250,6 +279,7 @@ namespace Farion.Multiplayer.Spacecraft
             }
 
             landingGear?.SetCommandedDeployed(landingGearDeployed.Value);
+            floodlights?.SetOn(floodlightsOn.Value);
             if (!IsServerStarted &&
                 hull != null &&
                 hullIntegrity.Value >= 0f)
@@ -262,6 +292,9 @@ namespace Farion.Multiplayer.Spacecraft
 
         public override void OnStartNetwork()
         {
+            tickDriver = NetworkManager != null
+                ? NetworkManager.GetComponent<ZonePhysicsTickDriver>()
+                : null;
             motor.SetExternalSimulation(true);
             celestialProbe?.SetExternalSimulation(true);
             atmosphereInteractor?.SetExternalSimulation(true);
@@ -342,8 +375,20 @@ namespace Farion.Multiplayer.Spacecraft
         protected override void TimeManager_OnPostTick()
         {
             SyncPilotBodyToSeat();
+            if (IsServerStarted)
+            {
+                MaintainParkAnchor();
+            }
+
             StepHull();
             CreateReconcile();
+        }
+
+        double ResolveSimulationSeconds(uint tick)
+        {
+            return tickDriver != null
+                ? tickDriver.ResolveSimulationSeconds(tick)
+                : tick * TimeManager.TickDelta;
         }
 
         void StepHull()
@@ -402,7 +447,7 @@ namespace Farion.Multiplayer.Spacecraft
                 data.OriginSequence != originAuthority.CurrentSequence;
             float deltaTime = (float)TimeManager.TickDelta;
             surfaceContactProbe?.BeginSimulationStep(deltaTime);
-            celestialProbe?.RefreshSample(data.GetTick() * TimeManager.TickDelta);
+            celestialProbe?.RefreshSample(ResolveSimulationSeconds(data.GetTick()));
             atmosphereInteractor?.Simulate(deltaTime, physicsBody);
             oceanInteractor?.Simulate(deltaTime, physicsBody);
             surfaceContactStabilizer?.Simulate(deltaTime, physicsBody);
@@ -488,7 +533,10 @@ namespace Farion.Multiplayer.Spacecraft
         public bool TryGetSurfaceCollisionObserver(
             out CelestialSurfaceCollisionObserverState observer)
         {
-            if (body == null || !body.gameObject.activeInHierarchy)
+            if (body == null ||
+                !body.gameObject.activeInHierarchy ||
+                !IsPiloted ||
+                (!IsServerStarted && !IsOwner))
             {
                 observer = default;
                 return false;
@@ -684,6 +732,80 @@ namespace Farion.Multiplayer.Spacecraft
             }
 
             body.isKinematic = !simulate;
+            if (simulate)
+            {
+                parkedBody = null;
+            }
+            else
+            {
+                CaptureParkAnchor();
+            }
+        }
+
+        void CaptureParkAnchor()
+        {
+            parkedBody = ResolveAnchorBody();
+            if (parkedBody == null)
+            {
+                return;
+            }
+
+            Transform anchorTransform = parkedBody.transform;
+            parkedLocalPosition = anchorTransform.InverseTransformPoint(body.position);
+            parkedLocalRotation =
+                Quaternion.Inverse(anchorTransform.rotation) * body.rotation;
+        }
+
+        CelestialBody ResolveAnchorBody()
+        {
+            if (celestialProbe != null &&
+                celestialProbe.HasSample &&
+                celestialProbe.CurrentSample.Body != null)
+            {
+                return celestialProbe.CurrentSample.Body;
+            }
+
+            sceneContext ??= MultiplayerSceneContext.FindIn(gameObject.scene);
+            GravitySimulation simulation = sceneContext != null
+                ? sceneContext.GravitySimulation
+                : null;
+            if (simulation == null)
+            {
+                return null;
+            }
+
+            GravitySample sample = simulation.FindDominantBody(body.position);
+            return sample.HasBody ? sample.Body : null;
+        }
+
+        void MaintainParkAnchor()
+        {
+            if (IsPiloted || body == null || !body.isKinematic)
+            {
+                return;
+            }
+
+            if (parkedBody == null)
+            {
+                CaptureParkAnchor();
+                if (parkedBody == null)
+                {
+                    return;
+                }
+            }
+
+            Transform anchorTransform = parkedBody.transform;
+            Vector3 targetPosition = anchorTransform.TransformPoint(parkedLocalPosition);
+            Quaternion targetRotation = anchorTransform.rotation * parkedLocalRotation;
+            if ((body.position - targetPosition).sqrMagnitude > 1e-10f)
+            {
+                body.MovePosition(targetPosition);
+            }
+
+            if (Quaternion.Angle(body.rotation, targetRotation) > 0.0001f)
+            {
+                body.MoveRotation(targetRotation);
+            }
         }
 
     }

@@ -130,6 +130,7 @@ namespace Farion.Gameplay.Flight
                 frame.SurfaceAltitude,
                 bodyRadius,
                 isBound,
+                energy,
                 eccentricityMagnitude,
                 periapsisRadius);
 
@@ -156,6 +157,7 @@ namespace Farion.Gameplay.Flight
             float altitude,
             float bodyRadius,
             bool isBound,
+            float energy,
             float eccentricity,
             float periapsisRadius)
         {
@@ -166,7 +168,9 @@ namespace Farion.Gameplay.Flight
 
             if (!isBound)
             {
-                return SpacecraftOrbitRegime.Escape;
+                return energy < 0f
+                    ? SpacecraftOrbitRegime.Suborbital
+                    : SpacecraftOrbitRegime.Escape;
             }
 
             if (periapsisRadius <= bodyRadius)

@@ -72,6 +72,10 @@ PrefabInstance:
       propertyPath: m_IsKinematic
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7452306353936764123, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
+      propertyPath: allowManualToggle
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8451750196482294104, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}
       propertyPath: persistentId
       value: ship.network_template
@@ -156,7 +160,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584143097308519450
+  _initializedTimestamp: -8584141847458253753
 --- !u!114 &3078003891906690678
 MonoBehaviour:
   m_ObjectHideFlags: 0

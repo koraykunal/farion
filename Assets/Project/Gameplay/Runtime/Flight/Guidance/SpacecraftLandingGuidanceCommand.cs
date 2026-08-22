@@ -10,6 +10,7 @@ namespace Farion.Gameplay.Flight
         SeekLevelSurface = 45,
         HoldAttitude = 50,
         CommitTouchdown = 60,
-        AbortLanding = 70
+        AbortLanding = 70,
+        ThrustDeficit = 80
     }
 }

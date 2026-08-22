@@ -370,11 +370,13 @@ namespace Farion.Gameplay.Character
                 detectedGroundNormal = hit.normal.normalized;
             }
 
-            float closestGap = closestDistance < float.PositiveInfinity
+            bool physicalGroundHitDetected = closestDistance < float.PositiveInfinity;
+            float closestGap = physicalGroundHitDetected
                 ? closestDistance - contactDistance
                 : float.PositiveInfinity;
 
             if (!hasArtificialGravity &&
+                !physicalGroundHitDetected &&
                 TrySampleSurfaceContact(
                     physicsBody.Position,
                     frame,

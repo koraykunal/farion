@@ -10,7 +10,7 @@ namespace Farion.Gameplay.Input
 
         const string BindingOverridesKey = "farion.input.binding-overrides";
         const string BindingSchemeVersionKey = "farion.input.binding-scheme";
-        const int BindingSchemeVersion = 2;
+        const int BindingSchemeVersion = 3;
         const string MouseSensitivityKey = "farion.input.mouse-sensitivity";
         const string InvertLookKey = "farion.input.invert-look";
         const float ReferenceGamepadLookRate = 120f;
@@ -99,6 +99,7 @@ namespace Farion.Gameplay.Input
         public static InputAction FlightBrake => Find("Flight", "Brake");
         public static InputAction FlightToggleAssist => Find("Flight", "ToggleAssist");
         public static InputAction FlightToggleLandingGear => Find("Flight", "ToggleLandingGear");
+        public static InputAction FlightToggleFloodlights => Find("Flight", "ToggleFloodlights");
 
         public static InputAction VehicleExit => Find("Vehicle", "Exit");
         public static InputAction VehicleToggleCamera => Find("Vehicle", "ToggleCamera");
@@ -270,6 +271,7 @@ namespace Farion.Gameplay.Input
             AddButton(map, "Brake", "<Keyboard>/x", "<Gamepad>/buttonSouth");
             AddButton(map, "ToggleAssist", "<Keyboard>/z", "<Gamepad>/buttonEast");
             AddButton(map, "ToggleLandingGear", "<Keyboard>/g", "<Gamepad>/dpad/down");
+            AddButton(map, "ToggleFloodlights", "<Keyboard>/l", "<Gamepad>/dpad/up");
         }
 
         static void BuildVehicleMap(InputActionAsset inputAsset)

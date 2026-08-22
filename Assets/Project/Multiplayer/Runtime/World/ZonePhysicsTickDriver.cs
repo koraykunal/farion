@@ -140,6 +140,10 @@ namespace Farion.Multiplayer.World
             subscribed = true;
             networkManager.TimeManager.OnPrePhysicsSimulation +=
                 TimeManager_OnPrePhysicsSimulation;
+            if (predictionManager != null)
+            {
+                predictionManager.OnPreReconcile += PredictionManager_OnPreReconcile;
+            }
         }
 
         void Unsubscribe()
@@ -152,6 +156,21 @@ namespace Farion.Multiplayer.World
             subscribed = false;
             networkManager.TimeManager.OnPrePhysicsSimulation -=
                 TimeManager_OnPrePhysicsSimulation;
+            if (predictionManager != null)
+            {
+                predictionManager.OnPreReconcile -= PredictionManager_OnPreReconcile;
+            }
+        }
+
+        void PredictionManager_OnPreReconcile(uint clientTick, uint serverTick)
+        {
+            if (clientTick == TimeManager.UNSET_TICK)
+            {
+                return;
+            }
+
+            ApplyNetworkSimulationTimeForTick(
+                networkManager.TimeManager.LocalTickToTick(clientTick));
         }
 
         void TimeManager_OnPrePhysicsSimulation(float deltaTime)
@@ -247,12 +266,23 @@ namespace Farion.Multiplayer.World
                 return;
             }
 
-            double seconds = simulationEpochSeconds +
-                ResolveSimulationTick() * networkManager.TimeManager.TickDelta;
+            ApplyNetworkSimulationTimeForTick(ResolveSimulationTick());
+        }
+
+        void ApplyNetworkSimulationTimeForTick(uint tick)
+        {
+            double seconds = ResolveSimulationSeconds(tick);
             for (int i = 0; i < zoneSceneContexts.Count; i++)
             {
                 ResolveSceneContext(i)?.ApplyNetworkSimulationTime(seconds);
             }
+        }
+
+        public double ResolveSimulationSeconds(uint tick)
+        {
+            return networkManager?.TimeManager != null
+                ? simulationEpochSeconds + tick * (double)networkManager.TimeManager.TickDelta
+                : 0d;
         }
 
         uint ResolveSimulationTick()
@@ -260,7 +290,7 @@ namespace Farion.Multiplayer.World
             return predictionManager != null &&
                 predictionManager.IsReconciling &&
                 predictionManager.ClientReplayTick != TimeManager.UNSET_TICK
-                    ? predictionManager.ClientReplayTick
+                    ? networkManager.TimeManager.LocalTickToTick(predictionManager.ClientReplayTick)
                     : networkManager.TimeManager.Tick;
         }
 

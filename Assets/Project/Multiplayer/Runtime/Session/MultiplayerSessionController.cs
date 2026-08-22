@@ -106,8 +106,13 @@ namespace Farion.Multiplayer.Session
             Unsubscribe();
             GameplaySessionModeRequest.Cancel();
             Active = null;
-            Physics.simulationMode = authoredSimulationMode;
-            Physics2D.simulationMode = authoredSimulation2DMode;
+            Physics.simulationMode = authoredSimulationMode == SimulationMode.Script
+                ? SimulationMode.FixedUpdate
+                : authoredSimulationMode;
+            Physics2D.simulationMode =
+                authoredSimulation2DMode == SimulationMode2D.Script
+                    ? SimulationMode2D.FixedUpdate
+                    : authoredSimulation2DMode;
         }
 
         public void StartHost() => StartHost(MultiplayerEndpoint.DefaultPort);

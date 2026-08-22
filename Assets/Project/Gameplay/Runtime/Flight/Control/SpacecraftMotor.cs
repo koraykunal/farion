@@ -35,6 +35,8 @@ namespace Farion.Gameplay.Flight
         public bool CurrentBrake;
         public Vector3 SmoothedTranslation;
         public Vector3 SmoothedRotationInput;
+        public Vector3 ReferenceVelocity;
+        public bool HasReferenceVelocity;
         public SpacecraftBoostState Boost;
         public ResourcePool Fuel;
     }
@@ -67,6 +69,7 @@ namespace Farion.Gameplay.Flight
     [RequireComponent(typeof(Rigidbody))]
     public sealed class SpacecraftMotor : MonoBehaviour
     {
+        const float ReferenceVelocitySmoothingRate = 1.5f;
         const float DefaultTranslationSpoolRate = 7f;
         const float DefaultRotationSpoolRate = 8f;
         const float DefaultBoostSpoolRate = 3.5f;
@@ -110,12 +113,15 @@ namespace Farion.Gameplay.Flight
         bool driveDisabled;
         Vector3 smoothedTranslation;
         Vector3 smoothedRotationInput;
+        Vector3 smoothedReferenceVelocity;
+        bool hasSmoothedReferenceVelocity;
         Vector3 lastGravityAcceleration;
         Vector3 lastThrustAcceleration;
         Vector3 lastFlightAssistAcceleration;
         Vector3 lastGravityCompensationAcceleration;
         Vector3 lastLocalLinearAcceleration;
         Vector3 lastLocalAngularAcceleration;
+        bool gravityExceedsThrust;
         bool externalSimulation;
 
         public Rigidbody Rigidbody =>
@@ -142,6 +148,7 @@ namespace Farion.Gameplay.Flight
         public ResourcePool Fuel => fuel;
         public float FuelNormalized => fuel.Normalized;
         public bool DriveDisabled => driveDisabled;
+        public bool GravityExceedsThrust => gravityExceedsThrust;
         public float MaxForwardSpeed => flightProfile != null
             ? flightProfile.EvaluateMaxForwardSpeed(moduleBonuses)
             : DefaultControlSettings.PositiveMaxSpeed.z;
@@ -215,6 +222,7 @@ namespace Farion.Gameplay.Flight
             ISpacecraftPhysicsBody physicsBody)
         {
             ApplyGravity(physicsBody);
+            UpdateReferenceVelocity(deltaTime, physicsBody.WorldCenterOfMass);
             UpdateSmoothedCommand(deltaTime);
             UpdateBoost(deltaTime);
             ApplyFlightControl(deltaTime, physicsBody);
@@ -245,6 +253,8 @@ namespace Farion.Gameplay.Flight
             CurrentBrake = currentCommand.Brake,
             SmoothedTranslation = smoothedTranslation,
             SmoothedRotationInput = smoothedRotationInput,
+            ReferenceVelocity = smoothedReferenceVelocity,
+            HasReferenceVelocity = hasSmoothedReferenceVelocity,
             Boost = boostController.CaptureState(),
             Fuel = fuel
         };
@@ -266,6 +276,8 @@ namespace Farion.Gameplay.Flight
                 toggleFlightAssist: false);
             smoothedTranslation = state.SmoothedTranslation;
             smoothedRotationInput = state.SmoothedRotationInput;
+            smoothedReferenceVelocity = state.ReferenceVelocity;
+            hasSmoothedReferenceVelocity = state.HasReferenceVelocity;
             boostController.RestoreState(state.Boost);
             fuel = state.Fuel;
         }
@@ -470,9 +482,18 @@ namespace Farion.Gameplay.Flight
                 flightAssistEnabled,
                 boostController.Authority,
                 boostController.Surge);
+            SpacecraftFlightControlSettings settings = ControlSettings;
             SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
                 frame,
-                ControlSettings);
+                settings);
+
+            Vector3 requiredCompensation = -localGravity;
+            Vector3 positiveLimit = settings.MaxPositiveAcceleration(boostController.Authority);
+            Vector3 negativeLimit = settings.NegativeAcceleration;
+            gravityExceedsThrust = flightAssistEnabled && HasThrust &&
+                (requiredCompensation.x > positiveLimit.x || -requiredCompensation.x > negativeLimit.x ||
+                 requiredCompensation.y > positiveLimit.y || -requiredCompensation.y > negativeLimit.y ||
+                 requiredCompensation.z > positiveLimit.z || -requiredCompensation.z > negativeLimit.z);
 
             float thrustScale = ConsumeFuel(deltaTime, output.LocalLinearAcceleration);
             lastLocalLinearAcceleration = output.LocalLinearAcceleration * thrustScale;
@@ -574,8 +595,33 @@ namespace Farion.Gameplay.Flight
 
         Vector3 ResolveFlightReferenceVelocity(Vector3 worldCenterOfMass)
         {
+            return hasSmoothedReferenceVelocity
+                ? smoothedReferenceVelocity
+                : ResolveRawReferenceVelocity(worldCenterOfMass, out _);
+        }
+
+        void UpdateReferenceVelocity(float deltaTime, Vector3 worldCenterOfMass)
+        {
+            Vector3 target = ResolveRawReferenceVelocity(worldCenterOfMass, out bool hardReference);
+            if (hardReference || !hasSmoothedReferenceVelocity)
+            {
+                smoothedReferenceVelocity = target;
+                hasSmoothedReferenceVelocity = true;
+                return;
+            }
+
+            smoothedReferenceVelocity = Vector3.Lerp(
+                smoothedReferenceVelocity,
+                target,
+                FarionMath.SmoothFactor(ReferenceVelocitySmoothingRate, deltaTime));
+        }
+
+        Vector3 ResolveRawReferenceVelocity(Vector3 worldCenterOfMass, out bool hardReference)
+        {
+            hardReference = false;
             if (!useBodyRelativeFlightAssist)
             {
+                hardReference = true;
                 return Vector3.zero;
             }
 
@@ -584,13 +630,22 @@ namespace Farion.Gameplay.Flight
                 SpacecraftSurfaceContactSample contact = surfaceContactProbe.CurrentContact;
                 if (contact.HasContact && contact.Body != null)
                 {
+                    hardReference = true;
                     return contact.Body.GetVelocityAtPoint(worldCenterOfMass);
                 }
             }
 
-            return celestialProbe != null && celestialProbe.HasSample
-                ? celestialProbe.CurrentSample.BodyPointVelocity
-                : Vector3.zero;
+            if (celestialProbe == null || !celestialProbe.HasSample)
+            {
+                return Vector3.zero;
+            }
+
+            var sample = celestialProbe.CurrentSample;
+            Vector3 spinVelocity = sample.BodyPointVelocity - sample.BodyVelocity;
+            float spinFade = sample.BodyRadius > 0f
+                ? 1f - Mathf.Clamp01(sample.SurfaceAltitude / sample.BodyRadius)
+                : 0f;
+            return sample.BodyVelocity + spinVelocity * spinFade;
         }
 
         SpacecraftFlightControlSettings ControlSettings => flightProfile != null

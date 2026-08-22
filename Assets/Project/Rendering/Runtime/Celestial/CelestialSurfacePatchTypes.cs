@@ -102,13 +102,15 @@ namespace Farion.Rendering.Celestial
                 MeshFilter filter,
                 MeshRenderer renderer,
                 MeshCollider collider,
-                Mesh mesh)
+                Mesh mesh,
+                Mesh collisionMesh)
             {
                 GameObject = gameObject;
                 Filter = filter;
                 Renderer = renderer;
                 Collider = collider;
                 Mesh = mesh;
+                CollisionMesh = collisionMesh;
             }
 
             public GameObject GameObject { get; }
@@ -116,6 +118,7 @@ namespace Farion.Rendering.Celestial
             public MeshRenderer Renderer { get; }
             public MeshCollider Collider { get; }
             public Mesh Mesh { get; }
+            public Mesh CollisionMesh { get; }
             public PatchDescriptor Descriptor { get; set; }
             public bool CollisionBaked { get; set; }
         }

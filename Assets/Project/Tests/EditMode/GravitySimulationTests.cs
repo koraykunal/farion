@@ -72,6 +72,46 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void ChangingReferenceFramePreservesDynamicBodyInertialVelocity()
+        {
+            CelestialBody planet = CreateBody(
+                "Planet",
+                Vector3.zero,
+                1600f,
+                9.81f,
+                CelestialBodyMotionMode.KinematicOrbit,
+                new Vector3(0f, 0f, 30f));
+            CelestialBody moon = CreateBody(
+                "Moon",
+                Vector3.right * 13000f,
+                120f,
+                1.62f,
+                CelestialBodyMotionMode.KinematicOrbit,
+                new Vector3(0f, 0f, 45f));
+            moon.SetOrbitAttractor(planet);
+            GravitySimulation simulation = CreateSimulation(planet, planet, moon);
+
+            GameObject actorObject = new("Actor");
+            actorObject.transform.SetParent(root.transform);
+            Rigidbody actor = actorObject.AddComponent<Rigidbody>();
+            actor.useGravity = false;
+            actor.linearVelocity = new Vector3(0f, 0f, 15f);
+            actor.position = moon.Position + Vector3.up * (moon.Radius + 1f);
+            GravityReferenceObserverStub observer =
+                actorObject.AddComponent<GravityReferenceObserverStub>();
+            observer.Body = actor;
+
+            simulation.SetPhysicsReferenceObserverSource(observer);
+
+            Assert.That(simulation.RefreshPhysicsReferenceBody(), Is.True);
+            Assert.That(simulation.PhysicsReferenceBody, Is.EqualTo(moon));
+            Assert.That(Vector3.Distance(simulation.ReferenceFrameVelocity, moon.InertialVelocity), Is.LessThan(0.0001f));
+            Assert.That(actor.linearVelocity.magnitude, Is.LessThan(0.0001f));
+            Assert.That(moon.Velocity.magnitude, Is.LessThan(0.0001f));
+            Assert.That(Vector3.Distance(planet.Velocity, new Vector3(0f, 0f, -15f)), Is.LessThan(0.0001f));
+        }
+
+        [Test]
         public void ReferenceFrameAccelerationRemovesFrameAcceleration()
         {
             CelestialBody star = CreateBody("Star", Vector3.zero, 1200f, 350f, CelestialBodyMotionMode.Static);
@@ -241,6 +281,20 @@ namespace Farion.Tests.EditMode
             body.ResetSimulationState();
             body.Rigidbody.position = position;
             return body;
+        }
+    }
+
+    sealed class GravityReferenceObserverStub :
+        MonoBehaviour,
+        ICelestialSurfaceCollisionObserver
+    {
+        public Rigidbody Body { get; set; }
+
+        public bool TryGetSurfaceCollisionObserver(
+            out CelestialSurfaceCollisionObserverState observer)
+        {
+            observer = new CelestialSurfaceCollisionObserverState(Body);
+            return observer.IsValid;
         }
     }
 }

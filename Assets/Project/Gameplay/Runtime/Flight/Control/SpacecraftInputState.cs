@@ -16,7 +16,8 @@ namespace Farion.Gameplay.Flight
             bool boost,
             bool brake,
             bool toggleFlightAssist,
-            bool toggleLandingGear = false)
+            bool toggleLandingGear = false,
+            bool toggleFloodlights = false)
         {
             Translation = ClampAxes(translation);
             Look = look;
@@ -25,6 +26,7 @@ namespace Farion.Gameplay.Flight
             Brake = brake;
             ToggleFlightAssist = toggleFlightAssist;
             ToggleLandingGear = toggleLandingGear;
+            ToggleFloodlights = toggleFloodlights;
         }
 
         public Vector3 Translation { get; }
@@ -34,6 +36,7 @@ namespace Farion.Gameplay.Flight
         public bool Brake { get; }
         public bool ToggleFlightAssist { get; }
         public bool ToggleLandingGear { get; }
+        public bool ToggleFloodlights { get; }
 
         public static SpacecraftInputState None => new(Vector3.zero, Vector2.zero, 0f, false);
 

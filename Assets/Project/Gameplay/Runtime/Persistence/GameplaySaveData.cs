@@ -24,6 +24,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] int payloadRevision;
         [SerializeField] string savedAtUtc;
         [SerializeField] double celestialSimulationTime;
+        [SerializeField] int celestialLayoutHash;
         [SerializeField] List<CelestialBodySnapshot> celestialBodies = new();
         [SerializeField] WorldOriginSnapshot worldOrigin;
         [SerializeField] PlayerInventorySnapshot playerInventory;
@@ -103,7 +104,13 @@ namespace Farion.Gameplay.Persistence
             sourceSchemaVersion > 0 ? sourceSchemaVersion : schemaVersion;
         public string SavedAtUtc => IdentifierText.Normalize(savedAtUtc);
         public double CelestialSimulationTime => celestialSimulationTime >= 0d ? celestialSimulationTime : 0d;
+        public int CelestialLayoutHash => celestialLayoutHash;
         public IReadOnlyList<CelestialBodySnapshot> CelestialBodies => celestialBodies;
+
+        public void SetCelestialLayoutHash(int layoutHash)
+        {
+            celestialLayoutHash = layoutHash;
+        }
         public WorldOriginSnapshot WorldOrigin => worldOrigin;
         public PlayerInventorySnapshot PlayerInventory => playerInventory;
         public InventoryContainerSnapshot ShuttleCargo => personalShipCargo;
@@ -189,6 +196,7 @@ namespace Farion.Gameplay.Persistence
                 source.ResourceDepositDeltas);
             migrated.SetShuttleFuel(source.ShuttleFuel);
             migrated.SetShuttleHull(source.ShuttleHull);
+            migrated.SetCelestialLayoutHash(source.CelestialLayoutHash);
             migrated.SetMultiplayerState(
                 source.MultiplayerPlayers,
                 source.MultiplayerShipCargo);

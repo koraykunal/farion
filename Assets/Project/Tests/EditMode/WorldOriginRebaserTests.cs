@@ -144,6 +144,34 @@ namespace Farion.Tests.EditMode
             Assert.That(Vector3.Distance(observed, offset), Is.LessThan(0.001f));
         }
 
+        [Test]
+        public void RuntimeShiftRootMovesWithAuthoredRoots()
+        {
+            Transform bodies = CreateRoot("Bodies", Vector3.zero);
+            Transform cameraRig = CreateRoot("CameraRig", new Vector3(10f, 20f, 30f));
+            WorldOriginRebaser rebaser = CreateRebaser(bodies);
+            rebaser.RegisterShiftRoot(cameraRig);
+
+            Vector3 offset = new(1000f, 2000f, -500f);
+            rebaser.Rebase(offset);
+
+            Assert.That(
+                Vector3.Distance(cameraRig.position, new Vector3(10f, 20f, 30f) - offset),
+                Is.LessThan(0.001f));
+        }
+
+        [Test]
+        public void ExplicitTrackingPositionCanDriveCollectiveRebase()
+        {
+            Transform actors = CreateRoot("Actors", new Vector3(1500f, 0f, 0f));
+            WorldOriginRebaser rebaser = CreateRebaser(actors);
+
+            Assert.That(
+                rebaser.RebaseIfNeeded(new Vector3(1500f, 0f, 0f)),
+                Is.True);
+            Assert.That(actors.position, Is.EqualTo(Vector3.zero));
+        }
+
         Transform CreateRoot(string rootName, Vector3 position)
         {
             GameObject rootObject = new(rootName);

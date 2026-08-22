@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.SurfaceDecorationProfile
   maximumCandidateEvaluationsPerFrame: 128
   candidateEvaluationBudgetMilliseconds: 2
-  placementPauseSpeed: 45
+  placementPauseSpeed: 0
   placementPauseAltitude: 140
   prefetchSeconds: 1.5
   shaderBinding:

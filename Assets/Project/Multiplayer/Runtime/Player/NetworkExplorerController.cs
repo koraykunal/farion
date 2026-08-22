@@ -42,6 +42,7 @@ namespace Farion.Multiplayer.Player
         CelestialActorProbe celestialProbe;
         MultiplayerWorldOriginAuthority originAuthority;
         MultiplayerSceneContext sceneContext;
+        ZonePhysicsTickDriver tickDriver;
         float accumulatedYaw;
         bool jumpQueued;
         bool previousJumpHeld;
@@ -119,6 +120,9 @@ namespace Farion.Multiplayer.Player
 
         public override void OnStartNetwork()
         {
+            tickDriver = NetworkManager != null
+                ? NetworkManager.GetComponent<ZonePhysicsTickDriver>()
+                : null;
             motor.SetExternalSimulation(true);
             celestialProbe.SetExternalSimulation(true);
             body.interpolation = RigidbodyInterpolation.None;
@@ -273,7 +277,9 @@ namespace Farion.Multiplayer.Player
                     clamped.YawDegrees,
                     clamped.Jump,
                     clamped.Sprint);
-            celestialProbe.RefreshSample(data.GetTick() * TimeManager.TickDelta);
+            celestialProbe.RefreshSample(tickDriver != null
+                ? tickDriver.ResolveSimulationSeconds(data.GetTick())
+                : data.GetTick() * TimeManager.TickDelta);
             motor.Simulate(
                 motorInput,
                 (float)TimeManager.TickDelta,

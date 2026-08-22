@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Farion.Simulation.Physics;
 using Farion.Simulation.World;
 using FishNet.Connection;
 using FishNet.Managing;
@@ -14,8 +16,11 @@ namespace Farion.Multiplayer.World
         [SerializeField] NetworkManager networkManager;
 
         readonly WorldOriginSequenceState state = new();
+        readonly List<CelestialSurfaceCollisionObserverState> trackingObservers = new();
         WorldOriginRebaser rebaser;
         Transform serverTrackingTarget;
+        MonoBehaviour serverTrackingObserverSource;
+        ICelestialSurfaceCollisionObserverGroup serverTrackingObserverGroup;
 
         public uint CurrentSequence => state.Sequence;
 
@@ -73,10 +78,19 @@ namespace Farion.Multiplayer.World
             }
         }
 
+        public void SetServerTrackingObserverSource(MonoBehaviour source)
+        {
+            serverTrackingObserverSource = source;
+            serverTrackingObserverGroup =
+                source as ICelestialSurfaceCollisionObserverGroup;
+            trackingObservers.Clear();
+        }
+
         public void ResetSession()
         {
             state.Reset();
             serverTrackingTarget = null;
+            SetServerTrackingObserverSource(null);
             if (rebaser != null)
             {
                 rebaser.Rebased -= HandleRebased;
@@ -128,14 +142,29 @@ namespace Farion.Multiplayer.World
         void OnPostTick()
         {
             if (!networkManager.IsServerStarted ||
-                rebaser == null ||
-                serverTrackingTarget == null)
+                rebaser == null)
             {
                 return;
             }
 
-            rebaser.SetTrackingTarget(serverTrackingTarget);
-            if (!rebaser.RebaseIfNeeded())
+            bool hasCollectivePosition =
+                TryResolveCollectiveTrackingPosition(out Vector3 trackingPosition);
+            if (!hasCollectivePosition && serverTrackingTarget == null)
+            {
+                return;
+            }
+
+            if (!hasCollectivePosition)
+            {
+                trackingPosition = serverTrackingTarget.position;
+            }
+
+            if (serverTrackingTarget != null)
+            {
+                rebaser.SetTrackingTarget(serverTrackingTarget);
+            }
+
+            if (!rebaser.RebaseIfNeeded(trackingPosition))
             {
                 return;
             }
@@ -168,6 +197,64 @@ namespace Farion.Multiplayer.World
                 state.Sequence,
                 rebaser != null ? rebaser.LastOriginOffset : Vector3.zero,
                 state.AccumulatedOrigin);
+        }
+
+        bool TryResolveCollectiveTrackingPosition(out Vector3 position)
+        {
+            position = default;
+            trackingObservers.Clear();
+            if (serverTrackingObserverSource == null)
+            {
+                serverTrackingObserverGroup = null;
+                return false;
+            }
+
+            serverTrackingObserverGroup ??=
+                serverTrackingObserverSource as ICelestialSurfaceCollisionObserverGroup;
+            if (serverTrackingObserverGroup == null)
+            {
+                return false;
+            }
+
+            serverTrackingObserverGroup.GetSurfaceCollisionObservers(trackingObservers);
+            return TryResolveCollectiveTrackingPosition(trackingObservers, out position);
+        }
+
+        internal static bool TryResolveCollectiveTrackingPosition(
+            IReadOnlyList<CelestialSurfaceCollisionObserverState> observers,
+            out Vector3 position)
+        {
+            position = default;
+            if (observers == null)
+            {
+                return false;
+            }
+
+            Vector3 minimum = default;
+            Vector3 maximum = default;
+            bool hasPosition = false;
+            for (int i = 0; i < observers.Count; i++)
+            {
+                CelestialSurfaceCollisionObserverState observer = observers[i];
+                if (!observer.IsValid)
+                {
+                    continue;
+                }
+
+                if (!hasPosition)
+                {
+                    minimum = observer.Position;
+                    maximum = observer.Position;
+                    hasPosition = true;
+                    continue;
+                }
+
+                minimum = Vector3.Min(minimum, observer.Position);
+                maximum = Vector3.Max(maximum, observer.Position);
+            }
+
+            position = (minimum + maximum) * 0.5f;
+            return hasPosition;
         }
     }
 }
