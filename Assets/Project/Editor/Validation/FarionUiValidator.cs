@@ -68,6 +68,7 @@ namespace Farion.Editor.Validation
             "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset";
         static readonly Vector2 RequiredReferenceResolution = new(1920f, 1080f);
         const float MinimumTextContrast = 4.5f;
+        const float MinimumSurfaceLuminanceStep = 1.5f;
 
         [MenuItem("Farion/Validation/Validate UI Foundation")]
         public static void ValidateFromMenu()
@@ -718,6 +719,14 @@ namespace Farion.Editor.Validation
             Color panel = Composite(theme.PanelSurface, theme.VoidSurface);
             Color button = Composite(theme.ButtonSurface, panel);
             Color highlighted = Composite(theme.ButtonSurfaceHighlighted, panel);
+            ValidateSurfaceStep(theme.VoidSurface, theme.PanelSurface, "Void/Panel", report);
+            ValidateSurfaceStep(theme.PanelSurface, theme.RaisedSurface, "Panel/Raised", report);
+            ValidateSurfaceStep(theme.RaisedSurface, theme.ButtonSurface, "Raised/Interactive", report);
+            ValidateSurfaceStep(
+                theme.ButtonSurface,
+                theme.ButtonSurfaceHighlighted,
+                "Interactive/Highlighted",
+                report);
             ValidateContrast(theme.PrimaryText, button, "PrimaryText/ButtonSurface", report);
             ValidateContrast(theme.SecondaryText, button, "SecondaryText/ButtonSurface", report);
             ValidateContrast(
@@ -745,6 +754,28 @@ namespace Farion.Editor.Validation
                 report.AddError(
                     $"UI theme contrast {role} is {ratio:0.00}:1; " +
                     $"minimum is {MinimumTextContrast:0.0}:1.");
+            }
+        }
+
+        static void ValidateSurfaceStep(
+            Color lower,
+            Color higher,
+            string role,
+            FarionValidationReport report)
+        {
+            if (lower.a < 0.999f || higher.a < 0.999f)
+            {
+                report.AddError($"UI theme surface step {role} must be opaque.");
+                return;
+            }
+
+            float lowerLuminance = RelativeLuminance(lower);
+            float ratio = RelativeLuminance(higher) / Mathf.Max(0.0001f, lowerLuminance);
+            if (ratio < MinimumSurfaceLuminanceStep)
+            {
+                report.AddError(
+                    $"UI theme surface step {role} is {ratio:0.00}x; " +
+                    $"minimum is {MinimumSurfaceLuminanceStep:0.0}x.");
             }
         }
 

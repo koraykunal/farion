@@ -33,7 +33,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceInput.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "FarionAtmosphereLighting.hlsl"
-            #include "FarionOceanWaves.hlsl"
+            #include "FarionOceanSurface.hlsl"
 
             // One body per pass: the feature chains a pass per ocean, so the shader
             // never needs to loop.
@@ -46,8 +46,8 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
             half4 _FarionOceanSpecularColor;
             half4 _FarionOceanUnderwaterColor;
             half4 _FarionOceanFoamColor;
-            // x: depth multiplier, y: alpha multiplier, z: unused, w: reference light intensity.
-            float4 _FarionOceanOpticalParams;
+            float _FarionOceanDepthMultiplier;
+            float _FarionOceanReferenceLightIntensity;
             // xyz: extinction per world unit, w: specular strength.
             float4 _FarionOceanUnderwaterOptics;
             // x: detail normal scale, y: detail speed, z: detail strength.
@@ -57,7 +57,9 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
             // x: amplitude, y: wave length, z: foam width, w: foam strength.
             float4 _FarionOceanSwellShape;
             float4x4 _FarionOceanWorldToLocal;
-            float _FarionOceanCameraInside;
+            // x: signed camera distance to the displaced surface,
+            // y: longest underwater spot light range, z: underwater visibility distance.
+            float4 _FarionOceanCameraSurfaceParams;
             // x: smoothness, y: specular strength, z: index of refraction, w: scatter strength.
             float4 _FarionOceanLightingParams;
             float4 _FarionOceanAtmosphereParams;
@@ -77,113 +79,27 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
             TEXTURE2D(_FarionOceanAtmosphereOpticalDepth);
             SAMPLER(sampler_FarionOceanAtmosphereOpticalDepth);
 
-            float2 RaySphere(float3 centre, float radius, float3 rayOrigin, float3 rayDirection)
+            #define FARION_MAX_UNDERWATER_LIGHTS 4
+            int _FarionUnderwaterLightCount;
+            float4 _FarionUnderwaterLightPositionRange[FARION_MAX_UNDERWATER_LIGHTS];
+            float4 _FarionUnderwaterLightDirectionOuterCos[FARION_MAX_UNDERWATER_LIGHTS];
+            half4 _FarionUnderwaterLightColorStrength[FARION_MAX_UNDERWATER_LIGHTS];
+            float _FarionUnderwaterLightInnerConeCos[FARION_MAX_UNDERWATER_LIGHTS];
+
+            FarionOceanSurfaceField OceanField()
             {
-                float3 offset = rayOrigin - centre;
-                float b = dot(offset, rayDirection);
-                float c = dot(offset, offset) - radius * radius;
-                float discriminant = b * b - c;
-                if (discriminant < 0.0)
-                {
-                    return float2(-1.0, 0.0);
-                }
-
-                float s = sqrt(discriminant);
-                float dstToSphere = max(-b - s, 0.0);
-                float dstOutSphere = -b + s;
-                if (dstOutSphere < 0.0)
-                {
-                    return float2(-1.0, 0.0);
-                }
-
-                return float2(dstToSphere, dstOutSphere - dstToSphere);
-            }
-
-            bool IsSkyDepth(float rawDepth)
-            {
-            #if UNITY_REVERSED_Z
-                return rawDepth <= 0.000001;
-            #else
-                return rawDepth >= 0.999999;
-            #endif
-            }
-
-            float SampleSwellHeight(float3 relativePosition, out float3 gradient)
-            {
-                float3 localGradient;
-                float height = FarionSampleWaveHeight(
-                    mul((float3x3)_FarionOceanWorldToLocal, relativePosition),
+                return FarionBuildOceanSurfaceField(
+                    _FarionOceanSphere.xyz,
+                    _FarionOceanSphere.w,
                     _FarionOceanSwellShape.y,
                     _FarionOceanSwellShape.x,
                     _FarionOceanSwellPhases.xyz,
-                    localGradient);
-                gradient = mul(transpose((float3x3)_FarionOceanWorldToLocal), localGradient);
-                return height;
+                    _FarionOceanWorldToLocal);
             }
 
-            // The analytic intersection is against the maximum swell envelope.
-            // Newton refinement pulls the relevant entry or exit onto the displaced
-            // surface, including when the camera starts underwater.
-            float RefineSurfaceDistance(
-                float3 rayOrigin,
-                float3 rayDirection,
-                float3 centre,
-                float distance,
-                float expectedSlopeSign,
-                float displacementScale,
-                out float surfaceHeight,
-                out float3 surfaceGradient)
+            bool IsPointInsideOcean(float3 worldPosition)
             {
-                surfaceHeight = 0.0;
-                surfaceGradient = 0.0;
-                float amplitude = _FarionOceanSwellShape.x * displacementScale;
-                if (amplitude <= 0.0)
-                {
-                    return distance;
-                }
-
-                float oceanRadius = _FarionOceanSphere.w;
-                float maxStep = amplitude * 4.0;
-
-                [loop]
-                for (int i = 0; i < 3; i++)
-                {
-                    float3 relative = rayOrigin + rayDirection * distance - centre;
-                    float radius = length(relative);
-                    float3 normal = relative / max(radius, 0.0001);
-                    float3 gradient;
-                    float height = SampleSwellHeight(relative, gradient) * displacementScale;
-                    gradient *= displacementScale;
-                    float error = radius - (oceanRadius + height);
-                    float slope = dot(rayDirection, normal) - dot(rayDirection, gradient);
-                    if (abs(slope) < 0.02)
-                    {
-                        return -1.0;
-                    }
-
-                    distance -= clamp(error / slope, -maxStep, maxStep);
-                }
-
-                distance = max(distance, 0.0);
-
-                float3 finalRelative = rayOrigin + rayDirection * distance - centre;
-                float finalRadius = length(finalRelative);
-                float3 finalGradient;
-                float rawFinalHeight = SampleSwellHeight(finalRelative, finalGradient);
-                float finalHeight = rawFinalHeight * displacementScale;
-                float3 scaledFinalGradient = finalGradient * displacementScale;
-                float finalError = finalRadius - (oceanRadius + finalHeight);
-                float finalSlope = dot(rayDirection, finalRelative / max(finalRadius, 0.0001))
-                    - dot(rayDirection, scaledFinalGradient);
-                if (abs(finalError) > max(0.01, amplitude * 0.05)
-                    || finalSlope * expectedSlopeSign <= 0.0)
-                {
-                    return -1.0;
-                }
-
-                surfaceHeight = rawFinalHeight;
-                surfaceGradient = finalGradient;
-                return distance;
+                return FarionOceanSurfaceRadialError(OceanField(), worldPosition, 1.0) < 0.0;
             }
 
             float3 TriplanarWeights(float3 normalDirection)
@@ -238,7 +154,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     TEXTURE2D_ARGS(_FarionOceanWaveNormalB, sampler_FarionOceanWaveNormalB),
                     localOceanPosition,
                     baseNormal,
-                    scale,
+                    scale * 0.63,
                     waveOffsetB);
                 half3 detailNormal = normalize(detailA + detailB - baseNormal);
                 return normalize(lerp(baseNormal, detailNormal, strength));
@@ -262,6 +178,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 float2 oceanHit,
                 bool cameraInsideOcean,
                 float sceneDistance,
+                bool scenePointInsideOcean,
                 out float segmentStart,
                 out float segmentEnd,
                 out float segmentLength,
@@ -271,10 +188,11 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 float hitStart = oceanHit.x;
                 float hitEnd = oceanHit.x + oceanHit.y;
                 segmentStart = cameraInsideOcean ? 0.0 : hitStart;
-                segmentEnd = min(hitEnd, sceneDistance);
+                exitsToAir = cameraInsideOcean
+                    && (!scenePointInsideOcean || sceneDistance >= hitEnd - 0.01);
+                segmentEnd = exitsToAir ? hitEnd : min(hitEnd, sceneDistance);
                 segmentLength = segmentEnd - segmentStart;
                 entersFromAir = !cameraInsideOcean;
-                exitsToAir = cameraInsideOcean && sceneDistance >= hitEnd - 0.01;
                 return segmentLength > 0.0;
             }
 
@@ -289,6 +207,200 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 half3 transmittedScene = sourceColor * transmittance;
                 half3 inScatteredWater = waterColor * waterVolumeLight * (1.0h - transmittance);
                 return transmittedScene + inScatteredWater;
+            }
+
+            half3 EvaluateWaterVolumeLight(
+                float3 worldPosition,
+                float3 centre,
+                float oceanRadius,
+                float3 extinctionCoefficients,
+                half3 ambient,
+                half3 starRadiance,
+                half3 starDirection,
+                half scatterStrength)
+            {
+                float3 relativePosition = worldPosition - centre;
+                float radialDistance = length(relativePosition);
+                float3 radialNormal = relativePosition / max(radialDistance, 0.0001);
+                float waterDepth = max(0.0, oceanRadius - radialDistance);
+                half sunCosine = saturate(dot(radialNormal, starDirection));
+                float sunPathLength = waterDepth / max((float)sunCosine, 0.08);
+                half3 ambientTransmission = exp(-extinctionCoefficients * (waterDepth * 0.35));
+                half3 sunTransmission = exp(-extinctionCoefficients * sunPathLength);
+                return ambient * ambientTransmission
+                    + starRadiance * sunTransmission * scatterStrength * sunCosine;
+            }
+
+            half3 ApplySegmentedWaterVolume(
+                half3 sourceColor,
+                half3 waterColor,
+                half3 nearVolumeLight,
+                half3 farVolumeLight,
+                float segmentLength,
+                float3 extinctionCoefficients)
+            {
+                float halfLength = segmentLength * 0.5;
+                half3 farHalf = ApplyWaterVolume(
+                    sourceColor,
+                    waterColor,
+                    farVolumeLight,
+                    halfLength,
+                    extinctionCoefficients);
+                return ApplyWaterVolume(
+                    farHalf,
+                    waterColor,
+                    nearVolumeLight,
+                    halfLength,
+                    extinctionCoefficients);
+            }
+
+            half3 EvaluateUnderwaterSpotLightsAt(
+                float3 samplePosition,
+                float viewDistance,
+                float3 viewRay,
+                float3 extinctionCoefficients)
+            {
+                half3 lightSum = 0.0h;
+                [loop]
+                for (int i = 0; i < _FarionUnderwaterLightCount; i++)
+                {
+                    float4 positionRange = _FarionUnderwaterLightPositionRange[i];
+                    float3 lightToSample = samplePosition - positionRange.xyz;
+                    float lightDistance = length(lightToSample);
+                    float range = max(positionRange.w, 0.001);
+                    if (lightDistance >= range)
+                    {
+                        continue;
+                    }
+
+                    float3 lightDirection = _FarionUnderwaterLightDirectionOuterCos[i].xyz;
+                    float3 sampleDirection = lightToSample / max(lightDistance, 0.001);
+                    half cone = smoothstep(
+                        _FarionUnderwaterLightDirectionOuterCos[i].w,
+                        max(
+                            _FarionUnderwaterLightInnerConeCos[i],
+                            _FarionUnderwaterLightDirectionOuterCos[i].w + 0.0001),
+                        dot(lightDirection, sampleDirection));
+                    float normalizedDistance = lightDistance / range;
+                    half rangeAttenuation = saturate(1.0h - normalizedDistance * normalizedDistance);
+                    rangeAttenuation = rangeAttenuation * rangeAttenuation
+                        / (1.0h + normalizedDistance * normalizedDistance * 8.0h);
+                    half phase = lerp(
+                        0.28h,
+                        1.0h,
+                        pow(saturate(dot(lightDirection, viewRay)), 6.0h));
+                    half3 transmission = exp(
+                        -extinctionCoefficients * (lightDistance + viewDistance));
+                    half4 colorStrength = _FarionUnderwaterLightColorStrength[i];
+                    lightSum += colorStrength.rgb
+                        * colorStrength.a
+                        * cone
+                        * rangeAttenuation
+                        * phase
+                        * transmission;
+                }
+
+                return lightSum;
+            }
+
+            half3 EvaluateUnderwaterSpotLightScattering(
+                float3 rayOrigin,
+                float3 rayDirection,
+                float segmentLength,
+                float3 extinctionCoefficients)
+            {
+                if (_FarionUnderwaterLightCount <= 0 || segmentLength <= 0.0)
+                {
+                    return 0.0h;
+                }
+
+                const int stepCount = 4;
+                float integrationLength = min(
+                    segmentLength,
+                    _FarionOceanCameraSurfaceParams.y);
+                float stepLength = integrationLength / stepCount;
+                float minimumExtinction = max(
+                    min(extinctionCoefficients.x, min(extinctionCoefficients.y, extinctionCoefficients.z)),
+                    0.0001);
+                half scatterFraction = 1.0h - exp(-minimumExtinction * stepLength);
+                half3 scattering = 0.0h;
+                [unroll]
+                for (int stepIndex = 0; stepIndex < stepCount; stepIndex++)
+                {
+                    float sampleDistance = (stepIndex + 0.5) * stepLength;
+                    scattering += EvaluateUnderwaterSpotLightsAt(
+                        rayOrigin + rayDirection * sampleDistance,
+                        sampleDistance,
+                        rayDirection,
+                        extinctionCoefficients) * scatterFraction;
+                }
+
+                return scattering;
+            }
+
+            bool TryProjectDirectionSample(
+                float3 interfacePosition,
+                float3 direction,
+                float travelDistance,
+                out float2 sampleUv,
+                out half edgeFade)
+            {
+                float3 samplePosition = interfacePosition + direction * max(travelDistance, 1.0);
+                float4 clipPosition = TransformWorldToHClip(samplePosition);
+                if (clipPosition.w <= 0.0001)
+                {
+                    sampleUv = 0.0;
+                    edgeFade = 0.0h;
+                    return false;
+                }
+
+                float4 screenPosition = ComputeScreenPos(clipPosition);
+                sampleUv = screenPosition.xy / screenPosition.w;
+                float2 edgeDistance = min(sampleUv, 1.0 - sampleUv);
+                edgeFade = smoothstep(0.0, 0.025, min(edgeDistance.x, edgeDistance.y));
+                return edgeFade > 0.0h;
+            }
+
+            half3 SampleReflectedWater(
+                float3 interfacePosition,
+                float3 direction,
+                float travelDistance,
+                half3 fallbackColor)
+            {
+                float2 sampleUv;
+                half edgeFade;
+                if (!TryProjectDirectionSample(
+                    interfacePosition,
+                    direction,
+                    travelDistance,
+                    sampleUv,
+                    edgeFade))
+                {
+                    return fallbackColor;
+                }
+
+                float sampleDepth = SampleSceneDepth(sampleUv);
+                if (FarionIsSkyDepth(sampleDepth))
+                {
+                    return fallbackColor;
+                }
+
+                float3 samplePositionWS = ComputeWorldSpacePosition(
+                    sampleUv,
+                    sampleDepth,
+                    UNITY_MATRIX_I_VP);
+                if (!IsPointInsideOcean(samplePositionWS))
+                {
+                    return fallbackColor;
+                }
+
+                // ponytail: screen-space reflection cannot see off-screen geometry;
+                // replace with a dedicated reflection buffer only if that gap is visible.
+                half3 reflectedColor = SAMPLE_TEXTURE2D_X(
+                    _BlitTexture,
+                    sampler_LinearClamp,
+                    sampleUv).rgb;
+                return lerp(fallbackColor, reflectedColor, edgeFade);
             }
 
             float3 AtmosphereSunTransmittance(float3 worldPosition, float3 directionToStar)
@@ -318,7 +430,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 half3 sourceColor = source.rgb;
 
                 float rawDepth = SampleSceneDepth(uv);
-                bool sceneIsSky = IsSkyDepth(rawDepth);
+                bool sceneIsSky = FarionIsSkyDepth(rawDepth);
                 float depthForPosition = sceneIsSky ? UNITY_RAW_FAR_CLIP_VALUE : rawDepth;
                 float3 scenePositionWS = ComputeWorldSpacePosition(uv, depthForPosition, UNITY_MATRIX_I_VP);
                 float3 rayOrigin = _WorldSpaceCameraPos.xyz;
@@ -335,99 +447,28 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
 
                 float3 centre = _FarionOceanSphere.xyz;
                 float bodyRadius = max(_FarionPlanetSphere.w, 0.001);
-                bool cameraInsideOcean = _FarionOceanCameraInside > 0.5;
+                bool cameraInsideOcean = _FarionOceanCameraSurfaceParams.x < 0.0;
+                bool scenePointInsideOcean = !sceneIsSky;
+                if (cameraInsideOcean && scenePointInsideOcean)
+                {
+                    scenePointInsideOcean = IsPointInsideOcean(scenePositionWS);
+                }
 
-                float amplitude = _FarionOceanSwellShape.x;
-                float2 meanOceanHit = RaySphere(centre, oceanRadius, rayOrigin, rayDirection);
-                float2 swellEnvelopeHit = RaySphere(centre, oceanRadius + amplitude, rayOrigin, rayDirection);
-                if (swellEnvelopeHit.x < 0.0)
+                FarionOceanSurfaceIntersection surfaceIntersection;
+                if (!FarionTryIntersectOceanSurface(
+                    OceanField(),
+                    rayOrigin,
+                    rayDirection,
+                    cameraInsideOcean,
+                    surfaceIntersection))
                 {
                     return half4(sourceColor, source.a);
                 }
 
-                float envelopeEnd = swellEnvelopeHit.x + swellEnvelopeHit.y;
-                float meanSurfaceDistance = meanOceanHit.x >= 0.0
-                    ? (cameraInsideOcean ? meanOceanHit.x + meanOceanHit.y : meanOceanHit.x)
-                    : (cameraInsideOcean ? envelopeEnd : swellEnvelopeHit.x);
-                float fadeStart = _FarionOceanSwellShape.y * 16.0;
-                float fadeEnd = _FarionOceanSwellShape.y * 24.0;
-                float surfaceDisplacementFade = 1.0 - smoothstep(
-                    fadeStart,
-                    max(fadeEnd, fadeStart + 0.001),
-                    meanSurfaceDistance);
-                float effectiveAmplitude = amplitude * surfaceDisplacementFade;
-                float2 oceanHit = effectiveAmplitude > 0.0001
-                    ? RaySphere(centre, oceanRadius + effectiveAmplitude, rayOrigin, rayDirection)
-                    : meanOceanHit;
-                if (oceanHit.x < 0.0)
-                {
-                    return half4(sourceColor, source.a);
-                }
-
-                float hitStart = oceanHit.x;
-                float hitEnd = oceanHit.x + oceanHit.y;
-                float refinedSwellHeight = 0.0;
-                float3 refinedSwellGradient = 0.0;
-                bool hasRefinedSwell = false;
-                if (effectiveAmplitude > 0.0001)
-                {
-                    float refinedDistance;
-                    float candidateSwellHeight;
-                    float3 candidateSwellGradient;
-                    if (cameraInsideOcean)
-                    {
-                        refinedDistance = RefineSurfaceDistance(
-                            rayOrigin,
-                            rayDirection,
-                            centre,
-                            hitEnd,
-                            1.0,
-                            surfaceDisplacementFade,
-                            candidateSwellHeight,
-                            candidateSwellGradient);
-                        if (refinedDistance >= 0.0)
-                        {
-                            hitEnd = refinedDistance;
-                            refinedSwellHeight = candidateSwellHeight;
-                            refinedSwellGradient = candidateSwellGradient;
-                            hasRefinedSwell = true;
-                        }
-                        else if (meanOceanHit.x >= 0.0)
-                        {
-                            hitEnd = meanOceanHit.x + meanOceanHit.y;
-                        }
-                    }
-                    else
-                    {
-                        refinedDistance = RefineSurfaceDistance(
-                            rayOrigin,
-                            rayDirection,
-                            centre,
-                            hitStart,
-                            -1.0,
-                            surfaceDisplacementFade,
-                            candidateSwellHeight,
-                            candidateSwellGradient);
-                        if (refinedDistance >= 0.0)
-                        {
-                            hitStart = refinedDistance;
-                            refinedSwellHeight = candidateSwellHeight;
-                            refinedSwellGradient = candidateSwellGradient;
-                            hasRefinedSwell = true;
-                        }
-                        else if (meanOceanHit.x >= 0.0)
-                        {
-                            hitStart = meanOceanHit.x;
-                        }
-                    }
-
-                    if (hitStart < 0.0 || hitEnd <= hitStart)
-                    {
-                        return half4(sourceColor, source.a);
-                    }
-                }
-
-                oceanHit = float2(hitStart, hitEnd - hitStart);
+                float surfaceDisplacementFade = surfaceIntersection.displacementFade;
+                float2 oceanHit = float2(
+                    surfaceIntersection.entryDistance,
+                    surfaceIntersection.exitDistance - surfaceIntersection.entryDistance);
 
                 float segmentStart;
                 float segmentEnd;
@@ -438,6 +479,7 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     oceanHit,
                     cameraInsideOcean,
                     sceneDistance,
+                    scenePointInsideOcean,
                     segmentStart,
                     segmentEnd,
                     segmentLength,
@@ -472,35 +514,39 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
 
                 float3 swellGradient;
                 float swellHeight;
-                if (hasRefinedSwell)
+                if (surfaceIntersection.wasRefined)
                 {
-                    swellHeight = refinedSwellHeight;
-                    swellGradient = refinedSwellGradient;
+                    swellHeight = surfaceIntersection.surfaceHeight;
+                    swellGradient = surfaceIntersection.surfaceGradient;
                 }
                 else
                 {
-                    swellHeight = SampleSwellHeight(relativeOceanPosition, swellGradient);
+                    swellHeight = FarionSampleOceanSurfaceHeight(
+                        OceanField(),
+                        relativeOceanPosition,
+                        swellGradient);
                 }
                 float3 swellNormal = swellFade > 0.001h
                     ? normalize(lerp(sphereNormal, FarionApplyWaveNormal(sphereNormal, swellGradient), swellFade))
                     : sphereNormal;
+                bool hasSurfaceInterface = entersFromAir || exitsToAir;
                 half3 localSwellNormal = mul((float3x3)_FarionOceanWorldToLocal, swellNormal);
                 half3 localWaveNormal = localSwellNormal;
-                if (!cameraInsideOcean)
+                if (hasSurfaceInterface)
                 {
                     localWaveNormal = SampleDetailNormal(
                         localOceanPosition,
                         localSwellNormal,
                         detailFade);
                 }
+
                 half3 waveNormal = normalize(mul(
                     transpose((float3x3)_FarionOceanWorldToLocal),
                     localWaveNormal));
 
-                float depthMultiplier = _FarionOceanOpticalParams.x;
-                float alphaMultiplier = _FarionOceanOpticalParams.y;
-                float referenceLightIntensity = max(_FarionOceanOpticalParams.w, 0.001);
-                float3 underwaterExtinction = max(_FarionOceanUnderwaterOptics.xyz, 0.0);
+                float depthMultiplier = _FarionOceanDepthMultiplier;
+                float referenceLightIntensity = max(_FarionOceanReferenceLightIntensity, 0.001);
+                float3 extinctionCoefficients = max(_FarionOceanUnderwaterOptics.xyz, 0.0);
                 half underwaterSpecularStrength = saturate(_FarionOceanUnderwaterOptics.w);
                 half surfaceFade = max(swellFade, detailFade);
                 half smoothness = saturate(_FarionOceanLightingParams.x) * lerp(0.1h, 1.0h, surfaceFade);
@@ -517,19 +563,15 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                         oceanRadius + swellHeight * surfaceDisplacementFade - length(floorRelativePosition));
                 }
 
-                float minimumUnderwaterExtinction = max(
-                    min(underwaterExtinction.x, min(underwaterExtinction.y, underwaterExtinction.z)),
+                float minimumExtinction = max(
+                    min(extinctionCoefficients.x, min(extinctionCoefficients.y, extinctionCoefficients.z)),
                     0.0001);
-                float3 exteriorExtinction = alphaMultiplier / bodyRadius
-                    * underwaterExtinction / minimumUnderwaterExtinction;
-                float3 extinctionCoefficients = cameraInsideOcean
-                    ? underwaterExtinction
-                    : exteriorExtinction;
-                half depth01 = saturate(1.0h - exp(-seafloorDepth / bodyRadius * depthMultiplier));
+                half volumeDepthBlend = saturate(1.0h - exp(-segmentLength * minimumExtinction));
+                half radialDepthBlend = saturate(1.0h - exp(-seafloorDepth / bodyRadius * depthMultiplier));
+                half depth01 = max(radialDepthBlend, volumeDepthBlend);
 
                 half3 starDirection = normalize(_FarionStarDirectionWS.xyz);
                 half3 viewDirection = -rayDirection;
-                half diffuseLighting = saturate(dot(sphereNormal, starDirection));
                 half waveDiffuseLighting = saturate(dot(waveNormal, starDirection));
                 half daylight = smoothstep(-0.15h, 0.15h, dot(sphereNormal, starDirection));
 
@@ -546,44 +588,26 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                 specular *= cameraInsideOcean ? underwaterSpecularStrength : 1.0h;
                 specular *= daylight * lerp(0.12h, 1.0h, surfaceFade);
 
-                float volumeSampleDistance = segmentStart + segmentLength * 0.5;
-                float3 volumeSamplePosition = rayOrigin + rayDirection * volumeSampleDistance;
-                float volumeWaterDepth = max(0.0, oceanRadius - length(volumeSamplePosition - centre));
-                half3 subsurfaceLightTransmission = exp(-underwaterExtinction * volumeWaterDepth);
-                half3 submergedAmbient = ambient * subsurfaceLightTransmission;
-                half3 submergedStarRadiance = starRadiance * subsurfaceLightTransmission;
-                half3 waterVolumeLight = submergedAmbient
-                    + submergedStarRadiance * scatterStrength * (0.22h * daylight + diffuseLighting);
                 half3 surfaceReflectionLight = ambient + starRadiance * scatterStrength * (0.25h * daylight + waveDiffuseLighting * 0.76h);
-                half3 volumeColor = cameraInsideOcean
-                    ? _FarionOceanUnderwaterColor.rgb
-                    : oceanColor;
-                half3 volumeLight = cameraInsideOcean
-                    ? submergedAmbient
-                        + submergedStarRadiance * scatterStrength * (0.07h * daylight + diffuseLighting * 0.29h)
-                    : waterVolumeLight;
-                float3 reflectionNormal = cameraInsideOcean ? swellNormal : waveNormal;
-                float3 reflectDirection = reflect(rayDirection, reflectionNormal);
-                half3 reflectedSurface = cameraInsideOcean
-                    ? volumeColor * volumeLight
-                    : SampleSkyReflection(reflectDirection, sphereNormal, surfaceReflectionLight);
 
-                bool hasSurfaceInterface = entersFromAir || exitsToAir;
-                half interfaceCos = entersFromAir
-                    ? saturate(dot(swellNormal, viewDirection))
-                    : saturate(dot(swellNormal, rayDirection));
+                float3 interfaceNormal = entersFromAir ? waveNormal : -waveNormal;
+                half interfaceCos = saturate(dot(-rayDirection, interfaceNormal));
                 half interfaceFresnel = SchlickFresnel(interfaceCos, indexOfRefraction);
-                half totalInternalReflection = 0.0h;
-
+                half interfaceEta = entersFromAir ? rcp(indexOfRefraction) : indexOfRefraction;
+                float3 refractedDirection = hasSurfaceInterface
+                    ? refract(rayDirection, interfaceNormal, interfaceEta)
+                    : rayDirection;
+                float refractedLengthSquared = dot(refractedDirection, refractedDirection);
+                half criticalReflection = 0.0h;
                 if (exitsToAir)
                 {
-                    half etaWaterToAir = indexOfRefraction;
-                    half sin2Transmitted = etaWaterToAir * etaWaterToAir * (1.0h - interfaceCos * interfaceCos);
-                    totalInternalReflection = step(1.0h, sin2Transmitted);
+                    half transmittedSinSquared = interfaceEta * interfaceEta
+                        * (1.0h - interfaceCos * interfaceCos);
+                    criticalReflection = smoothstep(0.9h, 1.0h, transmittedSinSquared);
                 }
 
                 half surfaceReflection = hasSurfaceInterface
-                    ? saturate(totalInternalReflection + (1.0h - totalInternalReflection) * interfaceFresnel)
+                    ? saturate(criticalReflection + (1.0h - criticalReflection) * interfaceFresnel)
                     : 0.0h;
                 half surfaceTransmission = hasSurfaceInterface
                     ? (1.0h - surfaceReflection)
@@ -593,27 +617,96 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     : 0.0h;
                 half3 surfaceGlint = _FarionOceanSpecularColor.rgb * starRadiance * specular * specularVisibility;
 
+                float nearSampleDistance = segmentLength * 0.25;
+                float farSampleDistance = segmentLength * 0.75;
+                half3 nearVolumeLight = EvaluateWaterVolumeLight(
+                    rayOrigin + rayDirection * nearSampleDistance,
+                    centre,
+                    oceanRadius,
+                    extinctionCoefficients,
+                    ambient,
+                    starRadiance,
+                    starDirection,
+                    scatterStrength);
+                half3 farVolumeLight = EvaluateWaterVolumeLight(
+                    rayOrigin + rayDirection * farSampleDistance,
+                    centre,
+                    oceanRadius,
+                    extinctionCoefficients,
+                    ambient,
+                    starRadiance,
+                    starDirection,
+                    scatterStrength);
+                half3 volumeColor = lerp(oceanColor, _FarionOceanUnderwaterColor.rgb, volumeDepthBlend);
+
+                float3 reflectedDirection = reflect(rayDirection, interfaceNormal);
+                half3 reflectedFallback = volumeColor
+                    * max(nearVolumeLight, surfaceReflectionLight * 0.2h);
+                half3 reflectedSurface = cameraInsideOcean
+                    ? (exitsToAir
+                        ? SampleReflectedWater(
+                            hitPosition,
+                            normalize(reflectedDirection),
+                            _FarionOceanCameraSurfaceParams.z,
+                            reflectedFallback)
+                        : reflectedFallback)
+                    : SampleSkyReflection(reflectedDirection, sphereNormal, surfaceReflectionLight);
+
+                half3 transmittedSurface = sourceColor;
+                if (cameraInsideOcean && exitsToAir && refractedLengthSquared > 0.000001)
+                {
+                    if (sceneIsSky)
+                    {
+                        float3 normalDeltaVS = mul(
+                            (float3x3)UNITY_MATRIX_V,
+                            waveNormal - sphereNormal);
+                        float2 distortion = clamp(normalDeltaVS.xy * 0.06, -0.035, 0.035);
+                        float2 refractedUv = saturate(uv + distortion);
+                        float refractedDepth = SampleSceneDepth(refractedUv);
+                        transmittedSurface = FarionIsSkyDepth(refractedDepth)
+                            ? SAMPLE_TEXTURE2D_X(
+                                _BlitTexture,
+                                sampler_LinearClamp,
+                                refractedUv).rgb
+                            : sourceColor;
+                    }
+                    else
+                    {
+                        transmittedSurface = SampleSkyReflection(
+                            normalize(refractedDirection),
+                            sphereNormal,
+                            surfaceReflectionLight);
+                    }
+                }
+
                 half3 waterColor;
                 if (cameraInsideOcean)
                 {
                     half3 interfaceColor = exitsToAir
-                        ? sourceColor * surfaceTransmission
+                        ? transmittedSurface * surfaceTransmission
                             + reflectedSurface * surfaceReflection
                             + surfaceGlint
                         : sourceColor;
-                    waterColor = ApplyWaterVolume(
+                    waterColor = ApplySegmentedWaterVolume(
                         interfaceColor,
                         volumeColor,
-                        volumeLight,
+                        nearVolumeLight,
+                        farVolumeLight,
+                        segmentLength,
+                        extinctionCoefficients);
+                    waterColor += EvaluateUnderwaterSpotLightScattering(
+                        rayOrigin,
+                        rayDirection,
                         segmentLength,
                         extinctionCoefficients);
                 }
                 else
                 {
-                    half3 transmittedWater = ApplyWaterVolume(
+                    half3 transmittedWater = ApplySegmentedWaterVolume(
                         sourceColor,
                         volumeColor,
-                        volumeLight,
+                        nearVolumeLight,
+                        farVolumeLight,
                         segmentLength,
                         extinctionCoefficients);
                     waterColor = transmittedWater * surfaceTransmission
@@ -629,7 +722,10 @@ Shader "Hidden/Farion/Celestial/Ocean Post Process"
                     half waveContact = _FarionOceanSwellShape.x > 0.0
                         ? saturate(swellHeight / _FarionOceanSwellShape.x * 0.5h + 0.5h)
                         : 1.0h;
-                    half foam = shoreFoam * shoreFoam * lerp(0.65h, 1.0h, waveContact) * foamStrength;
+                    half foam = shoreFoam * shoreFoam
+                        * lerp(0.65h, 1.0h, waveContact)
+                        * foamStrength
+                        * (1.0h - volumeDepthBlend);
                     half3 foamLight = ambient + starRadiance * (0.2h + waveDiffuseLighting * 0.8h);
                     waterColor = lerp(waterColor, _FarionOceanFoamColor.rgb * foamLight, foam);
                 }

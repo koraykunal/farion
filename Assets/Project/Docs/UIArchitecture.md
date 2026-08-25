@@ -225,13 +225,15 @@ menu or runtime builder.
   state to the authored views.
 - `UiSettingsCategoryView` owns category focus and selection presentation.
 - `UiSettingsOptionView` owns one adjustable row and reports player intent.
+  Audio rows use its native uGUI `Slider` range contract; keyboard and gamepad
+  left/right input keep a ten-percent step while pointer drag remains continuous.
 - `UiPreferencesService` remains the authority for persisted values and locale
   changes.
 
-`FarionInputActions` can persist and reset binding overrides, but the authored
-Settings screen does not yet expose interactive rebinding. That feature needs a
-complete capture, conflict, cancel, persistence, and device-prompt flow; it must
-not be represented by a nonfunctional settings row.
+The Controls category exposes keyboard rebinding through `UiKeyBindingsPanel`.
+It supports capture, cancel, conflict rejection, persistence, and full reset.
+Gamepad, mouse-button, secondary-slot, and swap-on-conflict authoring are not
+part of the current contract and must not be presented as available controls.
 
 The prefab keeps category navigation, option groups, context copy, and the back
 action as authored references. Scenes only hold standard prefab-instance

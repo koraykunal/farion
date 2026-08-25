@@ -35,8 +35,6 @@ namespace Farion.Rendering.Celestial
         [Header("Optical")]
         [Min(0f)]
         [SerializeField] float depthMultiplier = 10f;
-        [Min(0f)]
-        [SerializeField] float alphaMultiplier = 70f;
         [Header("Underwater")]
         [SerializeField] Color underwaterColor = new(0.01f, 0.12f, 0.18f, 1f);
         [Tooltip("World-space distance at which roughly 95% of the least-absorbed direct light has been lost underwater.")]
@@ -44,6 +42,9 @@ namespace Farion.Rendering.Celestial
         [SerializeField] float underwaterVisibilityDistance = 50f;
         [Range(0f, 1f)]
         [SerializeField] float underwaterSpecularStrength = 0.08f;
+        [Tooltip("Spot light intensity that scatters at exactly the fixture's authored strength. Brighter lamps scale up from here.")]
+        [Min(0.001f)]
+        [SerializeField] float underwaterLightReferenceIntensity = 1800f;
 
         [Header("Lighting")]
         [Range(0f, 1f)]
@@ -75,8 +76,8 @@ namespace Farion.Rendering.Celestial
         public float FoamWidth => foamWidth;
         public float FoamStrength => foamStrength;
         public float DepthMultiplier => depthMultiplier;
-        public float AlphaMultiplier => alphaMultiplier;
         public Color UnderwaterColor => underwaterColor;
+        public float UnderwaterLightReferenceIntensity => underwaterLightReferenceIntensity;
         public Vector3 UnderwaterExtinctionCoefficients
         {
             get
@@ -105,8 +106,8 @@ namespace Farion.Rendering.Celestial
             detailTileSize = Mathf.Max(0.01f, detailTileSize);
             waveSpeed = Mathf.Max(0f, waveSpeed);
             depthMultiplier = Mathf.Max(0f, depthMultiplier);
-            alphaMultiplier = Mathf.Max(0f, alphaMultiplier);
             underwaterVisibilityDistance = Mathf.Max(0.01f, underwaterVisibilityDistance);
+            underwaterLightReferenceIntensity = Mathf.Max(0.001f, underwaterLightReferenceIntensity);
             referenceLightIntensity = Mathf.Max(0.001f, referenceLightIntensity);
             indexOfRefraction = Mathf.Clamp(indexOfRefraction, 1.0001f, 2f);
             foamWidth = Mathf.Max(0f, foamWidth);

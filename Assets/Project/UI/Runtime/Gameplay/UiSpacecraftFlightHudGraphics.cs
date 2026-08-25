@@ -146,6 +146,7 @@ namespace Farion.UI.Gameplay
         float targetHull = 1f;
         float displayedHull = 1f;
         bool hullBreached;
+        bool flightAssistEnabled;
         float shakeAmplitude;
         float shakeTime;
         Vector2 shakeRestPosition;
@@ -237,10 +238,11 @@ namespace Farion.UI.Gameplay
                 speedValueText.SetText("{0:0}", telemetry.RelativeSpeed);
             }
 
+            flightAssistEnabled = telemetry.FlightAssistEnabled;
             if (assistValueText != null)
             {
                 assistValueText.SetText(
-                    telemetry.FlightAssistEnabled ? "ON" : "OFF");
+                    flightAssistEnabled ? "ON" : "OFF");
             }
 
             if (fuelValueText != null)
@@ -492,8 +494,7 @@ namespace Farion.UI.Gameplay
             SetTextColor(fuelValueText, signal);
             SetColor(fuelArcFillImage, signal, signal.a);
 
-            Color assist = assistValueText != null &&
-                assistValueText.text == "ON"
+            Color assist = flightAssistEnabled
                     ? Theme.Nominal
                     : Theme.SupportingText;
             SetTextColor(assistValueText, assist);

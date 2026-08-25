@@ -1,6 +1,7 @@
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Presentation.Flight;
 using Farion.Gameplay.Presentation.Lighting;
+using Farion.Rendering.Lighting;
 using UnityEditor;
 using UnityEngine;
 
@@ -267,6 +268,17 @@ namespace Farion.Editor.Authoring
             serialized.FindProperty("seed").floatValue = seed;
             serialized.FindProperty("startOn").boolValue = false;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            if (profile.UnderwaterScatteringStrength > 0f)
+            {
+                UnderwaterSpotLight underwaterLight = Ensure<UnderwaterSpotLight>(host);
+                SerializedObject serializedUnderwaterLight = new(underwaterLight);
+                serializedUnderwaterLight.FindProperty("source").objectReferenceValue = core;
+                serializedUnderwaterLight.FindProperty("scatteringStrength").floatValue =
+                    profile.UnderwaterScatteringStrength;
+                serializedUnderwaterLight.ApplyModifiedPropertiesWithoutUndo();
+            }
+
             return fixture;
         }
 
@@ -325,6 +337,7 @@ namespace Farion.Editor.Authoring
             serialized.FindProperty("spillRangeRatio").floatValue = 0.2f;
             serialized.FindProperty("shadows").enumValueIndex = (int)LightShadows.Soft;
             serialized.FindProperty("shadowStrength").floatValue = 0.85f;
+            serialized.FindProperty("underwaterScatteringStrength").floatValue = 0.85f;
             serialized.FindProperty("cookie").objectReferenceValue = cookie;
             serialized.FindProperty("lensEmissionColor").colorValue = new Color(1f, 0.96f, 0.9f, 1f);
             serialized.FindProperty("lensEmissionIntensity").floatValue = 6f;

@@ -172,6 +172,37 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void PlumeBendTrailsRotationOnlyWhileTheNozzleIsLoaded()
+        {
+            Vector3 aligned = SpacecraftThrusterNozzleVfx.CalculatePlumeBend(
+                Vector3.forward,
+                nozzleLoad: 1f,
+                maxBend: 0.45f);
+            Assert.That(aligned, Is.EqualTo(Vector3.zero));
+
+            Vector3 lagged = SpacecraftThrusterNozzleVfx.CalculatePlumeBend(
+                new Vector3(0.3f, -0.2f, 0.93f),
+                nozzleLoad: 1f,
+                maxBend: 0.45f);
+            Assert.That(lagged.x, Is.GreaterThan(0f));
+            Assert.That(lagged.y, Is.LessThan(0f));
+            Assert.That(lagged.z, Is.Zero);
+            Assert.That(lagged.magnitude, Is.LessThanOrEqualTo(0.45f + 1e-4f));
+
+            Vector3 idle = SpacecraftThrusterNozzleVfx.CalculatePlumeBend(
+                new Vector3(0.3f, -0.2f, 0.93f),
+                nozzleLoad: 0f,
+                maxBend: 0.45f);
+            Assert.That(idle, Is.EqualTo(Vector3.zero));
+
+            Vector3 clamped = SpacecraftThrusterNozzleVfx.CalculatePlumeBend(
+                new Vector3(4f, 4f, 0.1f),
+                nozzleLoad: 1f,
+                maxBend: 0.45f);
+            Assert.That(clamped.magnitude, Is.EqualTo(0.45f).Within(1e-4f));
+        }
+
+        [Test]
         public void RearMainVfxIgnoresTranslationThatDoesNotProduceForwardExhaust()
         {
             SpacecraftThrusterCommand reverse = new(

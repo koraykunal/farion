@@ -52,6 +52,8 @@ namespace Farion.UI.Gameplay
         Action quitGameAction;
         Func<string, SaveGameOperationResult> externalSaveAction;
         string externalSaveSlotName;
+        string displayedInteractionPrompt;
+        UiInputDeviceKind displayedPromptDevice = (UiInputDeviceKind)(-1);
 
         public event Action<UiScreenId> ScreenChanged;
         public UiScreenId CurrentScreen => currentScreen;
@@ -560,19 +562,39 @@ namespace Farion.UI.Gameplay
                 interactionRaycaster.HasTarget &&
                 !string.IsNullOrWhiteSpace(interactionRaycaster.CurrentPrompt);
 
-            interactionPromptText.gameObject.SetActive(showPrompt);
+            if (interactionPromptText.gameObject.activeSelf != showPrompt)
+            {
+                interactionPromptText.gameObject.SetActive(showPrompt);
+            }
+
             if (!showPrompt)
             {
-                interactionPromptText.text = string.Empty;
+                if (displayedInteractionPrompt != null)
+                {
+                    interactionPromptText.text = string.Empty;
+                    displayedInteractionPrompt = null;
+                    displayedPromptDevice = (UiInputDeviceKind)(-1);
+                }
+
                 return;
             }
 
-            string prompt = interactionRaycaster.CurrentPrompt.Trim();
+            string promptSource = interactionRaycaster.CurrentPrompt;
+            UiInputDeviceKind device = inputDeviceService != null
+                ? inputDeviceService.CurrentDevice
+                : UiInputDeviceKind.KeyboardMouse;
+            if (promptSource == displayedInteractionPrompt &&
+                device == displayedPromptDevice)
+            {
+                return;
+            }
+
+            displayedInteractionPrompt = promptSource;
+            displayedPromptDevice = device;
+            string prompt = promptSource.Trim();
             string binding = UiBindingDisplay.GetDisplayString(
                 FarionInputActions.OnFootInteract,
-                inputDeviceService != null
-                    ? inputDeviceService.CurrentDevice
-                    : UiInputDeviceKind.KeyboardMouse);
+                device);
             if (string.IsNullOrWhiteSpace(binding))
             {
                 binding = interactionPromptPrefix;

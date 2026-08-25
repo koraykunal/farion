@@ -25,10 +25,23 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _DistortionStrength: 0.014
+    - _AtmosphereDensity: 1
+    - _BellExpansion: 0
+    - _Boost: 0
+    - _DistortionReferenceDistance: 18
+    - _DistortionStrength: 0.021
+    - _Flare: 0
     - _FlowSpeed: 2.7
+    - _GroundSplash: 0
+    - _Heat: 0
+    - _LayerSeed: 0
     - _NoiseScale: 5.5
-    - _Opacity: 0.28
-    m_Colors: []
+    - _Opacity: 0.72
+    - _SoftFadeDistance: 1.6
+    - _SpeedBlend: 0
+    - _Throttle: 0
+    - _VacuumStrengthScale: 0.45
+    m_Colors:
+    - _PlumeBend: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

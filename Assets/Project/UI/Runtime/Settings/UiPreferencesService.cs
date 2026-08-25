@@ -421,11 +421,18 @@ namespace Farion.UI.Settings
                 appliedResolutionIndex,
                 0,
                 supportedResolutions.Count - 1)];
-            Screen.SetResolution(
-                resolution.x,
-                resolution.y,
-                appliedDisplayMode,
-                appliedRefreshRate);
+            if (Screen.width != resolution.x ||
+                Screen.height != resolution.y ||
+                Screen.fullScreenMode != appliedDisplayMode ||
+                !MatchesRefreshRate(Screen.currentResolution.refreshRateRatio, appliedRefreshRate))
+            {
+                Screen.SetResolution(
+                    resolution.x,
+                    resolution.y,
+                    appliedDisplayMode,
+                    appliedRefreshRate);
+            }
+
             QualitySettings.vSyncCount = vSyncEnabled ? 1 : 0;
         }
 

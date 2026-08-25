@@ -13,7 +13,7 @@ namespace Farion.UI.Settings
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Image))]
     public sealed class UiSettingsOptionView :
-        Selectable,
+        Slider,
         IUiValueControl,
         ISubmitHandler,
         IPointerClickHandler
@@ -35,10 +35,12 @@ namespace Farion.UI.Settings
         string displayTitle = string.Empty;
         string displayDescription = string.Empty;
         string displayValue = string.Empty;
+        bool rangeDragging;
 
         UiTheme Theme => theme = UiTheme.Resolve(theme);
 
         public event Action<UiSettingsOptionView, int> AdjustmentRequested;
+        public event Action<UiSettingsOptionView, float> RangeValueChanged;
         public event Action<IUiValueControl> Focused;
 
         public UiSettingId SettingId => settingId;
@@ -46,12 +48,14 @@ namespace Farion.UI.Settings
         public string DisplayDescription => displayDescription;
         public string DisplayValue => displayValue;
         public Selectable Selectable => this;
+        public bool HasRange => fillRect != null;
 
         protected override void Awake()
         {
             base.Awake();
             ResolveReferences();
             transition = Transition.None;
+            onValueChanged.AddListener(HandleRangeValueChanged);
             if (Application.isPlaying)
             {
                 RefreshVisual();
@@ -72,6 +76,12 @@ namespace Farion.UI.Settings
         {
             focusState.Reset();
             base.OnDisable();
+        }
+
+        protected override void OnDestroy()
+        {
+            onValueChanged.RemoveListener(HandleRangeValueChanged);
+            base.OnDestroy();
         }
 
         public void ConfigureContent(string title, string description, string value)
@@ -95,6 +105,21 @@ namespace Farion.UI.Settings
                 valueText.text =
                     $"\u2039  {ToLabel(displayValue)}  \u203A";
             }
+        }
+
+        public void ConfigureRange(float normalizedValue)
+        {
+            if (!HasRange)
+            {
+                return;
+            }
+
+            minValue = 0f;
+            maxValue = 1f;
+            wholeNumbers = false;
+            direction = Direction.LeftToRight;
+            SetValueWithoutNotify(Mathf.Clamp01(normalizedValue));
+            RefreshVisual();
         }
 
         public void SetAvailable(bool available)
@@ -146,8 +171,39 @@ namespace Farion.UI.Settings
 
             focusState.PointerClick();
             Select();
+            if (HasRange && eventData.button == PointerEventData.InputButton.Left)
+            {
+                Focused?.Invoke(this);
+                return;
+            }
+
             RequestAdjustment(
                 eventData.button == PointerEventData.InputButton.Right ? -1 : 1);
+        }
+
+        public override void OnPointerDown(PointerEventData eventData)
+        {
+            rangeDragging = HasRange &&
+                eventData.button == PointerEventData.InputButton.Left &&
+                RectTransformUtility.RectangleContainsScreenPoint(
+                    fillRect.parent as RectTransform,
+                    eventData.position,
+                    eventData.pressEventCamera);
+            if (HasRange && !rangeDragging)
+            {
+                Select();
+                return;
+            }
+
+            base.OnPointerDown(eventData);
+        }
+
+        public override void OnDrag(PointerEventData eventData)
+        {
+            if (!HasRange || rangeDragging)
+            {
+                base.OnDrag(eventData);
+            }
         }
 
         public override void OnPointerEnter(PointerEventData eventData)
@@ -186,6 +242,17 @@ namespace Farion.UI.Settings
             {
                 AdjustmentRequested?.Invoke(this, direction < 0 ? -1 : 1);
             }
+        }
+
+        void HandleRangeValueChanged(float normalizedValue)
+        {
+            if (!Application.isPlaying || !HasRange)
+            {
+                return;
+            }
+
+            Select();
+            RangeValueChanged?.Invoke(this, normalizedValue);
         }
 
         void ResolveReferences()
@@ -253,12 +320,46 @@ namespace Farion.UI.Settings
 
             if (selectionFrame == null)
             {
+                RefreshRangeVisual(available, focused);
                 return;
             }
 
             focus.a *= focused ? 0.9f : available ? 0.12f : 0.05f;
             selectionFrame.color = focus;
             selectionFrame.raycastTarget = false;
+            RefreshRangeVisual(available, focused);
+        }
+
+        void RefreshRangeVisual(bool available, bool focused)
+        {
+            if (!HasRange)
+            {
+                return;
+            }
+
+            Image fillImage = fillRect.GetComponent<Image>();
+            Image trackImage = fillRect.parent.GetComponent<Image>();
+            if (trackImage != null)
+            {
+                trackImage.color = focused ? Theme.RaisedSurface : Theme.PanelSurface;
+                trackImage.raycastTarget = false;
+            }
+
+            if (fillImage != null)
+            {
+                Color color = pending && available
+                    ? Theme.Caution
+                    : focused
+                        ? Theme.Focus
+                        : Theme.SupportingText;
+                if (!available)
+                {
+                    color.a *= 0.35f;
+                }
+
+                fillImage.color = color;
+                fillImage.raycastTarget = false;
+            }
         }
 
         static string ToLabel(string value)

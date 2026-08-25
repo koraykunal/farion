@@ -21,10 +21,10 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
         #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
         #include "FarionAtmosphereLighting.hlsl"
+        #include "FarionCelestialRaycast.hlsl"
 
         #define FARION_CLOUD_MAX_VIEW_STEPS 96
         #define FARION_CLOUD_MAX_LIGHT_STEPS 12
-        #define FARION_MAX_FLOAT 3.402823466e+38
 
         float4 _FarionCloudSphere;
         float4 _FarionCloudRadii;
@@ -63,34 +63,6 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
         SAMPLER(sampler_FarionCloudAtmosphereOpticalDepth);
         TEXTURE2D_X(_FarionCloudTexture);
 
-        float2 RaySphere(float3 center, float radius, float3 rayOrigin, float3 rayDirection)
-        {
-            float3 offset = rayOrigin - center;
-            float b = dot(offset, rayDirection);
-            float c = dot(offset, offset) - radius * radius;
-            float discriminant = b * b - c;
-            if (discriminant < 0.0)
-            {
-                return float2(FARION_MAX_FLOAT, 0.0);
-            }
-
-            float root = sqrt(discriminant);
-            float nearDistance = max(-b - root, 0.0);
-            float farDistance = -b + root;
-            return farDistance > 0.0
-                ? float2(nearDistance, farDistance - nearDistance)
-                : float2(FARION_MAX_FLOAT, 0.0);
-        }
-
-        bool IsSkyDepth(float rawDepth)
-        {
-        #if UNITY_REVERSED_Z
-            return rawDepth <= 0.000001;
-        #else
-            return rawDepth >= 0.999999;
-        #endif
-        }
-
         float3 GetWorldRay(float2 uv)
         {
         #if UNITY_REVERSED_Z
@@ -105,7 +77,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
         float GetSceneDistance(float2 uv, float3 rayDirection)
         {
             float rawDepth = SampleSceneDepth(uv);
-            if (IsSkyDepth(rawDepth))
+            if (FarionIsSkyDepth(rawDepth))
             {
                 return FARION_MAX_FLOAT;
             }
@@ -368,7 +340,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 return 0.0;
             }
 
-            float2 outerHit = RaySphere(_FarionCloudSphere.xyz, _FarionCloudRadii.z, position, directionToStar);
+            float2 outerHit = FarionRaySphere(_FarionCloudSphere.xyz, _FarionCloudRadii.z, position, directionToStar);
             int stepCount = max(1, (int)_FarionCloudSamplingParams.y);
             float outerStart = outerHit.x;
             float outerEnd = outerHit.x + outerHit.y;
@@ -376,7 +348,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             float firstEnd = outerEnd;
             float secondStart = outerEnd;
             float secondEnd = outerEnd;
-            float2 innerHit = RaySphere(_FarionCloudSphere.xyz, _FarionCloudRadii.y, position, directionToStar);
+            float2 innerHit = FarionRaySphere(_FarionCloudSphere.xyz, _FarionCloudRadii.y, position, directionToStar);
             if (innerHit.y > 0.0)
             {
                 float innerStart = innerHit.x;
@@ -518,7 +490,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             float3 center = _FarionCloudSphere.xyz;
             float innerRadius = _FarionCloudRadii.y;
             float outerRadius = _FarionCloudRadii.z;
-            float2 outerHit = RaySphere(center, outerRadius, rayOrigin, rayDirection);
+            float2 outerHit = FarionRaySphere(center, outerRadius, rayOrigin, rayDirection);
             if (outerHit.y <= 0.0)
             {
                 return;
@@ -526,9 +498,9 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
 
             float outerStart = outerHit.x;
             float outerEnd = outerHit.x + outerHit.y;
-            float2 innerHit = RaySphere(center, innerRadius, rayOrigin, rayDirection);
+            float2 innerHit = FarionRaySphere(center, innerRadius, rayOrigin, rayDirection);
             float visibilityLimit = GetSceneDistance(uv, rayDirection);
-            float2 surfaceHit = RaySphere(center, _FarionCloudRadii.x, rayOrigin, rayDirection);
+            float2 surfaceHit = FarionRaySphere(center, _FarionCloudRadii.x, rayOrigin, rayDirection);
             if (surfaceHit.y > 0.0 && surfaceHit.x > 0.0)
             {
                 visibilityLimit = min(visibilityLimit, surfaceHit.x);
@@ -611,8 +583,8 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
 
         float DepthWeight(float centerDepth, float sampleDepth)
         {
-            bool centerSky = IsSkyDepth(centerDepth);
-            bool sampleSky = IsSkyDepth(sampleDepth);
+            bool centerSky = FarionIsSkyDepth(centerDepth);
+            bool sampleSky = FarionIsSkyDepth(sampleDepth);
             if (centerSky || sampleSky)
             {
                 return centerSky == sampleSky ? 1.0 : 0.001;
@@ -654,7 +626,7 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                 float2 uv = input.texcoord;
                 float rawDepth = SampleSceneDepth(uv);
                 float4 cloud = SAMPLE_TEXTURE2D_X(_FarionCloudTexture, sampler_LinearClamp, uv);
-                if (IsSkyDepth(rawDepth))
+                if (FarionIsSkyDepth(rawDepth))
                 {
                     half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                     return half4(source.rgb * cloud.a + cloud.rgb, source.a);

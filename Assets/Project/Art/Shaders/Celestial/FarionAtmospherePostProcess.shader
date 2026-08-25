@@ -30,16 +30,22 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "FarionOceanSurface.hlsl"
 
             #define FARION_MAX_ATMOSPHERE_EFFECTS 8
             #define FARION_MAX_SCATTER_STEPS 32
-            #define FARION_MAX_FLOAT 3.402823466e+38
             #define FARION_SHADOW_PENUMBRA 0.04
 
             int _FarionAtmosphereEffectCount;
             float4 _FarionAtmosphereSpheres[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmospherePlanetSpheres[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmosphereSurfaceRadii[FARION_MAX_ATMOSPHERE_EFFECTS];
+            // x: ocean radius, y: wave amplitude, z: wave length,
+            // w: signed camera distance to the displaced surface.
+            float4 _FarionAtmosphereOceanSurfaceParams[FARION_MAX_ATMOSPHERE_EFFECTS];
+            // xyz: wave phases.
+            float4 _FarionAtmosphereOceanWavePhases[FARION_MAX_ATMOSPHERE_EFFECTS];
+            float4x4 _FarionAtmosphereOceanWorldToLocal[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmosphereScatteringCoefficients[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmosphereOpticalParams[FARION_MAX_ATMOSPHERE_EFFECTS];
             float4 _FarionAtmosphereSampleParams[FARION_MAX_ATMOSPHERE_EFFECTS];
@@ -56,37 +62,6 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
             SAMPLER(sampler_FarionAtmosphereBakedOpticalDepth);
             TEXTURE2D(_FarionAtmosphereBlueNoise);
             SAMPLER(sampler_FarionAtmosphereBlueNoise);
-
-            float2 RaySphere(float3 centre, float radius, float3 rayOrigin, float3 rayDirection)
-            {
-                float3 offset = rayOrigin - centre;
-                float b = dot(offset, rayDirection);
-                float c = dot(offset, offset) - radius * radius;
-                float discriminant = b * b - c;
-                if (discriminant < 0.0)
-                {
-                    return float2(FARION_MAX_FLOAT, 0.0);
-                }
-
-                float s = sqrt(discriminant);
-                float dstToSphere = max(-b - s, 0.0);
-                float dstOutSphere = -b + s;
-                if (dstOutSphere < 0.0)
-                {
-                    return float2(FARION_MAX_FLOAT, 0.0);
-                }
-
-                return float2(dstToSphere, dstOutSphere - dstToSphere);
-            }
-
-            bool IsSkyDepth(float rawDepth)
-            {
-            #if UNITY_REVERSED_Z
-                return rawDepth <= 0.000001;
-            #else
-                return rawDepth >= 0.999999;
-            #endif
-            }
 
             float3 DensityAtHeight(int index, float height01)
             {
@@ -202,17 +177,58 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                 float planetRadius = max(_FarionAtmospherePlanetSpheres[index].w, 0.001);
                 float surfaceRadius = max(_FarionAtmosphereSurfaceRadii[index].x, planetRadius);
 
-                float2 atmosphereHit = RaySphere(centre, atmosphereRadius, rayOrigin, rayDirection);
+                float2 atmosphereHit = FarionRaySphere(centre, atmosphereRadius, rayOrigin, rayDirection);
                 if (atmosphereHit.y <= 0.0)
                 {
                     return sourceColor;
                 }
 
-                float2 surfaceHit = RaySphere(centre, surfaceRadius, rayOrigin, rayDirection);
-                float surfaceDistance = min(sceneDistance, surfaceHit.x);
-
+                float2 surfaceHit = FarionRaySphere(centre, surfaceRadius, rayOrigin, rayDirection);
                 float dstToAtmosphere = atmosphereHit.x;
-                float dstThroughAtmosphere = min(atmosphereHit.y, surfaceDistance - dstToAtmosphere);
+                float atmosphereExit = atmosphereHit.x + atmosphereHit.y;
+                float surfaceDistance = surfaceHit.x < 0.0 ? FARION_MAX_FLOAT : surfaceHit.x;
+                float4 oceanSurfaceParams = _FarionAtmosphereOceanSurfaceParams[index];
+                if (oceanSurfaceParams.x > 0.0)
+                {
+                    bool cameraInsideOcean = oceanSurfaceParams.w < 0.0;
+                    FarionOceanSurfaceIntersection oceanIntersection;
+                    bool intersectsOcean = FarionTryIntersectOceanSurface(
+                        FarionBuildOceanSurfaceField(
+                            centre,
+                            oceanSurfaceParams.x,
+                            oceanSurfaceParams.z,
+                            oceanSurfaceParams.y,
+                            _FarionAtmosphereOceanWavePhases[index].xyz,
+                            _FarionAtmosphereOceanWorldToLocal[index]),
+                        rayOrigin,
+                        rayDirection,
+                        cameraInsideOcean,
+                        oceanIntersection);
+                    if (cameraInsideOcean)
+                    {
+                        if (!intersectsOcean)
+                        {
+                            return sourceColor;
+                        }
+
+                        // Air begins at the exact displaced interface used by the ocean.
+                        dstToAtmosphere = oceanIntersection.surfaceDistance;
+                        surfaceDistance = atmosphereExit;
+                    }
+                    else
+                    {
+                        // The mean ocean sphere is only a search bound. A trough can
+                        // sit below it, so clipping air to that sphere exposes the
+                        // black sky between atmosphere and the displaced surface.
+                        surfaceDistance = intersectsOcean
+                            ? oceanIntersection.surfaceDistance
+                            : atmosphereExit;
+                    }
+                }
+
+                float dstThroughAtmosphere = min(
+                    atmosphereExit,
+                    min(sceneDistance, surfaceDistance)) - dstToAtmosphere;
                 if (dstThroughAtmosphere <= 0.0)
                 {
                     return sourceColor;
@@ -326,7 +342,7 @@ Shader "Hidden/Farion/Celestial/Atmosphere Post Process"
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
 
                 float rawDepth = SampleSceneDepth(uv);
-                bool depthIsSky = IsSkyDepth(rawDepth);
+                bool depthIsSky = FarionIsSkyDepth(rawDepth);
                 float depthForPosition = depthIsSky ? UNITY_RAW_FAR_CLIP_VALUE : rawDepth;
                 float3 scenePositionWS = ComputeWorldSpacePosition(uv, depthForPosition, UNITY_MATRIX_I_VP);
                 float3 rayOrigin = _WorldSpaceCameraPos.xyz;

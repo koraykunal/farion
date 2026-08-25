@@ -6,7 +6,9 @@ Shader "Farion/VFX/Thruster Plasma"
         [HDR] _CruiseColor("Cruise Color", Color) = (0.08, 1.8, 4.5, 1)
         [HDR] _BoostColor("Boost Color", Color) = (2.5, 4.5, 7.5, 1)
         [HDR] _OverheatColor("Overheat Color", Color) = (5.5, 1.1, 0.08, 1)
-        [HDR] _DamageColor("Damage Color", Color) = (5.5, 0.08, 0.02, 1)
+        [HDR] _ThroatTint("Throat Tint", Color) = (1.35, 1.42, 1.55, 1)
+        [HDR] _TailTint("Tail Tint", Color) = (0.42, 0.26, 0.62, 1)
+        _CoolingRate("Cooling Rate", Range(0, 8)) = 1.9
         _Intensity("Intensity", Range(0, 12)) = 3
         _Opacity("Opacity", Range(0, 1)) = 1
         _NoiseScale("Noise Scale", Range(0.25, 24)) = 5
@@ -18,18 +20,19 @@ Shader "Farion/VFX/Thruster Plasma"
         _DiamondDamping("Diamond Damping", Range(0, 6)) = 2.4
         _TurbulenceGrowth("Turbulence Growth", Range(0, 1)) = 0.8
         _EddyGrowth("Eddy Growth", Range(0, 4)) = 1.6
-        _SoftFadeDistance("Soft Fade Distance", Range(0, 4)) = 0.6
+        _SoftFadeDistance("Soft Fade Distance", Range(0, 8)) = 1.6
         [Enum(Core Glow,0,Inner Plasma,1,Outer Plasma,2,Shock Diamonds,3)]
         _LayerMode("Layer Mode", Float) = 1
         [HideInInspector] _Throttle("Throttle", Range(0, 1)) = 0
         [HideInInspector] _Boost("Boost", Range(0, 1)) = 0
         [HideInInspector] _Heat("Heat", Range(0, 1)) = 0
-        [HideInInspector] _Damage("Damage", Range(0, 1)) = 0
         [HideInInspector] _LayerSeed("Layer Seed", Range(0, 1)) = 0
         [HideInInspector] _AtmosphereDensity("Atmosphere Density", Range(0, 1)) = 1
         [HideInInspector] _SpeedBlend("Speed Blend", Range(0, 1)) = 0
         [HideInInspector] _Flare("Ignition Flare", Range(0, 1)) = 0
         [HideInInspector] _BellExpansion("Bell Expansion", Range(0, 2)) = 0
+        [HideInInspector] _GroundSplash("Ground Splash", Range(0, 2)) = 0
+        [HideInInspector] _PlumeBend("Plume Bend", Vector) = (0, 0, 0, 0)
     }
 
     SubShader
@@ -58,13 +61,16 @@ Shader "Farion/VFX/Thruster Plasma"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "FarionThrusterShaping.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _IdleColor;
                 half4 _CruiseColor;
                 half4 _BoostColor;
                 half4 _OverheatColor;
-                half4 _DamageColor;
+                half4 _ThroatTint;
+                half4 _TailTint;
+                half _CoolingRate;
                 half _Intensity;
                 half _Opacity;
                 half _NoiseScale;
@@ -81,12 +87,13 @@ Shader "Farion/VFX/Thruster Plasma"
                 half _Throttle;
                 half _Boost;
                 half _Heat;
-                half _Damage;
                 half _LayerSeed;
                 half _AtmosphereDensity;
                 half _SpeedBlend;
                 half _Flare;
                 half _BellExpansion;
+                half _GroundSplash;
+                float4 _PlumeBend;
             CBUFFER_END
 
             struct Attributes
@@ -108,16 +115,42 @@ Shader "Farion/VFX/Thruster Plasma"
             Varyings Vertex(Attributes input)
             {
                 Varyings output;
-                float3 shapedOS = input.positionOS.xyz;
-                float bellAxial = saturate(shapedOS.z);
-                shapedOS.xy *= 1.0 + _BellExpansion * bellAxial * bellAxial;
+                output.positionOS = input.positionOS.xyz;
+                output.uv = input.uv;
+
+                if (_LayerMode < 0.5)
+                {
+                    float3 centerWS = TransformObjectToWorld(float3(0, 0, 0));
+                    float scaleX = length(float3(
+                        UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20));
+                    float scaleY = length(float3(
+                        UNITY_MATRIX_M._m01, UNITY_MATRIX_M._m11, UNITY_MATRIX_M._m21));
+                    float3 cameraRight = float3(
+                        UNITY_MATRIX_I_V._m00, UNITY_MATRIX_I_V._m10, UNITY_MATRIX_I_V._m20);
+                    float3 cameraUp = float3(
+                        UNITY_MATRIX_I_V._m01, UNITY_MATRIX_I_V._m11, UNITY_MATRIX_I_V._m21);
+                    float3 cameraBack = float3(
+                        UNITY_MATRIX_I_V._m02, UNITY_MATRIX_I_V._m12, UNITY_MATRIX_I_V._m22);
+
+                    float3 billboardWS = centerWS +
+                        cameraRight * (input.positionOS.x * scaleX) +
+                        cameraUp * (input.positionOS.y * scaleY);
+                    output.positionWS = billboardWS;
+                    output.positionHCS = TransformWorldToHClip(billboardWS);
+                    output.normalWS = cameraBack;
+                    return output;
+                }
+
+                float3 shapedOS = FarionShapeThrusterVertex(
+                    input.positionOS.xyz,
+                    _BellExpansion,
+                    _PlumeBend.xyz,
+                    _GroundSplash);
 
                 VertexPositionInputs positionInputs = GetVertexPositionInputs(shapedOS);
                 output.positionHCS = positionInputs.positionCS;
                 output.positionWS = positionInputs.positionWS;
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-                output.positionOS = input.positionOS.xyz;
-                output.uv = input.uv;
                 return output;
             }
 
@@ -159,13 +192,14 @@ Shader "Farion/VFX/Thruster Plasma"
                 return value / 0.875;
             }
 
-            half3 ResolveColor()
+            half3 ResolveColor(float axial)
             {
                 half3 color = lerp(_IdleColor.rgb, _CruiseColor.rgb, saturate(_Throttle * 1.3h));
                 color = lerp(color, _BoostColor.rgb, saturate(_Boost));
                 color = lerp(color, _OverheatColor.rgb, saturate(_Heat * _Heat));
-                color = lerp(color, _DamageColor.rgb, saturate(_Damage * 0.9h));
-                return color;
+
+                half temperature = exp(-axial * _CoolingRate);
+                return color * lerp(_TailTint.rgb, _ThroatTint.rgb, temperature);
             }
 
             half4 Fragment(Varyings input) : SV_Target
@@ -226,7 +260,7 @@ Shader "Farion/VFX/Thruster Plasma"
                     mask *= lerp(0.55, 1.1, noise);
                 }
 
-                float pressureFalloff = lerp(lerp(1.0, 0.72, axial), 1.0, _AtmosphereDensity);
+                float pressureFalloff = lerp(1.0, lerp(1.0, 0.62, axial), _AtmosphereDensity);
                 mask *= pressureFalloff;
 
                 if (_SoftFadeDistance > 0.0)
@@ -241,7 +275,7 @@ Shader "Farion/VFX/Thruster Plasma"
                     lerp(0.45h, 1.25h, _Throttle) *
                     lerp(1.0h, 1.6h, _Boost) *
                     (1.0h + _Flare * 1.4h);
-                half3 emission = ResolveColor() * intensity * mask * _Opacity;
+                half3 emission = ResolveColor(axial) * intensity * mask * _Opacity;
                 return half4(emission, mask * _Opacity);
             }
             ENDHLSL

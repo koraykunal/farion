@@ -57,9 +57,13 @@ namespace Farion.Rendering.Celestial
 
         public bool IsPointUnderwater(Vector3 worldPosition)
         {
-            Vector3 relativePosition = worldPosition - Center;
-            float surfaceRadius = Mathf.Max(0f, GetSurfaceRadiusAt(worldPosition) - 0.001f);
-            return relativePosition.sqrMagnitude < surfaceRadius * surfaceRadius;
+            return GetSignedSurfaceDistance(worldPosition) < 0f;
+        }
+
+        public float GetSignedSurfaceDistance(Vector3 worldPosition)
+        {
+            float surfaceRadius = Mathf.Max(0f, GetSurfaceRadiusAt(worldPosition));
+            return Vector3.Distance(worldPosition, Center) - surfaceRadius;
         }
 
     }

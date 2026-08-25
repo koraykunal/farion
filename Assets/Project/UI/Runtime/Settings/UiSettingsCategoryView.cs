@@ -1,6 +1,7 @@
 using System;
 using Farion.UI.Common;
 using Farion.UI.Foundation;
+using Farion.UI.Localization;
 using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
@@ -205,9 +206,7 @@ namespace Farion.UI.Settings
 
         static string ToLabel(string value)
         {
-            return string.IsNullOrWhiteSpace(value)
-                ? string.Empty
-                : value.ToUpperInvariant();
+            return UiLocalization.ToDisplayUpper(value);
         }
     }
 }

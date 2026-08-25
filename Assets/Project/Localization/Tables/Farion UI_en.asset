@@ -1009,6 +1009,10 @@ MonoBehaviour:
     m_Localized: CO-OP
     m_Metadata:
       m_Items: []
+  - m_Id: 8691678500000000
+    m_Localized: ACCESSIBILITY
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

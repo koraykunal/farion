@@ -15,15 +15,16 @@ MonoBehaviour:
   useColorTemperature: 0
   colorTemperature: 1800
   color: {r: 1, g: 0.06, b: 0.03, a: 1}
-  intensity: 800
+  intensity: 150
   range: 60
   spotAngle: 120
   innerSpotAngle: 40
   spillIntensityRatio: 0.25
   spillAngle: 160
   spillRangeRatio: 0.35
-  shadows: 2
+  shadows: 0
   shadowStrength: 0.6
+  underwaterScatteringStrength: 0
   cookie: {fileID: 0}
   lensEmissionColor: {r: 4, g: 0.15, b: 0.06, a: 1}
   lensEmissionIntensity: 2

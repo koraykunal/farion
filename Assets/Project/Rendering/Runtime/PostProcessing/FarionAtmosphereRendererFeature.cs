@@ -78,6 +78,9 @@ namespace Farion.Rendering.PostProcessing
             static readonly int AtmosphereSpheresId = Shader.PropertyToID("_FarionAtmosphereSpheres");
             static readonly int PlanetSpheresId = Shader.PropertyToID("_FarionAtmospherePlanetSpheres");
             static readonly int SurfaceRadiiId = Shader.PropertyToID("_FarionAtmosphereSurfaceRadii");
+            static readonly int OceanSurfaceParamsId = Shader.PropertyToID("_FarionAtmosphereOceanSurfaceParams");
+            static readonly int OceanWavePhasesId = Shader.PropertyToID("_FarionAtmosphereOceanWavePhases");
+            static readonly int OceanWorldToLocalId = Shader.PropertyToID("_FarionAtmosphereOceanWorldToLocal");
             static readonly int ScatteringCoefficientsId = Shader.PropertyToID("_FarionAtmosphereScatteringCoefficients");
             static readonly int OpticalParamsId = Shader.PropertyToID("_FarionAtmosphereOpticalParams");
             static readonly int SampleParamsId = Shader.PropertyToID("_FarionAtmosphereSampleParams");
@@ -90,6 +93,9 @@ namespace Farion.Rendering.PostProcessing
             static readonly Vector4[] AtmosphereSpheres = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] PlanetSpheres = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] SurfaceRadii = new Vector4[MaxAtmosphereBodies];
+            static readonly Vector4[] OceanSurfaceParams = new Vector4[MaxAtmosphereBodies];
+            static readonly Vector4[] OceanWavePhases = new Vector4[MaxAtmosphereBodies];
+            static readonly Matrix4x4[] OceanWorldToLocal = new Matrix4x4[MaxAtmosphereBodies];
             static readonly Vector4[] ScatteringCoefficients = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] OpticalParams = new Vector4[MaxAtmosphereBodies];
             static readonly Vector4[] SampleParams = new Vector4[MaxAtmosphereBodies];
@@ -159,7 +165,11 @@ namespace Farion.Rendering.PostProcessing
                     }
 
                     Material effectMaterial = GetEffectMaterial(passIndex);
-                    ApplyMaterialProperties(start, groupCount, effectMaterial);
+                    ApplyMaterialProperties(
+                        start,
+                        groupCount,
+                        cameraData.camera.transform.position,
+                        effectMaterial);
 
                     TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
                     destinationDesc.name = $"Farion Atmosphere Post Process {passIndex}";
@@ -229,7 +239,11 @@ namespace Farion.Rendering.PostProcessing
                 return materialPool[index];
             }
 
-            void ApplyMaterialProperties(int start, int count, Material material)
+            void ApplyMaterialProperties(
+                int start,
+                int count,
+                Vector3 cameraPosition,
+                Material material)
             {
                 CelestialAtmosphereProfile profile = AtmosphereEffects[start].Profile;
                 Vector3 scattering = profile.GetScatteringCoefficients();
@@ -243,6 +257,24 @@ namespace Farion.Rendering.PostProcessing
                     AtmosphereSpheres[i] = new Vector4(center.x, center.y, center.z, effectData.AtmosphereRadius);
                     PlanetSpheres[i] = new Vector4(center.x, center.y, center.z, effectData.SurfaceRadius);
                     SurfaceRadii[i] = new Vector4(effectData.SurfaceRadius, 0f, 0f, 0f);
+                    if (effectData.HasOceanSurface)
+                    {
+                        CelestialOceanEffectData oceanSurface = effectData.OceanSurface;
+                        Vector3 wavePhases = oceanSurface.WavePhases;
+                        OceanSurfaceParams[i] = new Vector4(
+                            oceanSurface.OceanRadius,
+                            oceanSurface.WaveAmplitude,
+                            oceanSurface.WaveLength,
+                            oceanSurface.GetSignedSurfaceDistance(cameraPosition));
+                        OceanWavePhases[i] = new Vector4(wavePhases.x, wavePhases.y, wavePhases.z, 0f);
+                        OceanWorldToLocal[i] = oceanSurface.WorldToLocalRotation;
+                    }
+                    else
+                    {
+                        OceanSurfaceParams[i] = Vector4.zero;
+                        OceanWavePhases[i] = Vector4.zero;
+                        OceanWorldToLocal[i] = Matrix4x4.identity;
+                    }
                     ScatteringCoefficients[i] = new Vector4(scattering.x, scattering.y, scattering.z, 0f);
                     OpticalParams[i] = new Vector4(
                         profile.DensityFalloff,
@@ -276,6 +308,9 @@ namespace Farion.Rendering.PostProcessing
                 material.SetVectorArray(AtmosphereSpheresId, AtmosphereSpheres);
                 material.SetVectorArray(PlanetSpheresId, PlanetSpheres);
                 material.SetVectorArray(SurfaceRadiiId, SurfaceRadii);
+                material.SetVectorArray(OceanSurfaceParamsId, OceanSurfaceParams);
+                material.SetVectorArray(OceanWavePhasesId, OceanWavePhases);
+                material.SetMatrixArray(OceanWorldToLocalId, OceanWorldToLocal);
                 material.SetVectorArray(ScatteringCoefficientsId, ScatteringCoefficients);
                 material.SetVectorArray(OpticalParamsId, OpticalParams);
                 material.SetVectorArray(SampleParamsId, SampleParams);

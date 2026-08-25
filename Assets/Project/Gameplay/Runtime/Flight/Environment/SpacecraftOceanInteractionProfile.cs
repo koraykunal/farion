@@ -118,8 +118,7 @@ namespace Farion.Gameplay.Flight
             Vector3 radialUp = frame.RadialUp.sqrMagnitude > 0.0001f ? frame.RadialUp : frame.LocalUp;
             submergedFraction = Mathf.Clamp01(submergedFraction);
             float waterDepth = Mathf.Max(0f, -frame.OceanAltitude);
-            Vector3 waterRelativeVelocity = frame.Velocity -
-                (frame.BodyPointVelocity + frame.Environment.GetOceanSurfaceVelocityAt(frame.RelativePosition));
+            Vector3 waterRelativeVelocity = frame.Velocity - frame.WaterPointVelocity;
             Vector3 verticalVelocity = Vector3.Project(waterRelativeVelocity, radialUp);
             Vector3 tangentialVelocity = waterRelativeVelocity - verticalVelocity;
             float entrySpeed = Mathf.Max(0f, -Vector3.Dot(waterRelativeVelocity, radialUp));

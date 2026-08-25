@@ -2,6 +2,7 @@ using Farion.Gameplay.Flight;
 using Farion.Core.Numerics;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.Scripting.APIUpdating;
 
 namespace Farion.Gameplay.Presentation.Flight
@@ -49,6 +50,17 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] float speedReference = 320f;
         [Range(0f, 1f)]
         [SerializeField] float speedStretch = 0.16f;
+
+        [Header("Plume Deflection")]
+        [Tooltip("Screen-space depth fade distance in metres. Forced to zero when the active render pipeline has no depth texture.")]
+        [Range(0f, 8f)]
+        [SerializeField] float softFadeDistance = 1.6f;
+        [Tooltip("How far the tail lags behind hard rotation, in nozzle radii.")]
+        [Range(0f, 2f)]
+        [SerializeField] float plumeBendGain = 0.7f;
+        [Tooltip("Radial spread of the plume tail when the ship hovers close to a surface.")]
+        [Range(0f, 2f)]
+        [SerializeField] float groundSplashGain = 0.85f;
 
         [Header("Editor Preview")]
         [Range(0f, 1f)]
@@ -103,6 +115,9 @@ namespace Farion.Gameplay.Presentation.Flight
             vacuumBellExpansion = Mathf.Clamp(vacuumBellExpansion, 0f, 2f);
             speedReference = Mathf.Max(1f, speedReference);
             speedStretch = Mathf.Clamp01(speedStretch);
+            softFadeDistance = Mathf.Clamp(softFadeDistance, 0f, 8f);
+            plumeBendGain = Mathf.Clamp(plumeBendGain, 0f, 2f);
+            groundSplashGain = Mathf.Clamp(groundSplashGain, 0f, 2f);
             previewLoad = Mathf.Clamp01(previewLoad);
             previewBoost = Mathf.Clamp01(previewBoost);
 
@@ -142,6 +157,7 @@ namespace Farion.Gameplay.Presentation.Flight
             SpacecraftThrusterVfxFrame frame,
             float nozzleLoad,
             float ignitionFlare,
+            Vector3 plumeBend,
             float deltaTime)
         {
             ResolveComponents();
@@ -165,7 +181,9 @@ namespace Farion.Gameplay.Presentation.Flight
                 frame.Heat,
                 frame.AtmosphereDensity,
                 Mathf.Clamp01(frame.RelativeSpeed / speedReference),
-                Mathf.Clamp01(ignitionFlare));
+                Mathf.Clamp01(ignitionFlare),
+                plumeBend * plumeBendGain,
+                frame.GroundProximity * load * groundSplashGain);
         }
 
         public void ClearRuntimeState()
@@ -211,7 +229,9 @@ namespace Farion.Gameplay.Presentation.Flight
                 heat: 0.15f,
                 atmosphereDensity: 0.6f,
                 speedBlend: 0f,
-                ignitionFlare: 0f);
+                ignitionFlare: 0f,
+                plumeBend: Vector3.zero,
+                groundSplash: 0f);
         }
 
         void ApplyPresentation(
@@ -220,7 +240,9 @@ namespace Farion.Gameplay.Presentation.Flight
             float heat,
             float atmosphereDensity,
             float speedBlend,
-            float ignitionFlare)
+            float ignitionFlare,
+            Vector3 plumeBend,
+            float groundSplash)
         {
             if (meshRenderer == null)
             {
@@ -228,6 +250,13 @@ namespace Farion.Gameplay.Presentation.Flight
             }
 
             bool visible = material != null && visibility > 0.001f;
+            if (visible &&
+                layerKind == SpacecraftThrusterMeshLayerKind.Distortion &&
+                !SceneColorAvailable())
+            {
+                visible = false;
+            }
+
             meshRenderer.enabled = visible;
             if (!visible)
             {
@@ -241,15 +270,17 @@ namespace Farion.Gameplay.Presentation.Flight
             float pressureStretch = Mathf.Lerp(1f, vacuumLengthScale, vacuumBlend);
             float speedTrail = 1f + Mathf.Clamp01(speedBlend) * speedStretch;
             float flareStretch = 1f + Mathf.Clamp01(ignitionFlare) * 0.35f;
+            float groundCompression = Mathf.Lerp(1f, 0.72f, Mathf.Clamp01(groundSplash));
             float length = Mathf.Lerp(minimumLength, maximumLength, shapedLoad) *
                 boostStretch *
                 pressureStretch *
                 speedTrail *
-                flareStretch;
+                flareStretch *
+                groundCompression;
 
             float layerSeed = ResolveRuntimeSeed();
             float radialPulse = Application.isPlaying
-                ? 1f + Mathf.Sin((Time.realtimeSinceStartup + layerSeed * 13f) * 17f) * 0.018f
+                ? 1f + Mathf.Sin((Time.time + layerSeed * 13f) * 17f) * 0.018f
                 : 1f;
             bool isCoreGlow = layerKind == SpacecraftThrusterMeshLayerKind.CoreGlow;
             float pressureRadius = isCoreGlow
@@ -268,15 +299,39 @@ namespace Farion.Gameplay.Presentation.Flight
             properties.SetFloat(ShaderIds.Throttle, shapedLoad);
             properties.SetFloat(ShaderIds.Boost, Mathf.Clamp01(boost));
             properties.SetFloat(ShaderIds.Heat, Mathf.Clamp01(heat));
-            properties.SetFloat(ShaderIds.Opacity, opacity * shapedLoad);
+            properties.SetFloat(ShaderIds.Opacity, opacity * Mathf.Sqrt(Mathf.Clamp01(visibility)));
             properties.SetFloat(ShaderIds.LayerSeed, layerSeed);
             properties.SetFloat(ShaderIds.AtmosphereDensity, ambientPressure);
             properties.SetFloat(ShaderIds.SpeedBlend, Mathf.Clamp01(speedBlend));
             properties.SetFloat(ShaderIds.Flare, Mathf.Clamp01(ignitionFlare));
+            properties.SetFloat(ShaderIds.SoftFadeDistance, ResolveSoftFadeDistance());
             properties.SetFloat(
                 ShaderIds.BellExpansion,
                 isCoreGlow ? 0f : vacuumBellExpansion * vacuumBlend * shapedLoad);
+            properties.SetFloat(
+                ShaderIds.GroundSplash,
+                isCoreGlow ? 0f : Mathf.Clamp(groundSplash, 0f, 2f));
+            properties.SetVector(
+                ShaderIds.PlumeBend,
+                isCoreGlow ? Vector4.zero : plumeBend);
             meshRenderer.SetPropertyBlock(properties);
+        }
+
+        float ResolveSoftFadeDistance()
+        {
+            return DepthTextureAvailable() ? softFadeDistance : 0f;
+        }
+
+        static bool DepthTextureAvailable()
+        {
+            return GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset pipeline &&
+                pipeline.supportsCameraDepthTexture;
+        }
+
+        static bool SceneColorAvailable()
+        {
+            return GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset pipeline &&
+                pipeline.supportsCameraOpaqueTexture;
         }
 
         float ResolveRuntimeSeed()
@@ -306,6 +361,8 @@ namespace Farion.Gameplay.Presentation.Flight
                     idleVisibility = 0.08f;
                     opacity = 1f;
                     response = 22f;
+                    plumeBendGain = 0f;
+                    groundSplashGain = 0f;
                     break;
                 case "InnerCone":
                     layerKind = SpacecraftThrusterMeshLayerKind.InnerPlasma;
@@ -314,6 +371,8 @@ namespace Farion.Gameplay.Presentation.Flight
                     maximumLength = 4.8f;
                     opacity = 0.92f;
                     response = 18f;
+                    plumeBendGain = 0.55f;
+                    groundSplashGain = 0.6f;
                     break;
                 case "OuterPlasma":
                     layerKind = SpacecraftThrusterMeshLayerKind.OuterPlasma;
@@ -322,6 +381,8 @@ namespace Farion.Gameplay.Presentation.Flight
                     maximumLength = 6.2f;
                     opacity = 0.42f;
                     response = 13f;
+                    plumeBendGain = 0.85f;
+                    groundSplashGain = 1.1f;
                     break;
                 case "ShockDiamonds":
                     layerKind = SpacecraftThrusterMeshLayerKind.ShockDiamonds;
@@ -330,6 +391,8 @@ namespace Farion.Gameplay.Presentation.Flight
                     maximumLength = 5.6f;
                     opacity = 0.48f;
                     response = 15f;
+                    plumeBendGain = 0.4f;
+                    groundSplashGain = 0.35f;
                     break;
                 case "Distortion":
                     layerKind = SpacecraftThrusterMeshLayerKind.Distortion;
@@ -338,6 +401,8 @@ namespace Farion.Gameplay.Presentation.Flight
                     maximumLength = 6.8f;
                     opacity = 0.34f;
                     response = 10f;
+                    plumeBendGain = 0.85f;
+                    groundSplashGain = 1.1f;
                     break;
             }
         }
@@ -381,7 +446,7 @@ namespace Farion.Gameplay.Presentation.Flight
                 normals = normals,
                 uv = uv,
                 triangles = triangles,
-                bounds = new Bounds(Vector3.zero, new Vector3(2.2f, 2.2f, 0.2f))
+                bounds = new Bounds(Vector3.zero, new Vector3(2.2f, 2.2f, 2.2f))
             };
             discMesh.UploadMeshData(markNoLongerReadable: true);
             return discMesh;
@@ -440,7 +505,7 @@ namespace Farion.Gameplay.Presentation.Flight
                 normals = normals,
                 uv = uv,
                 triangles = triangles,
-                bounds = new Bounds(new Vector3(0f, 0f, 0.5f), new Vector3(6.4f, 6.4f, 1.2f))
+                bounds = new Bounds(new Vector3(0f, 0f, 0.5f), new Vector3(9.6f, 9.6f, 1.4f))
             };
             coneMesh.UploadMeshData(markNoLongerReadable: true);
             return coneMesh;
@@ -457,6 +522,9 @@ namespace Farion.Gameplay.Presentation.Flight
             public static readonly int SpeedBlend = Shader.PropertyToID("_SpeedBlend");
             public static readonly int Flare = Shader.PropertyToID("_Flare");
             public static readonly int BellExpansion = Shader.PropertyToID("_BellExpansion");
+            public static readonly int GroundSplash = Shader.PropertyToID("_GroundSplash");
+            public static readonly int PlumeBend = Shader.PropertyToID("_PlumeBend");
+            public static readonly int SoftFadeDistance = Shader.PropertyToID("_SoftFadeDistance");
         }
     }
 }

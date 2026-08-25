@@ -2,28 +2,30 @@ Shader "Farion/VFX/Thruster Distortion"
 {
     Properties
     {
-        _Opacity("Opacity", Range(0, 1)) = 0.3
-        _DistortionStrength("Distortion Strength", Range(0, 0.08)) = 0.018
+        _Opacity("Opacity", Range(0, 1)) = 0.7
+        _DistortionStrength("Distortion Strength", Range(0, 0.08)) = 0.02
+        _DistortionReferenceDistance("Distortion Reference Distance", Range(1, 200)) = 18
         _NoiseScale("Noise Scale", Range(0.25, 24)) = 5
         _FlowSpeed("Flow Speed", Range(0, 10)) = 2.4
         _VacuumStrengthScale("Vacuum Strength Scale", Range(0, 1)) = 0.45
-        _SoftFadeDistance("Soft Fade Distance", Range(0, 4)) = 0.6
+        _SoftFadeDistance("Soft Fade Distance", Range(0, 8)) = 1.6
         [HideInInspector] _Throttle("Throttle", Range(0, 1)) = 0
         [HideInInspector] _Boost("Boost", Range(0, 1)) = 0
         [HideInInspector] _Heat("Heat", Range(0, 1)) = 0
-        [HideInInspector] _Damage("Damage", Range(0, 1)) = 0
         [HideInInspector] _LayerSeed("Layer Seed", Range(0, 1)) = 0
         [HideInInspector] _AtmosphereDensity("Atmosphere Density", Range(0, 1)) = 1
         [HideInInspector] _SpeedBlend("Speed Blend", Range(0, 1)) = 0
         [HideInInspector] _Flare("Ignition Flare", Range(0, 1)) = 0
         [HideInInspector] _BellExpansion("Bell Expansion", Range(0, 2)) = 0
+        [HideInInspector] _GroundSplash("Ground Splash", Range(0, 2)) = 0
+        [HideInInspector] _PlumeBend("Plume Bend", Vector) = (0, 0, 0, 0)
     }
 
     SubShader
     {
         Tags
         {
-            "Queue" = "Transparent+20"
+            "Queue" = "Transparent-10"
             "RenderType" = "Transparent"
             "RenderPipeline" = "UniversalPipeline"
         }
@@ -34,7 +36,7 @@ Shader "Farion/VFX/Thruster Distortion"
             Tags { "LightMode" = "UniversalForward" }
 
             Blend SrcAlpha OneMinusSrcAlpha
-            Cull Off
+            Cull Back
             ZWrite Off
             ZTest LEqual
 
@@ -46,10 +48,12 @@ Shader "Farion/VFX/Thruster Distortion"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "FarionThrusterShaping.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half _Opacity;
                 half _DistortionStrength;
+                half _DistortionReferenceDistance;
                 half _NoiseScale;
                 half _FlowSpeed;
                 half _VacuumStrengthScale;
@@ -57,12 +61,13 @@ Shader "Farion/VFX/Thruster Distortion"
                 half _Throttle;
                 half _Boost;
                 half _Heat;
-                half _Damage;
                 half _LayerSeed;
                 half _AtmosphereDensity;
                 half _SpeedBlend;
                 half _Flare;
                 half _BellExpansion;
+                half _GroundSplash;
+                float4 _PlumeBend;
             CBUFFER_END
 
             struct Attributes
@@ -82,9 +87,11 @@ Shader "Farion/VFX/Thruster Distortion"
             Varyings Vertex(Attributes input)
             {
                 Varyings output;
-                float3 shapedOS = input.positionOS.xyz;
-                float bellAxial = saturate(shapedOS.z);
-                shapedOS.xy *= 1.0 + _BellExpansion * bellAxial * bellAxial;
+                float3 shapedOS = FarionShapeThrusterVertex(
+                    input.positionOS.xyz,
+                    _BellExpansion,
+                    _PlumeBend.xyz,
+                    _GroundSplash);
 
                 VertexPositionInputs positionInputs = GetVertexPositionInputs(shapedOS);
                 output.positionHCS = positionInputs.positionCS;
@@ -145,8 +152,10 @@ Shader "Farion/VFX/Thruster Distortion"
                     lerp(0.35, 1.0, _Throttle) *
                     lerp(1.0, 1.65, saturate(_Boost + _Heat * 0.6)) *
                     lerp(_VacuumStrengthScale, 1.0, _AtmosphereDensity) *
-                    (1.0 + _Flare * 0.8);
-                half3 distortedScene = SampleSceneColor(screenUv + noiseVector * strength * envelope);
+                    (1.0 + _Flare * 0.8) *
+                    FarionThrusterViewScale(input.positionWS, _DistortionReferenceDistance);
+                float2 sampleUv = saturate(screenUv + noiseVector * strength * envelope);
+                half3 distortedScene = SampleSceneColor(sampleUv);
                 half alpha = saturate(envelope * _Opacity);
                 return half4(distortedScene, alpha);
             }

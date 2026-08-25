@@ -85,7 +85,7 @@ namespace Farion.UI.Feedback
             float autoCancelSeconds = 0f)
         {
             ResolveReferences();
-            if (router == null || onConfirm == null)
+            if (router == null || onConfirm == null || pendingConfirmation != null)
             {
                 return false;
             }

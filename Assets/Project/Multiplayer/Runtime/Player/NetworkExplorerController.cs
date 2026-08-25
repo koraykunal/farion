@@ -244,6 +244,7 @@ namespace Farion.Multiplayer.Player
                 accumulatedYaw,
                 jumpQueued,
                 current.Sprint,
+                current.Jump,
                 originAuthority?.CurrentSequence ?? 0);
             accumulatedYaw = 0f;
             jumpQueued = false;
@@ -266,6 +267,7 @@ namespace Farion.Multiplayer.Player
                 data.YawDegrees,
                 data.Jump,
                 data.Sprint,
+                data.SwimAscend,
                 data.OriginSequence);
             bool staleOrigin = IsServerStarted &&
                 originAuthority != null &&
@@ -276,7 +278,8 @@ namespace Farion.Multiplayer.Player
                     clamped.Movement,
                     clamped.YawDegrees,
                     clamped.Jump,
-                    clamped.Sprint);
+                    clamped.Sprint,
+                    clamped.SwimAscend);
             celestialProbe.RefreshSample(tickDriver != null
                 ? tickDriver.ResolveSimulationSeconds(data.GetTick())
                 : data.GetTick() * TimeManager.TickDelta);

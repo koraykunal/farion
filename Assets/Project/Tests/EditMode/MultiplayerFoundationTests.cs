@@ -52,12 +52,14 @@ namespace Farion.Tests.EditMode
                 new Vector2(10f, -10f),
                 float.PositiveInfinity,
                 true,
+                true,
                 true);
 
             Assert.That(input.Movement.magnitude, Is.EqualTo(1f).Within(0.0001f));
             Assert.That(input.YawDegrees, Is.Zero);
             Assert.That(input.Jump, Is.True);
             Assert.That(input.Sprint, Is.True);
+            Assert.That(input.SwimAscend, Is.True);
         }
 
         [Test]

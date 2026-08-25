@@ -29,6 +29,9 @@ namespace Farion.Rendering.Celestial
 
         TerrestrialPlanetVisualProfile subscribedProfile;
         CelestialFrameProvider frameProvider;
+        CelestialOceanEffectData oceanEffect;
+        int oceanEffectFrame = -1;
+        bool hasOceanEffect;
 #if UNITY_EDITOR
         bool editorApplyQueued;
 #endif
@@ -101,6 +104,20 @@ namespace Farion.Rendering.Celestial
 
         public bool TryGetOceanEffectData(out CelestialOceanEffectData data)
         {
+            if (Application.isPlaying && oceanEffectFrame == Time.frameCount)
+            {
+                data = oceanEffect;
+                return hasOceanEffect;
+            }
+
+            hasOceanEffect = CreateOceanEffectData(out oceanEffect);
+            oceanEffectFrame = Time.frameCount;
+            data = oceanEffect;
+            return hasOceanEffect;
+        }
+
+        bool CreateOceanEffectData(out CelestialOceanEffectData data)
+        {
             data = default;
 
             PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
@@ -120,21 +137,8 @@ namespace Farion.Rendering.Celestial
                 return false;
             }
 
-            float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
             ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
-            // Wave geometry is authored in simulation units, so it has to follow the
-            // same projection as the sphere itself for the shader to match buoyancy.
-            data = new CelestialOceanEffectData(
-                renderCenter,
-                bodyRadius * renderScale,
-                environment.OceanRadius * renderScale,
-                environment.WaveAmplitude * renderScale,
-                environment.WaveLength * renderScale,
-                environment.WavePhases,
-                Matrix4x4.Rotate(environment.WorldToBodyRotation),
-                profile.OceanProfile,
-                environment.HasAtmosphere ? environment.AtmosphereRadius * renderScale : 0f,
-                environment.HasAtmosphere ? profile.AtmosphereProfile : null);
+            data = BuildOceanEffectData(sourceBody, environment, renderCenter, renderScale);
             return true;
         }
 
@@ -157,14 +161,39 @@ namespace Farion.Rendering.Celestial
 
             float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
             ResolveRenderProjection(sourceBody, out Vector3 renderCenter, out float renderScale);
+            CelestialOceanEffectData oceanSurface =
+                TryGetOceanEffectData(out CelestialOceanEffectData ocean) ? ocean : default;
 
             data = new CelestialAtmosphereEffectData(
                 renderCenter,
                 bodyRadius * renderScale,
                 environment.AtmosphereBaseRadius * renderScale,
                 environment.AtmosphereRadius * renderScale,
-                profile.AtmosphereProfile);
+                profile.AtmosphereProfile,
+                oceanSurface);
             return true;
+        }
+
+        CelestialOceanEffectData BuildOceanEffectData(
+            CelestialBody sourceBody,
+            in CelestialEnvironmentSample environment,
+            Vector3 renderCenter,
+            float renderScale)
+        {
+            float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
+            // Wave geometry is authored in simulation units, so it follows the same
+            // projection as the sphere for rendering, buoyancy, and atmosphere clipping.
+            return new CelestialOceanEffectData(
+                renderCenter,
+                bodyRadius * renderScale,
+                environment.OceanRadius * renderScale,
+                environment.WaveAmplitude * renderScale,
+                environment.WaveLength * renderScale,
+                environment.WavePhases,
+                Matrix4x4.Rotate(environment.WorldToBodyRotation),
+                profile.OceanProfile,
+                environment.HasAtmosphere ? environment.AtmosphereRadius * renderScale : 0f,
+                environment.HasAtmosphere ? profile.AtmosphereProfile : null);
         }
 
         public bool TryGetCloudEffectData(out CelestialCloudEffectData data)

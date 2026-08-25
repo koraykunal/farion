@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d3d6f31e14146abafc0e5d056eceacc, type: 3}
   m_Name: SO_DefaultUiTheme
   m_EditorClassIdentifier:
-  voidSurface: {r: 0.018, g: 0.027, b: 0.039, a: 1}
-  raisedSurface: {r: 0.043, g: 0.067, b: 0.09, a: 1}
-  buttonSurface: {r: 0.024, g: 0.037, b: 0.052, a: 0.72}
-  buttonSurfaceHighlighted: {r: 0.055, g: 0.086, b: 0.118, a: 0.92}
-  panelSurface: {r: 0.018, g: 0.031, b: 0.045, a: 0.9}
+  voidSurface: {r: 0.0196, g: 0.0314, b: 0.0431, a: 1}
+  raisedSurface: {r: 0.0784, g: 0.1137, b: 0.149, a: 1}
+  buttonSurface: {r: 0.1137, g: 0.1608, b: 0.2, a: 1}
+  buttonSurfaceHighlighted: {r: 0.1569, g: 0.2235, b: 0.2706, a: 1}
+  panelSurface: {r: 0.0471, g: 0.0706, b: 0.098, a: 1}
   primaryText: {r: 0.88, g: 0.91, b: 0.93, a: 1}
-  secondaryText: {r: 0.54, g: 0.6, b: 0.65, a: 0.9}
+  secondaryText: {r: 0.62, g: 0.68, b: 0.72, a: 1}
   supportingText: {r: 0.68, g: 0.76, b: 0.81, a: 1}
   interfaceFont: {fileID: 11400000, guid: 0079e26c8ba29bb4083d076034bc0743, type: 2}
   interfaceMediumFont: {fileID: 11400000, guid: 0d701c7838e153f4989055cfcfdfa859, type: 2}
@@ -26,7 +26,7 @@ MonoBehaviour:
   focus: {r: 0.56, g: 0.68, b: 0.76, a: 1}
   nominal: {r: 0.58, g: 0.73, b: 0.69, a: 0.96}
   caution: {r: 1, g: 0.72, b: 0.24, a: 0.98}
-  critical: {r: 1, g: 0.26, b: 0.2, a: 1}
+  critical: {r: 1, g: 0.38, b: 0.32, a: 1}
   stateEnterDuration: 0.16
   stateExitDuration: 0.1
   panelHiddenOffset: {x: -24, y: 0}

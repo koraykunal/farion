@@ -25,19 +25,36 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _AtmosphereDensity: 1
+    - _BellExpansion: 0
+    - _Boost: 0
+    - _CoolingRate: 3.4
+    - _DiamondDamping: 2.4
     - _DiamondFrequency: 5
+    - _DiamondSpacingGrowth: 0.68
+    - _EddyGrowth: 1.6
     - _EdgeSoftness: 0.38
+    - _Flare: 0
     - _FlowSpeed: 4.5
+    - _GroundSplash: 0
+    - _Heat: 0
     - _Intensity: 7.5
     - _LayerMode: 0
+    - _LayerSeed: 0
     - _NoiseScale: 7
     - _NoiseStretch: 3
     - _Opacity: 1
+    - _SoftFadeDistance: 1.6
+    - _SpeedBlend: 0
+    - _Throttle: 0
+    - _TurbulenceGrowth: 0.8
     m_Colors:
     - _BoostColor: {r: 3.2, g: 5.2, b: 8, a: 1}
     - _CruiseColor: {r: 0.2, g: 2.4, b: 5.5, a: 1}
-    - _DamageColor: {r: 6, g: 0.08, b: 0.015, a: 1}
     - _IdleColor: {r: 0.02, g: 0.72, b: 2.1, a: 1}
     - _OverheatColor: {r: 6, g: 1.25, b: 0.05, a: 1}
+    - _PlumeBend: {r: 0, g: 0, b: 0, a: 0}
+    - _TailTint: {r: 0.72, g: 0.6, b: 0.92, a: 1}
+    - _ThroatTint: {r: 1.35, g: 1.42, b: 1.55, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

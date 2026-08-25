@@ -115,7 +115,8 @@ namespace Farion.Gameplay.Character
                 currentInput.Movement,
                 pendingYawDegrees,
                 jumpQueued,
-                currentInput.Sprint);
+                currentInput.Sprint,
+                currentInput.Jump);
             pendingYawDegrees = 0f;
             Simulate(input, Time.fixedDeltaTime, offlinePhysicsBody);
         }
@@ -175,7 +176,7 @@ namespace Farion.Gameplay.Character
             StabilizeGroundContact(physicsBody, gravityAcceleration, referenceVelocity, localUp, deltaTime);
             ApplyMovement(physicsBody, referenceVelocity, localUp, input.Movement, input.Sprint, deltaTime);
             ApplySteepSlopeSlide(physicsBody, gravityAcceleration);
-            ApplyWaterForces(physicsBody, environmentFrame, localUp);
+            ApplyWaterForces(physicsBody, environmentFrame, localUp, input.SwimAscend);
             ApplyJump(physicsBody, gravityAcceleration, referenceVelocity, celestialFrame, hasArtificialGravity, localUp);
             ApplyOrientation(physicsBody, localUp, input.YawDegrees, deltaTime);
             physicsBody.Commit();
@@ -798,7 +799,11 @@ namespace Farion.Gameplay.Character
             waterDepth = frame.WaterDepth;
         }
 
-        void ApplyWaterForces(IFirstPersonPhysicsBody physicsBody, CelestialFrameSample frame, Vector3 up)
+        void ApplyWaterForces(
+            IFirstPersonPhysicsBody physicsBody,
+            CelestialFrameSample frame,
+            Vector3 up,
+            bool swimAscend)
         {
             if (profile == null || waterSubmergedFraction <= 0f)
             {
@@ -806,15 +811,14 @@ namespace Farion.Gameplay.Character
             }
 
             float waterControl = Mathf.SmoothStep(0f, 1f, waterSubmergedFraction);
-            Vector3 bodyVelocity = frame.HasBody ? frame.BodyPointVelocity : Vector3.zero;
-            Vector3 relativeVelocity = physicsBody.LinearVelocity - bodyVelocity;
+            Vector3 relativeVelocity = physicsBody.LinearVelocity - frame.WaterPointVelocity;
 
             if (profile.UnderwaterLinearDrag > 0f)
             {
                 physicsBody.AddForce(-relativeVelocity * (profile.UnderwaterLinearDrag * waterControl), ForceMode.Acceleration);
             }
 
-            if (currentInput.Jump && profile.UnderwaterAscendAcceleration > 0f)
+            if (swimAscend && profile.UnderwaterAscendAcceleration > 0f)
             {
                 physicsBody.AddForce(up * (profile.UnderwaterAscendAcceleration * waterControl), ForceMode.Acceleration);
             }

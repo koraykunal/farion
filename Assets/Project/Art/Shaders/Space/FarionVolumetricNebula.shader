@@ -24,10 +24,10 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "../Celestial/FarionCelestialRaycast.hlsl"
 
             #define FARION_NEBULA_MAX_STEPS 192
             #define FARION_SPIRAL_NOISE_ITERATIONS 6
-            #define FARION_MAX_FLOAT 3.402823466e+38
 
             float4 _FarionNebulaSphere;
             half4 _FarionNebulaDeepColor;
@@ -107,37 +107,6 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                 return float3(body * lerp(0.12, 1.0, front), front, cloud);
             }
 
-            float2 RaySphere(float3 centre, float radius, float3 rayOrigin, float3 rayDirection)
-            {
-                float3 offset = rayOrigin - centre;
-                float b = dot(offset, rayDirection);
-                float c = dot(offset, offset) - radius * radius;
-                float discriminant = b * b - c;
-                if (discriminant < 0.0)
-                {
-                    return float2(FARION_MAX_FLOAT, 0.0);
-                }
-
-                float root = sqrt(discriminant);
-                float entry = max(-b - root, 0.0);
-                float exit = -b + root;
-                if (exit < 0.0)
-                {
-                    return float2(FARION_MAX_FLOAT, 0.0);
-                }
-
-                return float2(entry, exit - entry);
-            }
-
-            bool IsSkyDepth(float rawDepth)
-            {
-            #if UNITY_REVERSED_Z
-                return rawDepth <= 0.000001;
-            #else
-                return rawDepth >= 0.999999;
-            #endif
-            }
-
             float4 MarchNebula(float3 rayOrigin, float3 rayDirection, float travelDistance, float2 screenUV)
             {
                 float structureScale = _FarionNebulaShape.x;
@@ -215,7 +184,7 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                 float2 uv = input.texcoord.xy;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 float rawDepth = SampleSceneDepth(uv);
-                bool depthIsSky = IsSkyDepth(rawDepth);
+                bool depthIsSky = FarionIsSkyDepth(rawDepth);
                 float depthForPosition = depthIsSky ? UNITY_RAW_FAR_CLIP_VALUE : rawDepth;
                 float3 scenePositionWS = ComputeWorldSpacePosition(uv, depthForPosition, UNITY_MATRIX_I_VP);
                 float3 rayOriginWS = _WorldSpaceCameraPos.xyz;
@@ -224,7 +193,7 @@ Shader "Hidden/Farion/Space/Volumetric Nebula"
                     ? FARION_MAX_FLOAT
                     : length(scenePositionWS - rayOriginWS);
 
-                float2 volumeHit = RaySphere(
+                float2 volumeHit = FarionRaySphere(
                     _FarionNebulaSphere.xyz,
                     _FarionNebulaSphere.w,
                     rayOriginWS,

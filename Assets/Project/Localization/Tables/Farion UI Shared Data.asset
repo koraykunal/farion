@@ -1003,6 +1003,10 @@ MonoBehaviour:
     m_Key: save_load.state.coop
     m_Metadata:
       m_Items: []
+  - m_Id: 8691678500000000
+    m_Key: settings.section.accessibility
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

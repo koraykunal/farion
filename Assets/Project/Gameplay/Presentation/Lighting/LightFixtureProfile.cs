@@ -39,6 +39,11 @@ namespace Farion.Gameplay.Presentation.Lighting
         [Range(0f, 1f)]
         [SerializeField] float shadowStrength = 0.85f;
 
+        [Header("Underwater")]
+        [Tooltip("Volumetric scattering this fixture contributes inside an ocean. Zero leaves the fixture out of the water volume entirely.")]
+        [Range(0f, 2f)]
+        [SerializeField] float underwaterScatteringStrength;
+
         [Header("Cookie")]
         [Tooltip("Breaks the perfectly uniform circle. A flawless cone is the clearest tell " +
             "that a light is untouched engine default.")]
@@ -95,6 +100,7 @@ namespace Farion.Gameplay.Presentation.Lighting
         public float SpillRangeRatio => spillRangeRatio;
         public LightShadows Shadows => shadows;
         public float ShadowStrength => shadowStrength;
+        public float UnderwaterScatteringStrength => underwaterScatteringStrength;
         public Texture Cookie => cookie;
         public Color LensEmissionColor => lensEmissionColor;
         public float LensEmissionIntensity => lensEmissionIntensity;

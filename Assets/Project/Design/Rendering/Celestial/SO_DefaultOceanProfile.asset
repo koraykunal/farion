@@ -18,14 +18,13 @@ MonoBehaviour:
   horizonColor: {r: 0.62, g: 0.72, b: 0.8, a: 1}
   waveNormalA: {fileID: 2800000, guid: b02c9a130120e9e4dad2a74378c20c32, type: 3}
   waveNormalB: {fileID: 2800000, guid: e99c0ca8435d8bd4294c48f4e9b9701c, type: 3}
-  detailTileSize: 30
-  waveSpeed: 0.35
-  waveStrength: 0.323
+  detailTileSize: 10
+  waveSpeed: 0.18
+  waveStrength: 0.2
   foamColor: {r: 0.86, g: 0.92, b: 0.95, a: 1}
   foamWidth: 1.5
   foamStrength: 0.16
   depthMultiplier: 18
-  alphaMultiplier: 48
   underwaterColor: {r: 0.008, g: 0.105, b: 0.16, a: 1}
   underwaterVisibilityDistance: 50
   underwaterSpecularStrength: 0.05

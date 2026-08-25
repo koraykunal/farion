@@ -17,13 +17,14 @@ MonoBehaviour:
   color: {r: 1, g: 1, b: 1, a: 1}
   intensity: 1800
   range: 250
-  spotAngle: 81.9
-  innerSpotAngle: 35.5
+  spotAngle: 36
+  innerSpotAngle: 20
   spillIntensityRatio: 0.14
-  spillAngle: 179
+  spillAngle: 105
   spillRangeRatio: 0.2
   shadows: 2
   shadowStrength: 0.85
+  underwaterScatteringStrength: 0.85
   cookie: {fileID: 2800000, guid: 46a46c9f51c353940987d26191bbcf5a, type: 3}
   lensEmissionColor: {r: 1, g: 0.96, b: 0.9, a: 1}
   lensEmissionIntensity: 6

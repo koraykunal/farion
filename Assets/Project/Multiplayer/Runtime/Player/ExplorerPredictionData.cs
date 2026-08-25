@@ -10,6 +10,7 @@ namespace Farion.Multiplayer.Player
         public float YawDegrees;
         public bool Jump;
         public bool Sprint;
+        public bool SwimAscend;
         public uint OriginSequence;
 
         uint tick;
@@ -19,17 +20,20 @@ namespace Farion.Multiplayer.Player
             float yawDegrees,
             bool jump,
             bool sprint,
+            bool swimAscend,
             uint originSequence)
         {
             FirstPersonMotorInput input = new(
                 movement,
                 yawDegrees,
                 jump,
-                sprint);
+                sprint,
+                swimAscend);
             Movement = input.Movement;
             YawDegrees = input.YawDegrees;
             Jump = input.Jump;
             Sprint = input.Sprint;
+            SwimAscend = input.SwimAscend;
             OriginSequence = originSequence;
             tick = 0;
         }

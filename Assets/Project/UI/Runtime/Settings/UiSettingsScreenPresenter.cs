@@ -185,6 +185,7 @@ namespace Farion.UI.Settings
                 }
 
                 option.AdjustmentRequested += HandleAdjustment;
+                option.RangeValueChanged += HandleRangeValueChanged;
                 option.Focused += HandleControlFocused;
             }
 
@@ -243,6 +244,7 @@ namespace Farion.UI.Settings
                 }
 
                 option.AdjustmentRequested -= HandleAdjustment;
+                option.RangeValueChanged -= HandleRangeValueChanged;
                 option.Focused -= HandleControlFocused;
             }
 
@@ -378,6 +380,33 @@ namespace Farion.UI.Settings
                     break;
                 case UiSettingId.InvertLookY:
                     preferences.SetInvertLookY(!preferences.InvertLookY);
+                    break;
+            }
+        }
+
+        void HandleRangeValueChanged(UiSettingsOptionView option, float value)
+        {
+            if (audioDirector == null || option == null)
+            {
+                return;
+            }
+
+            switch (option.SettingId)
+            {
+                case UiSettingId.MasterVolume:
+                    audioDirector.SetBusVolume(AudioBusId.Master, value);
+                    break;
+                case UiSettingId.MusicVolume:
+                    audioDirector.SetBusVolume(AudioBusId.Music, value);
+                    break;
+                case UiSettingId.AmbienceVolume:
+                    audioDirector.SetBusVolume(AudioBusId.Ambience, value);
+                    break;
+                case UiSettingId.SfxVolume:
+                    audioDirector.SetBusVolume(AudioBusId.Sfx, value);
+                    break;
+                case UiSettingId.UiVolume:
+                    audioDirector.SetBusVolume(AudioBusId.Ui, value);
                     break;
             }
         }
@@ -541,45 +570,35 @@ namespace Farion.UI.Settings
                         option,
                         AudioBusId.Master,
                         UiTextKeys.SettingsAudioMasterTitle,
-                        "Master volume",
-                        UiTextKeys.SettingsAudioMasterDescription,
-                        "Control the complete game mix.");
+                        UiTextKeys.SettingsAudioMasterDescription);
                     break;
                 case UiSettingId.MusicVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Music,
                         UiTextKeys.SettingsAudioMusicTitle,
-                        "Music volume",
-                        UiTextKeys.SettingsAudioMusicDescription,
-                        "Control the adaptive score.");
+                        UiTextKeys.SettingsAudioMusicDescription);
                     break;
                 case UiSettingId.AmbienceVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Ambience,
                         UiTextKeys.SettingsAudioAmbienceTitle,
-                        "Ambience volume",
-                        UiTextKeys.SettingsAudioAmbienceDescription,
-                        "Control space, atmosphere, and interior ambience.");
+                        UiTextKeys.SettingsAudioAmbienceDescription);
                     break;
                 case UiSettingId.SfxVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Sfx,
                         UiTextKeys.SettingsAudioSfxTitle,
-                        "SFX volume",
-                        UiTextKeys.SettingsAudioSfxDescription,
-                        "Control spacecraft and world sound effects.");
+                        UiTextKeys.SettingsAudioSfxDescription);
                     break;
                 case UiSettingId.UiVolume:
                     ConfigureVolumeOption(
                         option,
                         AudioBusId.Ui,
                         UiTextKeys.SettingsAudioUiTitle,
-                        "UI volume",
-                        UiTextKeys.SettingsAudioUiDescription,
-                        "Control interface navigation and feedback sounds.");
+                        UiTextKeys.SettingsAudioUiDescription);
                     break;
                 case UiSettingId.VSync:
                     option.ConfigureContent(
@@ -594,7 +613,7 @@ namespace Farion.UI.Settings
                         UiLocalization.Get(UiTextKeys.SettingsFieldOfViewDescription),
                         preferences.FieldOfView.ToString(
                             "0",
-                            CultureInfo.InvariantCulture));
+                            UiLocalization.ResolveCulture()));
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.MouseSensitivity:
@@ -604,7 +623,7 @@ namespace Farion.UI.Settings
                             UiTextKeys.SettingsMouseSensitivityDescription),
                         preferences.MouseSensitivity.ToString(
                             "0.0",
-                            CultureInfo.InvariantCulture));
+                            UiLocalization.ResolveCulture()));
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.InvertLookY:
@@ -621,9 +640,7 @@ namespace Farion.UI.Settings
             UiSettingsOptionView option,
             AudioBusId bus,
             string titleKey,
-            string titleFallback,
-            string descriptionKey,
-            string descriptionFallback)
+            string descriptionKey)
         {
             if (audioDirector == null)
             {
@@ -631,10 +648,12 @@ namespace Farion.UI.Settings
                 return;
             }
 
+            float volume = audioDirector.GetBusVolume(bus);
             option.ConfigureContent(
                 UiLocalization.Get(titleKey),
                 UiLocalization.Get(descriptionKey),
-                $"{Mathf.RoundToInt(audioDirector.GetBusVolume(bus) * 100f)}%");
+                $"{Mathf.RoundToInt(volume * 100f)}%");
+            option.ConfigureRange(volume);
             option.SetAvailable(true);
         }
 
@@ -873,7 +892,7 @@ namespace Farion.UI.Settings
             return category switch
             {
                 UiSettingsCategory.Accessibility =>
-                    UiLocalization.Get(UiTextKeys.SettingsSubtitle),
+                    UiLocalization.Get(UiTextKeys.SettingsSectionAccessibility),
                 UiSettingsCategory.Audio =>
                     UiLocalization.Get(UiTextKeys.SettingsSectionAudio),
                 UiSettingsCategory.Display =>

@@ -2068,6 +2068,14 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 6367904192763838268, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 1621531018
+      objectReference: {fileID: 0}
+    - target: {fileID: 6367904192763838268, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 6996357835298573097, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4293781728
@@ -2145,6 +2153,14 @@ PrefabInstance:
       value: 3522029792
       objectReference: {fileID: 0}
     - target: {fileID: 7799582001703705958, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 8800000000000000009, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 1621531018
+      objectReference: {fileID: 0}
+    - target: {fileID: 8800000000000000009, guid: 8b791bdae46c80341911a36087fdf922, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
@@ -2737,6 +2753,18 @@ PrefabInstance:
       value: 4291805869
       objectReference: {fileID: 0}
     - target: {fileID: 6804671684099683344, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 7287663675586872891, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_overflowMode
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7287663675586872891, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4291805869
+      objectReference: {fileID: 0}
+    - target: {fileID: 7287663675586872891, guid: 547f5719e3e1f60408cf9b9dbee28cb5, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}

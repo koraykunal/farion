@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Farion.Rendering.Celestial;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Farion.Rendering.PostProcessing
 {
@@ -9,11 +11,22 @@ namespace Farion.Rendering.PostProcessing
         const float MinAtmosphereScreenPixelRadius = 6f;
         const float MinOceanScreenPixelRadius = 12f;
         const float MinCloudScreenPixelRadius = 12f;
+        const int MaxTrackedCameras = 8;
 
         static readonly List<TerrestrialPlanetVisual> Sources = new();
         static readonly Plane[] FrustumPlanes = new Plane[6];
+        static readonly Dictionary<EntityId, bool> CameraUnderwaterStates = new();
 
         public static bool HasSources => Sources.Count > 0;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Initialize()
+        {
+            Sources.Clear();
+            CameraUnderwaterStates.Clear();
+            RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+            RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+        }
 
         static bool CoversEnoughScreen(
             Camera camera,
@@ -62,6 +75,58 @@ namespace Farion.Rendering.PostProcessing
             {
                 Sources.Remove(source);
             }
+        }
+
+        public static bool IsCameraInsideOcean(Camera camera)
+        {
+            if (camera == null)
+            {
+                return false;
+            }
+
+            return CameraUnderwaterStates.TryGetValue(camera.GetEntityId(), out bool cached)
+                ? cached
+                : ComputeCameraInsideOcean(camera);
+        }
+
+        static bool ComputeCameraInsideOcean(Camera camera)
+        {
+            Vector3 cameraPosition = camera.transform.position;
+            for (int i = PruneDestroyed() - 1; i >= 0; i--)
+            {
+                if (Sources[i].TryGetOceanEffectData(out CelestialOceanEffectData ocean) &&
+                    ocean.IsPointUnderwater(cameraPosition))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        static void OnBeginCameraRendering(ScriptableRenderContext _, Camera camera)
+        {
+            if (camera == null || camera.cameraType != CameraType.Game || Sources.Count == 0)
+            {
+                return;
+            }
+
+            bool isUnderwater = ComputeCameraInsideOcean(camera);
+            EntityId cameraId = camera.GetEntityId();
+            if (!CameraUnderwaterStates.TryGetValue(cameraId, out bool wasUnderwater))
+            {
+                if (CameraUnderwaterStates.Count >= MaxTrackedCameras)
+                {
+                    CameraUnderwaterStates.Clear();
+                }
+            }
+            else if (wasUnderwater != isUnderwater &&
+                camera.TryGetComponent(out UniversalAdditionalCameraData cameraData))
+            {
+                cameraData.resetHistory = true;
+            }
+
+            CameraUnderwaterStates[cameraId] = isUnderwater;
         }
 
         public static void CollectAtmosphere(Camera camera, List<CelestialAtmosphereEffectData> results)
@@ -154,26 +219,6 @@ namespace Farion.Rendering.PostProcessing
             }
 
             return found;
-        }
-
-        public static bool IsCameraInsideOcean(Camera camera)
-        {
-            if (camera == null)
-            {
-                return false;
-            }
-
-            Vector3 cameraPosition = camera.transform.position;
-            for (int i = PruneDestroyed() - 1; i >= 0; i--)
-            {
-                if (Sources[i].TryGetOceanEffectData(out CelestialOceanEffectData data) &&
-                    data.IsPointUnderwater(cameraPosition))
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         static int PruneDestroyed()

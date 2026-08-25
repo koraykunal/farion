@@ -241,13 +241,13 @@ namespace Farion.UI.Gameplay
 
             tooltipSlot = slot;
             InventoryItemDefinition item = slot.Stack.Item;
-            SetText(tooltipTitleText, item.DisplayName.ToUpperInvariant());
+            SetText(tooltipTitleText, UiLocalization.ToDisplayUpper(item.DisplayName));
             SetText(
                 tooltipBodyText,
                 $"{FormatEnum(item.Category)}  /  {FormatEnum(item.Form)}\n" +
-                $"{UiLocalization.Get(UiTextKeys.InventoryStack).ToUpperInvariant()}  " +
+                $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryStack))}  " +
                 $"{slot.Stack.Quantity} / {item.MaxStackSize}\n" +
-                $"{UiLocalization.Get(UiTextKeys.InventoryDomain).ToUpperInvariant()}  " +
+                $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryDomain))}  " +
                 FormatEnum(item.PrimaryTechDomain));
 
             tooltipRoot.SetAsLastSibling();
@@ -269,7 +269,7 @@ namespace Farion.UI.Gameplay
             SetText(
                 capacityText,
                 $"{usedSlots:00} / {Mathf.Max(0, totalSlots):00} " +
-                UiLocalization.Get(UiTextKeys.InventorySlots).ToUpperInvariant());
+                UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventorySlots)));
         }
 
         void RefreshFocus()
@@ -343,17 +343,17 @@ namespace Farion.UI.Gameplay
                 detailIconImage.raycastTarget = false;
             }
 
-            SetText(detailTitleText, item.DisplayName.ToUpperInvariant());
+            SetText(detailTitleText, UiLocalization.ToDisplayUpper(item.DisplayName));
             SetText(
                 detailMetaText,
                 $"{FormatEnum(item.Category)}  /  {FormatEnum(item.Form)}");
             SetText(
                 detailStackText,
-                $"{UiLocalization.Get(UiTextKeys.InventoryStack).ToUpperInvariant()}  " +
+                $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryStack))}  " +
                 $"{stack.Quantity} / {item.MaxStackSize}");
             SetText(
                 detailDomainText,
-                $"{UiLocalization.Get(UiTextKeys.InventoryDomain).ToUpperInvariant()}\n" +
+                $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryDomain))}\n" +
                 FormatEnum(item.PrimaryTechDomain));
         }
 

@@ -10,29 +10,8 @@ float ozonePeakHeight;
 float ozoneBandWidth;
 
 #define PI 3.14159265358979323846
-#define FARION_MAX_FLOAT 3.402823466e+38
 
-float2 RaySphere(float3 centre, float radius, float3 rayOrigin, float3 rayDirection)
-{
-    float3 offset = rayOrigin - centre;
-    float b = dot(offset, rayDirection);
-    float c = dot(offset, offset) - radius * radius;
-    float discriminant = b * b - c;
-    if (discriminant < 0.0)
-    {
-        return float2(FARION_MAX_FLOAT, 0.0);
-    }
-
-    float s = sqrt(discriminant);
-    float dstToSphere = max(-b - s, 0.0);
-    float dstOutSphere = -b + s;
-    if (dstOutSphere < 0.0)
-    {
-        return float2(FARION_MAX_FLOAT, 0.0);
-    }
-
-    return float2(dstToSphere, dstOutSphere - dstToSphere);
-}
+#include "FarionCelestialRaycast.hlsl"
 
 float3 DensityAtPoint(float2 densitySamplePoint)
 {
@@ -83,7 +62,7 @@ void CSMain(uint2 id : SV_DispatchThreadID)
     float2 direction = float2(x, y);
 
     float2 inPoint = float2(0.0, lerp(planetRadius, atmosphereRadius, height01));
-    float rayLength = RaySphere(0.0, atmosphereRadius, float3(inPoint, 0.0), float3(direction, 0.0)).y;
+    float rayLength = FarionRaySphere(0.0, atmosphereRadius, float3(inPoint, 0.0), float3(direction, 0.0)).y;
 
     float3 outScattering = OpticalDepth(
         inPoint + direction * 0.0001,

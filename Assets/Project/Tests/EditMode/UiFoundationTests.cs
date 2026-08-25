@@ -6,6 +6,7 @@ using Farion.UI.Foundation;
 using Farion.UI.Gameplay;
 using Farion.UI.Input;
 using Farion.UI.Navigation;
+using Farion.UI.Settings;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -208,6 +209,7 @@ namespace Farion.Tests.EditMode
             systemRoot.ScreenRouter.Initialize();
 
             bool confirmed = false;
+            bool replacedConfirmation = false;
             Assert.That(
                 dialog.Present(
                     "CONFIRM",
@@ -215,13 +217,45 @@ namespace Farion.Tests.EditMode
                     "PROCEED",
                     () => confirmed = true),
                 Is.True);
+            Assert.That(
+                dialog.Present(
+                    "SECOND",
+                    "This request must not replace the first.",
+                    "REPLACE",
+                    () => replacedConfirmation = true),
+                Is.False);
 
             dialog.Confirm();
 
             Assert.That(confirmed, Is.True);
+            Assert.That(replacedConfirmation, Is.False);
             Assert.That(
                 systemRoot.ScreenRouter.IsOpen(UiScreenId.Confirmation),
                 Is.False);
+        }
+
+        [Test]
+        public void SettingsRangeUsesNativeSliderBounds()
+        {
+            root = new GameObject(
+                "VolumeOption",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(UiSettingsOptionView));
+            RectTransform track = new GameObject("Track", typeof(RectTransform))
+                .GetComponent<RectTransform>();
+            track.SetParent(root.transform);
+            RectTransform fill = new GameObject("Fill", typeof(RectTransform))
+                .GetComponent<RectTransform>();
+            fill.SetParent(track);
+
+            UiSettingsOptionView option = root.GetComponent<UiSettingsOptionView>();
+            option.fillRect = fill;
+            option.ConfigureRange(2f);
+
+            Assert.That(option.value, Is.EqualTo(1f));
+            option.ConfigureRange(-1f);
+            Assert.That(option.value, Is.EqualTo(0f));
         }
 
         [Test]

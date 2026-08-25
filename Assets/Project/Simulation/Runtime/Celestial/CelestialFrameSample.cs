@@ -75,6 +75,9 @@ namespace Farion.Simulation.Celestial
         public CelestialBody Body { get; }
         public bool HasBody => Body != null;
         public float BodyRadius => HasBody ? Body.Radius : 0f;
+        public Vector3 WaterPointVelocity => HasBody
+            ? BodyPointVelocity + Environment.GetOceanSurfaceVelocityAt(RelativePosition)
+            : Vector3.zero;
         public Vector3 Position { get; }
         public Vector3 Velocity { get; }
         public Vector3 BodyPosition { get; }

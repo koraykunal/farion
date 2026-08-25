@@ -1,5 +1,6 @@
 using Farion.Gameplay.Flight;
 using Farion.Rendering.Celestial;
+using Farion.Rendering.Lighting;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
@@ -164,9 +165,85 @@ namespace Farion.Tests.EditMode
                 null);
             Vector3 direction = new Vector3(0.7f, 0.2f, -0.4f).normalized;
             float surfaceRadius = data.GetSurfaceRadiusAt(direction * 10f);
+            for (int i = 0; i < 8; i++)
+            {
+                surfaceRadius = data.GetSurfaceRadiusAt(direction * surfaceRadius);
+            }
 
+            Assert.AreEqual(0f, data.GetSignedSurfaceDistance(direction * surfaceRadius), 1e-4f);
+            Assert.Less(data.GetSignedSurfaceDistance(direction * (surfaceRadius - 0.01f)), 0f);
+            Assert.Greater(data.GetSignedSurfaceDistance(direction * (surfaceRadius + 0.01f)), 0f);
             Assert.That(data.IsPointUnderwater(direction * (surfaceRadius - 0.01f)), Is.True);
             Assert.That(data.IsPointUnderwater(direction * (surfaceRadius + 0.01f)), Is.False);
+        }
+
+        [Test]
+        public void UnderwaterSpotLight_OnlyExposesAnActiveSubmergedSpot()
+        {
+            GameObject gameObject = new("Underwater spot light");
+            Light light = gameObject.AddComponent<Light>();
+            light.type = LightType.Spot;
+            light.intensity = 1800f;
+            light.range = 25f;
+            light.spotAngle = 40f;
+            light.innerSpotAngle = 20f;
+            UnderwaterSpotLight source = gameObject.AddComponent<UnderwaterSpotLight>();
+            CelestialOceanProfile profile = ScriptableObject.CreateInstance<CelestialOceanProfile>();
+            CelestialOceanEffectData ocean = new(
+                Vector3.zero,
+                9f,
+                10f,
+                0f,
+                26f,
+                Vector3.zero,
+                Matrix4x4.identity,
+                profile);
+
+            try
+            {
+                gameObject.transform.position = Vector3.forward * 9f;
+                Assert.That(source.TryBuildShaderData(ocean, Vector3.forward * 8f, out var data), Is.True);
+                Assert.That(data.PositionRange.w, Is.EqualTo(25f));
+                Assert.That(data.InnerConeCos, Is.GreaterThan(data.DirectionOuterCos.w));
+
+                gameObject.transform.position = Vector3.forward * 11f;
+                Assert.That(source.TryBuildShaderData(ocean, Vector3.forward * 8f, out _), Is.False);
+
+                gameObject.transform.position = Vector3.forward * 9f;
+                light.enabled = false;
+                Assert.That(source.TryBuildShaderData(ocean, Vector3.forward * 8f, out _), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void AtmosphereEffectData_CarriesTheOceanSurfaceUsedForMediaTransitions()
+        {
+            CelestialOceanEffectData ocean = new(
+                Vector3.zero,
+                9f,
+                10f,
+                0.35f,
+                26f,
+                new Vector3(0.2f, 1.1f, 2.4f),
+                Matrix4x4.identity,
+                null);
+            CelestialAtmosphereEffectData atmosphere = new(
+                Vector3.zero,
+                9f,
+                10f,
+                12f,
+                null,
+                ocean);
+
+            Assert.That(atmosphere.HasOceanSurface, Is.True);
+            Assert.That(atmosphere.OceanSurface.OceanRadius, Is.EqualTo(ocean.OceanRadius));
+            Assert.That(atmosphere.OceanSurface.WavePhases, Is.EqualTo(ocean.WavePhases));
+            Assert.That(atmosphere.OceanSurface.WorldToLocalRotation, Is.EqualTo(ocean.WorldToLocalRotation));
         }
 
         [Test]

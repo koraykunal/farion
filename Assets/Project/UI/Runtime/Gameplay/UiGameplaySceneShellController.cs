@@ -133,7 +133,11 @@ namespace Farion.UI.Gameplay
             flightHud.SetPilotContext(possession);
             postProcessRig.SetMotor(possession.SpacecraftMotor);
             lightingRig.SetPrimarySource(FindInScene<CelestialLightSource>(world));
-            orbitLines?.SetSimulation(runtimeRoot.Bindings.GravitySimulation);
+            if (orbitLines != null)
+            {
+                orbitLines.SetSimulation(runtimeRoot.Bindings.GravitySimulation);
+            }
+
             runtimeRoot.Bindings.GravitySimulation.SetPhysicsReferenceObserverSource(possession);
             BindWorldOrigin(runtimeRoot.Bindings.OriginRebaser);
 
@@ -165,8 +169,8 @@ namespace Farion.UI.Gameplay
             if (boundOriginRebaser != null)
             {
                 boundOriginRebaser.Rebased -= OnWorldOriginRebased;
-                boundOriginRebaser.UnregisterShiftRoot(spacecraftCameraRig?.transform);
-                boundOriginRebaser.UnregisterShiftRoot(firstPersonCameraRig?.transform);
+                boundOriginRebaser.UnregisterShiftRoot(ShiftRootOf(spacecraftCameraRig));
+                boundOriginRebaser.UnregisterShiftRoot(ShiftRootOf(firstPersonCameraRig));
             }
 
             boundOriginRebaser = rebaser;
@@ -175,31 +179,55 @@ namespace Farion.UI.Gameplay
                 return;
             }
 
-            boundOriginRebaser.RegisterShiftRoot(spacecraftCameraRig?.transform);
-            boundOriginRebaser.RegisterShiftRoot(firstPersonCameraRig?.transform);
+            boundOriginRebaser.RegisterShiftRoot(ShiftRootOf(spacecraftCameraRig));
+            boundOriginRebaser.RegisterShiftRoot(ShiftRootOf(firstPersonCameraRig));
             boundOriginRebaser.Rebased += OnWorldOriginRebased;
         }
 
         void OnWorldOriginRebased(Vector3 _)
         {
-            spacecraftCameraRig?.SnapToTarget();
-            firstPersonCameraRig?.SnapToTarget();
-            postProcessRig?.ResetCameraHistory(gameplayCamera);
+            if (spacecraftCameraRig != null)
+            {
+                spacecraftCameraRig.SnapToTarget();
+            }
+
+            if (firstPersonCameraRig != null)
+            {
+                firstPersonCameraRig.SnapToTarget();
+            }
+
+            if (postProcessRig != null)
+            {
+                postProcessRig.ResetCameraHistory(gameplayCamera);
+            }
         }
 
         void ResolvePresentation()
         {
             Scene scene = gameObject.scene;
-            spacecraftCameraRig ??= FindInScene<SpacecraftCameraRig>(scene);
-            firstPersonCameraRig ??= FindInScene<FirstPersonCameraRig>(scene);
-            gameplayCamera ??= FindInScene<Camera>(scene);
-            controlLock ??= FindInScene<PlayerControlLock>(scene);
-            gameplayUi ??= FindInScene<UiGameplayController>(scene);
-            flightHud ??= FindInScene<UiSpacecraftFlightHudPresenter>(scene);
-            postProcessRig ??= FindInScene<SpacecraftPostProcessRig>(scene);
-            lightingRig ??= FindInScene<CelestialLightingRig>(scene);
-            lodController ??= FindInScene<CelestialLodController>(scene);
-            orbitLines ??= FindInScene<CelestialOrbitLineRenderer>(scene);
+            ResolveInScene(ref spacecraftCameraRig, scene);
+            ResolveInScene(ref firstPersonCameraRig, scene);
+            ResolveInScene(ref gameplayCamera, scene);
+            ResolveInScene(ref controlLock, scene);
+            ResolveInScene(ref gameplayUi, scene);
+            ResolveInScene(ref flightHud, scene);
+            ResolveInScene(ref postProcessRig, scene);
+            ResolveInScene(ref lightingRig, scene);
+            ResolveInScene(ref lodController, scene);
+            ResolveInScene(ref orbitLines, scene);
+        }
+
+        static Transform ShiftRootOf(Component component)
+        {
+            return component != null ? component.transform : null;
+        }
+
+        static void ResolveInScene<T>(ref T component, Scene scene) where T : Component
+        {
+            if (component == null)
+            {
+                component = FindInScene<T>(scene);
+            }
         }
 
         static T FindInScene<T>(Scene scene) where T : Component

@@ -162,10 +162,19 @@ namespace Farion.Audio.Direction
                 return;
             }
 
+            PlayerPrefs.Save();
             StopAndRelease(ref ambienceInstance, immediate: false);
             StopAndRelease(ref spaceAmbientInstance, immediate: false);
             StopAndRelease(ref scoreInstance, immediate: false);
             Current = null;
+        }
+
+        void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                PlayerPrefs.Save();
+            }
         }
 
         public void SetSceneContext(AudioSceneContextId context)
@@ -231,7 +240,7 @@ namespace Farion.Audio.Direction
         public void SetBusVolume(AudioBusId bus, float value)
         {
             int index = ToBusIndex(bus);
-            float normalized = Mathf.Round(Mathf.Clamp01(value) * 10f) / 10f;
+            float normalized = Mathf.Round(Mathf.Clamp01(value) * 100f) / 100f;
             if (Mathf.Approximately(busVolumes[index], normalized))
             {
                 return;
@@ -239,7 +248,6 @@ namespace Farion.Audio.Direction
 
             busVolumes[index] = normalized;
             PlayerPrefs.SetFloat(VolumeKeys[index], normalized);
-            PlayerPrefs.Save();
             ApplyBusVolume(index);
             Changed?.Invoke();
         }

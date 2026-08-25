@@ -7,15 +7,15 @@ namespace Farion.UI.Styling
     public sealed class UiTheme : ScriptableObject
     {
         [Header("Surfaces")]
-        [SerializeField] Color voidSurface = new(0.018f, 0.027f, 0.039f, 1f);
-        [SerializeField] Color raisedSurface = new(0.043f, 0.067f, 0.09f, 1f);
-        [SerializeField] Color buttonSurface = new(0.024f, 0.037f, 0.052f, 0.72f);
-        [SerializeField] Color buttonSurfaceHighlighted = new(0.055f, 0.086f, 0.118f, 0.92f);
-        [SerializeField] Color panelSurface = new(0.018f, 0.031f, 0.045f, 0.9f);
+        [SerializeField] Color voidSurface = new(0.0196f, 0.0314f, 0.0431f, 1f);
+        [SerializeField] Color raisedSurface = new(0.0784f, 0.1137f, 0.149f, 1f);
+        [SerializeField] Color buttonSurface = new(0.1137f, 0.1608f, 0.2f, 1f);
+        [SerializeField] Color buttonSurfaceHighlighted = new(0.1569f, 0.2235f, 0.2706f, 1f);
+        [SerializeField] Color panelSurface = new(0.0471f, 0.0706f, 0.098f, 1f);
 
         [Header("Text")]
         [SerializeField] Color primaryText = new(0.88f, 0.91f, 0.93f, 1f);
-        [SerializeField] Color secondaryText = new(0.54f, 0.6f, 0.65f, 0.9f);
+        [SerializeField] Color secondaryText = new(0.62f, 0.68f, 0.72f, 1f);
         [SerializeField] Color supportingText = new(0.68f, 0.76f, 0.81f, 1f);
 
         [Header("Typography")]
@@ -27,7 +27,7 @@ namespace Farion.UI.Styling
         [SerializeField] Color focus = new(0.56f, 0.68f, 0.76f, 1f);
         [SerializeField] Color nominal = new(0.58f, 0.73f, 0.69f, 0.96f);
         [SerializeField] Color caution = new(1f, 0.72f, 0.24f, 0.98f);
-        [SerializeField] Color critical = new(1f, 0.26f, 0.2f, 1f);
+        [SerializeField] Color critical = new(1f, 0.38f, 0.32f, 1f);
 
         [Header("Motion")]
         [Min(0f)]

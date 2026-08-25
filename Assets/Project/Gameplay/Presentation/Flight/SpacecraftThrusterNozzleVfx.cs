@@ -51,6 +51,14 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] Vector3 translationSteeringEuler = new Vector3(4f, 5f, 2f);
         [SerializeField] Vector3 rotationSteeringEuler = new Vector3(3f, 4f, 4f);
 
+        [Header("Plume Inertia")]
+        [Tooltip("How quickly the exhaust column catches up with the nozzle after a hard rotation.")]
+        [Min(0.01f)]
+        [SerializeField] float plumeBendResponse = 5.5f;
+        [Tooltip("Maximum lateral lag of the plume tail, in nozzle radii before per-layer gain.")]
+        [Range(0f, 1f)]
+        [SerializeField] float maxPlumeBend = 0.45f;
+
         [Header("Mesh Layers")]
         [SerializeField] SpacecraftThrusterMeshLayer coreGlow;
         [SerializeField] SpacecraftThrusterMeshLayer innerPlasma;
@@ -82,10 +90,16 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] float maxLightRange = 7f;
         [Min(0.1f)]
         [SerializeField] float lightPower = 1.7f;
+        [Tooltip("Extra range in vacuum, where the plume runs longer than at sea level.")]
+        [Range(1f, 2f)]
+        [SerializeField] float vacuumLightRangeScale = 1.25f;
         [SerializeField] Color idleLightColor = new Color(0.18f, 0.85f, 1f, 1f);
         [SerializeField] Color boostLightColor = new Color(0.76f, 0.9f, 1f, 1f);
+        [Tooltip("Matches the plume overheat colour so the hull wash stays consistent with the exhaust.")]
+        [SerializeField] Color overheatLightColor = new Color(1f, 0.42f, 0.1f, 1f);
 
         [Header("Nozzle Heat Glow")]
+        [Tooltip("Optional. Point this at the engine-bell renderers to drive _EmissionColor from thermal soak.")]
         [SerializeField] Renderer[] heatGlowRenderers = Array.Empty<Renderer>();
         [ColorUsage(false, true)]
         [SerializeField] Color heatGlowColor = new Color(2.6f, 0.42f, 0.06f, 1f);
@@ -100,19 +114,24 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField, Range(0f, 1f)] float debugIgnitionFlare;
         [SerializeField, Range(0f, 1f)] float debugHeatGlow;
         [SerializeField] Vector3 debugSteeringEuler;
+        [SerializeField] Vector3 debugPlumeBend;
 
         Quaternion initialSteeringRotation = Quaternion.identity;
+        Quaternion laggedWorldRotation = Quaternion.identity;
         Vector3 currentSteeringEuler;
+        Vector3 currentPlumeBend;
         float currentNozzleLoad;
         float currentSideLoad;
         float currentIgnitionFlare;
         float currentHeatGlow;
         MaterialPropertyBlock heatGlowProperties;
         bool initialized;
+        bool plumeBendTracked;
 
         public float NozzleLoad => currentNozzleLoad;
         public float SideLoad => currentSideLoad;
         public float IgnitionFlare => currentIgnitionFlare;
+        public Vector3 PlumeBend => currentPlumeBend;
 
         void Reset()
         {
@@ -141,6 +160,8 @@ namespace Farion.Gameplay.Presentation.Flight
 
             AutoAssignMeshLayers();
             initialSteeringRotation = steeringRoot.localRotation;
+            plumeBendTracked = false;
+            currentPlumeBend = Vector3.zero;
             initialized = true;
         }
 
@@ -153,6 +174,8 @@ namespace Farion.Gameplay.Presentation.Flight
             distortion?.ClearRuntimeState();
             currentIgnitionFlare = 0f;
             currentHeatGlow = 0f;
+            currentPlumeBend = Vector3.zero;
+            plumeBendTracked = false;
             ClearHeatGlow();
         }
 
@@ -208,6 +231,7 @@ namespace Farion.Gameplay.Presentation.Flight
 
             UpdateIgnitionFlare(previousNozzleLoad, clampedDeltaTime);
             ApplySteering(frame, clampedDeltaTime);
+            UpdatePlumeBend(clampedDeltaTime);
             ApplyMeshLayers(frame, clampedDeltaTime);
             ApplyGraphs(frame, clampedDeltaTime);
             ApplyLight(frame);
@@ -241,6 +265,35 @@ namespace Farion.Gameplay.Presentation.Flight
             return Mathf.Clamp01(Mathf.Max(decayed, loadDelta / deltaTime * gain));
         }
 
+        void UpdatePlumeBend(float deltaTime)
+        {
+            Transform plumeRoot = steeringRoot != null ? steeringRoot : transform;
+            Quaternion currentRotation = plumeRoot.rotation;
+            if (!plumeBendTracked)
+            {
+                laggedWorldRotation = currentRotation;
+                plumeBendTracked = true;
+            }
+
+            laggedWorldRotation = Quaternion.Slerp(
+                laggedWorldRotation,
+                currentRotation,
+                FarionMath.SmoothFactor(plumeBendResponse, deltaTime));
+
+            Vector3 laggedAxis = plumeRoot.InverseTransformDirection(laggedWorldRotation * Vector3.forward);
+            currentPlumeBend = CalculatePlumeBend(laggedAxis, currentNozzleLoad, maxPlumeBend);
+        }
+
+        internal static Vector3 CalculatePlumeBend(
+            Vector3 laggedLocalAxis,
+            float nozzleLoad,
+            float maxBend)
+        {
+            return Vector3.ClampMagnitude(
+                new Vector3(laggedLocalAxis.x, laggedLocalAxis.y, 0f) * Mathf.Clamp01(nozzleLoad),
+                Mathf.Max(0f, maxBend));
+        }
+
         void Validate()
         {
             sideSign = Mathf.Clamp(sideSign, -1f, 1f);
@@ -257,6 +310,8 @@ namespace Farion.Gameplay.Presentation.Flight
             maxDirectionalMultiplier = Mathf.Max(minDirectionalMultiplier, maxDirectionalMultiplier);
             maxSteeringAngle = Mathf.Max(0f, maxSteeringAngle);
             steeringResponse = Mathf.Max(0f, steeringResponse);
+            plumeBendResponse = Mathf.Max(0.01f, plumeBendResponse);
+            maxPlumeBend = Mathf.Clamp01(maxPlumeBend);
             smokeAtmosphereThreshold = Mathf.Clamp01(smokeAtmosphereThreshold);
             sparksBoostThreshold = Mathf.Clamp01(sparksBoostThreshold);
             groundDustGain = Mathf.Max(0f, groundDustGain);
@@ -268,6 +323,7 @@ namespace Farion.Gameplay.Presentation.Flight
             maxLightIntensity = Mathf.Max(0f, maxLightIntensity);
             maxLightRange = Mathf.Max(0f, maxLightRange);
             lightPower = Mathf.Max(0.1f, lightPower);
+            vacuumLightRangeScale = Mathf.Clamp(vacuumLightRangeScale, 1f, 2f);
         }
 
         void AutoAssignMeshLayers()
@@ -349,15 +405,16 @@ namespace Farion.Gameplay.Presentation.Flight
 
         void ApplyMeshLayers(SpacecraftThrusterVfxFrame frame, float deltaTime)
         {
-            coreGlow?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
-            innerPlasma?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
-            outerPlasma?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
+            coreGlow?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, currentPlumeBend, deltaTime);
+            innerPlasma?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, currentPlumeBend, deltaTime);
+            outerPlasma?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, currentPlumeBend, deltaTime);
             shockDiamonds?.ApplyFrame(
                 frame,
                 currentNozzleLoad * Mathf.Clamp01(frame.AtmosphereDensity * 1.6f),
                 currentIgnitionFlare,
+                currentPlumeBend,
                 deltaTime);
-            distortion?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, deltaTime);
+            distortion?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, currentPlumeBend, deltaTime);
         }
 
         void ApplyGraphs(SpacecraftThrusterVfxFrame frame, float deltaTime)
@@ -434,10 +491,22 @@ namespace Farion.Gameplay.Presentation.Flight
 
             float lightLoad = Mathf.Pow(Mathf.Clamp01(currentNozzleLoad), lightPower);
             thrusterLight.enabled = lightLoad > 0.001f;
-            thrusterLight.intensity = maxLightIntensity * lightLoad * Mathf.Lerp(1f, 1.35f, frame.Boost);
-            thrusterLight.range = maxLightRange * Mathf.Lerp(0.35f, 1f, lightLoad);
-            thrusterLight.color = Color.Lerp(idleLightColor, boostLightColor, Mathf.Clamp01(frame.Boost + lightLoad * 0.35f));
-            thrusterLight.intensity *= 1f + currentIgnitionFlare * 0.9f;
+            thrusterLight.intensity = maxLightIntensity *
+                lightLoad *
+                Mathf.Lerp(1f, 1.35f, frame.Boost) *
+                (1f + currentIgnitionFlare * 0.9f);
+            thrusterLight.range = maxLightRange *
+                Mathf.Lerp(0.35f, 1f, lightLoad) *
+                Mathf.Lerp(vacuumLightRangeScale, 1f, frame.AtmosphereDensity);
+
+            Color plumeColor = Color.Lerp(
+                idleLightColor,
+                boostLightColor,
+                Mathf.Clamp01(frame.Boost + lightLoad * 0.35f));
+            thrusterLight.color = Color.Lerp(
+                plumeColor,
+                overheatLightColor,
+                Mathf.Clamp01(frame.Heat * frame.Heat));
         }
 
         void ApplyHeatGlow(SpacecraftThrusterVfxFrame frame, float deltaTime)
@@ -474,6 +543,7 @@ namespace Farion.Gameplay.Presentation.Flight
             debugIgnitionFlare = currentIgnitionFlare;
             debugHeatGlow = currentHeatGlow;
             debugSteeringEuler = currentSteeringEuler;
+            debugPlumeBend = currentPlumeBend;
         }
 
         static void SetFloat(VisualEffect graph, int id, float value)
@@ -503,18 +573,15 @@ namespace Farion.Gameplay.Presentation.Flight
         [Serializable]
         sealed class ThrusterGraphTuning
         {
+            [Tooltip("Drives the graph Rate property. Zero rate precedes Stop so existing particles decay.")]
             [Min(0f)]
             [SerializeField] float spawnRate;
-            [Min(0f)]
-            [SerializeField] float burstCount;
+            [Tooltip("Drives the graph Speed property.")]
             [Min(0f)]
             [SerializeField] float speed;
+            [Tooltip("Must match the graph particle lifetime. Only used to hold the effect alive while its tail decays.")]
             [Min(0f)]
             [SerializeField] float lifetime;
-            [Min(0f)]
-            [SerializeField] float size;
-            [Range(0f, 1f)]
-            [SerializeField] float alpha = 1f;
             [Min(0f)]
             [SerializeField] float boostRateMultiplier = 0.35f;
             [Min(0f)]
@@ -532,8 +599,6 @@ namespace Farion.Gameplay.Presentation.Flight
                     spawnRate = 34f,
                     speed = 7.5f,
                     lifetime = 0.55f,
-                    size = 0.045f,
-                    alpha = 0.9f,
                     boostRateMultiplier = 0.85f,
                     heatRateMultiplier = 0.4f
                 };
@@ -546,8 +611,6 @@ namespace Farion.Gameplay.Presentation.Flight
                     spawnRate = 24f,
                     speed = 0.65f,
                     lifetime = 1.8f,
-                    size = 0.22f,
-                    alpha = 0.38f,
                     atmosphereRateMultiplier = 0.75f
                 };
             }
@@ -555,11 +618,8 @@ namespace Farion.Gameplay.Presentation.Flight
             public void Validate()
             {
                 spawnRate = Mathf.Max(0f, spawnRate);
-                burstCount = Mathf.Max(0f, burstCount);
                 speed = Mathf.Max(0f, speed);
                 lifetime = Mathf.Max(0f, lifetime);
-                size = Mathf.Max(0f, size);
-                alpha = Mathf.Clamp01(alpha);
                 boostRateMultiplier = Mathf.Max(0f, boostRateMultiplier);
                 heatRateMultiplier = Mathf.Max(0f, heatRateMultiplier);
                 atmosphereRateMultiplier = Mathf.Max(0f, atmosphereRateMultiplier);
@@ -574,18 +634,12 @@ namespace Farion.Gameplay.Presentation.Flight
                     Mathf.Clamp01(heat) * heatRateMultiplier +
                     Mathf.Clamp01(atmosphereDensity) * atmosphereRateMultiplier;
                 float rate = spawnRate * shapedLoad * rateMultiplier;
-                float count = burstCount * shapedLoad * rateMultiplier;
-                float speedValue = speed * Mathf.Lerp(0.35f, 1.25f, shapedLoad) * Mathf.Lerp(1f, 1.4f, Mathf.Clamp01(boost));
-                float sizeValue = size * Mathf.Lerp(0.65f, 1.3f, shapedLoad);
+                float speedValue = speed *
+                    Mathf.Lerp(0.35f, 1.25f, shapedLoad) *
+                    Mathf.Lerp(1f, 1.4f, Mathf.Clamp01(boost));
 
                 SetFloat(graph, VfxIds.Rate, rate);
-                SetFloat(graph, VfxIds.Count, count);
                 SetFloat(graph, VfxIds.Speed, speedValue);
-                SetFloat(graph, VfxIds.Lifetime, lifetime);
-                SetFloat(graph, VfxIds.LifetimeUnderscore, lifetime);
-                SetFloat(graph, VfxIds.Size, sizeValue);
-                SetFloat(graph, VfxIds.SizeUnderscore, sizeValue);
-                SetFloat(graph, VfxIds.AlphaPublic, alpha * shapedLoad);
                 graph.playRate = Mathf.Lerp(0.75f, 1.35f, Mathf.Clamp01(boost + heat * 0.35f));
             }
 
@@ -653,13 +707,7 @@ namespace Farion.Gameplay.Presentation.Flight
             public static readonly int InAtmosphere = Shader.PropertyToID("InAtmosphere");
             public static readonly int BoostActive = Shader.PropertyToID("BoostActive");
             public static readonly int Rate = Shader.PropertyToID("Rate");
-            public static readonly int Count = Shader.PropertyToID("Count");
             public static readonly int Speed = Shader.PropertyToID("Speed");
-            public static readonly int Lifetime = Shader.PropertyToID("Lifetime");
-            public static readonly int LifetimeUnderscore = Shader.PropertyToID("_Lifetime");
-            public static readonly int Size = Shader.PropertyToID("Size");
-            public static readonly int SizeUnderscore = Shader.PropertyToID("_Size");
-            public static readonly int AlphaPublic = Shader.PropertyToID("Alpha");
         }
     }
 }
