@@ -7,28 +7,30 @@ namespace Farion.Gameplay.Flight
     public sealed class SpacecraftFlightProfile : ScriptableObject
     {
         [Header("Linear Speed")]
+        [Tooltip("Atmospheric cruise ceiling. Kept below orbital velocity so reaching orbit requires the boost drive rather than level flight.")]
         [Min(0f)]
-        [SerializeField] float maxForwardSpeed = 180f;
+        [SerializeField] float maxForwardSpeed = 250f;
         [Min(0f)]
-        [SerializeField] float maxBoostForwardSpeed = 260f;
+        [SerializeField] float maxBoostForwardSpeed = 650f;
         [Min(0f)]
-        [SerializeField] float maxReverseSpeed = 70f;
+        [SerializeField] float maxReverseSpeed = 90f;
         [Min(0f)]
-        [SerializeField] float maxStrafeSpeed = 45f;
+        [SerializeField] float maxStrafeSpeed = 60f;
         [Min(0f)]
-        [SerializeField] float maxVerticalSpeed = 40f;
+        [SerializeField] float maxVerticalSpeed = 60f;
 
         [Header("Linear Acceleration")]
         [Min(0f)]
-        [SerializeField] float forwardAcceleration = 20f;
+        [SerializeField] float forwardAcceleration = 32f;
         [Min(0f)]
-        [SerializeField] float boostForwardAcceleration = 34f;
+        [SerializeField] float boostForwardAcceleration = 60f;
         [Min(0f)]
-        [SerializeField] float reverseAcceleration = 18f;
+        [SerializeField] float reverseAcceleration = 30f;
         [Min(0f)]
-        [SerializeField] float strafeAcceleration = 12f;
+        [SerializeField] float strafeAcceleration = 18f;
+        [Tooltip("Must exceed the surface gravity of any body the ship is expected to lift off from, with enough margin left over to climb.")]
         [Min(0f)]
-        [SerializeField] float verticalAcceleration = 16f;
+        [SerializeField] float verticalAcceleration = 24f;
         [Min(0f)]
         [SerializeField] float brakeGain = 3.2f;
 
@@ -36,7 +38,7 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float pitchRateDeg = 65f;
         [Min(0f)]
-        [SerializeField] float yawRateDeg = 22f;
+        [SerializeField] float yawRateDeg = 35f;
         [Min(0f)]
         [SerializeField] float rollRateDeg = 110f;
 
@@ -44,13 +46,12 @@ namespace Farion.Gameplay.Flight
         [Min(0f)]
         [SerializeField] float pitchAccelerationDeg = 180f;
         [Min(0f)]
-        [SerializeField] float yawAccelerationDeg = 75f;
+        [SerializeField] float yawAccelerationDeg = 120f;
         [Min(0f)]
         [SerializeField] float rollAccelerationDeg = 280f;
 
         [Header("Manoeuvre Envelope")]
-        [Range(0f, 1f)]
-        [SerializeField] float optimalSpeedBandStart = 0.4f;
+        [Tooltip("Fraction of maximum forward speed below which the thrusters retain full turn authority. Above it authority falls off toward the off-band scale, modelling control saturation at high speed.")]
         [Range(0f, 1f)]
         [SerializeField] float optimalSpeedBandEnd = 0.75f;
         [Range(0.1f, 1f)]
@@ -90,12 +91,12 @@ namespace Farion.Gameplay.Flight
         [Header("Hull")]
         [Min(0f)]
         [SerializeField] float hullIntegrity = 500f;
-        [Tooltip("Impact speed the hull absorbs without taking damage.")]
+        [Tooltip("Impact speed the hull absorbs without taking damage. Set above the speed a controlled touchdown arrives at.")]
         [Min(0f)]
-        [SerializeField] float impactToleranceSpeed = 4f;
-        [Tooltip("Hull damage per metre per second of impact speed above the tolerance.")]
-        [Min(0f)]
-        [SerializeField] float impactDamagePerSpeedUnit = 12f;
+        [SerializeField] float impactToleranceSpeed = 12f;
+        [Tooltip("Impact speed at which a single contact consumes a full-integrity hull. Damage rises linearly between the tolerance speed and this one, so hull upgrades raise the survivable speed instead of rescaling a hidden constant.")]
+        [Min(0.1f)]
+        [SerializeField] float criticalImpactSpeed = 90f;
         [Tooltip("Colliding bodies lighter than this fraction of the ship mass cannot damage the hull.")]
         [Range(0f, 1f)]
         [SerializeField] float minimumImpactMassRatio = 0.05f;
@@ -140,13 +141,12 @@ namespace Farion.Gameplay.Flight
         public float IdleFuelPerSecond => idleFuelPerSecond;
         public float HullIntegrity => hullIntegrity;
         public float ImpactToleranceSpeed => impactToleranceSpeed;
-        public float ImpactDamagePerSpeedUnit => impactDamagePerSpeedUnit;
+        public float CriticalImpactSpeed => Mathf.Max(impactToleranceSpeed + 0.1f, criticalImpactSpeed);
         public float MinimumImpactMassRatio => Mathf.Clamp01(minimumImpactMassRatio);
         public float RigidbodyMass => rigidbodyMass;
         public bool OverrideCenterOfMass => overrideCenterOfMass;
         public Vector3 CenterOfMass => centerOfMass;
         public float AngularDamping => angularDamping;
-        public float OptimalSpeedBandStart => optimalSpeedBandStart;
         public float OptimalSpeedBandEnd => optimalSpeedBandEnd;
         public float OffBandAngularScale => offBandAngularScale;
 
@@ -165,7 +165,8 @@ namespace Farion.Gameplay.Flight
             hullIntegrity * bonuses.HullCapacityMultiplier;
 
         public float EvaluateImpactDamage(float impactSpeed) =>
-            Mathf.Max(0f, impactSpeed - impactToleranceSpeed) * impactDamagePerSpeedUnit;
+            Mathf.InverseLerp(impactToleranceSpeed, CriticalImpactSpeed, impactSpeed) *
+            hullIntegrity;
 
         public Vector3 MaxAngularRate()
         {
@@ -221,7 +222,6 @@ namespace Farion.Gameplay.Flight
                 limitManualFlightEnvelope,
                 manualEnvelopeStart,
                 boostSurgeStrength,
-                optimalSpeedBandStart,
                 optimalSpeedBandEnd,
                 offBandAngularScale);
         }
@@ -239,8 +239,7 @@ namespace Farion.Gameplay.Flight
             strafeAcceleration = Mathf.Max(0f, strafeAcceleration);
             verticalAcceleration = Mathf.Max(0f, verticalAcceleration);
             brakeGain = Mathf.Max(0f, brakeGain);
-            optimalSpeedBandStart = Mathf.Clamp01(optimalSpeedBandStart);
-            optimalSpeedBandEnd = Mathf.Clamp(optimalSpeedBandEnd, optimalSpeedBandStart, 1f);
+            optimalSpeedBandEnd = Mathf.Clamp01(optimalSpeedBandEnd);
             offBandAngularScale = Mathf.Clamp(offBandAngularScale, 0.1f, 1f);
             pitchRateDeg = Mathf.Max(0f, pitchRateDeg);
             yawRateDeg = Mathf.Max(0f, yawRateDeg);
@@ -261,7 +260,7 @@ namespace Farion.Gameplay.Flight
             idleFuelPerSecond = Mathf.Max(0f, idleFuelPerSecond);
             hullIntegrity = Mathf.Max(0f, hullIntegrity);
             impactToleranceSpeed = Mathf.Max(0f, impactToleranceSpeed);
-            impactDamagePerSpeedUnit = Mathf.Max(0f, impactDamagePerSpeedUnit);
+            criticalImpactSpeed = Mathf.Max(impactToleranceSpeed + 0.1f, criticalImpactSpeed);
             minimumImpactMassRatio = Mathf.Clamp01(minimumImpactMassRatio);
             rigidbodyMass = Mathf.Max(1f, rigidbodyMass);
             angularDamping = Mathf.Max(0f, angularDamping);

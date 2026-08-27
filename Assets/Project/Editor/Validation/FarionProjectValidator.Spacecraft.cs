@@ -108,7 +108,7 @@ namespace Farion.Editor.Validation
                     report.AddWarning(
                         $"{scenePath}: {motor.name} flight profile has no hull integrity, so impacts never damage it.");
                 }
-                else if (profile.ImpactDamagePerSpeedUnit <= 0f)
+                else if (profile.CriticalImpactSpeed <= profile.ImpactToleranceSpeed)
                 {
                     report.AddWarning(
                         $"{scenePath}: {motor.name} flight profile has a hull but takes no impact damage.");

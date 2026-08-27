@@ -49,6 +49,7 @@ namespace Farion.Gameplay.Presentation.Flight
         MaterialPropertyBlock propertyBlock;
         RenderParams renderParams;
         bool seeded;
+        Vector3 lastCenter;
 
         void OnValidate()
         {
@@ -89,6 +90,19 @@ namespace Farion.Gameplay.Presentation.Flight
             }
 
             Vector3 center = view.position;
+            if (seeded)
+            {
+                Vector3 centerDelta = center - lastCenter;
+                if (centerDelta.sqrMagnitude > fieldRadius * fieldRadius)
+                {
+                    for (int i = 0; i < MaxStreaks; i++)
+                    {
+                        points[i] += centerDelta;
+                    }
+                }
+            }
+
+            lastCenter = center;
             EnsureSeeded(center);
             Vector3 direction = velocity / Mathf.Max(speed, 0.0001f);
             float length = Mathf.Clamp(

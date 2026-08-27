@@ -11,6 +11,7 @@ namespace Farion.Gameplay.Flight
     {
         [Header("Source")]
         [SerializeField] SpacecraftSurfaceContactProbe surfaceContactProbe;
+        [SerializeField] SpacecraftMotor motor;
 
         [Header("Velocity Correction")]
         [SerializeField] bool removeLowSpeedClosingVelocity = true;
@@ -20,8 +21,9 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float maxStabilizedTangentialSpeed = 6f;
         [Min(0f)]
         [SerializeField] float tangentialDamping = 3f;
+        [Tooltip("Rate at which residual spin is bled off while resting on a surface. Suspended entirely while the pilot commands rotation so the ship can still raise its nose for takeoff.")]
         [Min(0f)]
-        [SerializeField] float angularDamping = 6f;
+        [SerializeField] float angularDamping = 2f;
 
         [Header("Penetration Recovery")]
         [SerializeField] bool recoverSmallPenetration = true;
@@ -127,7 +129,7 @@ namespace Farion.Gameplay.Flight
 
             physicsBody.SetLinearVelocity(bodyVelocity + relativeVelocity);
 
-            if (angularDamping > 0f)
+            if (angularDamping > 0f && !RotationCommanded)
             {
                 float damping = FarionMath.SmoothFactor(angularDamping, deltaTime);
                 Vector3 angularVelocity = Vector3.Lerp(
@@ -147,11 +149,19 @@ namespace Farion.Gameplay.Flight
             }
         }
 
+        bool RotationCommanded =>
+            motor != null && motor.CurrentCommand.Rotation.sqrMagnitude > 0.0001f;
+
         void ResolveComponents()
         {
             if (surfaceContactProbe == null)
             {
                 surfaceContactProbe = GetComponent<SpacecraftSurfaceContactProbe>();
+            }
+
+            if (motor == null)
+            {
+                motor = GetComponent<SpacecraftMotor>();
             }
         }
 

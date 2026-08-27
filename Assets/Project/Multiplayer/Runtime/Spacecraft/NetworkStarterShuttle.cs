@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Core.Identity;
 using System;
 using Farion.Core.Persistence;
@@ -107,6 +108,7 @@ namespace Farion.Multiplayer.Spacecraft
         public SpacecraftMotor Motor => motor;
         public SpacecraftHull Hull => hull;
         public KeyboardSpacecraftInput Input => input;
+        public KeyboardBoardingInput BoardingInput => boardingInput;
         public string InteractionPrompt => CanLocalPilot()
             ? PilotPrompt
             : ClaimPrompt;
@@ -444,7 +446,7 @@ namespace Farion.Multiplayer.Spacecraft
                 (!IsClaimed || !Owner.IsValid || OwnerId != claimedConnectionId);
             bool staleOrigin = IsServerStarted &&
                 originAuthority != null &&
-                data.OriginSequence != originAuthority.CurrentSequence;
+                !originAuthority.SharesReferenceFrame(data.OriginSequence);
             float deltaTime = (float)TimeManager.TickDelta;
             surfaceContactProbe?.BeginSimulationStep(deltaTime);
             celestialProbe?.RefreshSample(ResolveSimulationSeconds(data.GetTick()));
@@ -473,7 +475,7 @@ namespace Farion.Multiplayer.Spacecraft
             Channel channel = Channel.Unreliable)
         {
             if (originAuthority != null &&
-                data.OriginSequence != originAuthority.CurrentSequence)
+                !originAuthority.SharesReferenceFrame(data.OriginSequence))
             {
                 return;
             }
@@ -802,7 +804,7 @@ namespace Farion.Multiplayer.Spacecraft
                 body.MovePosition(targetPosition);
             }
 
-            if (Quaternion.Angle(body.rotation, targetRotation) > 0.0001f)
+            if (!FarionMath.IsSameRotation(body.rotation, targetRotation))
             {
                 body.MoveRotation(targetRotation);
             }

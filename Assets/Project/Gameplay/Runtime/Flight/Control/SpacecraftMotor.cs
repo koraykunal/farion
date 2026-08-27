@@ -10,6 +10,7 @@ namespace Farion.Gameplay.Flight
     public interface ISpacecraftPhysicsBody
     {
         Vector3 Position { get; }
+        Quaternion Rotation { get; }
         Vector3 WorldCenterOfMass { get; }
         Vector3 LinearVelocity { get; }
         Vector3 AngularVelocity { get; }
@@ -47,6 +48,7 @@ namespace Farion.Gameplay.Flight
 
         public RigidbodySpacecraftPhysicsBody(Rigidbody body) => this.body = body;
         public Vector3 Position => body.position;
+        public Quaternion Rotation => body.rotation;
         public Vector3 WorldCenterOfMass => body.worldCenterOfMass;
         public Vector3 LinearVelocity => body.linearVelocity;
         public Vector3 AngularVelocity => body.angularVelocity;
@@ -97,7 +99,9 @@ namespace Farion.Gameplay.Flight
 
         [Header("Surface Contact")]
         [SerializeField] SpacecraftSurfaceContactProbe surfaceContactProbe;
-        [SerializeField] bool suspendRotationWhileInSurfaceContact = true;
+        [Tooltip("Turn authority retained while the hull rests on a surface. Below one the ship settles instead of skating, but it must stay above zero or the nose can never be raised for takeoff.")]
+        [Range(0.1f, 1f)]
+        [SerializeField] float surfaceContactAngularScale = 0.6f;
 
         Rigidbody cachedRigidbody;
         RigidbodySpacecraftPhysicsBody offlinePhysicsBody;
@@ -159,9 +163,10 @@ namespace Farion.Gameplay.Flight
         public Vector3 RelativeVelocity => Rigidbody.linearVelocity - ResolveFlightReferenceVelocity();
         public float Speed => Velocity.magnitude;
         public float RelativeSpeed => RelativeVelocity.magnitude;
-        public bool RotationSuspendedByContact => suspendRotationWhileInSurfaceContact &&
-            surfaceContactProbe != null &&
-            surfaceContactProbe.HasContact;
+        public bool InSurfaceContact =>
+            surfaceContactProbe != null && surfaceContactProbe.HasContact;
+        public float SurfaceContactAngularScale =>
+            Mathf.Clamp(surfaceContactAngularScale, 0.1f, 1f);
 
         void Awake()
         {
@@ -406,7 +411,9 @@ namespace Farion.Gameplay.Flight
             }
 
             lastGravityAcceleration =
-                source.CalculateReferenceFrameAcceleration(physicsBody.Position);
+                source.CalculateReferenceFrameAcceleration(
+                    physicsBody.Position,
+                    physicsBody.LinearVelocity);
             physicsBody.AddForce(lastGravityAcceleration, ForceMode.Acceleration);
         }
 
@@ -469,11 +476,13 @@ namespace Farion.Gameplay.Flight
 
         void ApplyFlightControl(float deltaTime, ISpacecraftPhysicsBody physicsBody)
         {
+            Quaternion bodyRotation = physicsBody.Rotation;
+            Quaternion inverseBodyRotation = Quaternion.Inverse(bodyRotation);
             Vector3 relativeVelocity = physicsBody.LinearVelocity -
                 ResolveFlightReferenceVelocity(physicsBody.WorldCenterOfMass);
-            Vector3 localRelativeVelocity = transform.InverseTransformDirection(relativeVelocity);
-            Vector3 localAngularVelocity = transform.InverseTransformDirection(physicsBody.AngularVelocity);
-            Vector3 localGravity = transform.InverseTransformDirection(lastGravityAcceleration);
+            Vector3 localRelativeVelocity = inverseBodyRotation * relativeVelocity;
+            Vector3 localAngularVelocity = inverseBodyRotation * physicsBody.AngularVelocity;
+            Vector3 localGravity = inverseBodyRotation * lastGravityAcceleration;
             SpacecraftFlightControlFrame frame = new(
                 currentCommand,
                 localRelativeVelocity,
@@ -497,23 +506,20 @@ namespace Farion.Gameplay.Flight
 
             float thrustScale = ConsumeFuel(deltaTime, output.LocalLinearAcceleration);
             lastLocalLinearAcceleration = output.LocalLinearAcceleration * thrustScale;
-            lastThrustAcceleration = transform.TransformDirection(lastLocalLinearAcceleration);
+            lastThrustAcceleration = bodyRotation * lastLocalLinearAcceleration;
             lastFlightAssistAcceleration =
-                transform.TransformDirection(output.LocalAssistAcceleration * thrustScale);
+                bodyRotation * (output.LocalAssistAcceleration * thrustScale);
             lastGravityCompensationAcceleration =
-                transform.TransformDirection(output.LocalGravityCompensation * thrustScale);
+                bodyRotation * (output.LocalGravityCompensation * thrustScale);
 
             if (lastThrustAcceleration.sqrMagnitude > 0.000001f)
             {
                 physicsBody.AddForce(lastThrustAcceleration, ForceMode.Acceleration);
             }
 
-            lastLocalAngularAcceleration = output.LocalAngularAcceleration;
-            if (RotationSuspendedByContact)
-            {
-                lastLocalAngularAcceleration = Vector3.zero;
-                return;
-            }
+            lastLocalAngularAcceleration = InSurfaceContact
+                ? output.LocalAngularAcceleration * SurfaceContactAngularScale
+                : output.LocalAngularAcceleration;
 
             if (lastLocalAngularAcceleration.sqrMagnitude > 0.000001f)
             {
@@ -568,10 +574,11 @@ namespace Farion.Gameplay.Flight
 
         void RefreshTelemetry(ISpacecraftPhysicsBody physicsBody)
         {
+            Quaternion inverseBodyRotation = Quaternion.Inverse(physicsBody.Rotation);
             Vector3 relativeVelocity = physicsBody.LinearVelocity -
                 ResolveFlightReferenceVelocity(physicsBody.WorldCenterOfMass);
-            Vector3 localRelativeVelocity = transform.InverseTransformDirection(relativeVelocity);
-            Vector3 localAngularVelocity = transform.InverseTransformDirection(physicsBody.AngularVelocity);
+            Vector3 localRelativeVelocity = inverseBodyRotation * relativeVelocity;
+            Vector3 localAngularVelocity = inverseBodyRotation * physicsBody.AngularVelocity;
             currentThrusterCommand = BuildThrusterCommand(
                 lastLocalLinearAcceleration,
                 lastLocalAngularAcceleration);
@@ -672,14 +679,14 @@ namespace Farion.Gameplay.Flight
             flightProfile != null ? flightProfile.IdleFuelPerSecond : 0f;
 
         static SpacecraftFlightControlSettings DefaultControlSettings => new(
-            new Vector3(45f, 40f, 180f),
-            new Vector3(45f, 40f, 260f),
-            new Vector3(45f, 40f, 70f),
-            new Vector3(12f, 16f, 20f),
-            new Vector3(12f, 16f, 34f),
-            new Vector3(12f, 16f, 18f),
-            new Vector3(65f, 22f, 110f) * Mathf.Deg2Rad,
-            new Vector3(180f, 75f, 280f) * Mathf.Deg2Rad,
+            new Vector3(60f, 60f, 250f),
+            new Vector3(60f, 60f, 650f),
+            new Vector3(60f, 60f, 90f),
+            new Vector3(18f, 24f, 32f),
+            new Vector3(18f, 24f, 60f),
+            new Vector3(18f, 24f, 30f),
+            new Vector3(65f, 35f, 110f) * Mathf.Deg2Rad,
+            new Vector3(180f, 120f, 280f) * Mathf.Deg2Rad,
             new Vector3(2.8f, 2.8f, 2.2f),
             new Vector3(7f, 7f, 9f),
             3.2f,
@@ -687,7 +694,6 @@ namespace Farion.Gameplay.Flight
             limitManualFlightEnvelope: true,
             manualEnvelopeStart: 0.85f,
             boostSurgeStrength: 0.8f,
-            optimalSpeedBandStart: 0.4f,
             optimalSpeedBandEnd: 0.75f,
             offBandAngularScale: 0.55f);
 

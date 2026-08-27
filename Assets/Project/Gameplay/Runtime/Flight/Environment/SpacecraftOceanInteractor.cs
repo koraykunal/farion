@@ -81,12 +81,17 @@ namespace Farion.Gameplay.Flight
                 return;
             }
 
-            RefreshInteraction();
+            RefreshInteraction(physicsBody);
             ApplyInteractionForces(deltaTime, physicsBody);
         }
 
         [ContextMenu("Refresh Ocean Interaction")]
         public void RefreshInteraction()
+        {
+            RefreshInteraction(null);
+        }
+
+        public void RefreshInteraction(ISpacecraftPhysicsBody physicsBody)
         {
             ResolveComponents();
 
@@ -106,7 +111,10 @@ namespace Farion.Gameplay.Flight
             Vector3 buoyancySum = Vector3.zero;
             for (int i = 0; i < buoyancyPointCount; i++)
             {
-                Vector3 worldPoint = transform.TransformPoint(profile.GetBuoyancyPointLocal(i));
+                Vector3 worldPoint = physicsBody != null
+                    ? physicsBody.Position + physicsBody.Rotation *
+                        Vector3.Scale(profile.GetBuoyancyPointLocal(i), transform.lossyScale)
+                    : transform.TransformPoint(profile.GetBuoyancyPointLocal(i));
                 Vector3 acceleration = profile.EvaluateBuoyancyPoint(
                     frame,
                     worldPoint,

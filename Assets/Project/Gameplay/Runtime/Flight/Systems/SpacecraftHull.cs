@@ -23,7 +23,6 @@ namespace Farion.Gameplay.Flight
         ResourcePool integrity;
         Vector3 preStepLinearVelocity;
         Vector3 preStepAngularVelocity;
-        Vector3 preStepCenterOfMass;
         float pendingImpactSpeed;
         bool externalSimulation;
 
@@ -74,7 +73,6 @@ namespace Farion.Gameplay.Flight
             Rigidbody body = Rigidbody;
             preStepLinearVelocity = body.linearVelocity;
             preStepAngularVelocity = body.angularVelocity;
-            preStepCenterOfMass = body.worldCenterOfMass;
         }
 
         public void Step()
@@ -179,7 +177,7 @@ namespace Farion.Gameplay.Flight
                     : Vector3.zero;
             Vector3 shipVelocity = preStepLinearVelocity + Vector3.Cross(
                 preStepAngularVelocity,
-                point - preStepCenterOfMass);
+                point - Rigidbody.worldCenterOfMass);
             pendingImpactSpeed = Mathf.Max(
                 pendingImpactSpeed,
                 (shipVelocity - otherVelocity).magnitude);

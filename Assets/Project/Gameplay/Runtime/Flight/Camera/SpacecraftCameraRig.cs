@@ -164,6 +164,14 @@ namespace Farion.Gameplay.Flight
             ApplyCamera(forceSnap: true);
         }
 
+        public void NotifyOriginShift(Vector3 originOffset)
+        {
+            if (hasExteriorTargetPosition)
+            {
+                lastExteriorTargetPosition -= originOffset;
+            }
+        }
+
         public void RefreshTargetBounds()
         {
             targetBoundsDirty = true;

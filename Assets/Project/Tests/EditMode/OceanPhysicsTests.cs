@@ -254,8 +254,14 @@ namespace Farion.Tests.EditMode
             try
             {
                 Quaternion bodyRotation = Quaternion.Euler(17f, 63f, -9f);
+                TestFieldAccess.SetField(
+                    body,
+                    "initialAngularVelocityDegreesPerSecond",
+                    new Vector3(0f, 0.3f, 0f));
                 body.transform.rotation = bodyRotation;
                 body.Rigidbody.rotation = bodyRotation;
+                body.ResetSimulationState();
+                body.CaptureAnalyticReference(Vector3.zero, Vector3.zero, 0f, 0d);
                 CelestialEnvironmentSample environment = new(
                     body,
                     true,

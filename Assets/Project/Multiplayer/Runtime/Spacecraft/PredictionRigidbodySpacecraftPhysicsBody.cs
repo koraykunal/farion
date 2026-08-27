@@ -15,6 +15,7 @@ namespace Farion.Multiplayer.Spacecraft
 
         Rigidbody Rigidbody => predictionRigidbody.Rigidbody;
         public Vector3 Position => Rigidbody.position;
+        public Quaternion Rotation => Rigidbody.rotation;
         public Vector3 WorldCenterOfMass => Rigidbody.worldCenterOfMass;
         public Vector3 LinearVelocity => Rigidbody.linearVelocity;
         public Vector3 AngularVelocity => Rigidbody.angularVelocity;

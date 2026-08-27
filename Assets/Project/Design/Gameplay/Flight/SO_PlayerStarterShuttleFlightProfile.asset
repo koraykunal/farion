@@ -12,24 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1f8a1d8643641deaa8b47dd88a78d20, type: 3}
   m_Name: SO_PlayerStarterShuttleFlightProfile
   m_EditorClassIdentifier: 
-  maxForwardSpeed: 180
-  maxBoostForwardSpeed: 260
-  maxReverseSpeed: 70
-  maxStrafeSpeed: 45
-  maxVerticalSpeed: 40
-  forwardAcceleration: 20
-  boostForwardAcceleration: 48
-  reverseAcceleration: 18
-  strafeAcceleration: 12
-  verticalAcceleration: 16
+  maxForwardSpeed: 250
+  maxBoostForwardSpeed: 650
+  maxReverseSpeed: 90
+  maxStrafeSpeed: 60
+  maxVerticalSpeed: 60
+  forwardAcceleration: 32
+  boostForwardAcceleration: 60
+  reverseAcceleration: 30
+  strafeAcceleration: 18
+  verticalAcceleration: 24
   brakeGain: 3.2
   pitchRateDeg: 65
-  yawRateDeg: 22
+  yawRateDeg: 35
   rollRateDeg: 110
   pitchAccelerationDeg: 180
-  yawAccelerationDeg: 75
+  yawAccelerationDeg: 120
   rollAccelerationDeg: 280
-  optimalSpeedBandStart: 0.4
   optimalSpeedBandEnd: 0.75
   offBandAngularScale: 0.55
   velocityGain: {x: 2.8, y: 2.8, z: 2.2}
@@ -40,10 +39,15 @@ MonoBehaviour:
   translationSpoolRate: 7
   rotationSpoolRate: 8
   boostSpoolRate: 5
+  boostSurgeStrength: 0.8
   inputDeadZone: 0.04
-  boostDrainPerSecond: 0.28
-  boostRechargePerSecond: 0.16
-  boostRechargeDelay: 1.2
+  fuelCapacity: 1000
+  fuelPerAccelerationUnit: 0.05
+  idleFuelPerSecond: 0
+  hullIntegrity: 500
+  impactToleranceSpeed: 12
+  criticalImpactSpeed: 90
+  minimumImpactMassRatio: 0.05
   rigidbodyMass: 12000
   overrideCenterOfMass: 0
   centerOfMass: {x: 0, y: 0, z: 0}

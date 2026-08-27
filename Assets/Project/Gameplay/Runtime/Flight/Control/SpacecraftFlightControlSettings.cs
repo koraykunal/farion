@@ -20,7 +20,6 @@ namespace Farion.Gameplay.Flight
             bool limitManualFlightEnvelope,
             float manualEnvelopeStart,
             float boostSurgeStrength,
-            float optimalSpeedBandStart,
             float optimalSpeedBandEnd,
             float offBandAngularScale)
         {
@@ -43,11 +42,7 @@ namespace Farion.Gameplay.Flight
             LimitManualFlightEnvelope = limitManualFlightEnvelope;
             ManualEnvelopeStart = Mathf.Clamp(manualEnvelopeStart, 0.1f, 0.99f);
             BoostSurgeStrength = Mathf.Max(0f, boostSurgeStrength);
-            OptimalSpeedBandStart = Mathf.Clamp01(optimalSpeedBandStart);
-            OptimalSpeedBandEnd = Mathf.Clamp(
-                optimalSpeedBandEnd,
-                OptimalSpeedBandStart,
-                1f);
+            OptimalSpeedBandEnd = Mathf.Clamp01(optimalSpeedBandEnd);
             OffBandAngularScale = Mathf.Clamp(offBandAngularScale, 0.1f, 1f);
         }
 
@@ -66,39 +61,26 @@ namespace Farion.Gameplay.Flight
         public bool CompensateGravity { get; }
         public bool LimitManualFlightEnvelope { get; }
         public float ManualEnvelopeStart { get; }
-        public float OptimalSpeedBandStart { get; }
         public float OptimalSpeedBandEnd { get; }
         public float OffBandAngularScale { get; }
 
         public float ManoeuvreAuthority(float forwardSpeed, float maxForwardSpeed)
         {
-            if (maxForwardSpeed <= 0.0001f)
+            if (maxForwardSpeed <= 0.0001f || OptimalSpeedBandEnd >= 0.9999f)
             {
                 return 1f;
             }
 
             float ratio = Mathf.Abs(forwardSpeed) / maxForwardSpeed;
-            if (ratio >= OptimalSpeedBandStart && ratio <= OptimalSpeedBandEnd)
+            if (ratio <= OptimalSpeedBandEnd)
             {
                 return 1f;
             }
 
-            if (ratio < OptimalSpeedBandStart)
-            {
-                return OptimalSpeedBandStart <= 0.0001f
-                    ? 1f
-                    : Mathf.Lerp(
-                        OffBandAngularScale,
-                        1f,
-                        ratio / OptimalSpeedBandStart);
-            }
-
-            return OptimalSpeedBandEnd >= 0.9999f
-                ? 1f
-                : Mathf.Lerp(
-                    1f,
-                    OffBandAngularScale,
-                    Mathf.InverseLerp(OptimalSpeedBandEnd, 1f, ratio));
+            return Mathf.Lerp(
+                1f,
+                OffBandAngularScale,
+                Mathf.InverseLerp(OptimalSpeedBandEnd, 1f, ratio));
         }
 
         public Vector3 PositiveSpeed(float boostAuthority)

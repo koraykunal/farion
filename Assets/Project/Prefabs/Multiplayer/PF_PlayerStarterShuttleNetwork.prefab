@@ -160,7 +160,7 @@ MonoBehaviour:
   _initializeOrder: 0
   _preventDespawnOnDisconnect: 1
   _defaultDespawnType: 0
-  _initializedTimestamp: -8584141847458253753
+  _initializedTimestamp: -8584138000223723792
 --- !u!114 &3078003891906690678
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -190,6 +190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f51b22b953e42e9a984584a2737ed88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.KeyboardBoardingInput
+  controlLock: {fileID: 0}
 --- !u!1 &4587107810443285778 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1030458938231136038, guid: ae3eb0240f77b6640acd08090f7b8fbf, type: 3}

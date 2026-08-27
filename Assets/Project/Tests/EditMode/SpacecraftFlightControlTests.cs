@@ -411,7 +411,7 @@ namespace Farion.Tests.EditMode
             {
                 TestFieldAccess.SetField(profile, "hullIntegrity", 100f);
                 TestFieldAccess.SetField(profile, "impactToleranceSpeed", 4f);
-                TestFieldAccess.SetField(profile, "impactDamagePerSpeedUnit", 10f);
+                TestFieldAccess.SetField(profile, "criticalImpactSpeed", 14f);
 
                 SpacecraftMotor motor = shipObject.AddComponent<SpacecraftMotor>();
                 TestFieldAccess.SetField(motor, "flightProfile", profile);
@@ -692,7 +692,31 @@ namespace Farion.Tests.EditMode
                     Vector3.zero,
                     Vector3.zero,
                     assisted: false),
-                Settings(0.4f, 0.75f, 0.55f));
+                Settings(0.75f, 0.55f));
+
+            Assert.That(
+                output.LocalAngularAcceleration.y,
+                Is.EqualTo(140f * Mathf.Deg2Rad).Within(0.0001f));
+        }
+
+        [Test]
+        public void StationaryShipKeepsFullTurnAuthority()
+        {
+            SpacecraftPilotCommand command = new(
+                Vector3.zero,
+                Vector3.up,
+                boost: false,
+                brake: false,
+                toggleFlightAssist: false);
+
+            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
+                Frame(
+                    command,
+                    Vector3.zero,
+                    Vector3.zero,
+                    Vector3.zero,
+                    assisted: false),
+                Settings(0.75f, 0.55f));
 
             Assert.That(
                 output.LocalAngularAcceleration.y,
@@ -716,26 +740,7 @@ namespace Farion.Tests.EditMode
                     Vector3.zero,
                     Vector3.zero,
                     assisted: false),
-                Settings(0.4f, 0.75f, 0.55f));
-
-            Assert.That(
-                output.LocalAngularAcceleration.y,
-                Is.EqualTo(140f * Mathf.Deg2Rad * 0.55f).Within(0.0001f));
-        }
-
-        [Test]
-        public void StationaryShipTurnsAtOffBandScale()
-        {
-            SpacecraftPilotCommand command = new(
-                Vector3.zero,
-                Vector3.up,
-                boost: false,
-                brake: false,
-                toggleFlightAssist: false);
-
-            SpacecraftFlightControlOutput output = SpacecraftFlightControlLaw.Evaluate(
-                Frame(command, Vector3.zero, Vector3.zero, Vector3.zero, assisted: false),
-                Settings(0.4f, 0.75f, 0.55f));
+                Settings(0.75f, 0.55f));
 
             Assert.That(
                 output.LocalAngularAcceleration.y,
@@ -815,7 +820,6 @@ namespace Farion.Tests.EditMode
         }
 
         static SpacecraftFlightControlSettings Settings(
-            float optimalSpeedBandStart = 0f,
             float optimalSpeedBandEnd = 1f,
             float offBandAngularScale = 1f)
         {
@@ -835,7 +839,6 @@ namespace Farion.Tests.EditMode
                 limitManualFlightEnvelope: true,
                 manualEnvelopeStart: 0.85f,
                 boostSurgeStrength: 0f,
-                optimalSpeedBandStart,
                 optimalSpeedBandEnd,
                 offBandAngularScale);
         }
@@ -845,6 +848,7 @@ namespace Farion.Tests.EditMode
             public Vector3 AccumulatedForce { get; private set; }
             public Vector3 AccumulatedTorque { get; private set; }
             public Vector3 Position => Vector3.zero;
+            public Quaternion Rotation => Quaternion.identity;
             public Vector3 WorldCenterOfMass => Vector3.zero;
             public Vector3 LinearVelocity => Vector3.zero;
             public Vector3 AngularVelocity => Vector3.zero;
