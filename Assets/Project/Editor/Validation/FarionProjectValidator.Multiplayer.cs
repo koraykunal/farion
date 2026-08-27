@@ -318,10 +318,21 @@ namespace Farion.Editor.Validation
             NetworkTickSmoother networkSmoother = playerVisual != null
                 ? playerVisual.GetComponent<NetworkTickSmoother>()
                 : null;
+            SkinnedMeshRenderer[] playerRenderers = playerVisual != null
+                ? playerVisual.GetComponentsInChildren<SkinnedMeshRenderer>(true)
+                : null;
+            SerializedProperty ownerHiddenRenderers = networkExplorer != null
+                ? new SerializedObject(networkExplorer)
+                    .FindProperty("ownerHiddenRenderers")
+                : null;
             if (networkObject == null ||
                 !networkObject.EnablePrediction ||
                 networkExplorer == null ||
                 playerVisual == null ||
+                playerRenderers == null ||
+                playerRenderers.Length == 0 ||
+                ownerHiddenRenderers == null ||
+                ownerHiddenRenderers.arraySize != playerRenderers.Length ||
                 !HasNetworkTickSmoother(
                     networkObject,
                     networkSmoother,

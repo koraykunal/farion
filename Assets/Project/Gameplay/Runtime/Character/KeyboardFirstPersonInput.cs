@@ -32,7 +32,7 @@ namespace Farion.Gameplay.Character
 
             CurrentInput = new FirstPersonInputState(
                 FarionInputActions.OnFootMove.ReadValue<Vector2>(),
-                FarionInputActions.ReadLook(
+                FarionInputActions.ReadLookDelta(
                     FarionInputActions.OnFootLook,
                     mouseSensitivity,
                     gamepadLookDegreesPerSecond),

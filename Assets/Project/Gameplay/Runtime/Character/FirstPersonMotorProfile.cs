@@ -34,12 +34,24 @@ namespace Farion.Gameplay.Character
         [Min(0f)]
         [SerializeField] float underwaterLinearDrag = 4f;
 
+        [Header("Surface Penetration")]
+        [Tooltip("How far the capsule may sit below the analytic surface before it is pushed out. Must exceed the collision mesh's own deviation from that surface, or the explorer is corrected every frame and jitters against its own ground.")]
+        [Min(0f)]
+        [SerializeField] float surfacePenetrationSlop = 0.35f;
+        [Tooltip("Rate at which deeper penetration is recovered, in metres per second. Zero teleports out in a single step.")]
+        [Min(0f)]
+        [SerializeField] float surfacePenetrationRecoverySpeed = 4f;
+
         [Header("Jump")]
+        [Tooltip("Jump height reached under the reference gravity below. The take-off speed derived from this pair is what stays constant, so the same legs carry the explorer far higher on a low gravity body.")]
         [Min(0f)]
         [SerializeField] float jumpHeight = 1.4f;
+        [Tooltip("Gravity the authored jump height refers to. Keep at Earth gravity so designers can reason about the jump in familiar terms.")]
+        [Min(0.01f)]
+        [SerializeField] float jumpReferenceGravity = 9.81f;
         [Min(0f)]
         [FormerlySerializedAs("jumpSpeed")]
-        [SerializeField] float maximumJumpSpeed = 5f;
+        [SerializeField] float maximumJumpSpeed = 8f;
         [Min(0f)]
         [SerializeField] float minimumJumpSpeed = 1.2f;
         [Range(0f, 1f)]
@@ -87,7 +99,11 @@ namespace Farion.Gameplay.Character
         public float UnderwaterAscendAcceleration => underwaterAscendAcceleration;
         public float UnderwaterGravityScale => underwaterGravityScale;
         public float UnderwaterLinearDrag => underwaterLinearDrag;
+        public float SurfacePenetrationSlop => Mathf.Max(0f, surfacePenetrationSlop);
+        public float SurfacePenetrationRecoverySpeed =>
+            Mathf.Max(0f, surfacePenetrationRecoverySpeed);
         public float JumpHeight => jumpHeight;
+        public float JumpReferenceGravity => Mathf.Max(0.01f, jumpReferenceGravity);
         public float MaximumJumpSpeed => maximumJumpSpeed;
         public float MinimumJumpSpeed => minimumJumpSpeed;
         public float MaxJumpEscapeSpeedRatio => maxJumpEscapeSpeedRatio;
@@ -119,7 +135,10 @@ namespace Farion.Gameplay.Character
             underwaterAscendAcceleration = Mathf.Max(0f, underwaterAscendAcceleration);
             underwaterGravityScale = Mathf.Clamp01(underwaterGravityScale);
             underwaterLinearDrag = Mathf.Max(0f, underwaterLinearDrag);
+            surfacePenetrationSlop = Mathf.Max(0f, surfacePenetrationSlop);
+            surfacePenetrationRecoverySpeed = Mathf.Max(0f, surfacePenetrationRecoverySpeed);
             jumpHeight = Mathf.Max(0f, jumpHeight);
+            jumpReferenceGravity = Mathf.Max(0.01f, jumpReferenceGravity);
             maximumJumpSpeed = Mathf.Max(0f, maximumJumpSpeed);
             minimumJumpSpeed = Mathf.Max(0f, minimumJumpSpeed);
             maxJumpEscapeSpeedRatio = Mathf.Clamp01(maxJumpEscapeSpeedRatio);

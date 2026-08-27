@@ -1,4 +1,4 @@
-namespace Farion.Editor
+﻿namespace Farion.Editor
 {
     public static class FarionAssetPaths
     {
@@ -16,6 +16,8 @@ namespace Farion.Editor
             "Assets/Project/Prefabs/Multiplayer/PF_PlayerStarterShuttleNetwork.prefab";
         public const string NetworkExplorerPrefab =
             "Assets/Project/Prefabs/Gameplay/Character/PF_PlayerExplorerNetwork.prefab";
+        public const string CoreExplorerPrefab =
+            "Assets/Project/Prefabs/Gameplay/Character/PF_PlayerExplorerCore.prefab";
 
         public const string UiSystemRootPrefab =
             "Assets/Project/Prefabs/UI/Foundation/PF_UI_SystemRoot.prefab";

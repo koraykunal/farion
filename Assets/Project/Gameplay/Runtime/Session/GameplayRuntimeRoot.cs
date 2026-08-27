@@ -65,12 +65,25 @@ namespace Farion.Gameplay.Session
 
         void Start()
         {
-            if (Mode == GameplaySessionMode.Offline && assignedShuttle != null)
+            if (Mode != GameplaySessionMode.Offline)
             {
-                CelestialSurfaceSettling.TrySettle(
-                    celestialFrameProvider,
-                    assignedShuttle.transform);
+                return;
             }
+
+            SettleOnSurface(assignedShuttle != null ? assignedShuttle.transform : null);
+            SettleOnSurface(possession != null && possession.ExplorerRoot != null
+                ? possession.ExplorerRoot.transform
+                : null);
+        }
+
+        void SettleOnSurface(Transform target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            CelestialSurfaceSettling.TrySettle(celestialFrameProvider, target);
         }
 
         void OnValidate()

@@ -14,6 +14,7 @@ namespace Farion.Gameplay.Input
         const string MouseSensitivityKey = "farion.input.mouse-sensitivity";
         const string InvertLookKey = "farion.input.invert-look";
         const float ReferenceGamepadLookRate = 120f;
+        const float ReferenceGamepadFrameRate = 60f;
 
         static InputActionAsset asset;
         static float mouseSensitivityScale = float.NaN;
@@ -138,6 +139,19 @@ namespace Farion.Gameplay.Input
             Vector2 scaled = action?.activeControl?.device is Mouse
                 ? ScaleMouseLook(value, mouseSensitivity * MouseSensitivityScale)
                 : ScaleGamepadLook(value, gamepadDegreesPerSecond);
+            return ApplyLookInversion(scaled);
+        }
+
+        public static Vector2 ReadLookDelta(
+            InputAction action,
+            float mouseSensitivity,
+            float gamepadDegreesPerSecond)
+        {
+            Vector2 value = action?.ReadValue<Vector2>() ?? Vector2.zero;
+            Vector2 scaled = action?.activeControl?.device is Mouse
+                ? ScaleMouseLook(value, mouseSensitivity * MouseSensitivityScale)
+                : ScaleGamepadLook(value, gamepadDegreesPerSecond) *
+                    (Time.deltaTime * ReferenceGamepadFrameRate);
             return ApplyLookInversion(scaled);
         }
 

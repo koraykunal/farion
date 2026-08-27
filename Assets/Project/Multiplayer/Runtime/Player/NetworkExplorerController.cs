@@ -125,7 +125,7 @@ namespace Farion.Multiplayer.Player
                 : null;
             motor.SetExternalSimulation(true);
             celestialProbe.SetExternalSimulation(true);
-            body.interpolation = RigidbodyInterpolation.None;
+            ApplyOwnerInterpolation(Owner.IsLocalClient);
             SetTickCallbacks(TickCallback.Tick | TickCallback.PostTick);
             ApplyPossessionState(possessionActive.Value);
         }
@@ -192,8 +192,21 @@ namespace Farion.Multiplayer.Player
         public override void OnOwnershipClient(NetworkConnection prevOwner)
         {
             ApplyPossessionState(possessionActive.Value);
+            ApplyOwnerInterpolation(IsOwner);
             SetOwnerRendererVisibility(
                 appliedPossessionActive && !IsOwner);
+        }
+
+        void ApplyOwnerInterpolation(bool owned)
+        {
+            if (body == null)
+            {
+                return;
+            }
+
+            body.interpolation = owned
+                ? RigidbodyInterpolation.Interpolate
+                : RigidbodyInterpolation.None;
         }
 
         public void BindScene(
@@ -235,6 +248,8 @@ namespace Farion.Multiplayer.Player
         {
             if (!IsOwner || !appliedPossessionActive || input == null)
             {
+                accumulatedYaw = 0f;
+                jumpQueued = false;
                 return default;
             }
 
@@ -271,7 +286,7 @@ namespace Farion.Multiplayer.Player
                 data.OriginSequence);
             bool staleOrigin = IsServerStarted &&
                 originAuthority != null &&
-                clamped.OriginSequence != originAuthority.CurrentSequence;
+                !originAuthority.SharesReferenceFrame(clamped.OriginSequence);
             FirstPersonMotorInput motorInput = staleOrigin
                 ? FirstPersonMotorInput.None
                 : new FirstPersonMotorInput(
@@ -360,7 +375,7 @@ namespace Farion.Multiplayer.Player
             Channel channel = Channel.Unreliable)
         {
             if (originAuthority != null &&
-                data.OriginSequence != originAuthority.CurrentSequence)
+                !originAuthority.SharesReferenceFrame(data.OriginSequence))
             {
                 return;
             }

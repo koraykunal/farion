@@ -14,7 +14,7 @@ namespace Farion.Gameplay.Character
 
         [Header("View")]
         [Min(0f)]
-        [SerializeField] float eyeHeight = 1.65f;
+        [SerializeField] float eyeHeight = 0.65f;
         [Range(1f, 89f)]
         [SerializeField] float pitchLimit = 82f;
         [Min(0f)]

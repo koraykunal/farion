@@ -54,6 +54,7 @@ namespace Farion.Gameplay.Interaction
 
         [Header("Explorer")]
         [SerializeField] GameObject explorerRoot;
+        public GameObject ExplorerRoot => explorerRoot;
         [SerializeField] Rigidbody explorerRigidbody;
         [SerializeField] FirstPersonMotor explorerMotor;
         [SerializeField] KeyboardFirstPersonInput explorerInput;
@@ -515,9 +516,11 @@ namespace Farion.Gameplay.Interaction
 
         void BindControlLock()
         {
+            ResolveInputSource();
             explorerInput?.SetControlLock(controlLock);
             spacecraftInput?.SetControlLock(controlLock);
             explorerInteractionRaycaster?.SetControlLock(controlLock);
+            resolvedBoardingInput?.SetControlLock(controlLock);
         }
 
         void BindPossessionInteractables()

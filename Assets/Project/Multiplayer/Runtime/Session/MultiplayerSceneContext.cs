@@ -188,6 +188,7 @@ namespace Farion.Multiplayer.Session
             originAuthority?.BindRebaser(originRebaser);
             originAuthority?.SetServerTrackingObserverSource(
                 surfaceCollisionObservers);
+            originAuthority?.BindSimulation(gravitySimulation);
             playerSpawner?.BindContext(this, originAuthority);
         }
 
@@ -469,6 +470,7 @@ namespace Farion.Multiplayer.Session
             ownedSpacecraft = ship;
             ApplyPilotCameraView();
             ship.Input?.SetControlLock(controlLock);
+            ship.BoardingInput?.SetControlLock(controlLock);
             if (ship.Input != null)
             {
                 ship.Input.enabled = true;
@@ -527,6 +529,8 @@ namespace Farion.Multiplayer.Session
                     ship.Input.enabled = false;
                     ship.Input.SetControlLock(null);
                 }
+
+                ship.BoardingInput?.SetControlLock(null);
 
                 LocalPilotContextBinding.Apply(ship.transform, null);
             }
@@ -718,8 +722,6 @@ namespace Farion.Multiplayer.Session
                     gameObject.AddComponent<MultiplayerSurfaceCollisionObserverSource>();
             }
 
-            // Network prediction and reconciliation share one authored frame.
-            // A local observer-driven frame switch would diverge between peers.
             gravitySimulation?.SetPhysicsReferenceObserverSource(null);
 
             for (int i = 0; i < surfacePatchSystems.Count; i++)

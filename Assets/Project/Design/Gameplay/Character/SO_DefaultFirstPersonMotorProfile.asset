@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9efe13234b84b80b23650e508c22a4a, type: 3}
   m_Name: SO_DefaultFirstPersonMotorProfile
   m_EditorClassIdentifier: 
-  walkSpeed: 5
-  sprintSpeed: 8
+  walkSpeed: 2.5
+  sprintSpeed: 6
   groundAcceleration: 28
   airAcceleration: 8
   brakingAcceleration: 16
@@ -24,8 +24,11 @@ MonoBehaviour:
   underwaterAscendAcceleration: 14
   underwaterGravityScale: 0.35
   underwaterLinearDrag: 4
+  surfacePenetrationSlop: 0.35
+  surfacePenetrationRecoverySpeed: 4
   jumpHeight: 1.4
-  maximumJumpSpeed: 5
+  jumpReferenceGravity: 9.81
+  maximumJumpSpeed: 8
   minimumJumpSpeed: 1.2
   maxJumpEscapeSpeedRatio: 0.45
   jumpCooldown: 0.15
