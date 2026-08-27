@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Farion.Rendering.Celestial;
 using Farion.Simulation.Planetary;
 using Farion.Tests.Support;
 using NUnit.Framework;
@@ -19,6 +20,106 @@ namespace Farion.Tests.EditMode
             }
 
             createdObjects.Clear();
+        }
+
+        [Test]
+        public void CubeProjection_RoundTripsFaceParametersIncludingNeighbourOverhang()
+        {
+            for (int face = 0; face < 6; face++)
+            {
+                for (int ui = 0; ui <= 8; ui++)
+                {
+                    for (int vi = 0; vi <= 8; vi++)
+                    {
+                        float u = -1f + ui * 0.25f;
+                        float v = -1f + vi * 0.25f;
+                        Vector3 direction = CelestialCubeProjection.ToDirection(
+                            (CelestialCubeFace)face,
+                            u,
+                            v);
+                        CelestialCubeProjection.Project(
+                            direction,
+                            out CelestialCubeFace resolvedFace,
+                            out float resolvedU,
+                            out float resolvedV);
+
+                        if (Mathf.Abs(u) < 0.999f && Mathf.Abs(v) < 0.999f)
+                        {
+                            Assert.That(resolvedFace, Is.EqualTo((CelestialCubeFace)face));
+                        }
+
+                        Vector3 resolvedDirection = CelestialCubeProjection.ToDirection(
+                            resolvedFace,
+                            resolvedU,
+                            resolvedV);
+                        Assert.That(
+                            Vector3.Distance(direction, resolvedDirection),
+                            Is.LessThan(0.0005f));
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void CubeProjection_TangentWarpKeepsAngularSpacingNearlyUniform()
+        {
+            Vector3 centerA = CelestialCubeProjection.ToDirection(CelestialCubeFace.PositiveY, 0f, 0f);
+            Vector3 centerB = CelestialCubeProjection.ToDirection(CelestialCubeFace.PositiveY, 0.01f, 0f);
+            Vector3 cornerA = CelestialCubeProjection.ToDirection(CelestialCubeFace.PositiveY, 0.98f, 0.98f);
+            Vector3 cornerB = CelestialCubeProjection.ToDirection(CelestialCubeFace.PositiveY, 0.99f, 0.98f);
+
+            float centerStep = Vector3.Angle(centerA, centerB);
+            float cornerStep = Vector3.Angle(cornerA, cornerB);
+
+            Assert.That(centerStep, Is.GreaterThan(0f));
+            Assert.That(cornerStep / centerStep, Is.GreaterThan(0.5f));
+            Assert.That(cornerStep / centerStep, Is.LessThan(2f));
+        }
+
+        [Test]
+        public void BandLimitedSampling_DropsOctavesAndFadesFeaturesBelowTheSampleFootprint()
+        {
+            Vector3 direction = new Vector3(0.31f, 0.72f, -0.62f).normalized;
+
+            float sharp = PlanetarySampling.SampleBandLimitedFractalSigned(
+                direction,
+                40f,
+                6,
+                2f,
+                0.5f,
+                907,
+                Vector3.zero,
+                0.00001f);
+            float blurred = PlanetarySampling.SampleBandLimitedFractalSigned(
+                direction,
+                40f,
+                6,
+                2f,
+                0.5f,
+                907,
+                Vector3.zero,
+                0.05f);
+            float unlimited = PlanetarySampling.SampleFractalSigned(
+                direction,
+                40f,
+                6,
+                2f,
+                0.5f,
+                907,
+                Vector3.zero);
+
+            Assert.That(sharp, Is.EqualTo(unlimited).Within(0.000001f));
+            Assert.That(blurred, Is.Not.EqualTo(unlimited).Within(0.000001f));
+
+            Assert.That(PlanetarySampling.ResolveFootprintFade(0.01f, 0f), Is.EqualTo(1f));
+            Assert.That(PlanetarySampling.ResolveFootprintFade(0.01f, 0.001f), Is.EqualTo(1f));
+            Assert.That(PlanetarySampling.ResolveFootprintFade(0.01f, 0.02f), Is.EqualTo(0f));
+            Assert.That(
+                PlanetarySampling.ResolveUsableOctaves(4f, 2f, 6, 0.5f),
+                Is.EqualTo(1f));
+            Assert.That(
+                PlanetarySampling.ResolveUsableOctaves(4f, 2f, 6, 0.000001f),
+                Is.EqualTo(6f));
         }
 
         [Test]

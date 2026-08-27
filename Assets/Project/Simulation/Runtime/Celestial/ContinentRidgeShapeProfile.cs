@@ -11,6 +11,14 @@ namespace Farion.Simulation.Celestial
         [Header("Seed")]
         [SerializeField] int seed = 5748;
 
+        [Header("Relief")]
+        [Tooltip("Metres of surface displacement per unit of accumulated noise. Absolute so terrain relief stays physically sized when the body radius changes; the noise layers below sum to roughly +13 / -9 units.")]
+        [Min(0f)]
+        [SerializeField] float elevationScaleMeters = 24f;
+        [Tooltip("Body radius the noise scales below were authored against. Every scale is rescaled by the actual radius over this one, so a continent or a dune keeps the same size in metres on a body of any radius.")]
+        [Min(1f)]
+        [SerializeField] float featureReferenceRadiusMeters = 1600f;
+
         [Header("Continents")]
         [Min(0f)]
         [SerializeField] float oceanDepthMultiplier = 5f;
@@ -169,7 +177,10 @@ namespace Farion.Simulation.Celestial
 
         public override float EvaluateDisplacement(float baseRadius, Vector3 unitDirection)
         {
-            return (EvaluateHeightRatio(unitDirection, 0f) - 1f) * Mathf.Max(0.01f, baseRadius);
+            return EvaluateElevationMeters(
+                unitDirection,
+                0f,
+                ResolveFeatureScaleFactor(baseRadius));
         }
 
         public override CelestialShapeSample EvaluateSample(float baseRadius, Vector3 unitDirection)
@@ -186,7 +197,10 @@ namespace Farion.Simulation.Celestial
             unitDirection = unitDirection.sqrMagnitude > 0f ? unitDirection.normalized : Vector3.up;
             return Mathf.Max(
                 0.01f,
-                baseRadius * EvaluateHeightRatio(unitDirection, angularSampleFootprint));
+                baseRadius + EvaluateElevationMeters(
+                    unitDirection,
+                    angularSampleFootprint,
+                    ResolveFeatureScaleFactor(baseRadius)));
         }
 
         public override CelestialShapeSample EvaluateSample(
@@ -197,17 +211,34 @@ namespace Farion.Simulation.Celestial
             baseRadius = Mathf.Max(0.01f, baseRadius);
             unitDirection = unitDirection.sqrMagnitude > 0f ? unitDirection.normalized : Vector3.up;
 
-            float heightRatio = EvaluateHeightRatio(unitDirection, angularSampleFootprint);
-            float radius = Mathf.Max(0.01f, baseRadius * heightRatio);
+            float featureScale = ResolveFeatureScaleFactor(baseRadius);
+            float radius = Mathf.Max(
+                0.01f,
+                baseRadius + EvaluateElevationMeters(
+                    unitDirection,
+                    angularSampleFootprint,
+                    featureScale));
             return new CelestialShapeSample(
                 radius,
-                EvaluateShadingData(unitDirection, angularSampleFootprint));
+                EvaluateShadingData(unitDirection, angularSampleFootprint, featureScale));
         }
 
-        float EvaluateHeightRatio(Vector3 unitDirection, float sampleFootprint)
+        float ResolveFeatureScaleFactor(float baseRadius)
+        {
+            return Mathf.Max(0.01f, baseRadius) / Mathf.Max(1f, featureReferenceRadiusMeters);
+        }
+
+        float EvaluateElevationMeters(
+            Vector3 unitDirection,
+            float sampleFootprint,
+            float featureScale)
         {
             float ridgeFilterRadius = ResolveRidgeFilterRadius(sampleFootprint);
-            float continentShape = continentNoise.Sample(unitDirection, seed + 100, sampleFootprint);
+            float continentShape = continentNoise.Sample(
+                unitDirection,
+                seed + 100,
+                sampleFootprint,
+                featureScale);
             continentShape = FarionMath.SmoothMax(continentShape, -oceanFloorDepth, oceanFloorSmoothing);
             float coastProximity = CalculateCoastProximity(continentShape);
 
@@ -221,34 +252,80 @@ namespace Farion.Simulation.Celestial
                 unitDirection,
                 seed + 200,
                 ridgeFilterRadius,
-                sampleFootprint);
+                sampleFootprint,
+                featureScale);
             float mountainMask = Blend(
                 0f,
                 mountainBlend,
-                mountainMaskNoise.Sample(unitDirection, seed + 300, sampleFootprint));
+                mountainMaskNoise.Sample(
+                    unitDirection,
+                    seed + 300,
+                    sampleFootprint,
+                    featureScale));
             mountainMask *= 1f - coastProximity * coastalMountainFade;
 
             float escarpmentShape = escarpmentNoise.Sample(
                 unitDirection,
                 seed + 1100,
                 ridgeFilterRadius,
-                sampleFootprint);
+                sampleFootprint,
+                featureScale);
             float escarpmentMask = Blend(
                 0f,
                 escarpmentBlend,
-                escarpmentMaskNoise.Sample(unitDirection, seed + 1200, sampleFootprint));
+                escarpmentMaskNoise.Sample(
+                    unitDirection,
+                    seed + 1200,
+                    sampleFootprint,
+                    featureScale));
             escarpmentMask *= 1f - coastProximity * coastalMountainFade;
 
             float detail = detailStrength <= 0f
                 ? 0f
-                : detailRidgeNoise.Sample(unitDirection, seed + 2100, 0f, sampleFootprint) +
-                    detailFieldNoise.Sample(unitDirection, seed + 2200, sampleFootprint);
+                : detailRidgeNoise.Sample(
+                        unitDirection,
+                        seed + 2100,
+                        0f,
+                        sampleFootprint,
+                        featureScale) +
+                    detailFieldNoise.Sample(
+                        unitDirection,
+                        seed + 2200,
+                        sampleFootprint,
+                        featureScale);
 
-            return 1f +
-                continentShape * 0.01f +
-                mountainShape * 0.01f * mountainMask +
-                escarpmentShape * 0.01f * escarpmentMask * escarpmentStrength +
-                detail * 0.01f * detailStrength;
+            return elevationScaleMeters * (
+                continentShape +
+                mountainShape * mountainMask +
+                escarpmentShape * escarpmentMask * escarpmentStrength +
+                detail * detailStrength);
+        }
+
+        public override float EstimatePeakElevationMeters()
+        {
+            float continentPeak = continentNoise.Elevation + continentNoise.VerticalShift;
+            float mountainPeak =
+                (ridgeNoise.Elevation + ridgeNoise.VerticalShift) * Mathf.Max(0f, mountainBlend);
+            float escarpmentPeak =
+                (escarpmentNoise.Elevation + escarpmentNoise.VerticalShift) *
+                Mathf.Max(0f, escarpmentBlend) *
+                Mathf.Max(0f, escarpmentStrength);
+            float detailPeak =
+                (detailRidgeNoise.Elevation + detailFieldNoise.Elevation) *
+                Mathf.Max(0f, detailStrength);
+            return elevationScaleMeters * Mathf.Max(
+                0f,
+                continentPeak + mountainPeak + escarpmentPeak + detailPeak);
+        }
+
+        public override float EstimateTroughElevationMeters()
+        {
+            float oceanFloor = -Mathf.Abs(oceanFloorDepth) *
+                (1f + Mathf.Max(0f, oceanDepthMultiplier));
+            float detailTrough =
+                -(detailRidgeNoise.Elevation + detailFieldNoise.Elevation) *
+                Mathf.Max(0f, detailStrength);
+            return elevationScaleMeters * Mathf.Min(0f, oceanFloor + detailTrough);
         }
 
         public override bool TrySampleGeology(
@@ -264,7 +341,8 @@ namespace Farion.Simulation.Celestial
                 return false;
             }
 
-            float mask = EvaluateEscarpmentMask(unitDirection);
+            float featureScale = ResolveFeatureScaleFactor(baseRadius);
+            float mask = EvaluateEscarpmentMask(unitDirection, featureScale);
             if (mask <= 0.0001f)
             {
                 sample = CelestialGeologySample.None;
@@ -274,16 +352,20 @@ namespace Farion.Simulation.Celestial
             float spanMeters = Mathf.Max(1f, geologySpanMeters);
             float step = spanMeters / baseRadius;
             BuildTangentBasis(unitDirection, out Vector3 tangent, out Vector3 bitangent);
-            float displacementScale = 0.01f * mask * escarpmentStrength * baseRadius;
-            float here = SampleEscarpmentShape(unitDirection) * displacementScale;
-            float tangentPlus =
-                SampleEscarpmentShape((unitDirection + tangent * step).normalized) * displacementScale;
-            float tangentMinus =
-                SampleEscarpmentShape((unitDirection - tangent * step).normalized) * displacementScale;
-            float bitangentPlus =
-                SampleEscarpmentShape((unitDirection + bitangent * step).normalized) * displacementScale;
-            float bitangentMinus =
-                SampleEscarpmentShape((unitDirection - bitangent * step).normalized) * displacementScale;
+            float displacementScale = elevationScaleMeters * mask * escarpmentStrength;
+            float here = SampleEscarpmentShape(unitDirection, featureScale) * displacementScale;
+            float tangentPlus = SampleEscarpmentShape(
+                (unitDirection + tangent * step).normalized,
+                featureScale) * displacementScale;
+            float tangentMinus = SampleEscarpmentShape(
+                (unitDirection - tangent * step).normalized,
+                featureScale) * displacementScale;
+            float bitangentPlus = SampleEscarpmentShape(
+                (unitDirection + bitangent * step).normalized,
+                featureScale) * displacementScale;
+            float bitangentMinus = SampleEscarpmentShape(
+                (unitDirection - bitangent * step).normalized,
+                featureScale) * displacementScale;
 
             Vector3 gradient =
                 tangent * (tangentPlus - tangentMinus) +
@@ -303,18 +385,19 @@ namespace Farion.Simulation.Celestial
             return sample.HasFeature;
         }
 
-        float SampleEscarpmentShape(Vector3 unitDirection)
+        float SampleEscarpmentShape(Vector3 unitDirection, float featureScale)
         {
-            return escarpmentNoise.Sample(unitDirection, seed + 1100, 0f, 0f);
+            return escarpmentNoise.Sample(unitDirection, seed + 1100, 0f, 0f, featureScale);
         }
 
-        float EvaluateEscarpmentMask(Vector3 unitDirection)
+        float EvaluateEscarpmentMask(Vector3 unitDirection, float featureScale)
         {
             float mask = Blend(
                 0f,
                 escarpmentBlend,
-                escarpmentMaskNoise.Sample(unitDirection, seed + 1200));
-            float continentShape = continentNoise.Sample(unitDirection, seed + 100);
+                escarpmentMaskNoise.Sample(unitDirection, seed + 1200, 0f, featureScale));
+            float continentShape =
+                continentNoise.Sample(unitDirection, seed + 100, 0f, featureScale);
             continentShape = FarionMath.SmoothMax(continentShape, -oceanFloorDepth, oceanFloorSmoothing);
             float coastProximity = CalculateCoastProximity(continentShape);
             return Mathf.Max(0f, mask * (1f - coastProximity * coastalMountainFade));
@@ -332,24 +415,49 @@ namespace Farion.Simulation.Celestial
             return Mathf.Max(0f, angularSampleFootprint) * 1.5f;
         }
 
-        Vector4 EvaluateShadingData(Vector3 unitDirection, float sampleFootprint)
+        Vector4 EvaluateShadingData(
+            Vector3 unitDirection,
+            float sampleFootprint,
+            float featureScale)
         {
-            float large = largeNoise.Sample01(unitDirection, seed + 400, sampleFootprint);
-            float detailWarp = detailWarpNoise.Sample(unitDirection, seed + 500, sampleFootprint);
-            float detail = detailNoise.Sample01(unitDirection + Vector3.one * detailWarp * 0.1f, seed + 600, sampleFootprint);
-            float small = smallNoise.Sample01(unitDirection, seed + 700, sampleFootprint);
+            float large = largeNoise.Sample01(
+                unitDirection,
+                seed + 400,
+                sampleFootprint,
+                featureScale);
+            float detailWarp = detailWarpNoise.Sample(
+                unitDirection,
+                seed + 500,
+                sampleFootprint,
+                featureScale);
+            float detail = detailNoise.Sample01(
+                unitDirection + Vector3.one * detailWarp * 0.1f,
+                seed + 600,
+                sampleFootprint,
+                featureScale);
+            float small = smallNoise.Sample01(
+                unitDirection,
+                seed + 700,
+                sampleFootprint,
+                featureScale);
 
             Vector3 warpOffset = new(
-                smallNoise.Sample(unitDirection, seed + 800, sampleFootprint),
-                smallNoise.Sample(unitDirection, seed + 900, sampleFootprint),
-                smallNoise.Sample(unitDirection, seed + 1000, sampleFootprint));
+                smallNoise.Sample(unitDirection, seed + 800, sampleFootprint, featureScale),
+                smallNoise.Sample(unitDirection, seed + 900, sampleFootprint, featureScale),
+                smallNoise.Sample(unitDirection, seed + 1000, sampleFootprint, featureScale));
 
-            float warped = detailNoise.Sample01(unitDirection + warpOffset * 0.1f, seed + 1100, sampleFootprint);
+            float warped = detailNoise.Sample01(
+                unitDirection + warpOffset * 0.1f,
+                seed + 1100,
+                sampleFootprint,
+                featureScale);
             return new Vector4(large, detail, small, warped);
         }
 
         void OnValidate()
         {
+            elevationScaleMeters = Mathf.Max(0f, elevationScaleMeters);
+            featureReferenceRadiusMeters = Mathf.Max(1f, featureReferenceRadiusMeters);
             oceanDepthMultiplier = Mathf.Max(0f, oceanDepthMultiplier);
             oceanFloorSmoothing = Mathf.Max(0f, oceanFloorSmoothing);
             coastalShelfWidth = Mathf.Max(0f, coastalShelfWidth);
@@ -409,33 +517,7 @@ namespace Farion.Simulation.Celestial
 
         static float ResolveFadeWeight(float fadeFootprint, float sampleFootprint)
         {
-            if (fadeFootprint <= 0f || sampleFootprint <= 0f)
-            {
-                return 1f;
-            }
-
-            return 1f - Mathf.SmoothStep(
-                0f,
-                1f,
-                Mathf.InverseLerp(fadeFootprint * 0.5f, fadeFootprint, sampleFootprint));
-        }
-
-        static float ResolveUsableOctaves(float scale, float lacunarity, int octaves, float sampleFootprint)
-        {
-            if (sampleFootprint <= 0f)
-            {
-                return octaves;
-            }
-
-            float nyquistFrequency = 1f / (2f * sampleFootprint);
-            if (scale >= nyquistFrequency)
-            {
-                return 1f;
-            }
-
-            float safeLacunarity = Mathf.Max(1.0001f, lacunarity);
-            float usable = 1f + Mathf.Log(nyquistFrequency / scale) / Mathf.Log(safeLacunarity);
-            return Mathf.Clamp(usable, 1f, octaves);
+            return PlanetarySampling.ResolveFootprintFade(fadeFootprint, sampleFootprint);
         }
 
         [System.Serializable]
@@ -464,43 +546,44 @@ namespace Farion.Simulation.Celestial
 
             public float Sample(Vector3 direction, int noiseSeed, float sampleFootprint)
             {
-                float fade = ResolveFadeWeight(FadeFootprint, sampleFootprint);
+                return Sample(direction, noiseSeed, sampleFootprint, 1f);
+            }
+
+            public float Sample(
+                Vector3 direction,
+                int noiseSeed,
+                float sampleFootprint,
+                float featureScale)
+            {
+                featureScale = Mathf.Max(0.0001f, featureScale);
+                float scale = Scale * featureScale;
+                float fade = ResolveFadeWeight(FadeFootprint / featureScale, sampleFootprint);
                 if (fade <= 0f)
                 {
                     return 0f;
                 }
 
-                float usableOctaves = ResolveUsableOctaves(Scale, Lacunarity, Octaves, sampleFootprint);
-                int wholeOctaves = Mathf.Clamp(Mathf.FloorToInt(usableOctaves), 1, Octaves);
-                float noise = PlanetarySampling.SampleFractalSigned(
+                float noise = PlanetarySampling.SampleBandLimitedFractalSigned(
                     direction,
-                    Scale,
-                    wholeOctaves,
+                    scale,
+                    Octaves,
                     Lacunarity,
                     Persistence,
                     noiseSeed,
-                    Offset);
-
-                float blend = Mathf.Clamp01(usableOctaves - wholeOctaves);
-                if (blend > 0f && wholeOctaves < Octaves)
-                {
-                    float finer = PlanetarySampling.SampleFractalSigned(
-                        direction,
-                        Scale,
-                        wholeOctaves + 1,
-                        Lacunarity,
-                        Persistence,
-                        noiseSeed,
-                        Offset);
-                    noise = Mathf.Lerp(noise, finer, blend);
-                }
+                    Offset,
+                    sampleFootprint);
 
                 return (noise * Elevation + VerticalShift) * fade;
             }
 
-            public float Sample01(Vector3 direction, int noiseSeed, float sampleFootprint)
+            public float Sample01(
+                Vector3 direction,
+                int noiseSeed,
+                float sampleFootprint,
+                float featureScale = 1f)
             {
-                return Mathf.Clamp01(Sample(direction, noiseSeed, sampleFootprint) * 0.5f + 0.5f);
+                return Mathf.Clamp01(
+                    Sample(direction, noiseSeed, sampleFootprint, featureScale) * 0.5f + 0.5f);
             }
 
             public void Clamp()
@@ -536,15 +619,29 @@ namespace Farion.Simulation.Celestial
                 float minimumSpatialSmoothing,
                 float sampleFootprint)
             {
-                float fade = ResolveFadeWeight(FadeFootprint, sampleFootprint);
+                return Sample(direction, noiseSeed, minimumSpatialSmoothing, sampleFootprint, 1f);
+            }
+
+            public float Sample(
+                Vector3 direction,
+                int noiseSeed,
+                float minimumSpatialSmoothing,
+                float sampleFootprint,
+                float featureScale)
+            {
+                featureScale = Mathf.Max(0.0001f, featureScale);
+                float scale = Scale * featureScale;
+                float fade = ResolveFadeWeight(FadeFootprint / featureScale, sampleFootprint);
                 if (fade <= 0f)
                 {
                     return 0f;
                 }
 
                 direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.up;
-                float center = SampleRaw(direction, noiseSeed);
-                float filterRadius = Mathf.Max(SpatialSmoothing, minimumSpatialSmoothing);
+                float center = SampleRaw(direction, noiseSeed, scale);
+                float filterRadius = Mathf.Max(
+                    SpatialSmoothing / featureScale,
+                    minimumSpatialSmoothing);
                 if (filterRadius <= 0f)
                 {
                     return center * fade;
@@ -557,27 +654,32 @@ namespace Farion.Simulation.Celestial
                 Vector3 diagonalA = (tangentA + tangentB).normalized;
                 Vector3 diagonalB = (tangentA - tangentB).normalized;
                 float smoothed = center * 0.24f;
-                smoothed += SampleOffset(direction, tangentA, filterRadius, noiseSeed) * 0.12f;
-                smoothed += SampleOffset(direction, -tangentA, filterRadius, noiseSeed) * 0.12f;
-                smoothed += SampleOffset(direction, tangentB, filterRadius, noiseSeed) * 0.12f;
-                smoothed += SampleOffset(direction, -tangentB, filterRadius, noiseSeed) * 0.12f;
-                smoothed += SampleOffset(direction, diagonalA, filterRadius, noiseSeed) * 0.07f;
-                smoothed += SampleOffset(direction, -diagonalA, filterRadius, noiseSeed) * 0.07f;
-                smoothed += SampleOffset(direction, diagonalB, filterRadius, noiseSeed) * 0.07f;
-                smoothed += SampleOffset(direction, -diagonalB, filterRadius, noiseSeed) * 0.07f;
+                smoothed += SampleOffset(direction, tangentA, filterRadius, noiseSeed, scale) * 0.12f;
+                smoothed += SampleOffset(direction, -tangentA, filterRadius, noiseSeed, scale) * 0.12f;
+                smoothed += SampleOffset(direction, tangentB, filterRadius, noiseSeed, scale) * 0.12f;
+                smoothed += SampleOffset(direction, -tangentB, filterRadius, noiseSeed, scale) * 0.12f;
+                smoothed += SampleOffset(direction, diagonalA, filterRadius, noiseSeed, scale) * 0.07f;
+                smoothed += SampleOffset(direction, -diagonalA, filterRadius, noiseSeed, scale) * 0.07f;
+                smoothed += SampleOffset(direction, diagonalB, filterRadius, noiseSeed, scale) * 0.07f;
+                smoothed += SampleOffset(direction, -diagonalB, filterRadius, noiseSeed, scale) * 0.07f;
                 return smoothed * fade;
             }
 
-            float SampleOffset(Vector3 direction, Vector3 tangent, float distance, int noiseSeed)
+            float SampleOffset(
+                Vector3 direction,
+                Vector3 tangent,
+                float distance,
+                int noiseSeed,
+                float scale)
             {
-                return SampleRaw((direction + tangent * distance).normalized, noiseSeed);
+                return SampleRaw((direction + tangent * distance).normalized, noiseSeed, scale);
             }
 
-            float SampleRaw(Vector3 direction, int noiseSeed)
+            float SampleRaw(Vector3 direction, int noiseSeed, float scale)
             {
                 float ridge = PlanetarySampling.SampleRidged01(
                     direction,
-                    Scale,
+                    scale,
                     Octaves,
                     Lacunarity,
                     Persistence,

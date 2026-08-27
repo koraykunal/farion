@@ -31,9 +31,9 @@ namespace Farion.Simulation.Celestial
             WaveSpeed = Mathf.Max(0f, waveSpeed);
             WaveTime = waveTime >= 0d ? waveTime : 0d;
             WavePhases = OceanWaveField.GetPhases(WaveTime, WaveSpeed);
-            Quaternion bodyRotation = body != null && body.UsesAnalyticMotion
-                ? body.EvaluateAnalyticRotation(WaveTime)
-                : (body != null ? body.transform.rotation : Quaternion.identity);
+            Quaternion bodyRotation = body != null
+                ? body.Rigidbody.rotation
+                : Quaternion.identity;
             WorldToBodyRotation = Quaternion.Inverse(bodyRotation);
         }
 

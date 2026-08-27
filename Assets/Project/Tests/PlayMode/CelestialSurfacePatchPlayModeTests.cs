@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Farion.Rendering.Celestial;
 using Farion.Simulation.Physics;
 using NUnit.Framework;
@@ -85,6 +86,7 @@ namespace Farion.Tests.PlayMode
             collisionObserver.position = farPosition;
             collisionObserver.linearVelocity =
                 bodyVisual.Body.GetVelocityAtPoint(farPosition);
+            yield return null;
             for (int frame = 0;
                  frame < 60 &&
                  (patchSystem.SurfaceModeActive || patchSystem.PatchTransitionPending);
@@ -93,6 +95,7 @@ namespace Farion.Tests.PlayMode
                 yield return null;
             }
 
+            yield return null;
             Assert.That(patchSystem.SurfaceModeActive, Is.False);
             Assert.That(patchSystem.PatchTransitionPending, Is.False);
             Assert.That(
@@ -125,12 +128,7 @@ namespace Farion.Tests.PlayMode
 
             yield return null;
             Assert.That(patchSystem.SurfaceModeActive, Is.True);
-            Assert.That(
-                patchSystem.CollisionAuthority,
-                Is.EqualTo(CelestialSurfaceCollisionAuthority.GlobalFallback));
-            Assert.That(patchSystem.ActiveColliderCount, Is.EqualTo(0));
-            Assert.That(globalRenderer.enabled, Is.False);
-            Assert.That(globalCollider.enabled, Is.True);
+            AssertSurfaceContractHolds(patchSystem, globalRenderer, globalCollider);
 
             Vector3 localSurfacePosition =
                 patchSystem.transform.position +
@@ -138,22 +136,14 @@ namespace Farion.Tests.PlayMode
             camera.transform.position = localSurfacePosition;
             collisionObserver.position = localSurfacePosition;
             collisionObserver.linearVelocity =
-                bodyVisual.Body.GetVelocityAtPoint(localSurfacePosition);
+                bodyVisual.Body.GetVelocityAtPoint(localSurfacePosition) +
+                camera.transform.right * 500f;
             yield return null;
 
-            if (patchSystem.PatchTransitionPending)
-            {
-                Assert.That(globalCollider.enabled, Is.True);
-                Assert.That(
-                    patchSystem.CollisionAuthority,
-                    Is.Not.EqualTo(CelestialSurfaceCollisionAuthority.LocalAuthoritative));
-            }
+            AssertSurfaceContractHolds(patchSystem, globalRenderer, globalCollider);
 
             remainingFrames = 600;
-            while ((!patchSystem.SurfaceModeActive ||
-                    patchSystem.PatchTransitionPending ||
-                    !patchSystem.LocalCollisionCoverageReady) &&
-                   remainingFrames-- > 0)
+            while (remainingFrames-- > 0)
             {
                 KeepObserverAtAltitude(
                     patchSystem,
@@ -163,9 +153,15 @@ namespace Farion.Tests.PlayMode
                     surfaceDirection,
                     outerRadius + 10f);
                 yield return null;
-            }
 
-            yield return null;
+                if (patchSystem.SurfaceModeActive &&
+                    !patchSystem.PatchTransitionPending &&
+                    patchSystem.LocalCollisionCoverageReady &&
+                    patchSystem.ActiveColliderCount > 0)
+                {
+                    break;
+                }
+            }
 
             Assert.That(patchSystem.SurfaceModeActive, Is.True);
             Assert.That(patchSystem.PatchTransitionPending, Is.False);
@@ -197,10 +193,8 @@ namespace Farion.Tests.PlayMode
                 MeshFilter patchFilter = patchCollider.GetComponent<MeshFilter>();
                 Assert.That(patchFilter, Is.Not.Null);
                 Assert.That(patchCollider.sharedMesh, Is.Not.Null);
-                Assert.That(patchCollider.sharedMesh, Is.Not.SameAs(patchFilter.sharedMesh));
-                Assert.That(
-                    patchCollider.sharedMesh.vertexCount,
-                    Is.LessThan(patchFilter.sharedMesh.vertexCount));
+                Assert.That(patchCollider.sharedMesh, Is.SameAs(patchFilter.sharedMesh));
+                AssertGeomorphOffsetsAreCrackSafe(patchFilter.sharedMesh);
             }
 
             Assert.That(
@@ -221,10 +215,10 @@ namespace Farion.Tests.PlayMode
 
             Assert.That(
                 patchSystem.CollisionAuthority,
-                Is.EqualTo(CelestialSurfaceCollisionAuthority.GlobalFallback));
-            Assert.That(patchSystem.LocalCollisionCoverageReady, Is.False);
-            Assert.That(patchSystem.ActiveColliderCount, Is.EqualTo(0));
-            Assert.That(globalCollider.enabled, Is.True);
+                Is.EqualTo(CelestialSurfaceCollisionAuthority.LocalAuthoritative));
+            Assert.That(patchSystem.LocalCollisionCoverageReady, Is.True);
+            Assert.That(patchSystem.ActiveColliderCount, Is.GreaterThan(0));
+            Assert.That(globalCollider.enabled, Is.False);
 
             Vector3 farCameraPosition =
                 patchSystem.transform.position +
@@ -250,6 +244,78 @@ namespace Farion.Tests.PlayMode
             Assert.That(
                 globalCollider.sharedMesh,
                 Is.SameAs(terrainMesh.GetComponent<MeshFilter>().sharedMesh));
+        }
+
+        static void AssertGeomorphOffsetsAreCrackSafe(Mesh mesh)
+        {
+            List<Vector4> morphOffsets = new();
+            List<Vector4> morphNormals = new();
+            mesh.GetUVs(1, morphOffsets);
+            mesh.GetUVs(2, morphNormals);
+            Assert.That(
+                morphOffsets.Count,
+                Is.EqualTo(mesh.vertexCount),
+                "patch meshes must carry one geomorph offset per vertex");
+            Assert.That(
+                morphNormals.Count,
+                Is.EqualTo(mesh.vertexCount),
+                "patch meshes must carry one geomorph normal per vertex");
+
+            int rowSize = Mathf.RoundToInt(Mathf.Sqrt(mesh.vertexCount));
+            Assert.That(rowSize * rowSize, Is.EqualTo(mesh.vertexCount));
+
+            bool anyOffset = false;
+            for (int y = 0; y < rowSize; y++)
+            {
+                for (int x = 0; x < rowSize; x++)
+                {
+                    Vector4 offset = morphOffsets[y * rowSize + x];
+                    if ((x & 1) == 0 && (y & 1) == 0)
+                    {
+                        Assert.That(
+                            new Vector3(offset.x, offset.y, offset.z).magnitude,
+                            Is.LessThan(0.0001f),
+                            "coarse grid vertices must not move while morphing");
+                        continue;
+                    }
+
+                    anyOffset |= new Vector3(offset.x, offset.y, offset.z).sqrMagnitude > 0f;
+                }
+            }
+
+            Assert.That(anyOffset, Is.True, "geomorph offsets must be populated");
+        }
+
+        static void AssertSurfaceContractHolds(
+            CelestialSurfacePatchSystem patchSystem,
+            MeshRenderer globalRenderer,
+            MeshCollider globalCollider)
+        {
+            bool patchesOwnCollision = patchSystem.CollisionAuthority ==
+                CelestialSurfaceCollisionAuthority.LocalAuthoritative;
+
+            Assert.That(
+                globalCollider.enabled,
+                Is.EqualTo(!patchesOwnCollision),
+                "primary terrain collision must be active exactly when patches do not own it");
+            CelestialScaledSpaceVisual scaledSpace =
+                patchSystem.GetComponent<CelestialScaledSpaceVisual>();
+            if (scaledSpace == null || !scaledSpace.IsUsingScaledSpace)
+            {
+                Assert.That(
+                    globalRenderer.enabled,
+                    Is.EqualTo(!patchSystem.SurfaceRenderActive),
+                    "primary terrain must render exactly when patches do not");
+            }
+            Assert.That(
+                patchesOwnCollision || globalCollider.enabled,
+                Is.True,
+                "a collidable surface must exist at every moment");
+
+            if (patchesOwnCollision)
+            {
+                Assert.That(patchSystem.ActiveColliderCount, Is.GreaterThan(0));
+            }
         }
 
         static void DisableCameraDrivers(Camera camera)

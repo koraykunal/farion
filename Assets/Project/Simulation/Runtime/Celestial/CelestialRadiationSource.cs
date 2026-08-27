@@ -47,8 +47,11 @@ namespace Farion.Simulation.Celestial
             Vector3 directionToSource = offsetToSource / distance;
             Vector3 normal = worldNormal.sqrMagnitude > 0.0001f ? worldNormal.normalized : -directionToSource;
             float directExposure = Mathf.Clamp01(Vector3.Dot(normal, directionToSource));
-            float irradiance = profile.EvaluateNormalizedIrradiance(distance);
-            float equilibriumTemperature = profile.EvaluateEquilibriumTemperatureCelsius(distance, bondAlbedo);
+            float irradiance = profile.EvaluateNormalizedIrradiance(distance, sourceBody.Radius);
+            float equilibriumTemperature = profile.EvaluateEquilibriumTemperatureCelsius(
+                distance,
+                bondAlbedo,
+                sourceBody.Radius);
 
             sample = new CelestialInsolationSample(
                 sourceBody,

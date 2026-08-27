@@ -78,6 +78,19 @@ void ResolveExposure(uint3 id : SV_DispatchThreadID)
 
     if (total == 0u)
     {
+        float neutral = clamp(1.0, _FarionExposureLimits.y, _FarionExposureLimits.z);
+        float held = _FarionExposure[0];
+        if (held <= 0.0)
+        {
+            _FarionExposure[0] = neutral;
+            return;
+        }
+
+        float voidSpeed = neutral > held ? _FarionAdaptation.x : _FarionAdaptation.y;
+        _FarionExposure[0] = lerp(
+            held,
+            neutral,
+            saturate(1.0 - exp(-voidSpeed * _FarionLuminanceRange.w)));
         return;
     }
 

@@ -636,7 +636,6 @@ namespace Farion.Editor.Validation
             SerializedObject serialized = new(patchSystem);
             ValidateObjectReference(serialized, "profile", scope, report);
             ValidateObjectReference(serialized, "bodyVisual", scope, report);
-            ValidateObjectReference(serialized, "gravitySimulation", scope, report);
             if (!isSimulationZone)
             {
                 ValidateObjectReference(serialized, "targetCamera", scope, report);
@@ -697,17 +696,6 @@ namespace Farion.Editor.Validation
             {
                 report.AddError(
                     $"{scope} has no GravitySimulation in its scene.");
-            }
-            else
-            {
-                GravitySimulation assignedSimulation =
-                    serialized.FindProperty("gravitySimulation")?.objectReferenceValue
-                        as GravitySimulation;
-                if (assignedSimulation != null && assignedSimulation != sceneSimulation)
-                {
-                    report.AddError(
-                        $"{scope} must reference the GravitySimulation in its own scene.");
-                }
             }
         }
 

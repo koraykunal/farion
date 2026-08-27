@@ -25,7 +25,6 @@ namespace Farion.Rendering.Celestial
         [SerializeField] bool applyInEditMode = true;
         [SerializeField] bool updateEveryFrame = true;
 
-        // UnityEngine.Objects must not be created from a MonoBehaviour field initializer.
         MaterialPropertyBlock propertyBlock;
         CelestialStarVisualProfile subscribedProfile;
         bool warnedAboutInvalidVisualTransform;
@@ -156,7 +155,10 @@ namespace Farion.Rendering.Celestial
             bool shouldUseScaledSpace =
                 scaledSpaceProfile != null
                 && physicalDistance > 0.001f
-                && scaledSpaceProfile.ShouldUseScaledSpace(physicalDistance, IsUsingScaledSpace);
+                && scaledSpaceProfile.ShouldUseScaledSpace(
+                    physicalDistance,
+                    lightSource.Radius,
+                    IsUsingScaledSpace);
 
             if (!shouldUseScaledSpace)
             {

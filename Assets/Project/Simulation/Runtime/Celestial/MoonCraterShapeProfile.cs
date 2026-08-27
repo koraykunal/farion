@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Farion.Core.Numerics;
+using Farion.Simulation.Planetary;
 using UnityEngine;
 
 namespace Farion.Simulation.Celestial
@@ -15,10 +17,18 @@ namespace Farion.Simulation.Celestial
         const int DetailWarpOctaves = 4;
         const float DetailNoisePersistence = 0.5f;
         const float DetailNoiseLacunarity = 2.34f;
+        const int CraterGridResolution = 16;
+        const float CraterFootprintFadeRatio = 1.5f;
+        const float RidgeFootprintFadeRatio = 0.5f;
 
         [Header("Seed")]
         [SerializeField] int seed = 1;
         [SerializeField] int craterSeed = 17;
+
+        [Header("Relief")]
+        [Tooltip("Metres of surface displacement per unit of accumulated crater and ridge height. Absolute so relief stays physically sized when the body radius changes.")]
+        [Min(0f)]
+        [SerializeField] float reliefScaleMeters = 90f;
 
         [Header("Craters")]
         [SerializeField] bool cratersEnabled = true;
@@ -77,49 +87,137 @@ namespace Farion.Simulation.Celestial
         [Min(0.1f)]
         [SerializeField] float ejectaRayScale = 10f;
 
-        Crater[] cachedCraters;
-        Crater[] cachedEjectaCraters;
-        Vector4[] cachedBiomePoints;
-        int cachedHash;
+        CraterField craterField;
+
+        public override void PrepareSampling()
+        {
+            ResolveCraterField();
+        }
 
         public override float EvaluateDisplacement(float baseRadius, Vector3 unitDirection)
         {
-            return EvaluateUnitDisplacement(unitDirection) * Mathf.Max(0.01f, baseRadius);
+            return EvaluateUnitDisplacement(unitDirection, 0f) * reliefScaleMeters;
         }
 
         public override CelestialShapeSample EvaluateSample(float baseRadius, Vector3 unitDirection)
         {
+            return EvaluateSample(baseRadius, unitDirection, 0f);
+        }
+
+        public override float EvaluateRadius(
+            float baseRadius,
+            Vector3 unitDirection,
+            float angularSampleFootprint)
+        {
+            baseRadius = Mathf.Max(0.01f, baseRadius);
+            unitDirection = unitDirection.sqrMagnitude > 0f ? unitDirection.normalized : Vector3.up;
+            float displacement =
+                EvaluateUnitDisplacement(unitDirection, angularSampleFootprint) * reliefScaleMeters;
+            return Mathf.Max(0.01f, baseRadius + displacement);
+        }
+
+        public override CelestialShapeSample EvaluateSample(
+            float baseRadius,
+            Vector3 unitDirection,
+            float angularSampleFootprint)
+        {
             baseRadius = Mathf.Max(0.01f, baseRadius);
             unitDirection = unitDirection.sqrMagnitude > 0f ? unitDirection.normalized : Vector3.up;
 
-            float displacement = EvaluateUnitDisplacement(unitDirection) * baseRadius;
+            float displacement =
+                EvaluateUnitDisplacement(unitDirection, angularSampleFootprint) * reliefScaleMeters;
             float radius = Mathf.Max(0.01f, baseRadius + displacement);
             return new CelestialShapeSample(radius, EvaluateShadingData(unitDirection));
         }
 
-        float EvaluateUnitDisplacement(Vector3 unitDirection)
+        public override float EstimatePeakElevationMeters()
         {
-            EnsureCachedData();
+            return reliefScaleMeters *
+                (rimSteepness * rimWidth * rimWidth * craterRadiusMinMax.y * craterDepthScale +
+                    lowFrequencyAmplitude +
+                    ridgeAmplitude);
+        }
+
+        public override float EstimateTroughElevationMeters()
+        {
+            return -reliefScaleMeters *
+                (Mathf.Abs(floorHeightMinMax.x) * craterRadiusMinMax.y * craterDepthScale +
+                    lowFrequencyAmplitude +
+                    ridgeAmplitude);
+        }
+
+        float EvaluateUnitDisplacement(Vector3 unitDirection, float sampleFootprint)
+        {
+            CraterField field = ResolveCraterField();
 
             float unitDisplacement = 0f;
             if (cratersEnabled)
             {
-                for (int i = 0; i < cachedCraters.Length; i++)
+                List<Crater> candidates = field.Cells[GetCraterCellIndex(unitDirection)];
+                if (candidates != null)
                 {
-                    unitDisplacement += CalculateCraterHeight(unitDirection, cachedCraters[i]);
+                    for (int i = 0; i < candidates.Count; i++)
+                    {
+                        Crater crater = candidates[i];
+                        float fade = PlanetarySampling.ResolveFootprintFade(
+                            crater.Radius * CraterFootprintFadeRatio,
+                            sampleFootprint);
+                        if (fade <= 0f)
+                        {
+                            continue;
+                        }
+
+                        unitDisplacement += CalculateCraterHeight(unitDirection, crater) * fade;
+                    }
                 }
             }
 
             unitDisplacement *= craterDepthScale;
-            unitDisplacement += FractalNoise(unitDirection, lowFrequencyScale, lowFrequencyOctaves, 0.5f, 2f, seed + 1000) * lowFrequencyAmplitude;
-            unitDisplacement += RidgedNoise(unitDirection, ridgeScale, ridgeOctaves, ridgePersistence, ridgeLacunarity, ridgePower, seed + 2000) * ridgeAmplitude;
+            unitDisplacement += FractalNoise(
+                unitDirection,
+                lowFrequencyScale,
+                ResolveBandLimitedOctaves(lowFrequencyScale, 2f, lowFrequencyOctaves, sampleFootprint),
+                0.5f,
+                2f,
+                seed + 1000) * lowFrequencyAmplitude;
+
+            float ridgeFade = PlanetarySampling.ResolveFootprintFade(
+                RidgeFootprintFadeRatio / Mathf.Max(0.001f, ridgeScale),
+                sampleFootprint);
+            if (ridgeFade > 0f)
+            {
+                unitDisplacement += RidgedNoise(
+                    unitDirection,
+                    ridgeScale,
+                    ResolveBandLimitedOctaves(ridgeScale, ridgeLacunarity, ridgeOctaves, sampleFootprint),
+                    ridgePersistence,
+                    ridgeLacunarity,
+                    ridgePower,
+                    seed + 2000) * ridgeAmplitude * ridgeFade;
+            }
 
             return unitDisplacement;
         }
 
+        static int ResolveBandLimitedOctaves(
+            float scale,
+            float lacunarity,
+            int octaves,
+            float sampleFootprint)
+        {
+            return Mathf.Clamp(
+                Mathf.RoundToInt(PlanetarySampling.ResolveUsableOctaves(
+                    scale,
+                    lacunarity,
+                    octaves,
+                    sampleFootprint)),
+                1,
+                Mathf.Max(1, octaves));
+        }
+
         Vector4 EvaluateShadingData(Vector3 unitDirection)
         {
-            EnsureCachedData();
+            ResolveCraterField();
 
             Vector2 ejectaUv = CalculateEjectaUv(unitDirection);
             Vector3 biomeDirection = WarpDirection(
@@ -149,24 +247,30 @@ namespace Farion.Simulation.Celestial
             return new Vector4(ejectaUv.x, ejectaUv.y, detailNoise, biomeNoise);
         }
 
-        void EnsureCachedData()
+        CraterField ResolveCraterField()
         {
             int hash = CalculateSettingsHash();
-            if (cachedCraters != null && cachedHash == hash)
+            CraterField current = craterField;
+            if (current != null && current.Hash == hash)
             {
-                return;
+                return current;
             }
 
-            cachedHash = hash;
-            GenerateCraters();
-            GenerateBiomePoints();
-            SelectEjectaCraters();
+            Crater[] craters = GenerateCraters();
+            CraterField built = new(
+                hash,
+                craters,
+                BuildCraterGrid(craters),
+                GenerateBiomePoints(),
+                SelectEjectaCraters(craters));
+            craterField = built;
+            return built;
         }
 
-        void GenerateCraters()
+        Crater[] GenerateCraters()
         {
             int count = cratersEnabled ? Mathf.Max(1, craterCount) : 0;
-            cachedCraters = new Crater[count];
+            Crater[] craters = new Crater[count];
             DeterministicRandom random = new(seed + craterSeed);
 
             for (int i = 0; i < count; i++)
@@ -180,37 +284,76 @@ namespace Farion.Simulation.Celestial
 
                 float smoothness = Mathf.Lerp(smoothnessMinMax.x, smoothnessMinMax.y, 1f - sizeT);
 
-                cachedCraters[i] = new Crater(
+                craters[i] = new Crater(
                     random.OnUnitSphere(),
                     Mathf.Max(0.0001f, radius),
                     floorHeight,
                     Mathf.Max(0f, smoothness));
             }
+
+            return craters;
         }
 
-        void GenerateBiomePoints()
+        List<Crater>[] BuildCraterGrid(Crater[] craters)
         {
-            cachedBiomePoints = new Vector4[Mathf.Max(1, biomePointCount)];
+            int cellCount = CraterGridResolution *
+                CraterGridResolution *
+                CraterGridResolution;
+            List<Crater>[] cells = new List<Crater>[cellCount];
+            for (int craterIndex = 0; craterIndex < craters.Length; craterIndex++)
+            {
+                Crater crater = craters[craterIndex];
+                float influenceRadius = GetCraterInfluenceRadius(crater);
+                Vector3 minimum = crater.Centre - Vector3.one * influenceRadius;
+                Vector3 maximum = crater.Centre + Vector3.one * influenceRadius;
+                int minX = GetCraterCellCoordinate(minimum.x);
+                int minY = GetCraterCellCoordinate(minimum.y);
+                int minZ = GetCraterCellCoordinate(minimum.z);
+                int maxX = GetCraterCellCoordinate(maximum.x);
+                int maxY = GetCraterCellCoordinate(maximum.y);
+                int maxZ = GetCraterCellCoordinate(maximum.z);
+
+                for (int z = minZ; z <= maxZ; z++)
+                {
+                    for (int y = minY; y <= maxY; y++)
+                    {
+                        for (int x = minX; x <= maxX; x++)
+                        {
+                            int cellIndex = GetCraterCellIndex(x, y, z);
+                            cells[cellIndex] ??= new List<Crater>();
+                            cells[cellIndex].Add(crater);
+                        }
+                    }
+                }
+            }
+
+            return cells;
+        }
+
+        Vector4[] GenerateBiomePoints()
+        {
+            Vector4[] points = new Vector4[Mathf.Max(1, biomePointCount)];
             DeterministicRandom random = new(seed + 7000);
 
-            for (int i = 0; i < cachedBiomePoints.Length; i++)
+            for (int i = 0; i < points.Length; i++)
             {
                 Vector3 point = random.OnUnitSphere();
                 float radius = Mathf.Lerp(biomeRadiusMinMax.x, biomeRadiusMinMax.y, random.Value());
-                cachedBiomePoints[i] = new Vector4(point.x, point.y, point.z, Mathf.Max(0.0001f, radius));
+                points[i] = new Vector4(point.x, point.y, point.z, Mathf.Max(0.0001f, radius));
             }
+
+            return points;
         }
 
-        void SelectEjectaCraters()
+        Crater[] SelectEjectaCraters(Crater[] craters)
         {
-            if (!ejectaEnabled || desiredEjectaCraterCount <= 0 || cachedCraters.Length == 0)
+            if (!ejectaEnabled || desiredEjectaCraterCount <= 0 || craters.Length == 0)
             {
-                cachedEjectaCraters = Array.Empty<Crater>();
-                return;
+                return Array.Empty<Crater>();
             }
 
-            Crater[] candidates = new Crater[cachedCraters.Length];
-            Array.Copy(cachedCraters, candidates, cachedCraters.Length);
+            Crater[] candidates = new Crater[craters.Length];
+            Array.Copy(craters, candidates, craters.Length);
             Array.Sort(candidates, (a, b) => b.Radius.CompareTo(a.Radius));
 
             int poolSize = Mathf.Clamp(
@@ -253,13 +396,20 @@ namespace Farion.Simulation.Celestial
                 selectedCount++;
             }
 
-            cachedEjectaCraters = new Crater[selectedCount];
-            Array.Copy(selected, cachedEjectaCraters, selectedCount);
+            Crater[] ejecta = new Crater[selectedCount];
+            Array.Copy(selected, ejecta, selectedCount);
+            return ejecta;
         }
 
         float CalculateCraterHeight(Vector3 unitDirection, Crater crater)
         {
-            float x = Vector3.Distance(unitDirection, crater.Centre) / crater.Radius;
+            float distance = Vector3.Distance(unitDirection, crater.Centre);
+            if (distance > GetCraterInfluenceRadius(crater))
+            {
+                return 0f;
+            }
+
+            float x = distance / crater.Radius;
             float cavity = x * x - 1f;
             float rimX = Mathf.Min(x - 1f - rimWidth, 0f);
             float rim = rimSteepness * rimX * rimX;
@@ -269,9 +419,41 @@ namespace Farion.Simulation.Celestial
             return craterShape * crater.Radius;
         }
 
+        float GetCraterInfluenceRadius(Crater crater)
+        {
+            float influenceScale = Mathf.Max(
+                1f + rimWidth,
+                Mathf.Sqrt(1f + crater.Smoothness));
+            return crater.Radius * influenceScale;
+        }
+
+        static int GetCraterCellIndex(Vector3 direction)
+        {
+            return GetCraterCellIndex(
+                GetCraterCellCoordinate(direction.x),
+                GetCraterCellCoordinate(direction.y),
+                GetCraterCellCoordinate(direction.z));
+        }
+
+        static int GetCraterCellIndex(int x, int y, int z)
+        {
+            return x + CraterGridResolution *
+                (y + CraterGridResolution * z);
+        }
+
+        static int GetCraterCellCoordinate(float value)
+        {
+            float normalized = (Mathf.Clamp(value, -1f, 1f) + 1f) * 0.5f;
+            return Mathf.Clamp(
+                Mathf.FloorToInt(normalized * CraterGridResolution),
+                0,
+                CraterGridResolution - 1);
+        }
+
         Vector2 CalculateEjectaUv(Vector3 unitDirection)
         {
-            if (cachedEjectaCraters == null || cachedEjectaCraters.Length == 0)
+            Crater[] ejectaCraters = ResolveCraterField().EjectaCraters;
+            if (ejectaCraters.Length == 0)
             {
                 return Vector2.one;
             }
@@ -279,9 +461,9 @@ namespace Farion.Simulation.Celestial
             float minScaledDistance = float.PositiveInfinity;
             float angle = 0f;
 
-            for (int i = 0; i < cachedEjectaCraters.Length; i++)
+            for (int i = 0; i < ejectaCraters.Length; i++)
             {
-                Crater crater = cachedEjectaCraters[i];
+                Crater crater = ejectaCraters[i];
                 float scaledDistance = Vector3.Distance(crater.Centre, unitDirection) / Mathf.Max(0.0001f, crater.Radius * ejectaRayScale);
                 if (scaledDistance >= minScaledDistance)
                 {
@@ -315,16 +497,17 @@ namespace Farion.Simulation.Celestial
 
         float CalculateBiomeNoise(Vector3 unitDirection)
         {
-            if (cachedBiomePoints == null || cachedBiomePoints.Length == 0)
+            Vector4[] biomePoints = ResolveCraterField().BiomePoints;
+            if (biomePoints.Length == 0)
             {
                 return 1f;
             }
 
             float minDistance = float.PositiveInfinity;
-            for (int i = 0; i < cachedBiomePoints.Length; i++)
+            for (int i = 0; i < biomePoints.Length; i++)
             {
-                Vector3 point = new(cachedBiomePoints[i].x, cachedBiomePoints[i].y, cachedBiomePoints[i].z);
-                float radius = Mathf.Max(0.0001f, cachedBiomePoints[i].w);
+                Vector3 point = new(biomePoints[i].x, biomePoints[i].y, biomePoints[i].z);
+                float radius = Mathf.Max(0.0001f, biomePoints[i].w);
                 float distance = Vector3.Distance(unitDirection, point) / radius;
                 minDistance = Mathf.Min(minDistance, distance);
             }
@@ -361,6 +544,7 @@ namespace Farion.Simulation.Celestial
 
         void OnValidate()
         {
+            reliefScaleMeters = Mathf.Max(0f, reliefScaleMeters);
             craterCount = Mathf.Max(1, craterCount);
             craterRadiusMinMax.x = Mathf.Max(0.0001f, craterRadiusMinMax.x);
             craterRadiusMinMax.y = Mathf.Max(craterRadiusMinMax.x, craterRadiusMinMax.y);
@@ -378,10 +562,31 @@ namespace Farion.Simulation.Celestial
             biomeRadiusMinMax.y = Mathf.Max(biomeRadiusMinMax.x, biomeRadiusMinMax.y);
             detailNoiseScale = Mathf.Max(0.001f, detailNoiseScale);
             ejectaRayScale = Mathf.Max(0.1f, ejectaRayScale);
-            cachedCraters = null;
-            cachedEjectaCraters = null;
-            cachedBiomePoints = null;
+            craterField = null;
             NotifyChanged();
+        }
+
+        sealed class CraterField
+        {
+            public CraterField(
+                int hash,
+                Crater[] craters,
+                List<Crater>[] cells,
+                Vector4[] biomePoints,
+                Crater[] ejectaCraters)
+            {
+                Hash = hash;
+                Craters = craters;
+                Cells = cells;
+                BiomePoints = biomePoints;
+                EjectaCraters = ejectaCraters;
+            }
+
+            public int Hash { get; }
+            public Crater[] Craters { get; }
+            public List<Crater>[] Cells { get; }
+            public Vector4[] BiomePoints { get; }
+            public Crater[] EjectaCraters { get; }
         }
 
         static float FractalNoise(

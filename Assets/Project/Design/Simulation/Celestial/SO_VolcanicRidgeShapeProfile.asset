@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: SO_VolcanicRidgeShapeProfile
   m_EditorClassIdentifier:
   seed: 8123
+  elevationScaleMeters: 13
+  featureReferenceRadiusMeters: 500
   oceanDepthMultiplier: 1.6
   oceanFloorDepth: 0.9
   oceanFloorSmoothing: 0.35
@@ -27,6 +29,7 @@ MonoBehaviour:
     Scale: 0.35
     Elevation: 1.9
     VerticalShift: -0.15
+    FadeFootprint: 0
     Offset: {x: 3.4, y: -1.7, z: 2.9}
   mountainMaskNoise:
     Octaves: 4
@@ -35,6 +38,7 @@ MonoBehaviour:
     Scale: 0.45
     Elevation: 1
     VerticalShift: 0.25
+    FadeFootprint: 0
     Offset: {x: -2.1, y: 4.8, z: 0.6}
   ridgeNoise:
     Octaves: 4
@@ -42,10 +46,11 @@ MonoBehaviour:
     Persistence: 0.52
     Scale: 0.79
     Power: 2.15
-    Elevation: 7.0
+    Elevation: 7
     Gain: 0.8
     VerticalShift: 0.05
     SpatialSmoothing: 0.03
+    FadeFootprint: 0
     Offset: {x: 1.9, y: 2.3, z: -3.6}
   escarpmentNoise:
     Octaves: 4
@@ -102,6 +107,7 @@ MonoBehaviour:
     Scale: 2.96
     Elevation: 9.41
     VerticalShift: 0
+    FadeFootprint: 0
     Offset: {x: 0, y: 0, z: 0}
   detailNoise:
     Octaves: 4
@@ -110,6 +116,7 @@ MonoBehaviour:
     Scale: 1.5
     Elevation: 1
     VerticalShift: 0
+    FadeFootprint: 0
     Offset: {x: 0, y: 0, z: 0}
   largeNoise:
     Octaves: 4
@@ -118,6 +125,7 @@ MonoBehaviour:
     Scale: 1.77
     Elevation: 1
     VerticalShift: 0
+    FadeFootprint: 0
     Offset: {x: 0.25, y: -0.09, z: 0}
   smallNoise:
     Octaves: 5
@@ -126,4 +134,5 @@ MonoBehaviour:
     Scale: 4.44
     Elevation: 0.52
     VerticalShift: 0
+    FadeFootprint: 0
     Offset: {x: 0, y: 0, z: 0}

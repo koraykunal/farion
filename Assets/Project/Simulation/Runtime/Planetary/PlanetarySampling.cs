@@ -4,6 +4,79 @@ namespace Farion.Simulation.Planetary
 {
     public static class PlanetarySampling
     {
+        public static float ResolveFootprintFade(float featureFootprint, float sampleFootprint)
+        {
+            if (featureFootprint <= 0f || sampleFootprint <= 0f)
+            {
+                return 1f;
+            }
+
+            return 1f - Mathf.SmoothStep(
+                0f,
+                1f,
+                Mathf.InverseLerp(featureFootprint * 0.5f, featureFootprint, sampleFootprint));
+        }
+
+        public static float ResolveUsableOctaves(
+            float scale,
+            float lacunarity,
+            int octaves,
+            float sampleFootprint)
+        {
+            if (sampleFootprint <= 0f)
+            {
+                return octaves;
+            }
+
+            float nyquistFrequency = 1f / (2f * sampleFootprint);
+            if (scale >= nyquistFrequency)
+            {
+                return 1f;
+            }
+
+            float safeLacunarity = Mathf.Max(1.0001f, lacunarity);
+            float usable = 1f + Mathf.Log(nyquistFrequency / scale) / Mathf.Log(safeLacunarity);
+            return Mathf.Clamp(usable, 1f, octaves);
+        }
+
+        public static float SampleBandLimitedFractalSigned(
+            Vector3 direction,
+            float scale,
+            int octaves,
+            float lacunarity,
+            float persistence,
+            int seed,
+            Vector3 domainOffset,
+            float sampleFootprint)
+        {
+            float usableOctaves = ResolveUsableOctaves(scale, lacunarity, octaves, sampleFootprint);
+            int wholeOctaves = Mathf.Clamp(Mathf.FloorToInt(usableOctaves), 1, Mathf.Max(1, octaves));
+            float value = SampleFractalSigned(
+                direction,
+                scale,
+                wholeOctaves,
+                lacunarity,
+                persistence,
+                seed,
+                domainOffset);
+
+            float blend = Mathf.Clamp01(usableOctaves - wholeOctaves);
+            if (blend <= 0f || wholeOctaves >= octaves)
+            {
+                return value;
+            }
+
+            float finer = SampleFractalSigned(
+                direction,
+                scale,
+                wholeOctaves + 1,
+                lacunarity,
+                persistence,
+                seed,
+                domainOffset);
+            return Mathf.Lerp(value, finer, blend);
+        }
+
         public static float EvaluateRange(Vector2 range, float value, float blend)
         {
             float minimum = Mathf.Min(range.x, range.y);

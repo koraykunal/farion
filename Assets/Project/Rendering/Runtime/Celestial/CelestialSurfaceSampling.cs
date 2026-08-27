@@ -3,49 +3,66 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    internal static class CelestialSurfaceSampling
+    internal readonly struct CelestialSurfaceSampler
     {
-        public static CelestialShapeSample EvaluateSample(
+        readonly CelestialShapeProfile shapeProfile;
+        readonly CelestialSurfaceProfileBase surfaceProfile;
+        readonly float baseRadius;
+        readonly float angularFootprint;
+
+        CelestialSurfaceSampler(
+            CelestialShapeProfile shapeProfile,
+            CelestialSurfaceProfileBase surfaceProfile,
             float baseRadius,
-            Vector3 unitDirection,
-            float angularSampleFootprint,
+            float angularFootprint)
+        {
+            this.shapeProfile = shapeProfile;
+            this.surfaceProfile = surfaceProfile;
+            this.baseRadius = baseRadius;
+            this.angularFootprint = angularFootprint;
+        }
+
+        public static CelestialSurfaceSampler Create(
+            float baseRadius,
+            float angularFootprint,
             CelestialShapeProfile shapeProfile,
             CelestialSurfaceProfileBase surfaceProfile)
         {
+            CelestialShapeProfile resolvedShape = shapeProfile != null ? shapeProfile : null;
+            CelestialSurfaceProfileBase resolvedSurface = surfaceProfile != null ? surfaceProfile : null;
+            resolvedShape?.PrepareSampling();
+            return new CelestialSurfaceSampler(
+                resolvedShape,
+                resolvedSurface,
+                Mathf.Max(0.01f, baseRadius),
+                Mathf.Max(0f, angularFootprint));
+        }
+
+        public CelestialShapeSample EvaluateSample(Vector3 unitDirection)
+        {
             unitDirection = NormalizeDirection(unitDirection);
-            if (shapeProfile != null)
+            if (shapeProfile is not null)
             {
-                return shapeProfile.EvaluateSample(
-                    baseRadius,
-                    unitDirection,
-                    Mathf.Max(0f, angularSampleFootprint));
+                return shapeProfile.EvaluateSample(baseRadius, unitDirection, angularFootprint);
             }
 
-            float radius = surfaceProfile != null
+            float radius = surfaceProfile is not null
                 ? surfaceProfile.EvaluateRadius(baseRadius, unitDirection)
-                : Mathf.Max(0.01f, baseRadius);
+                : baseRadius;
             return new CelestialShapeSample(radius, new Vector4(0.5f, 0.5f, 0.5f, 0.5f));
         }
 
-        public static float EvaluateRadius(
-            float baseRadius,
-            Vector3 unitDirection,
-            float angularSampleFootprint,
-            CelestialShapeProfile shapeProfile,
-            CelestialSurfaceProfileBase surfaceProfile)
+        public float EvaluateRadius(Vector3 unitDirection)
         {
             unitDirection = NormalizeDirection(unitDirection);
-            if (shapeProfile != null)
+            if (shapeProfile is not null)
             {
-                return shapeProfile.EvaluateRadius(
-                    baseRadius,
-                    unitDirection,
-                    Mathf.Max(0f, angularSampleFootprint));
+                return shapeProfile.EvaluateRadius(baseRadius, unitDirection, angularFootprint);
             }
 
-            return surfaceProfile != null
+            return surfaceProfile is not null
                 ? surfaceProfile.EvaluateRadius(baseRadius, unitDirection)
-                : Mathf.Max(0.01f, baseRadius);
+                : baseRadius;
         }
 
         static Vector3 NormalizeDirection(Vector3 direction)

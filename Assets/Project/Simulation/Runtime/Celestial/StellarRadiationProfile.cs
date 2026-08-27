@@ -12,7 +12,8 @@ namespace Farion.Simulation.Celestial
         [SerializeField, Min(1000f)] float colorTemperatureKelvin = 5778f;
 
         [Header("Reference Orbit")]
-        [SerializeField, Min(0.001f)] float referenceOrbitDistance = 4000f;
+        [Tooltip("Orbit distance at which the reference equilibrium temperature is reached, measured in star radii. Expressed relative to the star so a system keeps its climate when every length in it is rescaled.")]
+        [SerializeField, Min(0.001f)] float referenceOrbitDistanceInStarRadii = 3.33f;
         [SerializeField] float referenceEquilibriumTemperatureCelsius = -18f;
         [SerializeField, Range(0f, 1f)] float referenceBondAlbedo = 0.3f;
 
@@ -22,7 +23,8 @@ namespace Farion.Simulation.Celestial
 
         public float Luminosity => Mathf.Max(0f, luminosity);
         public float ColorTemperatureKelvin => Mathf.Max(1000f, colorTemperatureKelvin);
-        public float ReferenceOrbitDistance => Mathf.Max(0.001f, referenceOrbitDistance);
+        public float ReferenceOrbitDistanceInStarRadii =>
+            Mathf.Max(0.001f, referenceOrbitDistanceInStarRadii);
         public float ReferenceEquilibriumTemperatureCelsius => Mathf.Max(AbsoluteZeroCelsius, referenceEquilibriumTemperatureCelsius);
         public float ReferenceBondAlbedo => Mathf.Clamp01(referenceBondAlbedo);
 
@@ -30,24 +32,29 @@ namespace Farion.Simulation.Celestial
         {
             luminosity = Mathf.Max(0f, luminosity);
             colorTemperatureKelvin = Mathf.Max(1000f, colorTemperatureKelvin);
-            referenceOrbitDistance = Mathf.Max(0.001f, referenceOrbitDistance);
+            referenceOrbitDistanceInStarRadii = Mathf.Max(0.001f, referenceOrbitDistanceInStarRadii);
             referenceEquilibriumTemperatureCelsius = Mathf.Max(AbsoluteZeroCelsius, referenceEquilibriumTemperatureCelsius);
             referenceBondAlbedo = Mathf.Clamp01(referenceBondAlbedo);
             NormalizePositiveRange(ref normalizedIrradianceRange, 0.001f, 128f);
             NormalizeTemperatureRange(ref equilibriumTemperatureRangeCelsius);
         }
 
-        public float EvaluateNormalizedIrradiance(float distance)
+        public float EvaluateNormalizedIrradiance(float distance, float starRadius)
         {
             float safeDistance = Mathf.Max(0.001f, distance);
-            float distanceScale = ReferenceOrbitDistance / safeDistance;
+            float referenceDistance =
+                ReferenceOrbitDistanceInStarRadii * Mathf.Max(0.001f, starRadius);
+            float distanceScale = referenceDistance / safeDistance;
             float irradiance = Luminosity * distanceScale * distanceScale;
             return Mathf.Clamp(irradiance, normalizedIrradianceRange.x, normalizedIrradianceRange.y);
         }
 
-        public float EvaluateEquilibriumTemperatureCelsius(float distance, float bondAlbedo)
+        public float EvaluateEquilibriumTemperatureCelsius(
+            float distance,
+            float bondAlbedo,
+            float starRadius)
         {
-            float irradiance = EvaluateNormalizedIrradiance(distance);
+            float irradiance = EvaluateNormalizedIrradiance(distance, starRadius);
             float referenceKelvin = ReferenceEquilibriumTemperatureCelsius - AbsoluteZeroCelsius;
             float albedoRatio = Mathf.Clamp01(1f - bondAlbedo) / Mathf.Max(0.0001f, 1f - ReferenceBondAlbedo);
             float kelvin = referenceKelvin * Mathf.Pow(Mathf.Max(0.0001f, irradiance * albedoRatio), 0.25f);

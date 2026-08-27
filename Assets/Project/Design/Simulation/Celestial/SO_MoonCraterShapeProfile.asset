@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Celestial.MoonCraterShapeProfile
   seed: 70
   craterSeed: 70
+  reliefScaleMeters: 120
   cratersEnabled: 1
   craterCount: 643
   craterRadiusMinMax: {x: 0.01, y: 0.1}

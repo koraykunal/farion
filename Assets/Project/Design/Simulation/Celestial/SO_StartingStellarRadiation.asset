@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   luminosity: 1
   colorTemperatureKelvin: 5778
-  referenceOrbitDistance: 323419.63
+  referenceOrbitDistanceInStarRadii: 269.51636
   referenceEquilibriumTemperatureCelsius: -18
   referenceBondAlbedo: 0.3
   normalizedIrradianceRange: {x: 0.001, y: 128}

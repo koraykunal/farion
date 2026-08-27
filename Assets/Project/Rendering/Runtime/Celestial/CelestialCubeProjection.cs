@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    internal enum CelestialCubeFace
+    public enum CelestialCubeFace
     {
         PositiveX,
         NegativeX,
@@ -12,9 +12,48 @@ namespace Farion.Rendering.Celestial
         NegativeZ
     }
 
-    internal static class CelestialCubeProjection
+    public static class CelestialCubeProjection
     {
+        const float WarpScale = Mathf.PI * 0.25f;
+
         public static void Project(
+            Vector3 direction,
+            out CelestialCubeFace face,
+            out float u,
+            out float v)
+        {
+            ProjectLinear(direction, out face, out float linearU, out float linearV);
+            u = Unwarp(linearU);
+            v = Unwarp(linearV);
+        }
+
+        public static Vector3 ToDirection(CelestialCubeFace face, float u, float v)
+        {
+            float warpedU = Warp(u);
+            float warpedV = Warp(v);
+            Vector3 direction = face switch
+            {
+                CelestialCubeFace.PositiveX => new Vector3(1f, -warpedV, -warpedU),
+                CelestialCubeFace.NegativeX => new Vector3(-1f, -warpedV, warpedU),
+                CelestialCubeFace.PositiveY => new Vector3(warpedU, 1f, warpedV),
+                CelestialCubeFace.NegativeY => new Vector3(warpedU, -1f, -warpedV),
+                CelestialCubeFace.PositiveZ => new Vector3(warpedU, -warpedV, 1f),
+                _ => new Vector3(-warpedU, -warpedV, -1f)
+            };
+            return direction.normalized;
+        }
+
+        static float Warp(float value)
+        {
+            return Mathf.Tan(Mathf.Clamp(value, -1.5f, 1.5f) * WarpScale);
+        }
+
+        static float Unwarp(float value)
+        {
+            return Mathf.Atan(value) / WarpScale;
+        }
+
+        static void ProjectLinear(
             Vector3 direction,
             out CelestialCubeFace face,
             out float u,
@@ -79,20 +118,6 @@ namespace Farion.Rendering.Celestial
                 u = -normalized.x / zDenominator;
                 v = -normalized.y / zDenominator;
             }
-        }
-
-        public static Vector3 ToDirection(CelestialCubeFace face, float u, float v)
-        {
-            Vector3 direction = face switch
-            {
-                CelestialCubeFace.PositiveX => new Vector3(1f, -v, -u),
-                CelestialCubeFace.NegativeX => new Vector3(-1f, -v, u),
-                CelestialCubeFace.PositiveY => new Vector3(u, 1f, v),
-                CelestialCubeFace.NegativeY => new Vector3(u, -1f, -v),
-                CelestialCubeFace.PositiveZ => new Vector3(u, -v, 1f),
-                _ => new Vector3(-u, -v, -1f)
-            };
-            return direction.normalized;
         }
     }
 }

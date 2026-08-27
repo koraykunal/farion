@@ -112,6 +112,13 @@ namespace Farion.Simulation.Planetary
                     min = Mathf.Min(min, radius);
                     max = Mathf.Max(max, radius);
                 }
+
+                min = Mathf.Min(
+                    min,
+                    baseRadius + shape.EstimateTroughElevationMeters());
+                max = Mathf.Max(
+                    max,
+                    baseRadius + shape.EstimatePeakElevationMeters());
             }
 
             terrainRadiusMinMax = new Vector2(Mathf.Max(0.01f, min), Mathf.Max(0.01f, max));
@@ -173,14 +180,25 @@ namespace Farion.Simulation.Planetary
 
         public bool TrySampleSurface(CelestialBody sourceBody, Vector3 position, out CelestialSurfaceSample sample)
         {
-            if (TrySamplePlanetSurface(sourceBody, position, out PlanetSurfaceSample planetSample))
+            sample = default;
+            CelestialBody source = ResolveBody();
+            if (source == null || sourceBody == null || sourceBody != source)
             {
-                sample = planetSample.Surface;
-                return true;
+                return false;
             }
 
-            sample = default;
-            return false;
+            ResolveLocalDirection(
+                source,
+                position,
+                out Vector3 localDirection,
+                out float centerDistance);
+            sample = BuildSurfaceGeometry(
+                source,
+                localDirection,
+                centerDistance,
+                out _,
+                out _);
+            return true;
         }
 
         public bool TrySampleGeology(
@@ -210,12 +228,51 @@ namespace Farion.Simulation.Planetary
                 return false;
             }
 
-            Vector3 centerToPoint = position - source.Position;
-            float centerDistance = centerToPoint.magnitude;
-            Vector3 worldDirection = centerDistance > 0.0001f ? centerToPoint / centerDistance : source.transform.up;
-            Vector3 localDirection = source.transform.InverseTransformDirection(worldDirection);
-            localDirection = localDirection.sqrMagnitude > 0.0001f ? localDirection.normalized : Vector3.up;
+            ResolveLocalDirection(
+                source,
+                position,
+                out Vector3 localDirection,
+                out float centerDistance);
             return TryBuildPlanetSurfaceSample(source, localDirection, centerDistance, out sample);
+        }
+
+        static void ResolveLocalDirection(
+            CelestialBody source,
+            Vector3 position,
+            out Vector3 localDirection,
+            out float centerDistance)
+        {
+            Vector3 centerToPoint = position - source.Position;
+            centerDistance = centerToPoint.magnitude;
+            Vector3 worldDirection = centerDistance > 0.0001f
+                ? centerToPoint / centerDistance
+                : source.transform.up;
+            localDirection = source.transform.InverseTransformDirection(worldDirection);
+            localDirection = localDirection.sqrMagnitude > 0.0001f
+                ? localDirection.normalized
+                : Vector3.up;
+        }
+
+        CelestialSurfaceSample BuildSurfaceGeometry(
+            CelestialBody source,
+            Vector3 localDirection,
+            float centerDistance,
+            out float surfaceRadius,
+            out float slopeAngle)
+        {
+            CelestialShapeProfile shape = ResolveShapeProfile();
+            surfaceRadius = EvaluateSurfaceRadius(source.Radius, localDirection, shape);
+            Vector3 worldDirection = source.transform.TransformDirection(localDirection).normalized;
+            Vector3 worldNormal = source.transform.TransformDirection(
+                EvaluateSurfaceNormal(source.Radius, localDirection, shape)).normalized;
+            slopeAngle = Vector3.Angle(worldDirection, worldNormal);
+            return new CelestialSurfaceSample(
+                source,
+                source.transform.TransformPoint(localDirection * surfaceRadius),
+                worldNormal,
+                centerDistance,
+                centerDistance - surfaceRadius,
+                slopeAngle);
         }
 
         public bool TrySamplePlanetSurface(Vector3 localDirection, out PlanetSurfaceSample sample)
@@ -242,23 +299,13 @@ namespace Farion.Simulation.Planetary
         {
             sample = default;
             PlanetGenerationContext context = CreateContext(source);
-            Vector3 worldDirection = source.transform.TransformDirection(localDirection).normalized;
-            CelestialShapeProfile shape = ResolveShapeProfile();
-            float surfaceRadius = EvaluateSurfaceRadius(source.Radius, localDirection, shape);
-            Vector3 localSurfacePoint = localDirection * surfaceRadius;
-            Vector3 worldSurfacePoint = source.transform.TransformPoint(localSurfacePoint);
-            Vector3 worldNormal = source.transform.TransformDirection(EvaluateSurfaceNormal(source.Radius, localDirection, shape)).normalized;
-            float slopeAngle = Vector3.Angle(worldDirection, worldNormal);
-            float surfaceAltitude = centerDistance - surfaceRadius;
-            float terrainAltitude = surfaceRadius - source.Radius;
-
-            CelestialSurfaceSample surface = new(
+            CelestialSurfaceSample surface = BuildSurfaceGeometry(
                 source,
-                worldSurfacePoint,
-                worldNormal,
+                localDirection,
                 centerDistance,
-                surfaceAltitude,
-                slopeAngle);
+                out float surfaceRadius,
+                out float slopeAngle);
+            float terrainAltitude = surfaceRadius - source.Radius;
 
             PlanetClimateSample climate = SampleClimate(
                 source,

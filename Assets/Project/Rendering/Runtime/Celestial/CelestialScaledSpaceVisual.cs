@@ -4,6 +4,7 @@ using UnityEngine.Rendering;
 namespace Farion.Rendering.Celestial
 {
     [ExecuteAlways]
+    [DefaultExecutionOrder(400)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CelestialBodyVisual))]
     public sealed class CelestialScaledSpaceVisual : MonoBehaviour
@@ -12,6 +13,7 @@ namespace Farion.Rendering.Celestial
 
         [SerializeField] CelestialScaledSpaceProfile profile;
         [SerializeField] CelestialBodyVisual bodyVisual;
+        [SerializeField] CelestialSurfacePatchSystem surfacePatchSystem;
         [SerializeField] Camera observerCamera;
         [SerializeField] bool applyInEditMode = true;
 
@@ -52,20 +54,44 @@ namespace Farion.Rendering.Celestial
             }
         }
 
+        public void SetObserverCamera(Camera camera)
+        {
+            if (observerCamera == camera)
+            {
+                return;
+            }
+
+            observerCamera = camera;
+            SetScaledState(false);
+        }
+
         void UpdateProjection()
         {
             ResolveReferences();
-            if (profile == null || bodyVisual == null || observerCamera == null)
+            Camera observer = ResolveObserverCamera();
+            if (profile == null ||
+                bodyVisual == null ||
+                observer == null ||
+                surfacePatchSystem != null &&
+                    surfacePatchSystem.SurfaceRenderActive)
             {
                 SetScaledState(false);
                 return;
             }
 
-            Vector3 observerPosition = observerCamera.transform.position;
+            Vector3 observerPosition = observer.transform.position;
             Vector3 observerToBody = transform.position - observerPosition;
             float physicalDistance = observerToBody.magnitude;
+            float physicalRadius = bodyVisual.HasRenderRadiusRange
+                ? bodyVisual.RenderRadiusMinMax.y
+                : bodyVisual.Body != null
+                    ? bodyVisual.Body.Radius
+                    : 0f;
             if (physicalDistance <= 0.001f
-                || !profile.ShouldUseScaledSpace(physicalDistance, IsUsingScaledSpace))
+                || !profile.ShouldUseScaledSpace(
+                    physicalDistance,
+                    physicalRadius,
+                    IsUsingScaledSpace))
             {
                 SetScaledState(false);
                 return;
@@ -78,7 +104,10 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            float displayDistance = profile.ResolveDisplayDistance(observerCamera, physicalDistance);
+            float displayDistance = profile.ResolveDisplayDistance(
+                observer,
+                physicalDistance,
+                physicalRadius);
             RenderScale = displayDistance / physicalDistance;
             proxyTransform.SetPositionAndRotation(
                 observerPosition + observerToBody / physicalDistance * displayDistance,
@@ -96,7 +125,7 @@ namespace Farion.Rendering.Celestial
 
             GetOrCreateProxy();
             proxyMeshFilter.sharedMesh = bodyVisual.GetLowestDetailRenderMesh();
-            bodyVisual.ConfigureSurfaceRenderer(proxyRenderer);
+            bodyVisual.ConfigureSurfaceRenderer(proxyRenderer, Vector4.zero);
         }
 
         void GetOrCreateProxy()
@@ -136,14 +165,15 @@ namespace Farion.Rendering.Celestial
 
         void SetScaledState(bool enabled)
         {
+            bool changed = IsUsingScaledSpace != enabled;
             IsUsingScaledSpace = enabled;
             RenderScale = enabled ? RenderScale : 1f;
-            if (proxyRenderer != null)
+            if (proxyRenderer != null && proxyRenderer.enabled != enabled)
             {
                 proxyRenderer.enabled = enabled;
             }
 
-            if (bodyVisual != null)
+            if (changed && bodyVisual != null)
             {
                 bodyVisual.SetScaledSpaceRenderSuppressed(enabled);
             }
@@ -156,10 +186,23 @@ namespace Farion.Rendering.Celestial
                 bodyVisual = GetComponent<CelestialBodyVisual>();
             }
 
-            if (observerCamera == null)
+            if (surfacePatchSystem == null)
             {
-                observerCamera = Camera.main;
+                surfacePatchSystem = GetComponent<CelestialSurfacePatchSystem>();
             }
+
+        }
+
+        Camera ResolveObserverCamera()
+        {
+            if (observerCamera != null)
+            {
+                return observerCamera;
+            }
+
+            return surfacePatchSystem != null && surfacePatchSystem.TargetCamera != null
+                ? surfacePatchSystem.TargetCamera
+                : Camera.main;
         }
 
         void Subscribe()

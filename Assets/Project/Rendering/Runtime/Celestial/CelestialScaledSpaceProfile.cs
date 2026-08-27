@@ -24,17 +24,51 @@ namespace Farion.Rendering.Celestial
             return physicalDistance > (currentlyUsingScaledSpace ? exitDistance : transitionDistance);
         }
 
+        public bool ShouldUseScaledSpace(
+            float physicalDistance,
+            float physicalRadius,
+            bool currentlyUsingScaledSpace)
+        {
+            return ShouldUseScaledSpace(
+                Mathf.Max(0f, physicalDistance - Mathf.Max(0f, physicalRadius)),
+                currentlyUsingScaledSpace);
+        }
+
         public float ResolveDisplayDistance(Camera observer, float physicalDistance)
         {
+            return ResolveDisplayDistanceFromTransition(
+                observer,
+                physicalDistance,
+                transitionDistance);
+        }
+
+        public float ResolveDisplayDistance(
+            Camera observer,
+            float physicalDistance,
+            float physicalRadius)
+        {
+            return ResolveDisplayDistanceFromTransition(
+                observer,
+                physicalDistance,
+                transitionDistance + Mathf.Max(0f, physicalRadius));
+        }
+
+        float ResolveDisplayDistanceFromTransition(
+            Camera observer,
+            float physicalDistance,
+            float transitionCenterDistance)
+        {
             physicalDistance = Mathf.Max(0f, physicalDistance);
-            if (physicalDistance <= transitionDistance)
+            if (physicalDistance <= transitionCenterDistance)
             {
                 return physicalDistance;
             }
 
-            float compressedDistance = transitionDistance
+            float compressedDistance = transitionCenterDistance
                 + compressionScale * Mathf.Log(
-                    1f + (physicalDistance - transitionDistance) / compressionScale);
+                    1f +
+                    (physicalDistance - transitionCenterDistance) /
+                    compressionScale);
             if (observer == null)
             {
                 return compressedDistance;

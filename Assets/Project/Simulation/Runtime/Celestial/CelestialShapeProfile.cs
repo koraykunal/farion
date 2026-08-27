@@ -6,6 +6,10 @@ namespace Farion.Simulation.Celestial
     {
         public event System.Action Changed;
 
+        public virtual void PrepareSampling()
+        {
+        }
+
         public virtual float EvaluateRadius(float baseRadius, Vector3 unitDirection)
         {
             return EvaluateSample(baseRadius, unitDirection).Radius;
@@ -36,6 +40,16 @@ namespace Farion.Simulation.Celestial
         }
 
         public abstract float EvaluateDisplacement(float baseRadius, Vector3 unitDirection);
+
+        public virtual float EstimatePeakElevationMeters()
+        {
+            return 0f;
+        }
+
+        public virtual float EstimateTroughElevationMeters()
+        {
+            return 0f;
+        }
 
         public virtual bool TrySampleGeology(
             float baseRadius,

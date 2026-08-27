@@ -12,21 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e14c25d36f874a68a901b2c3d4e5f607, type: 3}
   m_Name: SO_CelestialSurfacePatchProfile
   m_EditorClassIdentifier: 
-  enterAltitudeRatio: 0.7
-  exitAltitudeRatio: 0.9
+  enterAltitudeReliefMultiple: 32
+  exitAltitudeReliefMultiple: 48
+  minimumSurfaceAltitudeMeters: 250
   patchResolution: 16
-  maxSubdivisionLevel: 6
+  targetTriangleEdgeMeters: 2.5
   splitDistanceMultiplier: 2.2
   splitHysteresisRatio: 0.15
-  maxActivePatches: 640
-  skirtDepthRatio: 0.0025
-  collisionRadiusRatio: 0.16
-  minimumCollisionLevel: 6
+  maxActivePatches: 1536
+  collisionTriangleEdgeMeters: 25
+  collisionRadiusMeters: 400
   bakeCollisionMeshes: 1
   collisionPredictionSeconds: 0.75
-  collisionCoverageSafetyRatio: 0.5
-  collisionSafetyMarginRatio: 0.015
-  observerMoveThresholdRatio: 0.001
+  collisionSafetyMarginMeters: 24
+  observerMoveThresholdMeters: 2
   observerAngleThresholdDegrees: 0.08
-  maximumPatchBuildsPerFrame: 6
-  patchBuildBudgetMilliseconds: 2
+  maximumPatchBuildsPerFrame: 16
+  patchBuildBudgetMilliseconds: 3.5

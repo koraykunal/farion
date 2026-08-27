@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
+    [DefaultExecutionOrder(375)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CelestialBody), typeof(PlanetSurfaceModel))]
     public sealed class SurfaceFormationSpawner : MonoBehaviour
@@ -18,6 +19,8 @@ namespace Farion.Rendering.Celestial
         [SerializeField] Transform formationRoot;
 
         const string FormationContainerName = "Surface Formations";
+        const float TerrainAnchorEpsilon = 0.01f;
+        const int TerrainAnchorRefreshBudget = 32;
 
         [Header("Runtime State")]
         [SerializeField] bool placementSuspended;
@@ -34,6 +37,7 @@ namespace Farion.Rendering.Celestial
         readonly List<Renderer> shadingRenderers = new();
         readonly List<Collider> pieceColliders = new();
         MaterialPropertyBlock shadingBlock;
+        int terrainAnchorRefreshBudget;
         CelestialBodyVisual bodyVisual;
         readonly List<SurfaceScatterCell> staleCells = new();
         readonly List<Transform> observers = new();
@@ -103,23 +107,31 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            Vector3 primaryObserver = observerLocalPositions[0];
+            if (!TryGetPrimaryPlacementObserver(out Vector3 primaryObserver))
+            {
+                placementSuspended = true;
+                RefreshFormationCollision();
+                UpdateRuntimeCounts();
+                return;
+            }
+
             float observerSpeed = ResolveObserverSpeed(primaryObserver);
             prefetchCenter = primaryObserver + observerLocalVelocity * profile.PrefetchSeconds;
-            float altitude = Mathf.Max(0f, primaryObserver.magnitude - body.Radius);
             placementSuspended =
                 !SurfaceGeometryReady() ||
-                (profile.PlacementPauseSpeed > 0f && observerSpeed > profile.PlacementPauseSpeed) ||
-                altitude > profile.PlacementPauseAltitude;
+                (observerLocalPositions.Count == 1 &&
+                    profile.PlacementPauseSpeed > 0f &&
+                    observerSpeed > profile.PlacementPauseSpeed);
 
-            ReleaseDistantFormations();
             if (!placementSuspended)
             {
-                RefreshDesiredCells();
+                ReleaseDistantFormations();
+                RefreshDesiredCells(primaryObserver);
                 ProcessPendingCells();
             }
 
             RefreshFormationCollision();
+            RefreshTerrainAnchors();
             UpdateRuntimeCounts();
         }
 
@@ -183,6 +195,30 @@ namespace Farion.Rendering.Celestial
             }
 
             return nearest;
+        }
+
+        bool TryGetPrimaryPlacementObserver(out Vector3 observer)
+        {
+            for (int i = 0; i < observerLocalPositions.Count; i++)
+            {
+                if (CanPlaceAroundObserver(observerLocalPositions[i]))
+                {
+                    observer = observerLocalPositions[i];
+                    return true;
+                }
+            }
+
+            observer = default;
+            return false;
+        }
+
+        bool CanPlaceAroundObserver(Vector3 observerLocalPosition)
+        {
+            float maximumAltitude = profile != null
+                ? profile.PlacementPauseAltitude
+                : 0f;
+            return maximumAltitude <= 0f ||
+                observerLocalPosition.magnitude - body.Radius <= maximumAltitude;
         }
 
         public float SampleFormationInfluence(Vector3 localPosition)
@@ -251,6 +287,104 @@ namespace Farion.Rendering.Celestial
                 profile.Rules.Count > 0 &&
                 body != null &&
                 surfaceModel != null;
+        }
+
+        PieceAnchor BuildPieceAnchor(Vector3 surfaceLocalPosition, Vector3 baseLocalPosition)
+        {
+            return new PieceAnchor
+            {
+                Direction = surfaceLocalPosition.sqrMagnitude > 0.000001f
+                    ? surfaceLocalPosition.normalized
+                    : Vector3.up,
+                BaseLocalPosition = baseLocalPosition,
+                AnalyticRadius = surfaceLocalPosition.magnitude,
+                AppliedOffset = 0f,
+                AppliedTransition = -1
+            };
+        }
+
+        void RefreshTerrainAnchors()
+        {
+            if (patchSystem == null || observerLocalPositions.Count == 0)
+            {
+                return;
+            }
+
+            int committedTransition = patchSystem.CommittedTransitionCount;
+            if (committedTransition <= 0)
+            {
+                return;
+            }
+
+            Vector3 observerLocalPosition = observerLocalPositions[0];
+            terrainAnchorRefreshBudget = TerrainAnchorRefreshBudget;
+            for (int i = 0; i < ruleRuntimes.Count; i++)
+            {
+                foreach (FormationInstance instance in ruleRuntimes[i].Instances.Values)
+                {
+                    for (int piece = 0; piece < instance.Anchors.Count; piece++)
+                    {
+                        GameObject spawned = instance.Pieces[piece];
+                        if (spawned == null)
+                        {
+                            continue;
+                        }
+
+                        ApplyTerrainAnchor(
+                            spawned.transform,
+                            instance.Anchors[piece],
+                            observerLocalPosition,
+                            committedTransition,
+                            false);
+                    }
+                }
+            }
+        }
+
+        void ApplyTerrainAnchor(
+            Transform pieceTransform,
+            PieceAnchor anchor,
+            Vector3 observerLocalPosition,
+            int committedTransition,
+            bool force)
+        {
+            if (patchSystem == null)
+            {
+                return;
+            }
+
+            if (anchor.AppliedTransition != committedTransition &&
+                (force || terrainAnchorRefreshBudget > 0))
+            {
+                if (!force)
+                {
+                    terrainAnchorRefreshBudget--;
+                }
+
+                anchor.AppliedTransition = committedTransition;
+                anchor.HasSurfaceAnchor = patchSystem.TryResolveSurfaceAnchor(
+                    anchor.Direction,
+                    out anchor.SurfaceAnchor);
+            }
+
+            if (!anchor.HasSurfaceAnchor)
+            {
+                return;
+            }
+
+            float observerDistance = Vector3.Distance(
+                observerLocalPosition,
+                anchor.Direction * anchor.SurfaceAnchor.FineRadius);
+            float offset = patchSystem.ResolveAnchorRadius(
+                anchor.SurfaceAnchor,
+                observerDistance) - anchor.AnalyticRadius;
+            if (!force && Mathf.Abs(offset - anchor.AppliedOffset) < TerrainAnchorEpsilon)
+            {
+                return;
+            }
+
+            anchor.AppliedOffset = offset;
+            pieceTransform.localPosition = anchor.BaseLocalPosition + anchor.Direction * offset;
         }
 
         bool SurfaceGeometryReady()
@@ -333,7 +467,7 @@ namespace Farion.Rendering.Celestial
             }
         }
 
-        void RefreshDesiredCells()
+        void RefreshDesiredCells(Vector3 primaryObserver)
         {
             if (ruleRuntimes.Count == 0)
             {
@@ -353,12 +487,17 @@ namespace Farion.Rendering.Celestial
                     continue;
                 }
 
-                runtime.AnchorLocalPosition = observerLocalPositions[0];
+                runtime.AnchorLocalPosition = primaryObserver;
                 runtime.HasAnchor = true;
                 runtime.PendingCells.Clear();
                 EnqueueCellsAround(runtime, prefetchCenter);
-                for (int observer = 1; observer < observerLocalPositions.Count; observer++)
+                for (int observer = 0; observer < observerLocalPositions.Count; observer++)
                 {
+                    if (!CanPlaceAroundObserver(observerLocalPositions[observer]))
+                    {
+                        continue;
+                    }
+
                     EnqueueCellsAround(runtime, observerLocalPositions[observer]);
                 }
 
@@ -565,8 +704,10 @@ namespace Farion.Rendering.Celestial
                 Transform pieceTransform = spawned.transform;
                 pieceTransform.SetParent(formationRoot, false);
                 Vector3 pieceUp = item.LocalRotation * Vector3.up;
-                pieceTransform.localPosition = item.LocalPosition +
+                Vector3 baseLocalPosition = item.LocalPosition +
                     pieceUp * (ResolvePivotOffset(piece.Prefab) * item.Scale.y);
+                PieceAnchor anchor = BuildPieceAnchor(item.LocalPosition, baseLocalPosition);
+                pieceTransform.localPosition = baseLocalPosition;
                 pieceTransform.localRotation = item.LocalRotation;
                 pieceTransform.localScale = item.Scale;
                 ApplySurfaceShading(spawned, rule, sample);
@@ -579,7 +720,15 @@ namespace Farion.Rendering.Celestial
                 }
 
                 spawned.SetActive(true);
-                instance.Add(piece.Prefab, spawned);
+                ApplyTerrainAnchor(
+                    pieceTransform,
+                    anchor,
+                    observerLocalPositions.Count > 0
+                        ? observerLocalPositions[0]
+                        : anchor.Direction * anchor.AnalyticRadius,
+                    patchSystem != null ? patchSystem.CommittedTransitionCount : -1,
+                    true);
+                instance.Add(piece.Prefab, spawned, anchor);
             }
 
             if (instance.PieceCount == 0)
@@ -593,6 +742,9 @@ namespace Farion.Rendering.Celestial
 
         void RefreshFormationCollision()
         {
+            bool collisionSurfaceReady = patchSystem == null ||
+                patchSystem.CollisionAuthority ==
+                    CelestialSurfaceCollisionAuthority.LocalAuthoritative;
             for (int i = 0; i < ruleRuntimes.Count; i++)
             {
                 RuleRuntime runtime = ruleRuntimes[i];
@@ -600,6 +752,7 @@ namespace Farion.Rendering.Celestial
                 foreach (FormationInstance instance in runtime.Instances.Values)
                 {
                     bool shouldCollide =
+                        collisionSurfaceReady &&
                         NearestObserverDistance(instance.LocalCenter) <= distance;
                     if (shouldCollide == instance.CollidersEnabled)
                     {
@@ -824,6 +977,17 @@ namespace Farion.Rendering.Celestial
             public bool HasAnchor { get; set; }
         }
 
+        sealed class PieceAnchor
+        {
+            public Vector3 Direction;
+            public Vector3 BaseLocalPosition;
+            public float AnalyticRadius;
+            public float AppliedOffset;
+            public bool HasSurfaceAnchor;
+            public CelestialSurfaceAnchor SurfaceAnchor;
+            public int AppliedTransition;
+        }
+
         sealed class FormationInstance
         {
             public FormationInstance(Vector3 localCenter, float releaseDistance, int capacity)
@@ -832,6 +996,7 @@ namespace Farion.Rendering.Celestial
                 ReleaseDistance = releaseDistance;
                 Prefabs = new List<GameObject>(capacity);
                 Pieces = new List<GameObject>(capacity);
+                Anchors = new List<PieceAnchor>(capacity);
                 Colliders = new List<Collider>(capacity);
             }
 
@@ -839,20 +1004,23 @@ namespace Farion.Rendering.Celestial
             public float ReleaseDistance { get; }
             public List<GameObject> Prefabs { get; }
             public List<GameObject> Pieces { get; }
+            public List<PieceAnchor> Anchors { get; }
             public List<Collider> Colliders { get; }
             public bool CollidersEnabled { get; set; }
             public int PieceCount => Pieces.Count;
 
-            public void Add(GameObject prefab, GameObject spawned)
+            public void Add(GameObject prefab, GameObject spawned, PieceAnchor anchor)
             {
                 Prefabs.Add(prefab);
                 Pieces.Add(spawned);
+                Anchors.Add(anchor);
             }
 
             public void Clear()
             {
                 Prefabs.Clear();
                 Pieces.Clear();
+                Anchors.Clear();
                 Colliders.Clear();
                 CollidersEnabled = false;
             }

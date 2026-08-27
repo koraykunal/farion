@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Farion.Core.Physics;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
@@ -24,6 +26,16 @@ namespace Farion.Rendering.Celestial
     {
         const string PatchContainerName = "Adaptive Surface Patches";
         const int PatchBudgetReserve = 32;
+        const int CollisionPredictionSamples = 5;
+        const int MaximumCollisionBakesPerFrame = 2;
+        const float MorphStartRatio = 0.55f;
+        const float RenderLeadSeconds = 0.5f;
+        const float PatchBoundingRatio = 0.75f;
+        static readonly int SurfaceObserverPropertyId =
+            Shader.PropertyToID("_FarionSurfaceObserverWS");
+        static readonly int PreviousSurfaceObserverPropertyId =
+            Shader.PropertyToID("_FarionPreviousSurfaceObserverWS");
+        const int PendingBuildDrainMilliseconds = 2000;
 
         [Header("Profile")]
         [SerializeField] CelestialSurfacePatchProfile profile;
@@ -35,6 +47,8 @@ namespace Farion.Rendering.Celestial
 
         [Header("Runtime State")]
         [SerializeField] bool surfaceModeActive;
+        [SerializeField] bool surfaceRenderActive;
+        [SerializeField] bool surfaceRenderRequested;
         [SerializeField] CelestialSurfaceCollisionAuthority collisionAuthority;
         [SerializeField] bool localCollisionCoverageReady;
         [SerializeField] float collisionObserverSpeed;
@@ -48,36 +62,52 @@ namespace Farion.Rendering.Celestial
         [SerializeField] int skippedUnchangedRefreshCount;
         [SerializeField] int lastTransitionBuildCount;
         [SerializeField] int lastTransitionCommitFrame = -1;
+        [SerializeField] int resolvedSubdivisionLevel;
+        [SerializeField] int resolvedCollisionLevel;
+        [SerializeField] float resolvedEnterAltitude;
+        [SerializeField] float resolvedExitAltitude;
+        [SerializeField] float resolvedCollisionSafetyMarginAngle;
 
         readonly Dictionary<PatchKey, SurfacePatch> activePatches = new();
         readonly Dictionary<PatchKey, SurfacePatch> stagedPatches = new();
+        readonly Dictionary<PatchKey, PatchDescriptor> desiredPatchMap = new();
         readonly Stack<SurfacePatch> patchPool = new();
+        readonly Stack<PatchGeometry> geometryPool = new();
+        readonly Stack<PatchBuildOperation> operationPool = new();
         readonly List<PatchDescriptor> desiredPatches = new();
         readonly HashSet<PatchKey> desiredKeys = new();
         readonly HashSet<PatchKey> desiredCollisionKeys = new();
-        readonly List<PatchBuildWork> pendingPatchBuilds = new();
+        readonly HashSet<PatchKey> activeCollisionKeys = new();
+        readonly List<PatchBuildOperation> pendingPatchBuilds = new();
+        readonly List<PatchBuildOperation> abandonedPatchBuilds = new();
+        readonly List<PatchDescriptor> balanceQueue = new();
         readonly List<PatchKey> staleKeys = new();
-        readonly List<Vector3> patchBuildVertices = new();
-        readonly List<Vector3> patchBuildNormals = new();
-        readonly List<Vector4> patchBuildShadingData = new();
-        readonly List<int> patchBuildTriangles = new();
-        readonly List<int> patchBuildCollisionTriangles = new();
         readonly HashSet<PatchKey> subdividedBranches = new();
         readonly List<CelestialSurfaceCollisionObserverState> gatheredObservers = new();
         readonly List<Rigidbody> lastGatheredObserverRigidbodies = new();
         readonly List<Vector3> lastGatheredObserverLocalPositions = new();
         readonly List<Vector3> splitObserverLocalPositions = new();
+        readonly List<Vector3> splitObserverUpDirections = new();
+        readonly List<float> splitObserverVisibleHalfAngles = new();
+        readonly int[] faceTraversalOrder = { 0, 1, 2, 3, 4, 5 };
 
         Transform patchContainer;
-        Vector3[] extendedPositionBuffer = Array.Empty<Vector3>();
-        CelestialShapeSample[] surfaceSampleBuffer = Array.Empty<CelestialShapeSample>();
+        PlanetSurfaceModel surfaceModel;
+        int publishedSubdivisionLevel = -1;
         bool forceRefresh = true;
         bool patchGeometryDirty;
         bool transitionRebuildsAllGeometry;
         bool transitionLocalCollisionCoverageReady;
+        int transitionMaximumLevel;
         int nextPendingPatchBuild;
+        int collisionBakesThisFrame;
         float transitionBaseRadius;
+        Vector3 transitionLeadLocalPosition;
+        CelestialSurfaceSampler transitionSampler;
+        CancellationTokenSource transitionCancellation;
         bool observerStateInitialized;
+        bool surfaceObserverStateInitialized;
+        Vector3 previousSurfaceObserverPosition;
         Vector3 lastObserverLocalPosition;
         Vector3 lastObserverLocalDirection;
         bool collisionObserverStateInitialized;
@@ -91,10 +121,9 @@ namespace Farion.Rendering.Celestial
         float currentOuterRadius;
         ICelestialSurfaceCollisionObserver collisionObserver;
         ICelestialSurfaceCollisionObserverGroup collisionObserverGroup;
-        int lastActiveCoverageCheckFrame = -1;
-        bool lastActiveCoverageSafe;
 
         public bool SurfaceModeActive => surfaceModeActive;
+        public bool SurfaceRenderActive => surfaceRenderActive;
         public CelestialSurfaceCollisionAuthority CollisionAuthority => collisionAuthority;
         public bool LocalCollisionCoverageReady => localCollisionCoverageReady;
         public float CollisionObserverSpeed => collisionObserverSpeed;
@@ -112,6 +141,91 @@ namespace Farion.Rendering.Celestial
         public int SkippedUnchangedRefreshCount => skippedUnchangedRefreshCount;
         public int LastTransitionCommitFrame => lastTransitionCommitFrame;
         public Camera TargetCamera => ResolveCamera();
+
+        bool TryCreateSurfaceSampler(out CelestialSurfaceSampler sampler)
+        {
+            CelestialBody body = bodyVisual != null ? bodyVisual.Body : null;
+            if (profile == null || bodyVisual == null || body == null)
+            {
+                sampler = default;
+                return false;
+            }
+
+            sampler = CelestialSurfaceSampler.Create(
+                Mathf.Max(0.01f, body.Radius),
+                CalculatePatchAngularFootprint(
+                    profile.ResolveSubdivisionLevel(body.Radius),
+                    profile.PatchResolution),
+                bodyVisual.ShapeProfile,
+                bodyVisual.SurfaceProfile);
+            return true;
+        }
+
+        internal bool TryResolveSurfaceAnchor(
+            Vector3 unitDirection,
+            out CelestialSurfaceAnchor anchor)
+        {
+            anchor = default;
+            if (activePatches.Count == 0 ||
+                !TryCreateSurfaceSampler(out CelestialSurfaceSampler sampler))
+            {
+                return false;
+            }
+
+            unitDirection = unitDirection.sqrMagnitude > 0.000001f
+                ? unitDirection.normalized
+                : Vector3.up;
+            CelestialCubeProjection.Project(
+                unitDirection,
+                out CelestialCubeFace face,
+                out float u,
+                out float v);
+            for (int level = resolvedSubdivisionLevel; level >= 0; level--)
+            {
+                if (!activePatches.ContainsKey(ResolvePatchKey(face, level, u, v)))
+                {
+                    continue;
+                }
+
+                float fineRadius = CelestialSurfaceGridSampler.EvaluateRenderedRadius(
+                    sampler,
+                    unitDirection,
+                    level,
+                    profile.PatchResolution);
+                float coarseRadius = level > 0
+                    ? CelestialSurfaceGridSampler.EvaluateRenderedRadius(
+                        sampler,
+                        unitDirection,
+                        level - 1,
+                        profile.PatchResolution)
+                    : fineRadius;
+                anchor = new CelestialSurfaceAnchor(level, fineRadius, coarseRadius);
+                return true;
+            }
+
+            return false;
+        }
+
+        internal float ResolveAnchorRadius(
+            in CelestialSurfaceAnchor anchor,
+            float observerDistance)
+        {
+            CelestialBody body = bodyVisual != null ? bodyVisual.Body : null;
+            if (body == null || anchor.Level <= 0)
+            {
+                return anchor.FineRadius;
+            }
+
+            Vector4 range = ResolveMorphRange(Mathf.Max(0.01f, body.Radius), anchor.Level);
+            if (range.y <= 0f)
+            {
+                return anchor.FineRadius;
+            }
+
+            float weight = Mathf.Clamp01(
+                (observerDistance - range.x) / Mathf.Max(range.y - range.x, 0.0001f));
+            return Mathf.Lerp(anchor.FineRadius, anchor.CoarseRadius, weight);
+        }
 
         public void SetCamera(Camera camera)
         {
@@ -133,7 +247,6 @@ namespace Farion.Rendering.Celestial
             lastCollisionObserverRigidbody = null;
             lastGatheredObserverRigidbodies.Clear();
             lastGatheredObserverLocalPositions.Clear();
-            lastActiveCoverageCheckFrame = -1;
             forceRefresh = true;
         }
 
@@ -157,10 +270,33 @@ namespace Farion.Rendering.Celestial
 
         void LateUpdate()
         {
-            if (Application.isPlaying)
+            if (!Application.isPlaying)
             {
-                UpdateSurfaceMode(force: false);
+                return;
             }
+
+            DrainAbandonedOperations();
+            Camera observerCamera = ResolveCamera();
+            if (observerCamera != null)
+            {
+                Vector3 observerPosition = observerCamera.transform.position;
+                Shader.SetGlobalVector(
+                    PreviousSurfaceObserverPropertyId,
+                    surfaceObserverStateInitialized
+                        ? previousSurfaceObserverPosition
+                        : observerPosition);
+                Shader.SetGlobalVector(
+                    SurfaceObserverPropertyId,
+                    observerPosition);
+                previousSurfaceObserverPosition = observerPosition;
+                surfaceObserverStateInitialized = true;
+            }
+            else
+            {
+                surfaceObserverStateInitialized = false;
+            }
+
+            UpdateSurfaceMode(force: false);
         }
 
         void OnDisable()
@@ -174,6 +310,52 @@ namespace Farion.Rendering.Celestial
             DestroyAllPatches();
         }
 
+        void WaitForPendingBuilds()
+        {
+            for (int i = 0; i < pendingPatchBuilds.Count; i++)
+            {
+                WaitForBuild(pendingPatchBuilds[i].Task);
+            }
+
+            for (int i = 0; i < abandonedPatchBuilds.Count; i++)
+            {
+                WaitForBuild(abandonedPatchBuilds[i].Task);
+            }
+
+            for (int i = abandonedPatchBuilds.Count - 1; i >= 0; i--)
+            {
+                PatchBuildOperation operation = abandonedPatchBuilds[i];
+                if (operation.Patch != null)
+                {
+                    DestroyPatch(operation.Patch);
+                    operation.Patch = null;
+                }
+
+                if (operation.TaskFinished)
+                {
+                    ReturnOperation(operation);
+                }
+            }
+
+            abandonedPatchBuilds.Clear();
+        }
+
+        static void WaitForBuild(Task task)
+        {
+            if (task == null)
+            {
+                return;
+            }
+
+            try
+            {
+                task.Wait(PendingBuildDrainMilliseconds);
+            }
+            catch (AggregateException)
+            {
+            }
+        }
+
         void PublishSampleFootprint()
         {
             if (profile == null)
@@ -181,13 +363,44 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            PlanetSurfaceModel surfaceModel = GetComponent<PlanetSurfaceModel>();
-            if (surfaceModel != null)
+            CelestialBody body = GetComponent<CelestialBody>();
+            if (body == null)
             {
-                surfaceModel.SetSampleFootprint(CalculatePatchAngularFootprint(
-                    profile.MaxSubdivisionLevel,
-                    profile.PatchResolution));
+                return;
             }
+
+            PublishSampleFootprint(profile.ResolveSubdivisionLevel(body.Radius));
+        }
+
+        void PublishSampleFootprint(int subdivisionLevel)
+        {
+            if (publishedSubdivisionLevel == subdivisionLevel)
+            {
+                return;
+            }
+
+            publishedSubdivisionLevel = subdivisionLevel;
+            surfaceModel ??= GetComponent<PlanetSurfaceModel>();
+            if (surfaceModel == null)
+            {
+                return;
+            }
+
+            surfaceModel.SetSampleFootprint(CalculatePatchAngularFootprint(
+                subdivisionLevel,
+                profile.PatchResolution));
+        }
+
+        void RefreshResolvedMetrics(float baseRadius, float outerRadius)
+        {
+            float reliefMeters = Mathf.Max(0f, outerRadius - baseRadius);
+            resolvedSubdivisionLevel = profile.ResolveSubdivisionLevel(baseRadius);
+            PublishSampleFootprint(resolvedSubdivisionLevel);
+            resolvedCollisionLevel = profile.ResolveCollisionLevel(baseRadius);
+            resolvedEnterAltitude = profile.ResolveEnterAltitude(reliefMeters, baseRadius);
+            resolvedExitAltitude = profile.ResolveExitAltitude(reliefMeters, baseRadius);
+            resolvedCollisionSafetyMarginAngle =
+                profile.CollisionSafetyMarginMeters / Mathf.Max(0.01f, baseRadius);
         }
 
         void OnValidate()
@@ -206,36 +419,47 @@ namespace Farion.Rendering.Celestial
             if (profile == null ||
                 bodyVisual == null ||
                 body == null ||
-                !body.SupportsNonConvexSurfaceCollider ||
-                camera == null)
+                !body.SupportsNonConvexSurfaceCollider)
             {
                 DeactivateSurfaceMode();
                 return;
             }
 
             float baseRadius = Mathf.Max(0.01f, body.Radius);
-            float outerRadius = bodyVisual.HasRenderRadiusRange
-                ? bodyVisual.RenderRadiusMinMax.y
+            float outerRadius = bodyVisual.HasTerrainRadiusRange
+                ? bodyVisual.TerrainRadiusMinMax.y
                 : baseRadius;
             currentOuterRadius = outerRadius;
             currentCollisionObserverAvailable = TryGetCollisionObserver(
                 out CelestialSurfaceCollisionObserverState collisionState);
+            if (camera == null && !currentCollisionObserverAvailable)
+            {
+                DeactivateSurfaceMode();
+                return;
+            }
 
-            float altitude = Vector3.Distance(camera.transform.position, transform.position) - outerRadius;
-            float effectiveAltitudeRatio = altitude / baseRadius;
+            RefreshResolvedMetrics(baseRadius, outerRadius);
+
+            float cameraAltitude = camera != null
+                ? Vector3.Distance(camera.transform.position, transform.position) - outerRadius
+                : float.PositiveInfinity;
+            float collisionAltitude = float.PositiveInfinity;
             for (int i = 0; i < gatheredObservers.Count; i++)
             {
                 float observerAltitude = Vector3.Distance(
                     gatheredObservers[i].Position,
                     transform.position) - outerRadius;
-                effectiveAltitudeRatio = Mathf.Min(
-                    effectiveAltitudeRatio,
-                    observerAltitude / baseRadius);
+                collisionAltitude = Mathf.Min(collisionAltitude, observerAltitude);
             }
 
-            bool shouldUseSurfaceMode = surfaceModeActive || patchTransitionPending
-                ? effectiveAltitudeRatio <= profile.ExitAltitudeRatio
-                : effectiveAltitudeRatio <= profile.EnterAltitudeRatio;
+            bool shouldRenderSurface = camera != null &&
+                (surfaceRenderRequested
+                    ? cameraAltitude <= resolvedExitAltitude
+                    : cameraAltitude <= resolvedEnterAltitude);
+            bool shouldKeepCollisionSurface = surfaceModeActive || patchTransitionPending
+                ? collisionAltitude <= resolvedExitAltitude
+                : collisionAltitude <= resolvedEnterAltitude;
+            bool shouldUseSurfaceMode = shouldRenderSurface || shouldKeepCollisionSurface;
 
             if (!shouldUseSurfaceMode)
             {
@@ -243,7 +467,12 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            Vector3 observerLocalPosition = transform.InverseTransformPoint(camera.transform.position);
+            surfaceRenderRequested = shouldRenderSurface;
+            ApplyPrimaryTerrainState();
+
+            Vector3 observerLocalPosition = camera != null
+                ? transform.InverseTransformPoint(camera.transform.position)
+                : transform.InverseTransformPoint(collisionState.Position);
             Vector3 observerLocalDirection = observerLocalPosition.sqrMagnitude > 0.000001f
                 ? observerLocalPosition.normalized
                 : Vector3.up;
@@ -272,11 +501,9 @@ namespace Farion.Rendering.Celestial
                 currentCollisionObserverLocalPosition,
                 baseRadius,
                 outerRadius);
-            const int CoverageCheckFrameInterval = 5;
-            if (Time.frameCount - lastActiveCoverageCheckFrame >= CoverageCheckFrameInterval)
+            if (collisionAuthority == CelestialSurfaceCollisionAuthority.LocalAuthoritative)
             {
-                lastActiveCoverageCheckFrame = Time.frameCount;
-                lastActiveCoverageSafe = canPrepareLocalCollision &&
+                bool activeCoverageSafe = canPrepareLocalCollision &&
                     HasPredictedActiveCollisionCoverage(
                         currentCollisionObserverLocalPosition,
                         currentCollisionObserverLocalVelocity) &&
@@ -284,18 +511,11 @@ namespace Farion.Rendering.Celestial
                         baseRadius,
                         outerRadius,
                         useDesiredPatches: false);
-            }
-
-            bool activeLocalCoverageSafe = lastActiveCoverageSafe;
-            if (collisionAuthority == CelestialSurfaceCollisionAuthority.LocalAuthoritative &&
-                !activeLocalCoverageSafe)
-            {
-                ActivateGlobalCollisionAuthority();
-            }
-
-            if (surfaceModeActive)
-            {
-                ApplyPrimaryTerrainState();
+                if (!activeCoverageSafe &&
+                    !ShouldRetainLocalCollisionAuthority(outerRadius))
+                {
+                    ActivateGlobalCollisionAuthority();
+                }
             }
 
             bool needsRefresh = force ||
@@ -303,15 +523,13 @@ namespace Farion.Rendering.Celestial
                 !surfaceModeActive ||
                 ObserverMovedEnough(
                     observerLocalPosition,
-                    observerLocalDirection,
-                    baseRadius) ||
+                    observerLocalDirection) ||
                 CollisionObserverChangedEnough(
                     collisionState.Rigidbody,
                     currentCollisionObserverLocalPosition,
                     collisionObserverLocalDirection,
-                    currentCollisionObserverLocalVelocity,
-                    baseRadius) ||
-                GatheredObserversChangedEnough(baseRadius);
+                    currentCollisionObserverLocalVelocity) ||
+                GatheredObserversChangedEnough();
             if (!patchTransitionPending && needsRefresh)
             {
                 BeginPatchTransition(
@@ -341,15 +559,14 @@ namespace Farion.Rendering.Celestial
 
         bool ObserverMovedEnough(
             Vector3 observerLocalPosition,
-            Vector3 observerLocalDirection,
-            float baseRadius)
+            Vector3 observerLocalDirection)
         {
             if (!observerStateInitialized)
             {
                 return true;
             }
 
-            float moveThreshold = baseRadius * profile.ObserverMoveThresholdRatio;
+            float moveThreshold = profile.ObserverMoveThresholdMeters;
             if ((observerLocalPosition - lastObserverLocalPosition).sqrMagnitude >
                 moveThreshold * moveThreshold)
             {
@@ -364,8 +581,7 @@ namespace Farion.Rendering.Celestial
             Rigidbody observerRigidbody,
             Vector3 observerLocalPosition,
             Vector3 observerLocalDirection,
-            Vector3 observerLocalVelocity,
-            float baseRadius)
+            Vector3 observerLocalVelocity)
         {
             if (!currentCollisionObserverAvailable)
             {
@@ -378,7 +594,7 @@ namespace Farion.Rendering.Celestial
                 return true;
             }
 
-            float moveThreshold = baseRadius * profile.ObserverMoveThresholdRatio;
+            float moveThreshold = profile.ObserverMoveThresholdMeters;
             if ((observerLocalPosition - lastCollisionObserverLocalPosition).sqrMagnitude >
                 moveThreshold * moveThreshold)
             {
@@ -408,6 +624,7 @@ namespace Farion.Rendering.Celestial
             float baseRadius)
         {
             CancelPatchTransition();
+            transitionCancellation = new CancellationTokenSource();
             RebuildSubdividedBranches();
             splitObserverLocalPositions.Clear();
             for (int i = 0; i < gatheredObservers.Count; i++)
@@ -416,7 +633,12 @@ namespace Farion.Rendering.Celestial
                     transform.InverseTransformPoint(gatheredObservers[i].Position));
             }
 
+            RebuildObserverVisibilityCones(observerLocalPosition, baseRadius);
+            transitionLeadLocalPosition = observerLocalPosition +
+                collisionObserverLocalVelocity * RenderLeadSeconds;
+
             desiredPatches.Clear();
+            desiredPatchMap.Clear();
             desiredKeys.Clear();
             desiredCollisionKeys.Clear();
             pendingPatchBuilds.Clear();
@@ -424,11 +646,14 @@ namespace Farion.Rendering.Celestial
             transitionBaseRadius = baseRadius;
             transitionRebuildsAllGeometry = patchGeometryDirty;
             patchGeometryDirty = false;
+            transitionMaximumLevel = ResolveTransitionMaximumLevel(
+                canPrepareLocalCollision);
 
-            for (int face = 0; face < 6; face++)
+            BuildFaceTraversalOrder(observerLocalPosition);
+            for (int face = 0; face < faceTraversalOrder.Length; face++)
             {
                 CollectDesiredPatch(
-                    (CelestialCubeFace)face,
+                    (CelestialCubeFace)faceTraversalOrder[face],
                     level: 0,
                     x: 0,
                     y: 0,
@@ -439,10 +664,12 @@ namespace Farion.Rendering.Celestial
                     baseRadius);
             }
 
+            BalanceDesiredPatches(baseRadius);
+            ResolveDesiredPatchTopology();
+
             for (int i = 0; i < desiredPatches.Count; i++)
             {
                 PatchDescriptor descriptor = desiredPatches[i];
-                desiredKeys.Add(descriptor.Key);
                 bool collisionRequired = ShouldEnableCollision(
                     descriptor,
                     collisionObserverLocalPosition,
@@ -468,13 +695,25 @@ namespace Farion.Rendering.Celestial
                     useDesiredPatches: true);
             if (!transitionLocalCollisionCoverageReady)
             {
-                desiredCollisionKeys.Clear();
                 if (collisionAuthority ==
                     CelestialSurfaceCollisionAuthority.LocalAuthoritative)
                 {
+                    if (ShouldRetainLocalCollisionAuthority(currentOuterRadius))
+                    {
+                        CancelPatchTransition();
+                        forceRefresh = true;
+                        return;
+                    }
+
                     ActivateGlobalCollisionAuthority();
                 }
             }
+
+            transitionSampler = CelestialSurfaceSampler.Create(
+                baseRadius,
+                CalculatePatchAngularFootprint(resolvedSubdivisionLevel, profile.PatchResolution),
+                bodyVisual.ShapeProfile,
+                bodyVisual.SurfaceProfile);
 
             for (int i = 0; i < desiredPatches.Count; i++)
             {
@@ -482,18 +721,21 @@ namespace Farion.Rendering.Celestial
                 bool collisionRequired = desiredCollisionKeys.Contains(descriptor.Key);
                 SurfacePatch patch = null;
                 bool rebuildGeometry = transitionRebuildsAllGeometry ||
-                    !activePatches.TryGetValue(descriptor.Key, out patch);
+                    !activePatches.TryGetValue(descriptor.Key, out patch) ||
+                    !patch.Descriptor.HasSameEdgeTopology(descriptor);
                 bool prepareExistingCollision = !rebuildGeometry &&
                     collisionRequired &&
                     !patch.CollisionBaked;
                 if (rebuildGeometry || prepareExistingCollision)
                 {
-                    pendingPatchBuilds.Add(new PatchBuildWork(
+                    pendingPatchBuilds.Add(RentOperation(
                         descriptor,
                         rebuildGeometry,
                         collisionRequired));
                 }
             }
+
+            pendingPatchBuilds.Sort(ComparePendingPatchBuilds);
 
             if (!TransitionChangesCommittedSurface())
             {
@@ -533,6 +775,7 @@ namespace Farion.Rendering.Celestial
             {
                 PatchKey key = desiredPatches[i].Key;
                 if (!activePatches.TryGetValue(key, out SurfacePatch patch) ||
+                    !patch.Descriptor.HasSameEdgeTopology(desiredPatches[i]) ||
                     patch.Collider.enabled != desiredCollisionKeys.Contains(key))
                 {
                     return true;
@@ -544,42 +787,219 @@ namespace Farion.Rendering.Celestial
 
         void ProcessPatchTransition()
         {
+            collisionBakesThisFrame = 0;
+            DispatchQueuedPatchBuilds();
+
             double deadline = Time.realtimeSinceStartupAsDouble +
                 profile.PatchBuildBudgetMilliseconds / 1000d;
-            int processedThisFrame = 0;
+            int uploadedThisFrame = 0;
+            int remaining = 0;
 
-            while (nextPendingPatchBuild < pendingPatchBuilds.Count &&
-                processedThisFrame < profile.MaximumPatchBuildsPerFrame &&
-                (processedThisFrame == 0 || Time.realtimeSinceStartupAsDouble < deadline))
+            for (int i = 0; i < pendingPatchBuilds.Count; i++)
             {
-                PatchBuildWork work = pendingPatchBuilds[nextPendingPatchBuild++];
-                SurfacePatch patch;
-                if (work.RebuildGeometry)
-                {
-                    patch = RentPatch();
-                    BuildPatch(patch, work.Descriptor, transitionBaseRadius);
-                    patch.Renderer.enabled = false;
-                    patch.Collider.enabled = false;
-                    stagedPatches.Add(work.Descriptor.Key, patch);
-                }
-                else if (!activePatches.TryGetValue(work.Descriptor.Key, out patch))
+                PatchBuildOperation operation = pendingPatchBuilds[i];
+                if (operation.Stage == PatchBuildStage.Complete)
                 {
                     continue;
                 }
 
-                if (work.PrepareCollision)
+                if (operation.Stage == PatchBuildStage.CollisionPending)
                 {
-                    PreparePatchCollision(patch);
+                    TryPreparePatchCollision(operation);
                 }
 
-                processedThisFrame++;
+                if (operation.Stage == PatchBuildStage.Sampling && operation.TaskFinished)
+                {
+                    if (TryReportFailedBuild(operation))
+                    {
+                        CancelPatchTransition();
+                        forceRefresh = true;
+                        return;
+                    }
+
+                    bool canUpload = uploadedThisFrame < profile.MaximumPatchBuildsPerFrame &&
+                        Time.realtimeSinceStartupAsDouble < deadline;
+                    if (canUpload)
+                    {
+                        UploadPatchGeometry(operation);
+                        uploadedThisFrame++;
+                    }
+                }
+                if (operation.Stage != PatchBuildStage.Complete)
+                {
+                    remaining++;
+                }
             }
 
-            pendingPatchBuildCount = pendingPatchBuilds.Count - nextPendingPatchBuild;
-            if (pendingPatchBuildCount == 0)
+            pendingPatchBuildCount = remaining;
+            if (remaining == 0)
             {
                 CommitPatchTransition();
             }
+        }
+
+        void DispatchQueuedPatchBuilds()
+        {
+            int inFlight = 0;
+            for (int i = 0; i < pendingPatchBuilds.Count; i++)
+            {
+                if (pendingPatchBuilds[i].Stage == PatchBuildStage.Sampling &&
+                    !pendingPatchBuilds[i].TaskFinished)
+                {
+                    inFlight++;
+                }
+            }
+
+            for (int i = 0; i < abandonedPatchBuilds.Count; i++)
+            {
+                if (!abandonedPatchBuilds[i].TaskFinished)
+                {
+                    inFlight++;
+                }
+            }
+
+            int concurrency = ResolveBuildConcurrency();
+            while (nextPendingPatchBuild < pendingPatchBuilds.Count && inFlight < concurrency)
+            {
+                PatchBuildOperation operation = pendingPatchBuilds[nextPendingPatchBuild++];
+                if (operation.RebuildGeometry)
+                {
+                    StartPatchSampling(operation);
+                    inFlight++;
+                    continue;
+                }
+
+                if (!activePatches.TryGetValue(operation.Descriptor.Key, out SurfacePatch patch))
+                {
+                    operation.Stage = PatchBuildStage.Complete;
+                    continue;
+                }
+
+                operation.Patch = patch;
+                TryPreparePatchCollision(operation);
+            }
+        }
+
+        static int ResolveBuildConcurrency()
+        {
+            return Mathf.Clamp(SystemInfo.processorCount - 1, 1, 8);
+        }
+
+        void StartPatchSampling(PatchBuildOperation operation)
+        {
+            SurfacePatch patch = RentPatch();
+            patch.Renderer.enabled = false;
+            SetPatchCollision(patch, enabled: false);
+            patch.Descriptor = operation.Descriptor;
+            patch.CollisionBaked = false;
+            operation.Patch = patch;
+            operation.Geometry = RentGeometry();
+            operation.Stage = PatchBuildStage.Sampling;
+
+            PatchGeometry geometry = operation.Geometry;
+            PatchDescriptor descriptor = operation.Descriptor;
+            CelestialSurfaceSampler sampler = transitionSampler;
+            int resolution = profile.PatchResolution;
+            CancellationToken cancellationToken = transitionCancellation != null
+                ? transitionCancellation.Token
+                : CancellationToken.None;
+            operation.Task = Task.Run(
+                () => SamplePatchGeometry(
+                    geometry,
+                    descriptor,
+                    sampler,
+                    resolution,
+                    cancellationToken),
+                cancellationToken);
+        }
+
+        void UploadPatchGeometry(PatchBuildOperation operation)
+        {
+            PatchGeometry geometry = operation.Geometry;
+            SurfacePatch patch = operation.Patch;
+            Mesh previousMesh = patch.Mesh;
+            Mesh mesh = new()
+            {
+                name = $"Surface Patch {operation.Descriptor.Key}",
+                hideFlags = HideFlags.DontSave
+            };
+            patch.Mesh = mesh;
+            mesh.indexFormat = geometry.VertexCount <= 65535
+                ? IndexFormat.UInt16
+                : IndexFormat.UInt32;
+            mesh.SetVertices(geometry.Vertices, 0, geometry.VertexCount);
+            mesh.SetNormals(geometry.Normals, 0, geometry.VertexCount);
+            mesh.SetUVs(0, geometry.Shading, 0, geometry.VertexCount);
+            mesh.SetUVs(1, geometry.MorphOffsets, 0, geometry.VertexCount);
+            mesh.SetUVs(2, geometry.MorphNormals, 0, geometry.VertexCount);
+            mesh.SetTriangles(geometry.Triangles, 0, geometry.TriangleIndexCount, 0, true);
+            mesh.RecalculateBounds();
+
+            patch.Filter.sharedMesh = mesh;
+            patch.Collider.enabled = false;
+            patch.Collider.sharedMesh = null;
+            DestroyRuntimeObject(previousMesh);
+            patch.GameObject.name = mesh.name;
+            patch.GameObject.layer = FarionLayers.CelestialSurface;
+            bodyVisual.ConfigureSurfaceRenderer(
+                patch.Renderer,
+                ResolveMorphRange(transitionBaseRadius, operation.Descriptor.Key.Level));
+            stagedPatches[operation.Descriptor.Key] = patch;
+
+            ReturnGeometry(operation.Geometry);
+            operation.Geometry = null;
+            operation.Task = null;
+            TryPreparePatchCollision(operation);
+        }
+
+        bool TryReportFailedBuild(PatchBuildOperation operation)
+        {
+            if (operation.Task == null ||
+                (!operation.Task.IsFaulted && !operation.Task.IsCanceled))
+            {
+                return false;
+            }
+
+            if (operation.Task.IsFaulted)
+            {
+                Debug.LogException(operation.Task.Exception, this);
+            }
+
+            operation.Task = null;
+            operation.Stage = PatchBuildStage.Complete;
+            if (operation.Patch != null)
+            {
+                ReleasePatch(operation.Patch);
+                operation.Patch = null;
+            }
+
+            return true;
+        }
+
+        bool TryPreparePatchCollision(PatchBuildOperation operation)
+        {
+            SurfacePatch patch = operation.Patch;
+            if (!operation.PrepareCollision || patch.CollisionBaked)
+            {
+                operation.Stage = PatchBuildStage.Complete;
+                return true;
+            }
+
+            if (profile.BakeCollisionMeshes)
+            {
+                if (collisionBakesThisFrame >= MaximumCollisionBakesPerFrame)
+                {
+                    operation.Stage = PatchBuildStage.CollisionPending;
+                    return false;
+                }
+
+                collisionBakesThisFrame++;
+                CelestialMeshColliderBaker.BakeImmediate(patch.Mesh);
+            }
+
+            patch.CollisionBaked = true;
+            operation.Stage = PatchBuildStage.Complete;
+            return true;
         }
 
         void CommitPatchTransition()
@@ -604,17 +1024,12 @@ namespace Farion.Rendering.Celestial
                     transitionBaseRadius,
                     currentOuterRadius,
                     useDesiredPatches: true);
-            if (!commitLocalCollision &&
-                collisionAuthority ==
-                CelestialSurfaceCollisionAuthority.LocalAuthoritative)
-            {
-                ActivateGlobalCollisionAuthority();
-            }
-
             staleKeys.Clear();
             foreach (PatchKey key in activePatches.Keys)
             {
-                if (transitionRebuildsAllGeometry || !desiredKeys.Contains(key))
+                if (transitionRebuildsAllGeometry ||
+                    !desiredKeys.Contains(key) ||
+                    stagedPatches.ContainsKey(key))
                 {
                     staleKeys.Add(key);
                 }
@@ -629,7 +1044,7 @@ namespace Farion.Rendering.Celestial
 
             foreach (KeyValuePair<PatchKey, SurfacePatch> pair in stagedPatches)
             {
-                activePatches.Add(pair.Key, pair.Value);
+                activePatches[pair.Key] = pair.Value;
             }
 
             stagedPatches.Clear();
@@ -643,11 +1058,15 @@ namespace Farion.Rendering.Celestial
                 }
 
                 patch.GameObject.SetActive(true);
-                patch.Renderer.enabled = true;
-                SetPatchCollision(
-                    patch,
-                    commitLocalCollision &&
-                    desiredCollisionKeys.Contains(descriptor.Key));
+                bodyVisual.ConfigureSurfaceRenderer(
+                    patch.Renderer,
+                    desiredCollisionKeys.Contains(descriptor.Key)
+                        ? Vector4.zero
+                        : ResolveMorphRange(
+                            transitionBaseRadius,
+                            descriptor.Key.Level));
+                patch.Renderer.enabled = surfaceRenderActive;
+                SetPatchCollision(patch, desiredCollisionKeys.Contains(descriptor.Key));
                 deepestActiveLevel = Mathf.Max(deepestActiveLevel, descriptor.Key.Level);
             }
 
@@ -667,62 +1086,150 @@ namespace Farion.Rendering.Celestial
             lastTransitionCommitFrame = Time.frameCount;
             transitionRebuildsAllGeometry = false;
             transitionLocalCollisionCoverageReady = false;
-            pendingPatchBuilds.Clear();
+            transitionCancellation?.Dispose();
+            transitionCancellation = null;
+            ReleasePendingOperations(releasePatches: false);
             desiredKeys.Clear();
             desiredCollisionKeys.Clear();
+            forceRefresh = deepestActiveLevel < resolvedSubdivisionLevel;
             UpdateRuntimeCounts();
         }
 
         void CancelPatchTransition()
         {
-            foreach (SurfacePatch patch in stagedPatches.Values)
+            transitionCancellation?.Cancel();
+            transitionCancellation?.Dispose();
+            transitionCancellation = null;
+            if (collisionAuthority ==
+                CelestialSurfaceCollisionAuthority.LocalPreparing)
             {
-                ReleasePatch(patch);
+                ActivateGlobalCollisionAuthority();
             }
 
+            ReleasePendingOperations(releasePatches: true);
             stagedPatches.Clear();
-            pendingPatchBuilds.Clear();
             desiredPatches.Clear();
+            desiredPatchMap.Clear();
             desiredKeys.Clear();
             desiredCollisionKeys.Clear();
-            nextPendingPatchBuild = 0;
             pendingPatchBuildCount = 0;
             patchTransitionPending = false;
             transitionRebuildsAllGeometry = false;
             transitionLocalCollisionCoverageReady = false;
         }
 
+        void ReleasePendingOperations(bool releasePatches)
+        {
+            for (int i = 0; i < pendingPatchBuilds.Count; i++)
+            {
+                PatchBuildOperation operation = pendingPatchBuilds[i];
+                bool ownsPatch = releasePatches && operation.RebuildGeometry;
+                if (!ownsPatch)
+                {
+                    operation.Patch = null;
+                }
+                else
+                {
+                    stagedPatches.Remove(operation.Descriptor.Key);
+                }
+
+                if (!operation.TaskFinished)
+                {
+                    abandonedPatchBuilds.Add(operation);
+                    continue;
+                }
+
+                if (operation.Patch != null)
+                {
+                    ReleasePatch(operation.Patch);
+                }
+
+                ReturnOperation(operation);
+            }
+
+            pendingPatchBuilds.Clear();
+            nextPendingPatchBuild = 0;
+        }
+
+        void DrainAbandonedOperations()
+        {
+            for (int i = abandonedPatchBuilds.Count - 1; i >= 0; i--)
+            {
+                PatchBuildOperation operation = abandonedPatchBuilds[i];
+                if (!operation.TaskFinished)
+                {
+                    continue;
+                }
+
+                abandonedPatchBuilds.RemoveAt(i);
+                if (operation.Task != null && operation.Task.IsFaulted)
+                {
+                    Debug.LogException(operation.Task.Exception, this);
+                }
+
+                if (operation.Patch != null)
+                {
+                    ReleasePatch(operation.Patch);
+                }
+
+                ReturnOperation(operation);
+            }
+        }
+
+        PatchBuildOperation RentOperation(
+            PatchDescriptor descriptor,
+            bool rebuildGeometry,
+            bool prepareCollision)
+        {
+            PatchBuildOperation operation = operationPool.Count > 0
+                ? operationPool.Pop()
+                : new PatchBuildOperation();
+            operation.Reset();
+            operation.Descriptor = descriptor;
+            operation.RebuildGeometry = rebuildGeometry;
+            operation.PrepareCollision = prepareCollision;
+            return operation;
+        }
+
+        void ReturnOperation(PatchBuildOperation operation)
+        {
+            if (operation.Geometry != null)
+            {
+                ReturnGeometry(operation.Geometry);
+            }
+
+            operation.Reset();
+            operationPool.Push(operation);
+        }
+
+        PatchGeometry RentGeometry()
+        {
+            return geometryPool.Count > 0 ? geometryPool.Pop() : new PatchGeometry();
+        }
+
+        void ReturnGeometry(PatchGeometry geometry)
+        {
+            if (geometry != null)
+            {
+                geometryPool.Push(geometry);
+            }
+        }
+
         void UpdateRuntimeCounts()
         {
+            RefreshActiveCollisionKeys();
             activePatchCount = activePatches.Count;
-            activeColliderCount = 0;
-            foreach (SurfacePatch patch in activePatches.Values)
-            {
-                if (patch.Collider.enabled)
-                {
-                    activeColliderCount++;
-                }
-            }
+            activeColliderCount = activeCollisionKeys.Count;
         }
 
         void ActivateGlobalCollisionAuthority()
         {
-            if (bodyVisual != null && bodyVisual.isActiveAndEnabled)
-            {
-                bodyVisual.SetPrimaryTerrainEnabled(
-                    renderEnabled: !surfaceModeActive,
-                    collisionEnabled: true);
-            }
-
-            foreach (SurfacePatch patch in activePatches.Values)
-            {
-                SetPatchCollision(patch, enabled: false);
-            }
-
             collisionAuthority =
                 CelestialSurfaceCollisionAuthority.GlobalFallback;
             localCollisionCoverageReady = false;
-            lastActiveCoverageCheckFrame = -1;
+            ApplyPrimaryTerrainState();
+            DisablePatchCollision(activePatches);
+            DisablePatchCollision(stagedPatches);
             UpdateRuntimeCounts();
         }
 
@@ -731,21 +1238,217 @@ namespace Farion.Rendering.Celestial
             collisionAuthority =
                 CelestialSurfaceCollisionAuthority.LocalAuthoritative;
             localCollisionCoverageReady = true;
-            lastActiveCoverageCheckFrame = -1;
             ApplyPrimaryTerrainState();
         }
 
         void ApplyPrimaryTerrainState()
         {
+            bool patchesAreSurface = surfaceModeActive &&
+                activePatches.Count > 0 &&
+                surfaceRenderRequested;
+            bool patchesOwnCollision = collisionAuthority ==
+                    CelestialSurfaceCollisionAuthority.LocalAuthoritative &&
+                localCollisionCoverageReady;
+
+            if (surfaceRenderActive != patchesAreSurface)
+            {
+                surfaceRenderActive = patchesAreSurface;
+                foreach (SurfacePatch patch in activePatches.Values)
+                {
+                    patch.Renderer.enabled = patchesAreSurface;
+                }
+            }
+
             if (bodyVisual == null || !bodyVisual.isActiveAndEnabled)
             {
                 return;
             }
 
-            bodyVisual.SetPrimaryTerrainEnabled(
-                renderEnabled: !surfaceModeActive,
-                collisionEnabled: collisionAuthority !=
-                    CelestialSurfaceCollisionAuthority.LocalAuthoritative);
+            bodyVisual.SetPrimaryTerrainActive(
+                renderEnabled: !patchesAreSurface,
+                collisionEnabled: !patchesOwnCollision);
+        }
+
+        static void DisablePatchCollision(
+            Dictionary<PatchKey, SurfacePatch> patches)
+        {
+            foreach (SurfacePatch patch in patches.Values)
+            {
+                patch.Collider.enabled = false;
+            }
+        }
+
+        void RebuildObserverVisibilityCones(Vector3 observerLocalPosition, float baseRadius)
+        {
+            splitObserverUpDirections.Clear();
+            splitObserverVisibleHalfAngles.Clear();
+
+            float minimumRadius = baseRadius;
+            float maximumRadius = baseRadius;
+            if (bodyVisual != null && bodyVisual.HasTerrainRadiusRange)
+            {
+                minimumRadius = Mathf.Min(baseRadius, bodyVisual.TerrainRadiusMinMax.x);
+                maximumRadius = Mathf.Max(baseRadius, bodyVisual.TerrainRadiusMinMax.y);
+            }
+
+            AddObserverVisibilityCone(observerLocalPosition, minimumRadius, maximumRadius);
+        }
+
+        void AddObserverVisibilityCone(
+            Vector3 observerLocalPosition,
+            float minimumRadius,
+            float maximumRadius)
+        {
+            float observerRadius = observerLocalPosition.magnitude;
+            if (observerRadius <= 0.0001f)
+            {
+                splitObserverUpDirections.Add(Vector3.up);
+                splitObserverVisibleHalfAngles.Add(Mathf.PI);
+                return;
+            }
+
+            splitObserverUpDirections.Add(observerLocalPosition / observerRadius);
+            splitObserverVisibleHalfAngles.Add(
+                ResolveVisibleHalfAngle(observerRadius, minimumRadius, maximumRadius));
+        }
+
+        static float ResolveVisibleHalfAngle(
+            float observerRadius,
+            float minimumRadius,
+            float maximumRadius)
+        {
+            if (observerRadius <= minimumRadius)
+            {
+                return Mathf.PI;
+            }
+
+            float horizonAngle = Mathf.Acos(Mathf.Clamp01(minimumRadius / observerRadius));
+            float reliefAngle = maximumRadius > minimumRadius
+                ? Mathf.Acos(Mathf.Clamp01(minimumRadius / maximumRadius))
+                : 0f;
+            return horizonAngle + reliefAngle;
+        }
+
+        bool IsPatchPotentiallyVisible(Vector3 centerDirection, float size)
+        {
+            if (splitObserverUpDirections.Count == 0)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < splitObserverUpDirections.Count; i++)
+            {
+                float angle = Mathf.Acos(Mathf.Clamp(
+                    Vector3.Dot(splitObserverUpDirections[i], centerDirection),
+                    -1f,
+                    1f));
+                if (angle <= splitObserverVisibleHalfAngles[i] + size)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        void BuildFaceTraversalOrder(Vector3 observerLocalPosition)
+        {
+            Vector3 observerDirection = observerLocalPosition.sqrMagnitude > 0.000001f
+                ? observerLocalPosition.normalized
+                : Vector3.forward;
+            for (int i = 0; i < faceTraversalOrder.Length; i++)
+            {
+                faceTraversalOrder[i] = i;
+            }
+
+            for (int i = 1; i < faceTraversalOrder.Length; i++)
+            {
+                int face = faceTraversalOrder[i];
+                float score = Vector3.Dot(
+                    observerDirection,
+                    CelestialCubeProjection.ToDirection(
+                        (CelestialCubeFace)face,
+                        0f,
+                        0f));
+                int insert = i;
+                while (insert > 0)
+                {
+                    int previousFace = faceTraversalOrder[insert - 1];
+                    float previousScore = Vector3.Dot(
+                        observerDirection,
+                        CelestialCubeProjection.ToDirection(
+                            (CelestialCubeFace)previousFace,
+                            0f,
+                            0f));
+                    if (previousScore >= score)
+                    {
+                        break;
+                    }
+
+                    faceTraversalOrder[insert] = previousFace;
+                    insert--;
+                }
+
+                faceTraversalOrder[insert] = face;
+            }
+        }
+
+        int ComparePendingPatchBuilds(PatchBuildOperation left, PatchBuildOperation right)
+        {
+            int collisionPriority = right.PrepareCollision.CompareTo(
+                left.PrepareCollision);
+            if (collisionPriority != 0)
+            {
+                return collisionPriority;
+            }
+
+            Vector3 observerPosition = currentCollisionObserverAvailable
+                ? currentCollisionObserverLocalPosition
+                : lastObserverLocalPosition;
+            float leftDistance = (
+                left.Descriptor.CenterDirection * transitionBaseRadius -
+                observerPosition).sqrMagnitude;
+            float rightDistance = (
+                right.Descriptor.CenterDirection * transitionBaseRadius -
+                observerPosition).sqrMagnitude;
+            int distancePriority = leftDistance.CompareTo(rightDistance);
+            if (distancePriority != 0)
+            {
+                return distancePriority;
+            }
+
+            int levelPriority = right.Descriptor.Key.Level.CompareTo(
+                left.Descriptor.Key.Level);
+            if (levelPriority != 0)
+            {
+                return levelPriority;
+            }
+
+            int facePriority = left.Descriptor.Key.Face.CompareTo(
+                right.Descriptor.Key.Face);
+            if (facePriority != 0)
+            {
+                return facePriority;
+            }
+
+            int yPriority = left.Descriptor.Key.Y.CompareTo(
+                right.Descriptor.Key.Y);
+            return yPriority != 0
+                ? yPriority
+                : left.Descriptor.Key.X.CompareTo(right.Descriptor.Key.X);
+        }
+
+        int ResolveTransitionMaximumLevel(bool canPrepareLocalCollision)
+        {
+            int maximumLevel = activePatches.Count == 0
+                ? Mathf.Min(3, resolvedSubdivisionLevel)
+                : Mathf.Min(resolvedSubdivisionLevel, deepestActiveLevel + 2);
+            if (canPrepareLocalCollision)
+            {
+                maximumLevel = Mathf.Max(maximumLevel, resolvedCollisionLevel);
+            }
+
+            return maximumLevel;
         }
 
         void CollectDesiredPatch(
@@ -763,24 +1466,39 @@ namespace Farion.Rendering.Celestial
             Vector3 centerDirection = CelestialCubeProjection.ToDirection(face, uMin + size * 0.5f, vMin + size * 0.5f);
             float patchWorldSize = baseRadius * size;
             Vector3 patchCenter = centerDirection * baseRadius;
-            float observerDistance = Vector3.Distance(observerLocalPosition, patchCenter);
+            float cameraDistance = Mathf.Min(
+                Vector3.Distance(observerLocalPosition, patchCenter),
+                Vector3.Distance(transitionLeadLocalPosition, patchCenter));
+            float collisionObserverDistance = float.PositiveInfinity;
             for (int i = 0; i < splitObserverLocalPositions.Count; i++)
             {
-                observerDistance = Mathf.Min(
-                    observerDistance,
+                collisionObserverDistance = Mathf.Min(
+                    collisionObserverDistance,
                     Vector3.Distance(splitObserverLocalPositions[i], patchCenter));
             }
-            bool hasPatchBudget = desiredPatches.Count <
-                Mathf.Max(1, profile.MaxActivePatches - PatchBudgetReserve);
+            int balanceReserve = Mathf.Max(
+                PatchBudgetReserve,
+                profile.MaxActivePatches / 4);
+            int selectionLimit = Mathf.Max(
+                6,
+                profile.MaxActivePatches - balanceReserve);
+            bool hasPatchBudget = desiredPatches.Count + 3 <= selectionLimit;
+            bool hasHardPatchBudget = desiredPatches.Count + 3 <= profile.MaxActivePatches;
             float splitDistance = patchWorldSize * profile.SplitDistanceMultiplier;
             if (WasBranchSubdivided(key))
             {
                 splitDistance *= 1f + profile.SplitHysteresisRatio;
             }
 
-            bool shouldSplit = level < profile.MaxSubdivisionLevel &&
-                hasPatchBudget &&
-                observerDistance < splitDistance;
+            bool shouldSplitForRendering = surfaceRenderRequested &&
+                level < transitionMaximumLevel &&
+                cameraDistance < splitDistance &&
+                IsPatchPotentiallyVisible(centerDirection, size);
+            bool shouldSplitForCollision =
+                level < transitionMaximumLevel &&
+                collisionObserverDistance < splitDistance;
+            bool shouldSplit = hasHardPatchBudget &&
+                (shouldSplitForCollision || (hasPatchBudget && shouldSplitForRendering));
 
             if (!shouldSplit)
             {
@@ -798,7 +1516,7 @@ namespace Farion.Rendering.Celestial
             int childLevel = level + 1;
             int childX = x * 2;
             int childY = y * 2;
-            CollectDesiredPatch(
+            CollectChildrenNearestFirst(
                 face,
                 childLevel,
                 childX,
@@ -808,36 +1526,273 @@ namespace Farion.Rendering.Celestial
                 childSize,
                 observerLocalPosition,
                 baseRadius);
-            CollectDesiredPatch(
-                face,
+        }
+
+        void CollectChildrenNearestFirst(
+            CelestialCubeFace face,
+            int childLevel,
+            int childX,
+            int childY,
+            float uMin,
+            float vMin,
+            float childSize,
+            Vector3 observerLocalPosition,
+            float baseRadius)
+        {
+            Span<int> order = stackalloc int[4] { 0, 1, 2, 3 };
+            Span<float> distances = stackalloc float[4];
+            for (int i = 0; i < 4; i++)
+            {
+                float childUMin = uMin + (i & 1) * childSize;
+                float childVMin = vMin + (i >> 1) * childSize;
+                Vector3 childCenter = CelestialCubeProjection.ToDirection(
+                    face,
+                    childUMin + childSize * 0.5f,
+                    childVMin + childSize * 0.5f) * baseRadius;
+                distances[i] = ResolveNearestObserverDistance(
+                    observerLocalPosition,
+                    childCenter);
+            }
+
+            for (int i = 1; i < 4; i++)
+            {
+                int candidate = order[i];
+                float candidateDistance = distances[candidate];
+                int insert = i;
+                while (insert > 0 && distances[order[insert - 1]] > candidateDistance)
+                {
+                    order[insert] = order[insert - 1];
+                    insert--;
+                }
+
+                order[insert] = candidate;
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                int child = order[i];
+                CollectDesiredPatch(
+                    face,
+                    childLevel,
+                    childX + (child & 1),
+                    childY + (child >> 1),
+                    uMin + (child & 1) * childSize,
+                    vMin + (child >> 1) * childSize,
+                    childSize,
+                    observerLocalPosition,
+                    baseRadius);
+            }
+        }
+
+        float ResolveNearestObserverDistance(Vector3 observerLocalPosition, Vector3 patchCenter)
+        {
+            float nearest = Mathf.Min(
+                Vector3.Distance(observerLocalPosition, patchCenter),
+                Vector3.Distance(transitionLeadLocalPosition, patchCenter));
+            for (int i = 0; i < splitObserverLocalPositions.Count; i++)
+            {
+                nearest = Mathf.Min(
+                    nearest,
+                    Vector3.Distance(splitObserverLocalPositions[i], patchCenter));
+            }
+
+            return nearest;
+        }
+
+        void BalanceDesiredPatches(float baseRadius)
+        {
+            desiredPatchMap.Clear();
+            for (int i = 0; i < desiredPatches.Count; i++)
+            {
+                PatchDescriptor descriptor = desiredPatches[i];
+                desiredPatchMap[descriptor.Key] = descriptor;
+            }
+
+            balanceQueue.Clear();
+            balanceQueue.AddRange(desiredPatches);
+            for (int cursor = 0; cursor < balanceQueue.Count; cursor++)
+            {
+                PatchDescriptor descriptor = balanceQueue[cursor];
+                if (!desiredPatchMap.ContainsKey(descriptor.Key))
+                {
+                    continue;
+                }
+
+                for (int edge = 0; edge < 4; edge++)
+                {
+                    if (!TryFindDesiredPatchAcrossEdge(
+                            descriptor,
+                            (PatchEdge)edge,
+                            out PatchDescriptor neighbour) ||
+                        descriptor.Key.Level - neighbour.Key.Level <= 1)
+                    {
+                        continue;
+                    }
+
+                    SplitDesiredPatch(neighbour, baseRadius);
+                    balanceQueue.Add(descriptor);
+                    break;
+                }
+            }
+
+            balanceQueue.Clear();
+            desiredPatches.Clear();
+            desiredPatches.AddRange(desiredPatchMap.Values);
+        }
+
+        void ResolveDesiredPatchTopology()
+        {
+            desiredKeys.Clear();
+            for (int i = 0; i < desiredPatches.Count; i++)
+            {
+                desiredKeys.Add(desiredPatches[i].Key);
+            }
+
+            for (int i = 0; i < desiredPatches.Count; i++)
+            {
+                PatchDescriptor descriptor = desiredPatches[i];
+                int coarserEdgeMask = 0;
+                for (int edge = 0; edge < 4; edge++)
+                {
+                    if (!TryFindDesiredPatchAcrossEdge(
+                            descriptor,
+                            (PatchEdge)edge,
+                            out PatchDescriptor neighbour))
+                    {
+                        continue;
+                    }
+
+                    if (neighbour.Key.Level < descriptor.Key.Level)
+                    {
+                        coarserEdgeMask |= 1 << edge;
+                    }
+                }
+
+                PatchDescriptor resolved = descriptor.WithEdgeTopology(coarserEdgeMask);
+                desiredPatches[i] = resolved;
+                desiredPatchMap[resolved.Key] = resolved;
+            }
+        }
+
+        void SplitDesiredPatch(PatchDescriptor descriptor, float baseRadius)
+        {
+            desiredPatchMap.Remove(descriptor.Key);
+            int childLevel = descriptor.Key.Level + 1;
+            int childX = descriptor.Key.X * 2;
+            int childY = descriptor.Key.Y * 2;
+            AddDesiredPatch(CreatePatchDescriptor(
+                descriptor.Key.Face,
+                childLevel,
+                childX,
+                childY,
+                baseRadius));
+            AddDesiredPatch(CreatePatchDescriptor(
+                descriptor.Key.Face,
                 childLevel,
                 childX + 1,
                 childY,
-                uMin + childSize,
-                vMin,
-                childSize,
-                observerLocalPosition,
-                baseRadius);
-            CollectDesiredPatch(
-                face,
+                baseRadius));
+            AddDesiredPatch(CreatePatchDescriptor(
+                descriptor.Key.Face,
                 childLevel,
                 childX,
                 childY + 1,
-                uMin,
-                vMin + childSize,
-                childSize,
-                observerLocalPosition,
-                baseRadius);
-            CollectDesiredPatch(
-                face,
+                baseRadius));
+            AddDesiredPatch(CreatePatchDescriptor(
+                descriptor.Key.Face,
                 childLevel,
                 childX + 1,
                 childY + 1,
-                uMin + childSize,
-                vMin + childSize,
-                childSize,
-                observerLocalPosition,
-                baseRadius);
+                baseRadius));
+        }
+
+        void AddDesiredPatch(PatchDescriptor descriptor)
+        {
+            desiredPatchMap[descriptor.Key] = descriptor;
+            balanceQueue.Add(descriptor);
+        }
+
+        static PatchDescriptor CreatePatchDescriptor(
+            CelestialCubeFace face,
+            int level,
+            int x,
+            int y,
+            float baseRadius)
+        {
+            float size = 2f / (1 << level);
+            float uMin = -1f + x * size;
+            float vMin = -1f + y * size;
+            Vector3 centerDirection = CelestialCubeProjection.ToDirection(
+                face,
+                uMin + size * 0.5f,
+                vMin + size * 0.5f);
+            return new PatchDescriptor(
+                new PatchKey(face, level, x, y),
+                uMin,
+                vMin,
+                size,
+                centerDirection,
+                baseRadius * size);
+        }
+
+        bool TryFindDesiredPatchAcrossEdge(
+            PatchDescriptor descriptor,
+            PatchEdge edge,
+            out PatchDescriptor neighbour)
+        {
+            Vector3 direction = DirectionAcrossEdge(descriptor, edge);
+            CelestialCubeProjection.Project(
+                direction,
+                out CelestialCubeFace face,
+                out float u,
+                out float v);
+            for (int level = transitionMaximumLevel; level >= 0; level--)
+            {
+                int patchCount = 1 << level;
+                int x = Mathf.Clamp(
+                    Mathf.FloorToInt((u + 1f) * 0.5f * patchCount),
+                    0,
+                    patchCount - 1);
+                int y = Mathf.Clamp(
+                    Mathf.FloorToInt((v + 1f) * 0.5f * patchCount),
+                    0,
+                    patchCount - 1);
+                if (desiredPatchMap.TryGetValue(
+                        new PatchKey(face, level, x, y),
+                        out neighbour))
+                {
+                    return true;
+                }
+            }
+
+            neighbour = default;
+            return false;
+        }
+
+        static Vector3 DirectionAcrossEdge(
+            PatchDescriptor descriptor,
+            PatchEdge edge)
+        {
+            float offset = Mathf.Max(0.000001f, descriptor.Size * 0.01f);
+            float u = descriptor.UMin + descriptor.Size * 0.5f;
+            float v = descriptor.VMin + descriptor.Size * 0.5f;
+            switch (edge)
+            {
+                case PatchEdge.Bottom:
+                    v = descriptor.VMin - offset;
+                    break;
+                case PatchEdge.Right:
+                    u = descriptor.UMin + descriptor.Size + offset;
+                    break;
+                case PatchEdge.Top:
+                    v = descriptor.VMin + descriptor.Size + offset;
+                    break;
+                default:
+                    u = descriptor.UMin - offset;
+                    break;
+            }
+
+            return CelestialCubeProjection.ToDirection(descriptor.Key.Face, u, v);
         }
 
         void RebuildSubdividedBranches()
@@ -870,7 +1825,7 @@ namespace Farion.Rendering.Celestial
             CelestialBody body = bodyVisual.Body;
             if (body == null ||
                 !body.SupportsNonConvexSurfaceCollider ||
-                descriptor.Key.Level < profile.MinimumCollisionLevel)
+                descriptor.Key.Level < resolvedCollisionLevel)
             {
                 return false;
             }
@@ -879,10 +1834,9 @@ namespace Farion.Rendering.Celestial
                 observerLocalDirection,
                 descriptor.CenterDirection) * Mathf.Deg2Rad * baseRadius;
             float patchMargin = descriptor.PatchWorldSize * 0.8f;
-            float collisionRadius = baseRadius * profile.CollisionRadiusRatio;
             float observerAltitude = Mathf.Max(0f, observerLocalPosition.magnitude - baseRadius);
-            return surfaceDistance <= collisionRadius + patchMargin &&
-                observerAltitude <= baseRadius * profile.ExitAltitudeRatio;
+            return surfaceDistance <= profile.CollisionRadiusMeters + patchMargin &&
+                observerAltitude <= resolvedExitAltitude;
         }
 
         bool CanPrepareLocalCollision(
@@ -891,22 +1845,7 @@ namespace Farion.Rendering.Celestial
             float baseRadius,
             float outerRadius)
         {
-            return CanPrepareLocalCollision(
-                hasCollisionObserver,
-                observerLocalPosition,
-                currentCollisionObserverLocalVelocity,
-                baseRadius,
-                outerRadius);
-        }
-
-        bool CanPrepareLocalCollision(
-            bool hasCollisionObserver,
-            Vector3 observerLocalPosition,
-            Vector3 observerLocalVelocity,
-            float baseRadius,
-            float outerRadius)
-        {
-            if (!hasCollisionObserver || profile.CollisionRadiusRatio <= 0f)
+            if (!hasCollisionObserver || profile.CollisionRadiusMeters <= 0f)
             {
                 return false;
             }
@@ -921,14 +1860,42 @@ namespace Farion.Rendering.Celestial
                 return false;
             }
 
-            float safetyMargin = baseRadius * profile.CollisionSafetyMarginRatio;
-            float availableTravel = baseRadius *
-                profile.CollisionRadiusRatio *
-                profile.CollisionCoverageSafetyRatio;
-            float predictedTravel =
-                observerLocalVelocity.magnitude *
-                profile.CollisionPredictionSeconds;
-            return predictedTravel + safetyMargin <= availableTravel;
+            return true;
+        }
+
+        bool ShouldRetainLocalCollisionAuthority(float outerRadius)
+        {
+            if (collisionAuthority !=
+                CelestialSurfaceCollisionAuthority.LocalAuthoritative)
+            {
+                return false;
+            }
+
+            float retainAltitude = Mathf.Max(
+                profile.CollisionSafetyMarginMeters * 2f,
+                profile.CollisionTriangleEdgeMeters);
+            bool retained = false;
+            for (int i = 0; i < gatheredObservers.Count; i++)
+            {
+                Vector3 localPosition = transform.InverseTransformPoint(
+                    gatheredObservers[i].Position);
+                if (localPosition.magnitude - outerRadius > retainAltitude ||
+                    localPosition.sqrMagnitude <= 0.000001f)
+                {
+                    continue;
+                }
+
+                if (!IsCollisionDirectionCovered(
+                        localPosition.normalized,
+                        useDesiredPatches: false))
+                {
+                    return false;
+                }
+
+                retained = true;
+            }
+
+            return retained;
         }
 
         void ResolveObserverLocalState(
@@ -963,7 +1930,6 @@ namespace Farion.Rendering.Celestial
                 if (!CanPrepareLocalCollision(
                         true,
                         localPosition,
-                        localVelocity,
                         baseRadius,
                         outerRadius))
                 {
@@ -989,19 +1955,31 @@ namespace Farion.Rendering.Celestial
                 ResolveObserverLocalState(
                     gatheredObservers[observerIndex],
                     out Vector3 localPosition,
-                    out Vector3 localDirection,
-                    out _);
-                for (int i = 0; i < desiredPatches.Count; i++)
+                    out _,
+                    out Vector3 localVelocity);
+                for (int sample = 0; sample < CollisionPredictionSamples; sample++)
                 {
-                    PatchDescriptor descriptor = desiredPatches[i];
-                    if (!desiredCollisionKeys.Contains(descriptor.Key) &&
-                        ShouldEnableCollision(
-                            descriptor,
-                            localPosition,
-                            localDirection,
-                            baseRadius))
+                    float progress = sample / (CollisionPredictionSamples - 1f);
+                    Vector3 predictedPosition = localPosition +
+                        localVelocity * (profile.CollisionPredictionSeconds * progress);
+                    if (predictedPosition.sqrMagnitude <= 0.000001f)
                     {
-                        desiredCollisionKeys.Add(descriptor.Key);
+                        continue;
+                    }
+
+                    Vector3 predictedDirection = predictedPosition.normalized;
+                    for (int i = 0; i < desiredPatches.Count; i++)
+                    {
+                        PatchDescriptor descriptor = desiredPatches[i];
+                        if (!desiredCollisionKeys.Contains(descriptor.Key) &&
+                            ShouldEnableCollision(
+                                descriptor,
+                                predictedPosition,
+                                predictedDirection,
+                                baseRadius))
+                        {
+                            desiredCollisionKeys.Add(descriptor.Key);
+                        }
                     }
                 }
             }
@@ -1019,14 +1997,14 @@ namespace Farion.Rendering.Celestial
             }
         }
 
-        bool GatheredObserversChangedEnough(float baseRadius)
+        bool GatheredObserversChangedEnough()
         {
             if (gatheredObservers.Count != lastGatheredObserverRigidbodies.Count)
             {
                 return true;
             }
 
-            float moveThreshold = baseRadius * profile.ObserverMoveThresholdRatio;
+            float moveThreshold = profile.ObserverMoveThresholdMeters;
             float moveThresholdSqr = moveThreshold * moveThreshold;
             for (int i = 0; i < gatheredObservers.Count; i++)
             {
@@ -1049,10 +2027,10 @@ namespace Farion.Rendering.Celestial
 
         float CalculateLocalCollisionPreparationAltitude(float baseRadius)
         {
-            int minimumLevel = profile.MinimumCollisionLevel;
+            int minimumLevel = resolvedCollisionLevel;
             if (minimumLevel <= 0)
             {
-                return baseRadius * profile.ExitAltitudeRatio;
+                return resolvedExitAltitude;
             }
 
             float parentSize = 2f / (1 << (minimumLevel - 1));
@@ -1097,11 +2075,10 @@ namespace Farion.Rendering.Celestial
             bool useDesiredPatches)
         {
             float predictionSeconds = profile.CollisionPredictionSeconds;
-            float safetyMarginRatio = profile.CollisionSafetyMarginRatio;
-            const int PredictionSamples = 5;
-            for (int sample = 0; sample < PredictionSamples; sample++)
+            float safetyMarginAngle = resolvedCollisionSafetyMarginAngle;
+            for (int sample = 0; sample < CollisionPredictionSamples; sample++)
             {
-                float progress = sample / (PredictionSamples - 1f);
+                float progress = sample / (CollisionPredictionSamples - 1f);
                 Vector3 predictedPosition =
                     observerLocalPosition +
                     observerLocalVelocity * (predictionSeconds * progress);
@@ -1116,7 +2093,7 @@ namespace Farion.Rendering.Celestial
                     return false;
                 }
 
-                if (safetyMarginRatio <= 0f)
+                if (safetyMarginAngle <= 0f)
                 {
                     continue;
                 }
@@ -1127,16 +2104,16 @@ namespace Farion.Rendering.Celestial
                 Vector3 tangent = Vector3.Cross(referenceAxis, direction).normalized;
                 Vector3 bitangent = Vector3.Cross(direction, tangent).normalized;
                 if (!IsCollisionDirectionCovered(
-                        (direction + tangent * safetyMarginRatio).normalized,
+                        (direction + tangent * safetyMarginAngle).normalized,
                         useDesiredPatches) ||
                     !IsCollisionDirectionCovered(
-                        (direction - tangent * safetyMarginRatio).normalized,
+                        (direction - tangent * safetyMarginAngle).normalized,
                         useDesiredPatches) ||
                     !IsCollisionDirectionCovered(
-                        (direction + bitangent * safetyMarginRatio).normalized,
+                        (direction + bitangent * safetyMarginAngle).normalized,
                         useDesiredPatches) ||
                     !IsCollisionDirectionCovered(
-                        (direction - bitangent * safetyMarginRatio).normalized,
+                        (direction - bitangent * safetyMarginAngle).normalized,
                         useDesiredPatches))
                 {
                     return false;
@@ -1148,25 +2125,18 @@ namespace Farion.Rendering.Celestial
 
         bool IsCollisionDirectionCovered(Vector3 direction, bool useDesiredPatches)
         {
-            if (useDesiredPatches)
+            CelestialCubeProjection.Project(
+                direction,
+                out CelestialCubeFace face,
+                out float u,
+                out float v);
+            HashSet<PatchKey> collisionKeys = useDesiredPatches
+                ? desiredCollisionKeys
+                : activeCollisionKeys;
+            int maximumLevel = Mathf.Max(transitionMaximumLevel, resolvedSubdivisionLevel);
+            for (int level = 0; level <= maximumLevel; level++)
             {
-                for (int i = 0; i < desiredPatches.Count; i++)
-                {
-                    PatchDescriptor descriptor = desiredPatches[i];
-                    if (desiredCollisionKeys.Contains(descriptor.Key) &&
-                        DescriptorContainsDirection(descriptor, direction))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            foreach (SurfacePatch patch in activePatches.Values)
-            {
-                if (patch.Collider.enabled &&
-                    DescriptorContainsDirection(patch.Descriptor, direction))
+                if (collisionKeys.Contains(ResolvePatchKey(face, level, u, v)))
                 {
                     return true;
                 }
@@ -1175,21 +2145,38 @@ namespace Farion.Rendering.Celestial
             return false;
         }
 
-        static bool DescriptorContainsDirection(
-            PatchDescriptor descriptor,
-            Vector3 direction)
+        static PatchKey ResolvePatchKey(CelestialCubeFace face, int level, float u, float v)
         {
-            CelestialCubeProjection.Project(direction, out CelestialCubeFace face, out float u, out float v);
-            if (face != descriptor.Key.Face)
+            int patchCount = 1 << level;
+            int x = Mathf.Clamp(
+                Mathf.FloorToInt((u + 1f) * 0.5f * patchCount),
+                0,
+                patchCount - 1);
+            int y = Mathf.Clamp(
+                Mathf.FloorToInt((v + 1f) * 0.5f * patchCount),
+                0,
+                patchCount - 1);
+            return new PatchKey(face, level, x, y);
+        }
+
+        void RefreshActiveCollisionKeys()
+        {
+            activeCollisionKeys.Clear();
+            foreach (KeyValuePair<PatchKey, SurfacePatch> pair in activePatches)
             {
-                return false;
+                if (pair.Value.Collider.enabled)
+                {
+                    activeCollisionKeys.Add(pair.Key);
+                }
             }
 
-            const float Epsilon = 0.0001f;
-            return u >= descriptor.UMin - Epsilon &&
-                u <= descriptor.UMin + descriptor.Size + Epsilon &&
-                v >= descriptor.VMin - Epsilon &&
-                v <= descriptor.VMin + descriptor.Size + Epsilon;
+            foreach (KeyValuePair<PatchKey, SurfacePatch> pair in stagedPatches)
+            {
+                if (pair.Value.Collider.enabled)
+                {
+                    activeCollisionKeys.Add(pair.Key);
+                }
+            }
         }
 
         bool AreDesiredCollisionPatchesReady()
@@ -1203,7 +2190,7 @@ namespace Farion.Rendering.Celestial
             {
                 if (!activePatches.TryGetValue(key, out SurfacePatch patch) ||
                     !patch.Collider.enabled ||
-                    patch.Collider.sharedMesh != patch.CollisionMesh)
+                    patch.Collider.sharedMesh != patch.Mesh)
                 {
                     return false;
                 }
@@ -1212,84 +2199,54 @@ namespace Farion.Rendering.Celestial
             return true;
         }
 
-        void BuildPatch(SurfacePatch patch, PatchDescriptor descriptor, float baseRadius)
+        static void SamplePatchGeometry(
+            PatchGeometry geometry,
+            PatchDescriptor descriptor,
+            CelestialSurfaceSampler sampler,
+            int resolution,
+            CancellationToken cancellationToken)
         {
-            patch.Descriptor = descriptor;
-            int resolution = profile.PatchResolution;
             int rowSize = resolution + 1;
-            int surfaceVertexCount = rowSize * rowSize;
             int extendedRowSize = resolution + 3;
-            int estimatedVertexCount = surfaceVertexCount + rowSize * 4;
-            int estimatedIndexCount = resolution * resolution * 6 + resolution * 4 * 12;
-            List<Vector3> vertices = patchBuildVertices;
-            List<Vector3> normals = patchBuildNormals;
-            List<Vector4> shadingData = patchBuildShadingData;
-            List<int> triangles = patchBuildTriangles;
-            vertices.Clear();
-            normals.Clear();
-            shadingData.Clear();
-            triangles.Clear();
-            if (vertices.Capacity < estimatedVertexCount)
-            {
-                vertices.Capacity = estimatedVertexCount;
-                normals.Capacity = estimatedVertexCount;
-                shadingData.Capacity = estimatedVertexCount;
-            }
+            int vertexCount = rowSize * rowSize;
+            int triangleIndexCount = resolution * resolution * 6;
+            geometry.EnsureCapacity(
+                vertexCount,
+                triangleIndexCount,
+                extendedRowSize * extendedRowSize);
 
-            if (triangles.Capacity < estimatedIndexCount)
-            {
-                triangles.Capacity = estimatedIndexCount;
-            }
-
-            int extendedPositionCount = extendedRowSize * extendedRowSize;
-            if (extendedPositionBuffer.Length < extendedPositionCount)
-            {
-                Array.Resize(ref extendedPositionBuffer, extendedPositionCount);
-            }
-
-            if (surfaceSampleBuffer.Length < surfaceVertexCount)
-            {
-                Array.Resize(ref surfaceSampleBuffer, surfaceVertexCount);
-            }
-
-            Vector3[] extendedPositions = extendedPositionBuffer;
-            CelestialShapeSample[] surfaceSamples = surfaceSampleBuffer;
-            // Shared vertices must resolve to the same radius across adjacent LODs.
-            // Level-dependent filtering made split/merge transitions pulse visibly.
-            float angularFootprint = CalculatePatchAngularFootprint(
-                profile.MaxSubdivisionLevel,
-                resolution);
+            Vector3[] extendedPositions = geometry.ExtendedPositions;
+            Vector3[] vertices = geometry.Vertices;
+            Vector3[] normals = geometry.Normals;
+            Vector4[] shading = geometry.Shading;
+            Vector4[] morphOffsets = geometry.MorphOffsets;
+            Vector4[] morphNormals = geometry.MorphNormals;
+            int[] triangles = geometry.Triangles;
 
             for (int extendedY = 0; extendedY < extendedRowSize; extendedY++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 int y = extendedY - 1;
                 float v = descriptor.VMin + descriptor.Size * (y / (float)resolution);
                 for (int extendedX = 0; extendedX < extendedRowSize; extendedX++)
                 {
                     int x = extendedX - 1;
                     float u = descriptor.UMin + descriptor.Size * (x / (float)resolution);
-                    Vector3 direction = CelestialCubeProjection.ToDirection(descriptor.Key.Face, u, v);
+                    Vector3 direction = CelestialCubeProjection.ToDirection(
+                        descriptor.Key.Face,
+                        u,
+                        v);
                     bool isSurfaceVertex = x >= 0 && x <= resolution && y >= 0 && y <= resolution;
                     float vertexRadius;
                     if (isSurfaceVertex)
                     {
-                        CelestialShapeSample sample = CelestialSurfaceSampling.EvaluateSample(
-                            baseRadius,
-                            direction,
-                            angularFootprint,
-                            bodyVisual.ShapeProfile,
-                            bodyVisual.SurfaceProfile);
-                        surfaceSamples[y * rowSize + x] = sample;
+                        CelestialShapeSample sample = sampler.EvaluateSample(direction);
+                        shading[y * rowSize + x] = sample.ShadingData;
                         vertexRadius = sample.Radius;
                     }
                     else
                     {
-                        vertexRadius = CelestialSurfaceSampling.EvaluateRadius(
-                            baseRadius,
-                            direction,
-                            angularFootprint,
-                            bodyVisual.ShapeProfile,
-                            bodyVisual.SurfaceProfile);
+                        vertexRadius = sampler.EvaluateRadius(direction);
                     }
 
                     extendedPositions[extendedY * extendedRowSize + extendedX] =
@@ -1297,8 +2254,15 @@ namespace Farion.Rendering.Celestial
                 }
             }
 
+            SnapEdgesToCoarserNeighbours(
+                descriptor.CoarserEdgeMask,
+                resolution,
+                extendedRowSize,
+                extendedPositions);
+
             for (int y = 0; y <= resolution; y++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 int extendedY = y + 1;
                 for (int x = 0; x <= resolution; x++)
                 {
@@ -1325,102 +2289,85 @@ namespace Farion.Rendering.Celestial
                         }
                     }
 
-                    CelestialShapeSample sample = surfaceSamples[y * rowSize + x];
-                    vertices.Add(position);
-                    normals.Add(normal);
-                    shadingData.Add(sample.ShadingData);
+                    int index = y * rowSize + x;
+                    vertices[index] = position;
+                    normals[index] = normal;
                 }
             }
 
+            BuildMorphData(
+                vertices,
+                normals,
+                morphOffsets,
+                morphNormals,
+                resolution,
+                rowSize);
+
+            int triangleIndex = 0;
             for (int y = 0; y < resolution; y++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 for (int x = 0; x < resolution; x++)
                 {
                     int a = y * rowSize + x;
                     int b = a + 1;
                     int c = a + rowSize;
                     int d = c + 1;
-                    AddOutwardTriangle(triangles, vertices, a, c, b);
-                    AddOutwardTriangle(triangles, vertices, b, c, d);
+                    triangleIndex = AddOutwardTriangle(triangles, vertices, triangleIndex, a, c, b);
+                    triangleIndex = AddOutwardTriangle(triangles, vertices, triangleIndex, b, c, d);
                 }
             }
 
-            patchBuildCollisionTriangles.Clear();
-            patchBuildCollisionTriangles.AddRange(triangles);
-            int surfaceVertexCountForCollision = vertices.Count;
-
-            float skirtDepth = Mathf.Max(0.01f, baseRadius * profile.SkirtDepthRatio);
-            AddSkirt(
-                PatchEdge.Bottom,
-                resolution,
-                rowSize,
-                skirtDepth,
-                vertices,
-                normals,
-                shadingData,
-                triangles);
-            AddSkirt(
-                PatchEdge.Right,
-                resolution,
-                rowSize,
-                skirtDepth,
-                vertices,
-                normals,
-                shadingData,
-                triangles);
-            AddSkirt(
-                PatchEdge.Top,
-                resolution,
-                rowSize,
-                skirtDepth,
-                vertices,
-                normals,
-                shadingData,
-                triangles);
-            AddSkirt(
-                PatchEdge.Left,
-                resolution,
-                rowSize,
-                skirtDepth,
-                vertices,
-                normals,
-                shadingData,
-                triangles);
-
-            Mesh mesh = patch.Mesh;
-            mesh.Clear();
-            mesh.name = $"Surface Patch {descriptor.Key}";
-            mesh.indexFormat = vertices.Count <= 65535
-                ? IndexFormat.UInt16
-                : IndexFormat.UInt32;
-            mesh.SetVertices(vertices);
-            mesh.SetTriangles(triangles, 0, true);
-            mesh.SetUVs(0, shadingData);
-            mesh.SetNormals(normals);
-            mesh.RecalculateBounds();
-
-            Mesh collisionMesh = patch.CollisionMesh;
-            collisionMesh.Clear();
-            collisionMesh.name = $"Surface Patch Collision {descriptor.Key}";
-            collisionMesh.indexFormat = surfaceVertexCountForCollision <= 65535
-                ? IndexFormat.UInt16
-                : IndexFormat.UInt32;
-            collisionMesh.SetVertices(vertices, 0, surfaceVertexCountForCollision);
-            collisionMesh.SetTriangles(patchBuildCollisionTriangles, 0, true);
-            collisionMesh.RecalculateBounds();
-
-            patch.CollisionBaked = false;
-            patch.Filter.sharedMesh = mesh;
-            patch.Collider.sharedMesh = null;
-            patch.Collider.enabled = false;
-            patch.GameObject.name = $"Surface Patch {descriptor.Key}";
-            patch.GameObject.layer = FarionLayers.CelestialSurface;
-            bodyVisual.ConfigureSurfaceRenderer(patch.Renderer);
+            geometry.VertexCount = vertexCount;
+            geometry.TriangleIndexCount = triangleIndex;
         }
 
-        static void AddOutwardTriangle(
-            List<int> triangles,
-            List<Vector3> vertices,
+        static void BuildMorphData(
+            Vector3[] vertices,
+            Vector3[] normals,
+            Vector4[] morphOffsets,
+            Vector4[] morphNormals,
+            int resolution,
+            int rowSize)
+        {
+            for (int y = 0; y <= resolution; y++)
+            {
+                int yLow = y & ~1;
+                int yHigh = (y & 1) != 0 ? yLow + 2 : yLow;
+                for (int x = 0; x <= resolution; x++)
+                {
+                    int xLow = x & ~1;
+                    int xHigh = (x & 1) != 0 ? xLow + 2 : xLow;
+                    Vector3 coarse = (x & 1) != 0 && (y & 1) != 0
+                        ? (vertices[yLow * rowSize + xHigh] +
+                            vertices[yHigh * rowSize + xLow]) * 0.5f
+                        : (vertices[yLow * rowSize + xLow] +
+                            vertices[yLow * rowSize + xHigh] +
+                            vertices[yHigh * rowSize + xLow] +
+                            vertices[yHigh * rowSize + xHigh]) * 0.25f;
+                    int index = y * rowSize + x;
+                    Vector3 offset = coarse - vertices[index];
+                    morphOffsets[index] = new Vector4(offset.x, offset.y, offset.z, 0f);
+                    Vector3 coarseNormal = (x & 1) != 0 && (y & 1) != 0
+                        ? (normals[yLow * rowSize + xHigh] +
+                            normals[yHigh * rowSize + xLow]).normalized
+                        : (normals[yLow * rowSize + xLow] +
+                            normals[yLow * rowSize + xHigh] +
+                            normals[yHigh * rowSize + xLow] +
+                            normals[yHigh * rowSize + xHigh]).normalized;
+                    morphNormals[index] = new Vector4(
+                        coarseNormal.x,
+                        coarseNormal.y,
+                        coarseNormal.z,
+                        0f);
+                }
+            }
+        }
+
+        static int AddOutwardTriangle(
+            int[] triangles,
+            Vector3[] vertices,
+            int triangleIndex,
             int a,
             int b,
             int c)
@@ -1432,98 +2379,77 @@ namespace Farion.Rendering.Celestial
                 (b, c) = (c, b);
             }
 
-            triangles.Add(a);
-            triangles.Add(b);
-            triangles.Add(c);
+            triangles[triangleIndex] = a;
+            triangles[triangleIndex + 1] = b;
+            triangles[triangleIndex + 2] = c;
+            return triangleIndex + 3;
         }
 
-        static void AddSkirt(
-            PatchEdge edge,
+        static void SnapEdgesToCoarserNeighbours(
+            int coarserEdgeMask,
             int resolution,
             int rowSize,
-            float skirtDepth,
-            List<Vector3> vertices,
-            List<Vector3> normals,
-            List<Vector4> shadingData,
-            List<int> triangles)
+            Vector3[] positions)
         {
-            int skirtStart = vertices.Count;
-            for (int i = 0; i <= resolution; i++)
+            for (int edge = 0; edge < 4; edge++)
             {
-                int sourceIndex = GetEdgeIndex(edge, i, resolution, rowSize);
-                Vector3 radialDirection = vertices[sourceIndex].normalized;
-                vertices.Add(vertices[sourceIndex] - radialDirection * skirtDepth);
-                normals.Add(normals[sourceIndex]);
-                shadingData.Add(shadingData[sourceIndex]);
-            }
+                if ((coarserEdgeMask & 1 << edge) == 0)
+                {
+                    continue;
+                }
 
-            for (int i = 0; i < resolution; i++)
-            {
-                int a = GetEdgeIndex(edge, i, resolution, rowSize);
-                int b = GetEdgeIndex(edge, i + 1, resolution, rowSize);
-                int skirtA = skirtStart + i;
-                int skirtB = skirtA + 1;
-                AddDoubleSidedTriangle(triangles, a, b, skirtB);
-                AddDoubleSidedTriangle(triangles, a, skirtB, skirtA);
+                PatchEdge patchEdge = (PatchEdge)edge;
+                for (int i = 1; i < resolution; i += 2)
+                {
+                    int previous = GetExtendedEdgeIndex(
+                        patchEdge,
+                        i - 1,
+                        resolution,
+                        rowSize);
+                    int current = GetExtendedEdgeIndex(
+                        patchEdge,
+                        i,
+                        resolution,
+                        rowSize);
+                    int next = GetExtendedEdgeIndex(
+                        patchEdge,
+                        i + 1,
+                        resolution,
+                        rowSize);
+                    positions[current] = (positions[previous] + positions[next]) * 0.5f;
+                }
             }
         }
 
-        static int GetEdgeIndex(PatchEdge edge, int index, int resolution, int rowSize)
+        static int GetExtendedEdgeIndex(
+            PatchEdge edge,
+            int index,
+            int resolution,
+            int rowSize)
         {
             return edge switch
             {
-                PatchEdge.Bottom => index,
-                PatchEdge.Right => index * rowSize + resolution,
-                PatchEdge.Top => resolution * rowSize + (resolution - index),
-                _ => (resolution - index) * rowSize
+                PatchEdge.Bottom => rowSize + index + 1,
+                PatchEdge.Right => (index + 1) * rowSize + resolution + 1,
+                PatchEdge.Top => (resolution + 1) * rowSize + resolution - index + 1,
+                _ => (resolution - index + 1) * rowSize + 1
             };
-        }
-
-        static void AddDoubleSidedTriangle(List<int> triangles, int a, int b, int c)
-        {
-            triangles.Add(a);
-            triangles.Add(b);
-            triangles.Add(c);
-            triangles.Add(a);
-            triangles.Add(c);
-            triangles.Add(b);
         }
 
         void SetPatchCollision(SurfacePatch patch, bool enabled)
         {
             if (!enabled)
             {
-                if (!patch.Collider.enabled && patch.Collider.sharedMesh == null)
-                {
-                    return;
-                }
-
                 patch.Collider.enabled = false;
-                patch.Collider.sharedMesh = null;
                 return;
             }
 
-            if (patch.Collider.enabled && patch.Collider.sharedMesh == patch.CollisionMesh)
+            if (patch.Collider.sharedMesh != patch.Mesh)
             {
-                return;
+                patch.Collider.sharedMesh = patch.Mesh;
             }
 
-            PreparePatchCollision(patch);
-            patch.Collider.enabled = true;
-        }
-
-        void PreparePatchCollision(SurfacePatch patch)
-        {
-            if (!patch.CollisionBaked && profile.BakeCollisionMeshes)
-            {
-                CelestialMeshColliderBaker.BakeImmediate(patch.CollisionMesh);
-                patch.CollisionBaked = true;
-            }
-
-            if (patch.Collider.sharedMesh != patch.CollisionMesh)
-            {
-                patch.Collider.sharedMesh = patch.CollisionMesh;
-            }
+            patch.Collider.enabled = patch.Collider.sharedMesh != null;
         }
 
         SurfacePatch RentPatch()
@@ -1548,17 +2474,7 @@ namespace Farion.Rendering.Celestial
                 MeshCollider collider = patchObject.AddComponent<MeshCollider>();
                 collider.convex = false;
                 collider.enabled = false;
-                Mesh mesh = new()
-                {
-                    name = "Celestial Surface Patch",
-                    hideFlags = HideFlags.DontSave
-                };
-                Mesh collisionMesh = new()
-                {
-                    name = "Celestial Surface Patch Collision",
-                    hideFlags = HideFlags.DontSave
-                };
-                patch = new SurfacePatch(patchObject, filter, renderer, collider, mesh, collisionMesh);
+                patch = new SurfacePatch(patchObject, filter, renderer, collider, null);
             }
 
             patch.GameObject.SetActive(true);
@@ -1573,9 +2489,7 @@ namespace Farion.Rendering.Celestial
             }
 
             patch.Collider.enabled = false;
-            patch.Collider.sharedMesh = null;
             patch.Renderer.enabled = false;
-            patch.Filter.sharedMesh = null;
             patch.GameObject.SetActive(false);
             patchPool.Push(patch);
         }
@@ -1586,26 +2500,29 @@ namespace Farion.Rendering.Celestial
                 !patchTransitionPending &&
                 activePatches.Count == 0)
             {
+                surfaceRenderRequested = false;
                 if (collisionAuthority !=
                     CelestialSurfaceCollisionAuthority.GlobalFallback)
                 {
                     collisionAuthority =
                         CelestialSurfaceCollisionAuthority.GlobalFallback;
                     localCollisionCoverageReady = false;
-                    ApplyPrimaryTerrainState();
                 }
 
+                ApplyPrimaryTerrainState();
                 return;
             }
 
             CancelPatchTransition();
             if (bodyVisual != null && bodyVisual.isActiveAndEnabled)
             {
-                bodyVisual.SetPrimaryTerrainEnabled(renderEnabled: true, collisionEnabled: true);
+                bodyVisual.SetPrimaryTerrainActive(renderEnabled: true, collisionEnabled: true);
             }
 
             ReleaseAllActivePatches();
             surfaceModeActive = false;
+            surfaceRenderActive = false;
+            surfaceRenderRequested = false;
             collisionAuthority =
                 CelestialSurfaceCollisionAuthority.GlobalFallback;
             localCollisionCoverageReady = false;
@@ -1640,6 +2557,7 @@ namespace Farion.Rendering.Celestial
         void DestroyAllPatches()
         {
             CancelPatchTransition();
+            WaitForPendingBuilds();
             foreach (SurfacePatch patch in activePatches.Values)
             {
                 DestroyPatch(patch);
@@ -1668,7 +2586,6 @@ namespace Farion.Rendering.Celestial
             patch.Collider.sharedMesh = null;
             patch.Filter.sharedMesh = null;
             DestroyRuntimeObject(patch.Mesh);
-            DestroyRuntimeObject(patch.CollisionMesh);
             DestroyRuntimeObject(patch.GameObject);
         }
 
@@ -1828,15 +2745,40 @@ namespace Farion.Rendering.Celestial
 
         void HandleMaterialPropertiesChanged()
         {
+            float baseRadius = bodyVisual != null && bodyVisual.Body != null
+                ? Mathf.Max(0.01f, bodyVisual.Body.Radius)
+                : 0f;
             foreach (SurfacePatch patch in activePatches.Values)
             {
-                bodyVisual.ConfigureSurfaceRenderer(patch.Renderer);
+                bodyVisual.ConfigureSurfaceRenderer(
+                    patch.Renderer,
+                    patch.Collider.enabled
+                        ? Vector4.zero
+                        : ResolveMorphRange(baseRadius, patch.Descriptor.Key.Level));
             }
 
             foreach (SurfacePatch patch in stagedPatches.Values)
             {
-                bodyVisual.ConfigureSurfaceRenderer(patch.Renderer);
+                bodyVisual.ConfigureSurfaceRenderer(
+                    patch.Renderer,
+                    desiredCollisionKeys.Contains(patch.Descriptor.Key)
+                        ? Vector4.zero
+                        : ResolveMorphRange(baseRadius, patch.Descriptor.Key.Level));
             }
+        }
+
+        Vector4 ResolveMorphRange(float baseRadius, int level)
+        {
+            if (level <= 0 || baseRadius <= 0f)
+            {
+                return Vector4.zero;
+            }
+
+            float parentWorldSize = baseRadius * (2f / (1 << (level - 1)));
+            float completeDistance = parentWorldSize * Mathf.Max(
+                0.1f,
+                profile.SplitDistanceMultiplier - PatchBoundingRatio);
+            return new Vector4(completeDistance * MorphStartRatio, completeDistance, 0f, 0f);
         }
 
         static float CalculatePatchAngularFootprint(int level, int resolution)

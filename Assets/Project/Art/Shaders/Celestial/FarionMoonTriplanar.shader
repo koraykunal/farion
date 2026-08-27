@@ -106,11 +106,15 @@ Shader "Farion/Celestial/Moon Triplanar"
 
             half4 _FarionAmbientColor;
 
+            #include "FarionSurfaceGeomorph.hlsl"
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
                 float4 texcoord : TEXCOORD0;
+                float4 morphOffsetOS : TEXCOORD1;
+                float4 morphNormalOS : TEXCOORD2;
             };
 
             struct Varyings
@@ -129,12 +133,19 @@ Shader "Farion/Celestial/Moon Triplanar"
             Varyings Vertex(Attributes input)
             {
                 Varyings output;
-                VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                float morphWeight = FarionResolveMorphWeight(input.positionOS.xyz);
+                float3 positionOS = input.positionOS.xyz +
+                    input.morphOffsetOS.xyz * morphWeight;
+                float3 normalOS = FarionApplyGeomorphNormal(
+                    input.normalOS,
+                    input.morphNormalOS.xyz,
+                    morphWeight);
+                VertexPositionInputs positionInputs = GetVertexPositionInputs(positionOS);
                 output.positionHCS = positionInputs.positionCS;
                 output.positionWS = positionInputs.positionWS;
-                output.positionOS = input.positionOS.xyz;
-                output.normalOS = normalize(input.normalOS);
-                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.positionOS = positionOS;
+                output.normalOS = normalOS;
+                output.normalWS = TransformObjectToWorldNormal(normalOS);
                 output.terrainData = input.texcoord;
 #if defined(_ADDITIONAL_LIGHTS_VERTEX)
                 output.vertexLighting = VertexLighting(positionInputs.positionWS, output.normalWS);
@@ -295,6 +306,7 @@ Shader "Farion/Celestial/Moon Triplanar"
             ENDHLSL
         }
 
+
         Pass
         {
             Name "DepthOnly"
@@ -306,14 +318,13 @@ Shader "Farion/Celestial/Moon Triplanar"
 
             HLSLPROGRAM
             #pragma target 3.5
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
+            #pragma vertex FarionGeomorphDepthOnlyVertex
+            #pragma fragment FarionGeomorphDepthOnlyFragment
 
-            #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+            #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
 
@@ -327,15 +338,14 @@ Shader "Farion/Celestial/Moon Triplanar"
 
             HLSLPROGRAM
             #pragma target 3.5
-            #pragma vertex DepthNormalsVertex
-            #pragma fragment DepthNormalsFragment
+            #pragma vertex FarionGeomorphDepthNormalsVertex
+            #pragma fragment FarionGeomorphDepthNormalsFragment
 
-            #pragma multi_compile _ LOD_FADE_CROSSFADE
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthNormalsPass.hlsl"
+            #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
 
@@ -347,8 +357,13 @@ Shader "Farion/Celestial/Moon Triplanar"
             ColorMask RG
 
             HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex FarionGeomorphMotionVertex
+            #pragma fragment FarionGeomorphMotionFragment
             #pragma multi_compile _ LOD_FADE_CROSSFADE
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ObjectMotionVectors.hlsl"
+            #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
 
@@ -364,11 +379,12 @@ Shader "Farion/Celestial/Moon Triplanar"
 
             HLSLPROGRAM
             #pragma target 3.5
-            #pragma vertex ShadowPassVertex
-            #pragma fragment ShadowPassFragment
+            #pragma vertex FarionGeomorphShadowVertex
+            #pragma fragment FarionGeomorphShadowFragment
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #pragma multi_compile_instancing
 
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
     }

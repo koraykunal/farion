@@ -40,6 +40,11 @@ namespace Farion.Rendering.Celestial
             angularSampleFootprint = angularSampleFootprint > 0f
                 ? angularSampleFootprint
                 : CalculateAngularSampleFootprint(resolution);
+            CelestialSurfaceSampler sampler = CelestialSurfaceSampler.Create(
+                radius,
+                angularSampleFootprint,
+                shapeProfile,
+                surfaceProfile);
 
             Vector3[] vertices = new Vector3[data.Vertices.Length];
             Vector4[] shadingData = new Vector4[data.Vertices.Length];
@@ -49,12 +54,7 @@ namespace Farion.Rendering.Celestial
             for (int i = 0; i < vertices.Length; i++)
             {
                 Vector3 unitDirection = data.Vertices[i];
-                CelestialShapeSample shapeSample = CelestialSurfaceSampling.EvaluateSample(
-                    radius,
-                    unitDirection,
-                    angularSampleFootprint,
-                    shapeProfile,
-                    surfaceProfile);
+                CelestialShapeSample shapeSample = sampler.EvaluateSample(unitDirection);
                 float vertexRadius = shapeSample.Radius;
                 shadingData[i] = shapeSample.ShadingData;
 

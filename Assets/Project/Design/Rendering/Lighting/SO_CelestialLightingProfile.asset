@@ -27,9 +27,14 @@ MonoBehaviour:
   shadowNearPlane: 0.2
   directionalShadowAngle: 0.55
   bounceIntensity: 0
+  enablePlanetshine: 1
+  planetshineColor: {r: 0.62, g: 0.68, b: 0.78, a: 1}
+  planetshineIntensity: 0.85
+  planetshineAlbedo: 0.35
+  planetshineShadows: 0
   applyRenderSettings: 1
   ambientMode: 3
-  ambientLight: {r: 0.018, g: 0.021, b: 0.028, a: 1}
+  ambientLight: {r: 0.055, g: 0.065, b: 0.09, a: 1}
   ambientIntensity: 1
   disableFog: 1
   reflectionCubemap: {fileID: 8900000, guid: 63ae189e87ad4724892912873ed88bfb, type: 3}
@@ -37,6 +42,6 @@ MonoBehaviour:
   applyCameraDefaults: 1
   cameraClearFlags: 1
   cameraBackground: {r: 0, g: 0, b: 0, a: 1}
-  nearClipPlane: 0.1
+  nearClipPlane: 0.3
   farClipPlane: 50000
   allowHdr: 1
