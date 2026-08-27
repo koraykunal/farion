@@ -5,6 +5,8 @@ namespace Farion.Gameplay.ResourceNodes
 {
     static class ResourceNodeFactory
     {
+        const float MaximumTiltDegrees = 3f;
+
         public static bool TryCreate(
             ResourceDepositData deposit,
             Vector3 position,
@@ -38,6 +40,7 @@ namespace Farion.Gameplay.ResourceNodes
 
             node.transform.SetParent(parent, worldPositionStays: false);
             node.transform.SetPositionAndRotation(position, rotation);
+            ApplyDepositVariation(node.transform, deposit.GenerationSeed);
             node.name = $"Resource Node - {deposit.Resource.DisplayName} ({deposit.DepositId})";
             if (!Application.isPlaying)
             {
@@ -57,19 +60,49 @@ namespace Farion.Gameplay.ResourceNodes
             return true;
         }
 
+        static void ApplyDepositVariation(Transform node, int generationSeed)
+        {
+            uint hash = Scramble(unchecked((uint)generationSeed));
+            float yaw = (hash & 0xFFFFu) * (360f / 65536f);
+            float pitch = (((hash >> 16) & 0xFFu) - 127.5f) * (MaximumTiltDegrees / 127.5f);
+            float roll = (((hash >> 24) & 0xFFu) - 127.5f) * (MaximumTiltDegrees / 127.5f);
+            node.Rotate(pitch, yaw, roll, Space.Self);
+        }
+
+        static uint Scramble(uint value)
+        {
+            unchecked
+            {
+                value ^= value >> 16;
+                value *= 2246822519u;
+                value ^= value >> 13;
+                value *= 3266489917u;
+                value ^= value >> 16;
+                return value;
+            }
+        }
+
         static void EnsureInteractionCollider(GameObject node)
         {
-            Collider collider = node.GetComponentInChildren<Collider>();
-            if (collider == null)
+            Collider[] colliders = node.GetComponentsInChildren<Collider>();
+            for (int i = 0; i < colliders.Length; i++)
             {
-                collider = node.AddComponent<SphereCollider>();
+                if (colliders[i] != null && colliders[i].isTrigger)
+                {
+                    return;
+                }
             }
 
-            collider.isTrigger = true;
+            node.AddComponent<SphereCollider>().isTrigger = true;
         }
 
         static void ApplyResourceColor(GameObject node, ResourceDepositData deposit)
         {
+            if (!deposit.Resource.TintByBiome)
+            {
+                return;
+            }
+
             Color color = deposit.Biome != null ? deposit.Biome.PreviewColor : Color.yellow;
             if (deposit.TerrainFeature != null)
             {

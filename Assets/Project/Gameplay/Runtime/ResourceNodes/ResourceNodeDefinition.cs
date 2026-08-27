@@ -28,6 +28,8 @@ namespace Farion.Gameplay.ResourceNodes
 
         [Header("Presentation")]
         [SerializeField] GameObject visualPrefab;
+        [Tooltip("Overrides the visual prefab's albedo with the biome preview colour. Leave off for authored art; it exists so untextured placeholder meshes stay distinguishable.")]
+        [SerializeField] bool tintByBiome;
 
         public string NodeId => string.IsNullOrWhiteSpace(nodeId) ? name : nodeId.Trim();
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? NodeId : displayName.Trim();
@@ -41,6 +43,7 @@ namespace Farion.Gameplay.ResourceNodes
         public bool RequiresScan => requiresScan;
         public GameObject VisualPrefab => visualPrefab;
         public bool HasVisualPrefab => visualPrefab != null;
+        public bool TintByBiome => tintByBiome;
 
         void OnValidate()
         {

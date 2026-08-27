@@ -23,3 +23,4 @@ MonoBehaviour:
   harvestDurationSeconds: 0
   requiresScan: 0
   visualPrefab: {fileID: 100000, guid: 4ad02a787d1045c2bf61979e83775cd5, type: 3}
+  tintByBiome: 1
