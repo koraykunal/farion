@@ -14,9 +14,6 @@ namespace Farion.Gameplay.Presentation.Character
         static readonly int GroundedId = Animator.StringToHash("Grounded");
         static readonly int SubmergedId = Animator.StringToHash("Submerged");
         static readonly int VerticalSpeedId = Animator.StringToHash("VerticalSpeed");
-        static readonly int TurnRateId = Animator.StringToHash("TurnRate");
-
-        const float MaximumTurnRate = 360f;
 
         [Header("Bindings")]
         [SerializeField] FirstPersonMotor motor;
@@ -35,13 +32,9 @@ namespace Farion.Gameplay.Presentation.Character
         [Header("Response")]
         [Tooltip("Seconds of smoothing applied to the movement axes so direction changes do not snap the blend tree.")]
         [SerializeField] float directionDamping = 0.1f;
-        [Tooltip("Seconds of smoothing applied to the yaw rate so mouse jitter does not flicker the turn-in-place states.")]
-        [SerializeField] float turnRateDamping = 0.15f;
 
         bool previousGrounded = true;
         float airborneVerticalSpeed;
-        bool hasPreviousForward;
-        Vector3 previousForward;
 
         void Reset()
         {
@@ -98,11 +91,6 @@ namespace Farion.Gameplay.Presentation.Character
                 directionDamping,
                 deltaTime);
             animator.SetFloat(VerticalSpeedId, ResolveVerticalSpeed(state));
-            animator.SetFloat(
-                TurnRateId,
-                ResolveTurnRate(state, deltaTime),
-                turnRateDamping,
-                deltaTime);
         }
 
         float ResolveVerticalSpeed(FirstPersonMotorState state)
@@ -119,29 +107,6 @@ namespace Farion.Gameplay.Presentation.Character
 
             previousGrounded = state.Grounded;
             return verticalSpeed;
-        }
-
-        float ResolveTurnRate(FirstPersonMotorState state, float deltaTime)
-        {
-            Vector3 up = state.LocalUp.sqrMagnitude > 0.5f
-                ? state.LocalUp
-                : motor.transform.up;
-            Vector3 forward = Vector3.ProjectOnPlane(motor.transform.forward, up);
-            float turnRate = 0f;
-            if (hasPreviousForward &&
-                deltaTime > 0f &&
-                forward.sqrMagnitude > 0.0001f &&
-                previousForward.sqrMagnitude > 0.0001f)
-            {
-                turnRate = Mathf.Clamp(
-                    Vector3.SignedAngle(previousForward, forward, up) / deltaTime,
-                    -MaximumTurnRate,
-                    MaximumTurnRate);
-            }
-
-            previousForward = forward;
-            hasPreviousForward = true;
-            return turnRate;
         }
 
         float ResolveGait(float speed)

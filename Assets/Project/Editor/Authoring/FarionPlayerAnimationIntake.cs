@@ -28,36 +28,26 @@ namespace Farion.Editor.Authoring
         const float MaximumClipTimeScale = 2f;
 
         const float SubmergedThreshold = 0.5f;
-        const float JumpStartAnticipationTrim = 0.4f;
         const float JumpRiseSpeed = 1f;
         const float HardLandingSpeed = -6f;
-        const float TurnEnterRate = 45f;
-        const float TurnExitRate = 15f;
-        const float IdleSpeed01 = 0.08f;
+        const float FallEntrySpeed = -7f;
 
         static readonly StringBuilder Report = new();
 
         readonly struct ClipSource
         {
-            public ClipSource(
-                string asset,
-                string clip,
-                bool loop,
-                string mirrored = null,
-                float startTrim = 0f)
+            public ClipSource(string asset, string clip, bool loop, string mirrored = null)
             {
                 Asset = asset;
                 Clip = clip;
                 Loop = loop;
                 Mirrored = mirrored;
-                StartTrim = startTrim;
             }
 
             public string Asset { get; }
             public string Clip { get; }
             public bool Loop { get; }
             public string Mirrored { get; }
-            public float StartTrim { get; }
         }
 
         static readonly ClipSource[] Sources =
@@ -68,11 +58,9 @@ namespace Farion.Editor.Authoring
             new("AN_PlayerExplorer_Strafe_Left_A", "Strafe_Left", true, "Strafe_Right"),
             new("AN_PlayerExplorer_Run_Forward_A", "Run_Forward", true),
             new("AN_PlayerExplorer_Fall_Loop_A", "Fall_Loop", true),
-            new("AN_PlayerExplorer_Jump_Start_A", "Jump_Start", false,
-                startTrim: JumpStartAnticipationTrim),
+            new("AN_PlayerExplorer_Jump_A", "Jump", false),
             new("AN_PlayerExplorer_Jump_Down_A", "Jump_Down", false),
             new("AN_PlayerExplorer_Land_Hard_A", "Land_Hard", false),
-            new("AN_PlayerExplorer_Turn_Right_A", "Turn_Right", true, "Turn_Left"),
             new("AN_PlayerExplorer_Swim_Idle_A", "Swim_Idle", true),
             new("AN_PlayerExplorer_Swim_Forward_A", "Swim_Forward", true)
         };
@@ -149,12 +137,11 @@ namespace Farion.Editor.Authoring
 
                 List<ModelImporterClipAnimation> authored = new()
                 {
-                    BuildClip(defaults[0], source.Clip, source.Loop, false, source.StartTrim)
+                    BuildClip(defaults[0], source.Clip, source.Loop, false)
                 };
                 if (!string.IsNullOrEmpty(source.Mirrored))
                 {
-                    authored.Add(
-                        BuildClip(defaults[0], source.Mirrored, source.Loop, true, source.StartTrim));
+                    authored.Add(BuildClip(defaults[0], source.Mirrored, source.Loop, true));
                 }
 
                 importer.clipAnimations = authored.ToArray();
@@ -167,17 +154,13 @@ namespace Farion.Editor.Authoring
             ModelImporterClipAnimation take,
             string name,
             bool loop,
-            bool mirror,
-            float startTrim)
+            bool mirror)
         {
             return new ModelImporterClipAnimation
             {
                 name = name,
                 takeName = take.takeName,
-                firstFrame = Mathf.Lerp(
-                    take.firstFrame,
-                    take.lastFrame,
-                    Mathf.Clamp01(startTrim)),
+                firstFrame = take.firstFrame,
                 lastFrame = take.lastFrame,
                 wrapMode = loop ? WrapMode.Loop : WrapMode.ClampForever,
                 loopTime = loop,
@@ -240,7 +223,6 @@ namespace Farion.Editor.Authoring
             controller.AddParameter("Submerged", AnimatorControllerParameterType.Float);
             controller.AddParameter("Grounded", AnimatorControllerParameterType.Bool);
             controller.AddParameter("VerticalSpeed", AnimatorControllerParameterType.Float);
-            controller.AddParameter("TurnRate", AnimatorControllerParameterType.Float);
             SetDefaultFloat(controller, "StrideScale", 1f);
 
             AnimatorStateMachine machine = controller.layers[0].stateMachine;
@@ -255,12 +237,8 @@ namespace Farion.Editor.Authoring
             AnimatorState swim = BuildSwim(controller, clips);
             PlaceState(machine, swim, new Vector3(60f, 240f, 0f));
 
-            AnimatorState turnLeft = machine.AddState("TurnLeft", new Vector3(-180f, -120f, 0f));
-            turnLeft.motion = Require(clips, "Turn_Left");
-            AnimatorState turnRight = machine.AddState("TurnRight", new Vector3(-180f, 120f, 0f));
-            turnRight.motion = Require(clips, "Turn_Right");
-            AnimatorState jumpStart = machine.AddState("JumpStart", new Vector3(340f, -160f, 0f));
-            jumpStart.motion = Require(clips, "Jump_Start");
+            AnimatorState jump = machine.AddState("Jump", new Vector3(340f, -160f, 0f));
+            jump.motion = Require(clips, "Jump");
             AnimatorState jumpDown = machine.AddState("JumpDown", new Vector3(340f, 40f, 0f));
             jumpDown.motion = Require(clips, "Jump_Down");
             AnimatorState airborne = machine.AddState("AirborneLoop", new Vector3(620f, -60f, 0f));
@@ -269,43 +247,19 @@ namespace Farion.Editor.Authoring
             land.motion = Require(clips, "Land_Hard");
             machine.defaultState = ground;
 
-            AddAirExits(ground, jumpStart, jumpDown);
-            AddAirExits(turnLeft, jumpStart, jumpDown);
-            AddAirExits(turnRight, jumpStart, jumpDown);
+            AddAirExits(ground, jump, jumpDown);
 
-            AnimatorStateTransition transition = Link(ground, turnLeft, 0.12f);
-            transition.AddCondition(AnimatorConditionMode.If, 0f, "Grounded");
-            transition.AddCondition(AnimatorConditionMode.Less, IdleSpeed01, "Speed01");
-            transition.AddCondition(AnimatorConditionMode.Less, -TurnEnterRate, "TurnRate");
-            transition = Link(ground, turnRight, 0.12f);
-            transition.AddCondition(AnimatorConditionMode.If, 0f, "Grounded");
-            transition.AddCondition(AnimatorConditionMode.Less, IdleSpeed01, "Speed01");
-            transition.AddCondition(AnimatorConditionMode.Greater, TurnEnterRate, "TurnRate");
-
-            transition = Link(turnLeft, ground, 0.08f);
-            transition.AddCondition(AnimatorConditionMode.Greater, IdleSpeed01, "Speed01");
-            transition = Link(turnLeft, ground, 0.12f);
-            transition.AddCondition(AnimatorConditionMode.Greater, -TurnExitRate, "TurnRate");
-            transition = Link(turnRight, ground, 0.08f);
-            transition.AddCondition(AnimatorConditionMode.Greater, IdleSpeed01, "Speed01");
-            transition = Link(turnRight, ground, 0.12f);
-            transition.AddCondition(AnimatorConditionMode.Less, TurnExitRate, "TurnRate");
-
-            AddLandingExits(jumpStart, land, ground);
-            transition = Link(jumpStart, airborne, 0.2f);
-            transition.AddCondition(AnimatorConditionMode.Less, 0f, "VerticalSpeed");
+            AddLandingExits(jump, land, ground);
+            AnimatorStateTransition transition = Link(jump, airborne, 0.25f);
+            transition.AddCondition(AnimatorConditionMode.Less, FallEntrySpeed, "VerticalSpeed");
 
             AddLandingExits(jumpDown, land, ground);
-            Link(jumpDown, airborne, 0.15f, 0.85f);
+            transition = Link(jumpDown, airborne, 0.25f);
+            transition.AddCondition(AnimatorConditionMode.Less, FallEntrySpeed, "VerticalSpeed");
 
             AddLandingExits(airborne, land, ground);
 
-            transition = Link(land, jumpStart, 0.05f);
-            transition.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
-            transition.AddCondition(AnimatorConditionMode.Greater, JumpRiseSpeed, "VerticalSpeed");
-            transition = Link(land, airborne, 0.15f);
-            transition.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
-            transition.AddCondition(AnimatorConditionMode.Less, JumpRiseSpeed, "VerticalSpeed");
+            AddAirExits(land, jump, jumpDown);
             Link(land, ground, 0.2f, 0.75f);
 
             AnimatorStateTransition toSwim = machine.AddAnyStateTransition(swim);
@@ -346,10 +300,10 @@ namespace Farion.Editor.Authoring
 
         static void AddAirExits(
             AnimatorState from,
-            AnimatorState jumpStart,
+            AnimatorState jump,
             AnimatorState jumpDown)
         {
-            AnimatorStateTransition rise = Link(from, jumpStart, 0.05f);
+            AnimatorStateTransition rise = Link(from, jump, 0.05f);
             rise.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
             rise.AddCondition(AnimatorConditionMode.Greater, JumpRiseSpeed, "VerticalSpeed");
 

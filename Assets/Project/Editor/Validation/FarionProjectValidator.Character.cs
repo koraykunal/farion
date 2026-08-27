@@ -20,8 +20,7 @@ namespace Farion.Editor.Validation
                 ("StrideScale", AnimatorControllerParameterType.Float),
                 ("Submerged", AnimatorControllerParameterType.Float),
                 ("Grounded", AnimatorControllerParameterType.Bool),
-                ("VerticalSpeed", AnimatorControllerParameterType.Float),
-                ("TurnRate", AnimatorControllerParameterType.Float)
+                ("VerticalSpeed", AnimatorControllerParameterType.Float)
             };
 
         static void ValidateCharacterAnimation(FarionValidationReport report)

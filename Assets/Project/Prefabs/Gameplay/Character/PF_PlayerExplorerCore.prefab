@@ -225,7 +225,6 @@ MonoBehaviour:
   swimClipSpeed: 1.4
   maximumStrideScale: 2.5
   directionDamping: 0.1
-  turnRateDamping: 0.15
 --- !u!1001 &4440814741343516981
 PrefabInstance:
   m_ObjectHideFlags: 0

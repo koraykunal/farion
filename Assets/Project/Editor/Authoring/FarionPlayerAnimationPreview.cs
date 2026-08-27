@@ -108,16 +108,10 @@ namespace Farion.Editor.Authoring
                     ("Strafe Left", () => SetPose(moveX: -1f, speed: 0.55f, grounded: true)),
                     ("Strafe Right", () => SetPose(moveX: 1f, speed: 0.55f, grounded: true)));
                 EditorGUILayout.Space();
-                EditorGUILayout.LabelField("Turn", EditorStyles.boldLabel);
-                ButtonRow(
-                    ("Turn Left", () => SetPose(grounded: true, turnRate: -90f)),
-                    ("Turn Right", () => SetPose(grounded: true, turnRate: 90f)));
-
-                EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Air", EditorStyles.boldLabel);
                 ButtonRow(
                     ("Jump", () => SetPose(verticalSpeed: 4f)),
-                    ("Fall", () => SetPose(verticalSpeed: -4f)),
+                    ("Long Fall", () => SetPose(verticalSpeed: -9f)),
                     ("Hard Land", () => SetPose(grounded: true, verticalSpeed: -8f)));
 
                 EditorGUILayout.Space();
@@ -134,8 +128,7 @@ namespace Farion.Editor.Authoring
             float speed = 0f,
             float submerged = 0f,
             bool grounded = false,
-            float verticalSpeed = 0f,
-            float turnRate = 0f)
+            float verticalSpeed = 0f)
         {
             animator.SetFloat("MoveX", moveX);
             animator.SetFloat("MoveY", moveY);
@@ -144,7 +137,6 @@ namespace Farion.Editor.Authoring
             animator.SetFloat("Submerged", submerged);
             animator.SetBool("Grounded", grounded);
             animator.SetFloat("VerticalSpeed", verticalSpeed);
-            animator.SetFloat("TurnRate", turnRate);
         }
 
         private void ResolveAnimator()
