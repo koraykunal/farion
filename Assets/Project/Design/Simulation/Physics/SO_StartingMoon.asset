@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   bodyName: Starting Moon
   bodyType: 2
-  radius: 120
+  radius: 1200
   surfaceGravity: 1.62
-  initialVelocity: {x: 0, y: 0, z: 135.60394}
-  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
+  initialVelocity: {x: 0, y: 0, z: 428.81732}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.061257895, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1

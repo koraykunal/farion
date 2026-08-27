@@ -107,16 +107,49 @@ namespace Farion.Tests.EditMode
             WorldOriginSequenceState state = new();
 
             Assert.That(
-                state.TryAccept(1, new Vector3(100f, 0f, 0f), out Vector3 first),
+                state.TryAccept(1, new Vector3(100f, 0f, 0f), 7, out Vector3 first),
                 Is.True);
             Assert.That(first, Is.EqualTo(new Vector3(100f, 0f, 0f)));
             Assert.That(
-                state.TryAccept(1, new Vector3(200f, 0f, 0f), out _),
+                state.TryAccept(1, new Vector3(200f, 0f, 0f), 9, out _),
                 Is.False);
             Assert.That(
-                state.TryAccept(0, Vector3.zero, out _),
+                state.TryAccept(0, Vector3.zero, 9, out _),
                 Is.False);
             Assert.That(state.AccumulatedOrigin, Is.EqualTo(new Vector3(100f, 0f, 0f)));
+            Assert.That(state.ReferenceBodyId, Is.EqualTo(7));
+        }
+
+        [Test]
+        public void ReferenceBodyChangeAloneAdvancesTheFrameSequence()
+        {
+            WorldOriginSequenceState state = new();
+            Vector3 origin = new(120f, 0f, -40f);
+
+            state.RecordServerShift(origin, 11);
+            uint afterFirst = state.Sequence;
+            state.RecordServerShift(origin, 22);
+
+            Assert.That(state.Sequence, Is.GreaterThan(afterFirst));
+            Assert.That(state.ReferenceBodyId, Is.EqualTo(22));
+            Assert.That(state.AccumulatedOrigin, Is.EqualTo(origin));
+        }
+
+        [Test]
+        public void LateJoinAdoptsTheServerReferenceBodyWithoutMovingTheOrigin()
+        {
+            WorldOriginSequenceState state = new();
+
+            Assert.That(
+                state.TryAccept(5, Vector3.zero, 33, out Vector3 delta),
+                Is.True);
+            Assert.That(delta, Is.EqualTo(Vector3.zero));
+            Assert.That(state.ReferenceBodyId, Is.EqualTo(33));
+
+            Assert.That(
+                state.TryAccept(4, new Vector3(9f, 9f, 9f), 44, out _),
+                Is.False);
+            Assert.That(state.ReferenceBodyId, Is.EqualTo(33));
         }
 
         [Test]
@@ -125,10 +158,27 @@ namespace Farion.Tests.EditMode
             WorldOriginSequenceState state = new();
 
             Assert.That(
-                state.TryAccept(3, new Vector3(450f, -20f, 8f), out Vector3 delta),
+                state.TryAccept(3, new Vector3(450f, -20f, 8f), 0, out Vector3 delta),
                 Is.True);
             Assert.That(delta, Is.EqualTo(new Vector3(450f, -20f, 8f)));
             Assert.That(state.Sequence, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ScheduledFrameTickHandlesWrapAround()
+        {
+            Assert.That(
+                MultiplayerWorldOriginAuthority.HasReachedTick(120, 120),
+                Is.True);
+            Assert.That(
+                MultiplayerWorldOriginAuthority.HasReachedTick(121, 120),
+                Is.True);
+            Assert.That(
+                MultiplayerWorldOriginAuthority.HasReachedTick(119, 120),
+                Is.False);
+            Assert.That(
+                MultiplayerWorldOriginAuthority.HasReachedTick(2, uint.MaxValue - 1),
+                Is.True);
         }
 
         [Test]

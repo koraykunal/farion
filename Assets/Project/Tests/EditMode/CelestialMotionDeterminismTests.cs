@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using System.Collections.Generic;
 using Farion.Simulation.Physics;
 using NUnit.Framework;
@@ -26,6 +27,26 @@ namespace Farion.Tests.EditMode
             }
 
             created.Clear();
+        }
+
+        [Test]
+        public void SlowSpinIsDetectedForEveryPhysicsStep()
+        {
+            const float SpinDegreesPerSecond = 0.3f;
+            const float StepSeconds = 0.01f;
+
+            Quaternion current = Quaternion.identity;
+            Quaternion next = Quaternion.AngleAxis(
+                SpinDegreesPerSecond * StepSeconds,
+                Vector3.up);
+
+            Assert.That(
+                Quaternion.Angle(current, next),
+                Is.EqualTo(0f),
+                "Quaternion.Angle is expected to under-resolve this step; the guard below is "
+                + "what keeps a slowly spinning body from snapping once the error accumulates.");
+            Assert.That(FarionMath.IsSameRotation(current, next), Is.False);
+            Assert.That(FarionMath.IsSameRotation(current, current), Is.True);
         }
 
         [Test]

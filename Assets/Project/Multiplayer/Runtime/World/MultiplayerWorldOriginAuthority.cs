@@ -13,16 +13,41 @@ namespace Farion.Multiplayer.World
     [RequireComponent(typeof(NetworkManager))]
     public sealed class MultiplayerWorldOriginAuthority : MonoBehaviour
     {
+        const uint FrameChangeLeadTicks = 12;
+
         [SerializeField] NetworkManager networkManager;
 
         readonly WorldOriginSequenceState state = new();
         readonly List<CelestialSurfaceCollisionObserverState> trackingObservers = new();
         WorldOriginRebaser rebaser;
+        GravitySimulation simulation;
         Transform serverTrackingTarget;
         MonoBehaviour serverTrackingObserverSource;
         ICelestialSurfaceCollisionObserverGroup serverTrackingObserverGroup;
+        WorldOriginBroadcast pendingFrame;
+        bool hasPendingFrame;
 
         public uint CurrentSequence => state.Sequence;
+
+        public bool SharesReferenceFrame(uint sequence)
+        {
+            if (sequence == state.Sequence)
+            {
+                return true;
+            }
+
+            if (state.TryGetReferenceBody(sequence, out int referenceBodyId))
+            {
+                return referenceBodyId == state.ReferenceBodyId;
+            }
+
+            if (hasPendingFrame && pendingFrame.Sequence == sequence)
+            {
+                return pendingFrame.ReferenceBodyId == state.ReferenceBodyId;
+            }
+
+            return false;
+        }
 
         public event Action<Vector3> OriginShifted;
 
@@ -31,6 +56,7 @@ namespace Farion.Multiplayer.World
             networkManager ??= GetComponent<NetworkManager>();
             networkManager.ClientManager.RegisterBroadcast<WorldOriginBroadcast>(
                 OnOriginBroadcast);
+            networkManager.TimeManager.OnPreTick += OnPreTick;
             networkManager.TimeManager.OnPostTick += OnPostTick;
         }
 
@@ -43,6 +69,7 @@ namespace Farion.Multiplayer.World
 
             networkManager.ClientManager.UnregisterBroadcast<WorldOriginBroadcast>(
                 OnOriginBroadcast);
+            networkManager.TimeManager.OnPreTick -= OnPreTick;
             networkManager.TimeManager.OnPostTick -= OnPostTick;
         }
 
@@ -69,6 +96,16 @@ namespace Farion.Multiplayer.World
             }
         }
 
+        public void BindSimulation(GravitySimulation nextSimulation)
+        {
+            simulation = nextSimulation;
+            if (simulation != null && state.Sequence > 0)
+            {
+                simulation.ApplyNetworkPhysicsReferenceBody(
+                    state.ReferenceBodyId);
+            }
+        }
+
         public void SetServerTrackingTarget(Transform target)
         {
             serverTrackingTarget = target;
@@ -89,8 +126,11 @@ namespace Farion.Multiplayer.World
         public void ResetSession()
         {
             state.Reset();
+            simulation = null;
             serverTrackingTarget = null;
             SetServerTrackingObserverSource(null);
+            pendingFrame = default;
+            hasPendingFrame = false;
             if (rebaser != null)
             {
                 rebaser.Rebased -= HandleRebased;
@@ -117,9 +157,11 @@ namespace Farion.Multiplayer.World
                 return true;
             }
 
-            state.RecordServerShift(rebaser.AccumulatedOriginOffset);
+            state.RecordServerShift(
+                rebaser.AccumulatedOriginOffset,
+                simulation != null ? simulation.PhysicsReferenceStableId : state.ReferenceBodyId);
             networkManager.ServerManager.Broadcast(
-                CreateBroadcast(),
+                CreateCurrentBroadcast(networkManager.TimeManager.Tick),
                 requireAuthenticated: true,
                 channel: Channel.Reliable);
             return true;
@@ -134,24 +176,104 @@ namespace Farion.Multiplayer.World
 
             networkManager.ServerManager.Broadcast(
                 connection,
-                CreateBroadcast(),
+                hasPendingFrame
+                    ? pendingFrame
+                    : CreateCurrentBroadcast(networkManager.TimeManager.Tick),
                 requireAuthenticated: true,
                 channel: Channel.Reliable);
         }
 
-        void OnPostTick()
+        void OnPreTick()
         {
-            if (!networkManager.IsServerStarted ||
-                rebaser == null)
+            if (!hasPendingFrame ||
+                !HasReachedTick(networkManager.TimeManager.Tick, pendingFrame.ApplyTick))
             {
                 return;
+            }
+
+            WorldOriginBroadcast frame = pendingFrame;
+            hasPendingFrame = false;
+            pendingFrame = default;
+            if (!state.TryAccept(
+                    frame.Sequence,
+                    frame.AccumulatedOrigin,
+                    frame.ReferenceBodyId,
+                    out Vector3 delta))
+            {
+                return;
+            }
+
+            simulation?.ApplyNetworkPhysicsReferenceBody(frame.ReferenceBodyId);
+            if (rebaser != null && delta.sqrMagnitude > Mathf.Epsilon)
+            {
+                rebaser.Rebase(delta);
+            }
+        }
+
+        void OnPostTick()
+        {
+            if (!networkManager.IsServerStarted || hasPendingFrame)
+            {
+                return;
+            }
+
+            int referenceBodyId = ResolveServerReferenceBodyId();
+            bool referenceChanged = referenceBodyId != state.ReferenceBodyId;
+            bool originChanged = TryResolveServerRebaseOffset(out Vector3 originDelta);
+            if (!referenceChanged && !originChanged)
+            {
+                return;
+            }
+
+            uint applyTick = networkManager.TimeManager.Tick + FrameChangeLeadTicks;
+            pendingFrame = new WorldOriginBroadcast(
+                state.Sequence + 1,
+                state.AccumulatedOrigin + originDelta,
+                referenceBodyId,
+                applyTick);
+            hasPendingFrame = true;
+            networkManager.ServerManager.Broadcast(
+                pendingFrame,
+                requireAuthenticated: true,
+                channel: Channel.Reliable);
+        }
+
+        int ResolveServerReferenceBodyId()
+        {
+            if (simulation == null || serverTrackingObserverSource == null)
+            {
+                return state.ReferenceBodyId;
+            }
+
+            serverTrackingObserverGroup ??=
+                serverTrackingObserverSource as ICelestialSurfaceCollisionObserverGroup;
+            if (serverTrackingObserverGroup == null)
+            {
+                return simulation.PhysicsReferenceStableId;
+            }
+
+            trackingObservers.Clear();
+            serverTrackingObserverGroup.GetSurfaceCollisionObservers(trackingObservers);
+            CelestialBody candidate =
+                simulation.ResolvePhysicsReferenceBodyCandidate(trackingObservers);
+            return candidate != null
+                ? candidate.StableId
+                : simulation.PhysicsReferenceStableId;
+        }
+
+        bool TryResolveServerRebaseOffset(out Vector3 originDelta)
+        {
+            originDelta = Vector3.zero;
+            if (rebaser == null)
+            {
+                return false;
             }
 
             bool hasCollectivePosition =
                 TryResolveCollectiveTrackingPosition(out Vector3 trackingPosition);
             if (!hasCollectivePosition && serverTrackingTarget == null)
             {
-                return;
+                return false;
             }
 
             if (!hasCollectivePosition)
@@ -164,39 +286,34 @@ namespace Farion.Multiplayer.World
                 rebaser.SetTrackingTarget(serverTrackingTarget);
             }
 
-            if (!rebaser.RebaseIfNeeded(trackingPosition))
-            {
-                return;
-            }
-
-            state.RecordServerShift(rebaser.AccumulatedOriginOffset);
-            networkManager.ServerManager.Broadcast(
-                CreateBroadcast(),
-                requireAuthenticated: true,
-                channel: Channel.Reliable);
+            return rebaser.TryGetRebaseOffset(trackingPosition, out originDelta);
         }
 
         void OnOriginBroadcast(WorldOriginBroadcast message, Channel channel)
         {
-            if (!state.TryAccept(
-                    message.Sequence,
-                    message.AccumulatedOrigin,
-                    out Vector3 delta) ||
-                rebaser == null ||
-                delta.sqrMagnitude <= Mathf.Epsilon)
+            if (networkManager.IsServerStarted ||
+                !state.CanAccept(message.Sequence) ||
+                (hasPendingFrame && message.Sequence <= pendingFrame.Sequence))
             {
                 return;
             }
 
-            rebaser.Rebase(delta);
+            pendingFrame = message;
+            hasPendingFrame = true;
         }
 
-        WorldOriginBroadcast CreateBroadcast()
+        WorldOriginBroadcast CreateCurrentBroadcast(uint applyTick)
         {
             return new WorldOriginBroadcast(
                 state.Sequence,
-                rebaser != null ? rebaser.LastOriginOffset : Vector3.zero,
-                state.AccumulatedOrigin);
+                state.AccumulatedOrigin,
+                state.ReferenceBodyId,
+                applyTick);
+        }
+
+        internal static bool HasReachedTick(uint currentTick, uint targetTick)
+        {
+            return unchecked((int)(currentTick - targetTick)) >= 0;
         }
 
         bool TryResolveCollectiveTrackingPosition(out Vector3 position)

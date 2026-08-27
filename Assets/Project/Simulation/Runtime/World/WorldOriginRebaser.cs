@@ -27,6 +27,9 @@ namespace Farion.Simulation.World
         readonly List<Transform> uniqueShiftRoots = new();
         readonly List<Transform> runtimeShiftRoots = new();
         readonly List<Rigidbody> shiftedRigidbodies = new();
+        readonly List<Rigidbody> rigidbodyBuffer = new();
+        readonly List<Vector3> shiftedRigidbodyPositions = new();
+        readonly List<Quaternion> shiftedRigidbodyRotations = new();
 
         public bool AutomaticRebasing { get; private set; } = true;
 
@@ -36,6 +39,7 @@ namespace Farion.Simulation.World
         public int LastShiftFrame => lastShiftFrame;
         public float TrackingDistanceFromOrigin => trackingDistanceFromOrigin;
         public Transform TrackingTarget => trackingTarget;
+        public event Action<Vector3> Rebasing;
         public event Action<Vector3> Rebased;
 
         public WorldOriginSnapshot CaptureSnapshot()
@@ -169,21 +173,30 @@ namespace Farion.Simulation.World
 
         public bool RebaseIfNeeded(Vector3 trackingPosition)
         {
-            Vector3 offset = trackingPosition;
-            if (settings != null && !settings.RebaseAllAxes)
-            {
-                offset.y = 0f;
-            }
-
-            trackingDistanceFromOrigin = offset.magnitude;
-            float rebaseDistance = settings != null ? settings.RebaseDistance : 1000f;
-            if (offset.sqrMagnitude <= rebaseDistance * rebaseDistance)
+            if (!TryGetRebaseOffset(trackingPosition, out Vector3 offset))
             {
                 return false;
             }
 
             Rebase(offset);
             return true;
+        }
+
+        public bool TryGetRebaseOffset(
+            Vector3 trackingPosition,
+            out Vector3 originOffset)
+        {
+            originOffset = trackingPosition;
+            if (settings != null && !settings.RebaseAllAxes)
+            {
+                originOffset.y = 0f;
+            }
+
+            trackingDistanceFromOrigin = originOffset.magnitude;
+            float rebaseDistance = settings != null
+                ? settings.RebaseDistance
+                : 1000f;
+            return originOffset.sqrMagnitude > rebaseDistance * rebaseDistance;
         }
 
         public void Rebase(Vector3 originOffset)
@@ -194,7 +207,9 @@ namespace Farion.Simulation.World
             }
 
             RefreshShiftRoots();
+            Rebasing?.Invoke(originOffset);
 
+            CaptureRigidbodyPoses();
             foreach (Transform root in uniqueShiftRoots)
             {
                 if (root != null)
@@ -203,6 +218,7 @@ namespace Farion.Simulation.World
                 }
             }
 
+            ApplyShiftedRigidbodyPoses(originOffset);
             UnityEngine.Physics.SyncTransforms();
             ResetShiftedInterpolation();
 
@@ -214,8 +230,11 @@ namespace Farion.Simulation.World
             Rebased?.Invoke(originOffset);
         }
 
-        void ResetShiftedInterpolation()
+        void CaptureRigidbodyPoses()
         {
+            shiftedRigidbodies.Clear();
+            shiftedRigidbodyPositions.Clear();
+            shiftedRigidbodyRotations.Clear();
             foreach (Transform root in uniqueShiftRoots)
             {
                 if (root == null)
@@ -223,19 +242,52 @@ namespace Farion.Simulation.World
                     continue;
                 }
 
-                root.GetComponentsInChildren(false, shiftedRigidbodies);
-                foreach (Rigidbody body in shiftedRigidbodies)
+                root.GetComponentsInChildren(false, rigidbodyBuffer);
+                foreach (Rigidbody body in rigidbodyBuffer)
                 {
-                    RigidbodyInterpolation interpolation = body.interpolation;
-                    if (interpolation != RigidbodyInterpolation.None)
-                    {
-                        body.interpolation = RigidbodyInterpolation.None;
-                        body.interpolation = interpolation;
-                    }
+                    shiftedRigidbodies.Add(body);
+                    shiftedRigidbodyPositions.Add(body.position);
+                    shiftedRigidbodyRotations.Add(body.rotation);
+                }
+            }
+
+            rigidbodyBuffer.Clear();
+        }
+
+        void ApplyShiftedRigidbodyPoses(Vector3 originOffset)
+        {
+            for (int i = 0; i < shiftedRigidbodies.Count; i++)
+            {
+                Rigidbody body = shiftedRigidbodies[i];
+                if (body != null)
+                {
+                    body.transform.SetPositionAndRotation(
+                        shiftedRigidbodyPositions[i] - originOffset,
+                        shiftedRigidbodyRotations[i]);
+                }
+            }
+        }
+
+        void ResetShiftedInterpolation()
+        {
+            foreach (Rigidbody body in shiftedRigidbodies)
+            {
+                if (body == null)
+                {
+                    continue;
+                }
+
+                RigidbodyInterpolation interpolation = body.interpolation;
+                if (interpolation != RigidbodyInterpolation.None)
+                {
+                    body.interpolation = RigidbodyInterpolation.None;
+                    body.interpolation = interpolation;
                 }
             }
 
             shiftedRigidbodies.Clear();
+            shiftedRigidbodyPositions.Clear();
+            shiftedRigidbodyRotations.Clear();
         }
 
         public void SetTrackingTarget(Transform target)

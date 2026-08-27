@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   bodyName: Starting Planet
   bodyType: 1
-  radius: 1600
+  radius: 16000
   surfaceGravity: 9.81
-  initialVelocity: {x: 0, y: 0, z: 91.65151}
-  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
+  initialVelocity: {x: 0, y: 0, z: 289.82755}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.3, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1

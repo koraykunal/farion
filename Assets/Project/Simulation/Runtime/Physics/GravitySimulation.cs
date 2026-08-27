@@ -25,15 +25,22 @@ namespace Farion.Simulation.Physics
         [Header("Runtime Reference Frame")]
         [SerializeField] Vector3 referenceFrameVelocity;
         [SerializeField] Vector3 referenceFrameAcceleration;
+        [SerializeField] Vector3 referenceFrameAngularVelocity;
 
         readonly List<CelestialBody> simulationBodies = new();
         readonly List<CelestialBody> analyticOrder = new();
         readonly List<CelestialSurfaceCollisionObserverState> referenceObservers = new();
+        readonly List<GameObject> frameShiftRoots = new();
+        readonly List<Rigidbody> frameShiftBodies = new();
         MonoBehaviour physicsReferenceObserverSource;
         ICelestialSurfaceCollisionObserver physicsReferenceObserver;
         ICelestialSurfaceCollisionObserverGroup physicsReferenceObserverGroup;
         double simulationTime;
         bool externalTimeSource;
+        Quaternion referenceFrameRotation = Quaternion.identity;
+        Quaternion referenceBodyWorldRotation = Quaternion.identity;
+        Vector3 referenceFrameOrigin;
+        bool referenceRotationInitialized;
 
         public bool IntegrationEnabled { get; private set; } = true;
         public double SimulationTime => simulationTime;
@@ -46,8 +53,12 @@ namespace Farion.Simulation.Physics
         public float MaxAcceleration => settings != null && settings.ClampAcceleration ? settings.MaxAcceleration : 0f;
         public CelestialBody PhysicsReferenceBody => physicsReferenceBody;
         public bool HasPhysicsReferenceFrame => ResolvedPhysicsReferenceBody != null;
+        public int PhysicsReferenceStableId =>
+            ResolvedPhysicsReferenceBody != null ? ResolvedPhysicsReferenceBody.StableId : 0;
         public Vector3 ReferenceFrameVelocity => referenceFrameVelocity;
         public Vector3 ReferenceFrameAcceleration => referenceFrameAcceleration;
+        public Vector3 ReferenceFrameAngularVelocity => referenceFrameAngularVelocity;
+        public Quaternion ReferenceFrameRotation => referenceFrameRotation;
 
         void Awake()
         {
@@ -168,10 +179,49 @@ namespace Farion.Simulation.Physics
             }
 
             Vector3 previousFrameVelocity = referenceFrameVelocity;
+            Vector3 previousFrameAngularVelocity = referenceFrameAngularVelocity;
+            Vector3 previousFrameOrigin = referenceFrameOrigin;
             physicsReferenceBody = body;
+            referenceRotationInitialized = false;
+            InitializeReferenceRotation();
             UpdateReferenceFrameAcceleration();
             UpdateReferenceFrameVelocity();
-            ShiftDynamicBodyVelocities(referenceFrameVelocity - previousFrameVelocity);
+            ShiftDynamicBodyVelocities(
+                previousFrameVelocity,
+                previousFrameAngularVelocity,
+                previousFrameOrigin,
+                referenceFrameVelocity,
+                referenceFrameAngularVelocity,
+                referenceFrameOrigin);
+        }
+
+        public bool ApplyNetworkPhysicsReferenceBody(int stableId)
+        {
+            CelestialBody target = null;
+            if (stableId != 0)
+            {
+                for (int i = 0; i < simulationBodies.Count; i++)
+                {
+                    if (simulationBodies[i] != null && simulationBodies[i].StableId == stableId)
+                    {
+                        target = simulationBodies[i];
+                        break;
+                    }
+                }
+
+                if (target == null)
+                {
+                    return false;
+                }
+            }
+
+            if (target == ResolvedPhysicsReferenceBody)
+            {
+                return false;
+            }
+
+            SetPhysicsReferenceBody(target);
+            return true;
         }
 
         public void SetPhysicsReferenceObserverSource(MonoBehaviour source)
@@ -185,15 +235,29 @@ namespace Farion.Simulation.Physics
         public bool RefreshPhysicsReferenceBody()
         {
             GatherPhysicsReferenceObservers();
-            if (referenceObservers.Count == 0)
+            CelestialBody candidate = ResolvePhysicsReferenceBodyCandidate(referenceObservers);
+
+            if (candidate == null || candidate == ResolvedPhysicsReferenceBody)
             {
                 return false;
             }
 
-            CelestialBody candidate = null;
-            for (int i = 0; i < referenceObservers.Count; i++)
+            SetPhysicsReferenceBody(candidate);
+            return candidate == ResolvedPhysicsReferenceBody;
+        }
+
+        public CelestialBody ResolvePhysicsReferenceBodyCandidate(
+            IReadOnlyList<CelestialSurfaceCollisionObserverState> observers)
+        {
+            if (observers == null || observers.Count == 0)
             {
-                CelestialSurfaceCollisionObserverState observer = referenceObservers[i];
+                return null;
+            }
+
+            CelestialBody candidate = null;
+            for (int i = 0; i < observers.Count; i++)
+            {
+                CelestialSurfaceCollisionObserverState observer = observers[i];
                 if (!observer.IsValid || observer.Rigidbody.gameObject.scene != gameObject.scene)
                 {
                     continue;
@@ -206,7 +270,7 @@ namespace Farion.Simulation.Physics
                     DominanceHysteresisBias);
                 if (!sample.HasBody)
                 {
-                    return false;
+                    continue;
                 }
 
                 if (candidate == null)
@@ -215,17 +279,11 @@ namespace Farion.Simulation.Physics
                 }
                 else if (candidate != sample.Body)
                 {
-                    return false;
+                    return ResolvedPhysicsReferenceBody;
                 }
             }
 
-            if (candidate == null || candidate == ResolvedPhysicsReferenceBody)
-            {
-                return false;
-            }
-
-            SetPhysicsReferenceBody(candidate);
-            return candidate == ResolvedPhysicsReferenceBody;
+            return candidate;
         }
 
         public void SetSimulationTime(double seconds)
@@ -293,11 +351,17 @@ namespace Farion.Simulation.Physics
             for (int i = 0; i < analyticOrder.Count; i++)
             {
                 CelestialBody body = analyticOrder[i];
+                if (body.HasAnalyticReference && simulationTime > 0d)
+                {
+                    continue;
+                }
+
                 CelestialBody attractor = body.OrbitAttractor;
                 body.CaptureAnalyticReference(
                     attractor != null ? attractor.SystemPosition : body.Position,
                     attractor != null ? attractor.SystemVelocity : Vector3.zero,
-                    GravitationalConstant);
+                    GravitationalConstant,
+                    simulationTime);
             }
         }
 
@@ -319,7 +383,7 @@ namespace Farion.Simulation.Physics
                 CelestialBody attractor = body.OrbitAttractor;
                 body.EvaluateAnalyticMotion(
                     simulationTime,
-                    attractor != null ? attractor.SystemPosition : body.SystemPosition,
+                    attractor != null ? attractor.SystemPosition : body.AnalyticEpochOrigin,
                     attractor != null ? attractor.SystemVelocity : Vector3.zero);
             }
 
@@ -329,7 +393,24 @@ namespace Farion.Simulation.Physics
                 return;
             }
 
-            Vector3 anchorWorld = anchor.Rigidbody != null ? anchor.Rigidbody.position : anchor.transform.position;
+            InitializeReferenceRotation();
+            CelestialBody referenceBody = ResolvedPhysicsReferenceBody;
+            if (referenceBody != null)
+            {
+                Quaternion inertialReferenceRotation =
+                    referenceBody.EvaluateAnalyticRotation(simulationTime);
+                referenceFrameRotation =
+                    referenceBodyWorldRotation * Quaternion.Inverse(inertialReferenceRotation);
+            }
+            else
+            {
+                referenceFrameRotation = Quaternion.identity;
+                referenceFrameAngularVelocity = Vector3.zero;
+            }
+
+            Vector3 anchorWorld = anchor.Rigidbody != null
+                ? anchor.Rigidbody.position
+                : anchor.transform.position;
             Vector3 anchorSystem = anchor.SystemPosition;
             for (int i = 0; i < analyticOrder.Count; i++)
             {
@@ -341,8 +422,11 @@ namespace Farion.Simulation.Physics
 
                 Vector3 worldPosition = body == anchor
                     ? anchorWorld
-                    : anchorWorld + (body.SystemPosition - anchorSystem);
-                body.ApplyAnalyticPose(worldPosition, body.EvaluateAnalyticRotation(simulationTime));
+                    : anchorWorld + referenceFrameRotation *
+                        (body.SystemPosition - anchorSystem);
+                Quaternion worldRotation = referenceFrameRotation *
+                    body.EvaluateAnalyticRotation(simulationTime);
+                body.ApplyAnalyticPose(worldPosition, worldRotation);
             }
 
             UpdateReferenceFrameAcceleration();
@@ -379,8 +463,32 @@ namespace Farion.Simulation.Physics
             Vector3 point,
             CelestialBody ignoredBody = null)
         {
-            return CalculateAcceleration(point, ignoredBody) -
+            return CalculateReferenceFrameAcceleration(
+                point,
+                Vector3.zero,
+                ignoredBody);
+        }
+
+        public Vector3 CalculateReferenceFrameAcceleration(
+            Vector3 point,
+            Vector3 frameRelativeVelocity,
+            CelestialBody ignoredBody = null)
+        {
+            Vector3 acceleration = CalculateAcceleration(point, ignoredBody) -
                 referenceFrameAcceleration;
+            if (referenceFrameAngularVelocity.sqrMagnitude <= 0.00000001f)
+            {
+                return acceleration;
+            }
+
+            Vector3 relativePosition = point - referenceFrameOrigin;
+            acceleration -= 2f * Vector3.Cross(
+                referenceFrameAngularVelocity,
+                frameRelativeVelocity);
+            acceleration -= Vector3.Cross(
+                referenceFrameAngularVelocity,
+                Vector3.Cross(referenceFrameAngularVelocity, relativePosition));
+            return acceleration;
         }
 
         public Vector3 CalculateAccelerationFromBody(Vector3 point, CelestialBody body)
@@ -670,9 +778,9 @@ namespace Farion.Simulation.Physics
                 body.ResetSimulationState();
             }
 
+            InitializeReferenceRotation();
             UpdateReferenceFrameAcceleration();
             UpdateReferenceFrameVelocity();
-            ApplyReferenceFrameVelocityToBodies();
         }
 
         CelestialBody FindBody(CelestialBodySnapshot snapshot)
@@ -728,19 +836,33 @@ namespace Farion.Simulation.Physics
         {
             CelestialBody referenceBody = ResolvedPhysicsReferenceBody;
             referenceFrameVelocity = referenceBody != null
-                ? referenceBody.InertialVelocity
+                ? referenceFrameRotation * referenceBody.InertialVelocity
                 : Vector3.zero;
-            ApplyReferenceFrameVelocityToBodies();
+            referenceFrameAngularVelocity = referenceBody != null
+                ? referenceFrameRotation * referenceBody.InertialAngularVelocity
+                : Vector3.zero;
+            referenceFrameOrigin = referenceBody != null
+                ? referenceBody.Position
+                : Vector3.zero;
+            ApplyReferenceFrameMotionToBodies();
         }
 
-        void ApplyReferenceFrameVelocityToBodies()
+        void ApplyReferenceFrameMotionToBodies()
         {
             for (int i = 0; i < simulationBodies.Count; i++)
             {
                 CelestialBody body = simulationBodies[i];
                 if (body != null)
                 {
-                    body.SetPhysicsReferenceFrameVelocity(referenceFrameVelocity);
+                    Vector3 relativePosition = body.Position - referenceFrameOrigin;
+                    Vector3 linearVelocity =
+                        referenceFrameRotation * body.InertialVelocity -
+                        referenceFrameVelocity -
+                        Vector3.Cross(referenceFrameAngularVelocity, relativePosition);
+                    Vector3 angularVelocity =
+                        referenceFrameRotation * body.InertialAngularVelocity -
+                        referenceFrameAngularVelocity;
+                    body.SetPhysicsFrameMotion(linearVelocity, angularVelocity);
                 }
             }
         }
@@ -774,25 +896,73 @@ namespace Farion.Simulation.Physics
             }
         }
 
-        void ShiftDynamicBodyVelocities(Vector3 frameVelocityDelta)
+        void ShiftDynamicBodyVelocities(
+            Vector3 previousLinearVelocity,
+            Vector3 previousAngularVelocity,
+            Vector3 previousOrigin,
+            Vector3 nextLinearVelocity,
+            Vector3 nextAngularVelocity,
+            Vector3 nextOrigin)
         {
-            if (frameVelocityDelta.sqrMagnitude <= 0.00000001f || !gameObject.scene.IsValid())
+            if (!gameObject.scene.IsValid())
             {
                 return;
             }
 
-            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            gameObject.scene.GetRootGameObjects(frameShiftRoots);
+            for (int rootIndex = 0; rootIndex < frameShiftRoots.Count; rootIndex++)
             {
-                Rigidbody[] bodies = root.GetComponentsInChildren<Rigidbody>(true);
-                for (int i = 0; i < bodies.Length; i++)
+                frameShiftRoots[rootIndex]
+                    .GetComponentsInChildren(true, frameShiftBodies);
+                for (int i = 0; i < frameShiftBodies.Count; i++)
                 {
-                    Rigidbody body = bodies[i];
+                    Rigidbody body = frameShiftBodies[i];
                     if (body != null && !body.isKinematic)
                     {
-                        body.linearVelocity -= frameVelocityDelta;
+                        Vector3 previousPointVelocity = previousLinearVelocity +
+                            Vector3.Cross(
+                                previousAngularVelocity,
+                                body.position - previousOrigin);
+                        Vector3 nextPointVelocity = nextLinearVelocity +
+                            Vector3.Cross(
+                                nextAngularVelocity,
+                                body.position - nextOrigin);
+                        body.linearVelocity -= nextPointVelocity - previousPointVelocity;
                     }
                 }
             }
+
+            frameShiftRoots.Clear();
+            frameShiftBodies.Clear();
+        }
+
+        void InitializeReferenceRotation()
+        {
+            CelestialBody referenceBody = ResolvedPhysicsReferenceBody;
+            if (referenceBody == null)
+            {
+                referenceRotationInitialized = false;
+                referenceFrameRotation = Quaternion.identity;
+                referenceBodyWorldRotation = Quaternion.identity;
+                referenceFrameOrigin = Vector3.zero;
+                return;
+            }
+
+            if (referenceRotationInitialized)
+            {
+                return;
+            }
+
+            Quaternion inertialRotation =
+                referenceBody.EvaluateAnalyticRotation(simulationTime);
+            Quaternion currentWorldRotation = referenceBody.Rigidbody != null
+                ? referenceBody.Rigidbody.rotation
+                : referenceBody.transform.rotation;
+            referenceFrameRotation =
+                currentWorldRotation * Quaternion.Inverse(inertialRotation);
+            referenceBodyWorldRotation = currentWorldRotation;
+            referenceFrameOrigin = referenceBody.Position;
+            referenceRotationInitialized = true;
         }
 
         CelestialBody ResolvedPhysicsReferenceBody =>

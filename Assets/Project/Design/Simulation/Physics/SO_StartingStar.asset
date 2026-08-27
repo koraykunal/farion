@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   bodyName: Starting Star
   bodyType: 0
-  radius: 1200
+  radius: 12000
   surfaceGravity: 350
   initialVelocity: {x: 0, y: 0, z: 0}
-  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.01, z: 0}
   deriveMassFromSurfaceGravity: 1
-  explicitMass: 1000000000
+  explicitMass: 1e+9
   participatesInNBody: 1
   motionMode: 0

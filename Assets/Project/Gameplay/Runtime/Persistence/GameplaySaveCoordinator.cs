@@ -20,8 +20,8 @@ namespace Farion.Gameplay.Persistence
 
         readonly IGameplaySaveParticipant[] saveParticipants =
         {
-            new CelestialSimulationSaveParticipant(),
             new WorldOriginSaveParticipant(),
+            new CelestialSimulationSaveParticipant(),
             new PlayerPossessionSaveParticipant(),
             new PlayerInventorySaveParticipant(),
             new ShuttleCargoSaveParticipant(),

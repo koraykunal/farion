@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Farion.Gameplay.Persistence
 {
     public sealed class WorldOriginSaveParticipant : IGameplaySaveParticipant
@@ -28,6 +30,18 @@ namespace Farion.Gameplay.Persistence
             {
                 context.OriginRebaser.ResetRuntimeState();
                 return true;
+            }
+
+            if (!saveData.WorldOrigin.IsSupported)
+            {
+                return false;
+            }
+
+            Vector3 delta = saveData.WorldOrigin.AccumulatedOffset -
+                context.OriginRebaser.AccumulatedOriginOffset;
+            if (delta.sqrMagnitude > Mathf.Epsilon)
+            {
+                context.OriginRebaser.Rebase(delta);
             }
 
             return context.OriginRebaser.RestoreSnapshot(saveData.WorldOrigin);

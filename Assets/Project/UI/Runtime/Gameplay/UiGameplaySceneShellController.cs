@@ -148,6 +148,12 @@ namespace Farion.UI.Gameplay
                 patch.SetCollisionObserverSource(possession);
             }
 
+            foreach (CelestialScaledSpaceVisual scaledSpace in
+                     FindAllInScene<CelestialScaledSpaceVisual>(world))
+            {
+                scaledSpace.SetObserverCamera(gameplayCamera);
+            }
+
             lodController.SetCamera(gameplayCamera);
             foreach (CelestialBodyVisual visual in
                      FindAllInScene<CelestialBodyVisual>(world))
@@ -184,16 +190,11 @@ namespace Farion.UI.Gameplay
             boundOriginRebaser.Rebased += OnWorldOriginRebased;
         }
 
-        void OnWorldOriginRebased(Vector3 _)
+        void OnWorldOriginRebased(Vector3 originOffset)
         {
             if (spacecraftCameraRig != null)
             {
-                spacecraftCameraRig.SnapToTarget();
-            }
-
-            if (firstPersonCameraRig != null)
-            {
-                firstPersonCameraRig.SnapToTarget();
+                spacecraftCameraRig.NotifyOriginShift(originOffset);
             }
 
             if (postProcessRig != null)

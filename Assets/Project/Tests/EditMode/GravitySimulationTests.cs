@@ -135,6 +135,31 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void ReferenceBodyRotationStaysFixedInTheCorotatingFrame()
+        {
+            CelestialBody planet = CreateBody(
+                "Planet",
+                Vector3.zero,
+                16000f,
+                9.81f,
+                CelestialBodyMotionMode.KinematicOrbit,
+                initialAngularVelocity: new Vector3(0f, 0.3f, 0f));
+            GravitySimulation simulation = CreateSimulation(planet, planet);
+            simulation.RebuildAnalyticOrder();
+            Quaternion initialRotation = planet.Rigidbody.rotation;
+
+            simulation.SetSimulationTime(10d);
+
+            Assert.That(
+                Quaternion.Angle(planet.Rigidbody.rotation, initialRotation),
+                Is.LessThan(0.001f));
+            Assert.That(planet.AngularVelocity.magnitude, Is.LessThan(0.0001f));
+            Assert.That(
+                simulation.ReferenceFrameAngularVelocity.magnitude,
+                Is.EqualTo(0.3f * Mathf.Deg2Rad).Within(0.0001f));
+        }
+
+        [Test]
         public void DominantBodyIsTheStrongestAttractorAtThePoint()
         {
             CelestialBody star = CreateBody("Star", Vector3.zero, 1200f, 350f, CelestialBodyMotionMode.Static);
@@ -265,7 +290,8 @@ namespace Farion.Tests.EditMode
             float surfaceGravity,
             CelestialBodyMotionMode motionMode,
             Vector3 initialVelocity = default,
-            Transform parent = null)
+            Transform parent = null,
+            Vector3 initialAngularVelocity = default)
         {
             GameObject owner = new(bodyName);
             owner.transform.SetParent(parent != null ? parent : root.transform);
@@ -276,6 +302,10 @@ namespace Farion.Tests.EditMode
             TestFieldAccess.SetField(body, "surfaceGravity", surfaceGravity);
             TestFieldAccess.SetField(body, "motionMode", motionMode);
             TestFieldAccess.SetField(body, "initialVelocity", initialVelocity);
+            TestFieldAccess.SetField(
+                body,
+                "initialAngularVelocityDegreesPerSecond",
+                initialAngularVelocity);
             body.RecalculateMass(GravitySimulation.DefaultGravitationalConstant);
             body.ConfigureRigidbody();
             body.ResetSimulationState();

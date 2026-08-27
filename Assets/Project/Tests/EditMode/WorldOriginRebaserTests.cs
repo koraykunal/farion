@@ -145,6 +145,20 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void RebasingRunsBeforeRootsMove()
+        {
+            Transform bodies = CreateRoot("Bodies", new Vector3(100f, 0f, 0f));
+            WorldOriginRebaser rebaser = CreateRebaser(bodies);
+            Vector3 observedPosition = Vector3.zero;
+            rebaser.Rebasing += _ => observedPosition = bodies.position;
+
+            rebaser.Rebase(new Vector3(40f, 0f, 0f));
+
+            Assert.That(observedPosition, Is.EqualTo(new Vector3(100f, 0f, 0f)));
+            Assert.That(bodies.position, Is.EqualTo(new Vector3(60f, 0f, 0f)));
+        }
+
+        [Test]
         public void RuntimeShiftRootMovesWithAuthoredRoots()
         {
             Transform bodies = CreateRoot("Bodies", Vector3.zero);

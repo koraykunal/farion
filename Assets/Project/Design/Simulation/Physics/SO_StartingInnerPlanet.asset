@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   bodyName: Ember
   bodyType: 1
-  radius: 500
+  radius: 5000
   surfaceGravity: 4
-  initialVelocity: {x: 0, y: 0, z: -167.332}
+  initialVelocity: {x: 0, y: 0, z: -364.1862}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.25, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9

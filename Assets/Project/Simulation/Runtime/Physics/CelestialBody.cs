@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Core.Persistence;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
@@ -30,6 +31,9 @@ namespace Farion.Simulation.Physics
         Vector3 simulatedVelocity;
         Vector3 simulatedAngularVelocity;
         Vector3 physicsReferenceFrameVelocity;
+        Vector3 frameRelativeVelocity;
+        Vector3 frameRelativeAngularVelocity;
+        bool hasResolvedFrameMotion;
         float mass;
         OrbitalElements orbit;
         bool hasOrbit;
@@ -41,8 +45,19 @@ namespace Farion.Simulation.Physics
         Vector3 systemVelocity;
         Vector3 localOffsetAtEpoch;
         Vector3 driftVelocity;
+        Vector3 epochSystemOrigin;
+        double analyticEpochSeconds;
 
         public string BodyName => bodyName;
+        public int StableId
+        {
+            get
+            {
+                string persistentId = PersistentId;
+                return ResolveStableId(
+                    string.IsNullOrEmpty(persistentId) ? bodyName : persistentId);
+            }
+        }
         public string PersistentId
         {
             get
@@ -63,10 +78,15 @@ namespace Farion.Simulation.Physics
         public Vector3 InitialVelocity => initialVelocity;
         public Vector3 InitialAngularVelocityDegreesPerSecond => initialAngularVelocityDegreesPerSecond;
         public Vector3 InertialVelocity => simulatedVelocity;
-        public Vector3 Velocity => ResolvedInertialVelocity - physicsReferenceFrameVelocity;
-        public Vector3 AngularVelocity => hasAnalyticReference
+        public Vector3 InertialAngularVelocity => hasAnalyticReference
             ? referenceRotation * simulatedAngularVelocity
             : transform.rotation * simulatedAngularVelocity;
+        public Vector3 Velocity => hasResolvedFrameMotion
+            ? frameRelativeVelocity
+            : ResolvedInertialVelocity - physicsReferenceFrameVelocity;
+        public Vector3 AngularVelocity => hasResolvedFrameMotion
+            ? frameRelativeAngularVelocity
+            : InertialAngularVelocity;
         public float Mass => mass;
         public bool ParticipatesInNBody => participatesInNBody;
         public CelestialBodyMotionMode MotionMode => motionMode;
@@ -80,6 +100,8 @@ namespace Farion.Simulation.Physics
         public Vector3 SystemPosition => systemPosition;
         public Vector3 SystemVelocity => systemVelocity;
         public Vector3 EpochLocalOffset => localOffsetAtEpoch;
+        public Vector3 AnalyticEpochOrigin => epochSystemOrigin;
+        public bool HasAnalyticReference => hasAnalyticReference;
         public float OrbitPeriodSeconds => hasOrbit ? (float)orbit.PeriodSeconds : 0f;
         public Vector3 Position => Rigidbody.position;
 
@@ -180,12 +202,21 @@ namespace Farion.Simulation.Physics
             simulatedVelocity = initialVelocity;
             simulatedAngularVelocity = initialAngularVelocityDegreesPerSecond * Mathf.Deg2Rad;
             physicsReferenceFrameVelocity = Vector3.zero;
+            frameRelativeVelocity = Vector3.zero;
+            frameRelativeAngularVelocity = Vector3.zero;
+            hasResolvedFrameMotion = false;
         }
 
-        public void CaptureAnalyticReference(Vector3 attractorSystemOrigin, Vector3 attractorSystemVelocity, float gravitationalConstant)
+        public void CaptureAnalyticReference(
+            Vector3 attractorSystemOrigin,
+            Vector3 attractorSystemVelocity,
+            float gravitationalConstant,
+            double epochSeconds)
         {
             referenceRotation = Rigidbody != null ? Rigidbody.rotation : transform.rotation;
             hasAnalyticReference = true;
+            epochSystemOrigin = attractorSystemOrigin;
+            analyticEpochSeconds = epochSeconds;
             spinDegreesPerSecond = initialAngularVelocityDegreesPerSecond.magnitude;
             spinAxis = spinDegreesPerSecond > 0.0001f
                 ? initialAngularVelocityDegreesPerSecond / spinDegreesPerSecond
@@ -225,9 +256,10 @@ namespace Farion.Simulation.Physics
 
         public void EvaluateAnalyticMotion(double timeSeconds, Vector3 attractorSystemPosition, Vector3 attractorSystemVelocity)
         {
+            double localTime = timeSeconds - analyticEpochSeconds;
             if (hasOrbit)
             {
-                orbit.Evaluate(timeSeconds, out Vector3 localPosition, out Vector3 localVelocity);
+                orbit.Evaluate(localTime, out Vector3 localPosition, out Vector3 localVelocity);
                 systemPosition = attractorSystemPosition + localPosition;
                 systemVelocity = attractorSystemVelocity + localVelocity;
             }
@@ -235,7 +267,7 @@ namespace Farion.Simulation.Physics
             {
                 systemPosition = attractorSystemPosition +
                     localOffsetAtEpoch +
-                    driftVelocity * (float)timeSeconds;
+                    driftVelocity * (float)localTime;
                 systemVelocity = attractorSystemVelocity + driftVelocity;
             }
 
@@ -254,7 +286,7 @@ namespace Farion.Simulation.Physics
                 return referenceRotation;
             }
 
-            double totalDegrees = spinDegreesPerSecond * timeSeconds;
+            double totalDegrees = spinDegreesPerSecond * (timeSeconds - analyticEpochSeconds);
             float wrapped = (float)(totalDegrees - 360d * System.Math.Floor(totalDegrees / 360d));
             return referenceRotation * Quaternion.AngleAxis(wrapped, spinAxis);
         }
@@ -280,7 +312,7 @@ namespace Farion.Simulation.Physics
                 }
             }
 
-            if (Quaternion.Angle(body.rotation, worldRotation) > 0.0001f)
+            if (!FarionMath.IsSameRotation(body.rotation, worldRotation))
             {
                 if (stepped)
                 {
@@ -338,6 +370,14 @@ namespace Farion.Simulation.Physics
         internal void SetPhysicsReferenceFrameVelocity(Vector3 frameVelocity)
         {
             physicsReferenceFrameVelocity = frameVelocity;
+            hasResolvedFrameMotion = false;
+        }
+
+        internal void SetPhysicsFrameMotion(Vector3 linearVelocity, Vector3 angularVelocity)
+        {
+            frameRelativeVelocity = linearVelocity;
+            frameRelativeAngularVelocity = angularVelocity;
+            hasResolvedFrameMotion = true;
         }
 
         public void IntegratePosition(float deltaTime, Vector3 referenceFrameVelocity)
@@ -402,6 +442,26 @@ namespace Farion.Simulation.Physics
             }
 
             return string.Equals(snapshot.BodyName, BodyName, System.StringComparison.Ordinal);
+        }
+
+        static int ResolveStableId(string identity)
+        {
+            if (string.IsNullOrEmpty(identity))
+            {
+                return 0;
+            }
+
+            unchecked
+            {
+                uint hash = 2166136261u;
+                for (int i = 0; i < identity.Length; i++)
+                {
+                    hash ^= identity[i];
+                    hash *= 16777619u;
+                }
+
+                return hash == 0u ? 1 : (int)hash;
+            }
         }
 
         Vector3 ResolvedInertialVelocity =>
