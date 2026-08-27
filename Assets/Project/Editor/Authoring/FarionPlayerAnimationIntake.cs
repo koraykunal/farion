@@ -28,6 +28,7 @@ namespace Farion.Editor.Authoring
         const float MaximumClipTimeScale = 2f;
 
         const float SubmergedThreshold = 0.5f;
+        const float JumpStartAnticipationTrim = 0.4f;
         const float JumpRiseSpeed = 1f;
         const float HardLandingSpeed = -6f;
         const float TurnEnterRate = 45f;
@@ -38,18 +39,25 @@ namespace Farion.Editor.Authoring
 
         readonly struct ClipSource
         {
-            public ClipSource(string asset, string clip, bool loop, string mirrored = null)
+            public ClipSource(
+                string asset,
+                string clip,
+                bool loop,
+                string mirrored = null,
+                float startTrim = 0f)
             {
                 Asset = asset;
                 Clip = clip;
                 Loop = loop;
                 Mirrored = mirrored;
+                StartTrim = startTrim;
             }
 
             public string Asset { get; }
             public string Clip { get; }
             public bool Loop { get; }
             public string Mirrored { get; }
+            public float StartTrim { get; }
         }
 
         static readonly ClipSource[] Sources =
@@ -60,7 +68,8 @@ namespace Farion.Editor.Authoring
             new("AN_PlayerExplorer_Strafe_Left_A", "Strafe_Left", true, "Strafe_Right"),
             new("AN_PlayerExplorer_Run_Forward_A", "Run_Forward", true),
             new("AN_PlayerExplorer_Fall_Loop_A", "Fall_Loop", true),
-            new("AN_PlayerExplorer_Jump_Start_A", "Jump_Start", false),
+            new("AN_PlayerExplorer_Jump_Start_A", "Jump_Start", false,
+                startTrim: JumpStartAnticipationTrim),
             new("AN_PlayerExplorer_Jump_Down_A", "Jump_Down", false),
             new("AN_PlayerExplorer_Land_Hard_A", "Land_Hard", false),
             new("AN_PlayerExplorer_Turn_Right_A", "Turn_Right", true, "Turn_Left"),
@@ -140,11 +149,12 @@ namespace Farion.Editor.Authoring
 
                 List<ModelImporterClipAnimation> authored = new()
                 {
-                    BuildClip(defaults[0], source.Clip, source.Loop, false)
+                    BuildClip(defaults[0], source.Clip, source.Loop, false, source.StartTrim)
                 };
                 if (!string.IsNullOrEmpty(source.Mirrored))
                 {
-                    authored.Add(BuildClip(defaults[0], source.Mirrored, source.Loop, true));
+                    authored.Add(
+                        BuildClip(defaults[0], source.Mirrored, source.Loop, true, source.StartTrim));
                 }
 
                 importer.clipAnimations = authored.ToArray();
@@ -157,13 +167,17 @@ namespace Farion.Editor.Authoring
             ModelImporterClipAnimation take,
             string name,
             bool loop,
-            bool mirror)
+            bool mirror,
+            float startTrim)
         {
             return new ModelImporterClipAnimation
             {
                 name = name,
                 takeName = take.takeName,
-                firstFrame = take.firstFrame,
+                firstFrame = Mathf.Lerp(
+                    take.firstFrame,
+                    take.lastFrame,
+                    Mathf.Clamp01(startTrim)),
                 lastFrame = take.lastFrame,
                 wrapMode = loop ? WrapMode.Loop : WrapMode.ClampForever,
                 loopTime = loop,
