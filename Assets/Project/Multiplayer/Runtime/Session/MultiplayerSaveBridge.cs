@@ -96,7 +96,8 @@ namespace Farion.Multiplayer.Session
                 playerSpawner.LoadRestoredShipCargo(shipCargo);
             }
 
-            originAuthority?.AdoptRestoredOrigin();
+            originAuthority?.AdoptRestoredOrigin(
+                MultiplayerZoneCatalog.StartingZoneId);
             physicsTickDriver?.AdoptRestoredSimulationTime();
         }
     }

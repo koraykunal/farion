@@ -1,6 +1,8 @@
 using Farion.Core.Identity;
 using System.Collections.Generic;
 using Farion.Multiplayer.Session;
+using Farion.Multiplayer.Spawning;
+using Farion.Simulation.Physics;
 using Farion.Simulation.World;
 using FishNet.Connection;
 using FishNet.Managing;
@@ -18,9 +20,13 @@ namespace Farion.Multiplayer.World
     {
         [SerializeField] NetworkManager networkManager;
         [SerializeField] ZonePhysicsTickDriver physicsTickDriver;
+        [SerializeField] MultiplayerWorldOriginAuthority originAuthority;
+        [SerializeField] MultiplayerPlayerSpawner playerSpawner;
 
         readonly Dictionary<GeneratedEntityId, SimulationZoneContext> zones = new();
-        GeneratedEntityId activeZoneId;
+        readonly Dictionary<GeneratedEntityId, int> pendingPinBodies = new();
+        string zoneSceneName;
+        int startingBodyStableId;
         bool subscribed;
 
         public int LoadedZoneCount => zones.Count;
@@ -29,11 +35,35 @@ namespace Farion.Multiplayer.World
         {
             networkManager ??= GetComponent<NetworkManager>();
             physicsTickDriver ??= GetComponent<ZonePhysicsTickDriver>();
+            originAuthority ??= GetComponent<MultiplayerWorldOriginAuthority>();
+            playerSpawner ??= GetComponent<MultiplayerPlayerSpawner>();
         }
 
         void Start()
         {
+            InstallSceneProcessor();
             Subscribe();
+        }
+
+        void InstallSceneProcessor()
+        {
+            if (networkManager?.SceneManager == null ||
+                networkManager.SceneManager.GetSceneProcessor()
+                    is FarionZoneSceneProcessor)
+            {
+                return;
+            }
+
+            SceneProcessorBase previous =
+                networkManager.SceneManager.GetSceneProcessor();
+            FarionZoneSceneProcessor processor =
+                gameObject.AddComponent<FarionZoneSceneProcessor>();
+            processor.Initialize(networkManager.SceneManager);
+            networkManager.SceneManager.SetSceneProcessor(processor);
+            if (previous != null && previous.GetType() == typeof(DefaultSceneProcessor))
+            {
+                Destroy(previous);
+            }
         }
 
         void OnDestroy()
@@ -48,14 +78,12 @@ namespace Farion.Multiplayer.World
         {
             if (!networkManager.IsServerStarted ||
                 connection == null ||
-                !connection.IsActive ||
-                (activeZoneId.IsValid && activeZoneId != zoneId))
+                !connection.IsActive)
             {
                 return false;
             }
 
-            activeZoneId = zoneId;
-
+            zoneSceneName = sceneName;
             SceneLoadData load = zones.TryGetValue(
                 zoneId,
                 out SimulationZoneContext existingZone) &&
@@ -143,6 +171,7 @@ namespace Farion.Multiplayer.World
                 }
 
                 zones[zoneId] = context;
+                ApplyZonePin(zoneId, scene);
                 foreach (NetworkConnection connection in
                          networkManager.ServerManager.Clients.Values)
                 {
@@ -152,6 +181,119 @@ namespace Farion.Multiplayer.World
                     }
                 }
             }
+        }
+
+        void ApplyZonePin(GeneratedEntityId zoneId, Scene scene)
+        {
+            if (!pendingPinBodies.Remove(zoneId, out int bodyStableId))
+            {
+                return;
+            }
+
+            MultiplayerSceneContext sceneContext =
+                MultiplayerSceneContext.FindIn(scene);
+            if (sceneContext == null ||
+                sceneContext.GravitySimulation == null ||
+                !sceneContext.GravitySimulation
+                    .ApplyNetworkPhysicsReferenceBody(bodyStableId))
+            {
+                Debug.LogError(
+                    $"Zone '{zoneId}' could not pin celestial body '{bodyStableId}'.",
+                    this);
+                return;
+            }
+
+            originAuthority?.PinReferenceBody(zoneId, bodyStableId);
+        }
+
+        public bool BeginHandoff(
+            NetworkConnection connection,
+            CelestialBody targetBody)
+        {
+            if (!networkManager.IsServerStarted ||
+                connection == null ||
+                !connection.IsActive ||
+                targetBody == null ||
+                playerSpawner == null ||
+                string.IsNullOrEmpty(zoneSceneName))
+            {
+                return false;
+            }
+
+            MultiplayerSceneContext sourceContext =
+                ResolveConnectionContext(connection);
+            if (sourceContext == null || !sourceContext.ZoneId.IsValid)
+            {
+                return false;
+            }
+
+            GeneratedEntityId targetZoneId = MultiplayerZoneCatalog.ZoneIdForBody(
+                targetBody.StableId,
+                ResolveStartingBodyStableId());
+            if (!targetZoneId.IsValid || targetZoneId == sourceContext.ZoneId)
+            {
+                return false;
+            }
+
+            if (!playerSpawner.PrepareHandoff(
+                    connection,
+                    sourceContext,
+                    targetZoneId))
+            {
+                return false;
+            }
+
+            if (zones.TryGetValue(targetZoneId, out SimulationZoneContext existing) &&
+                existing != null &&
+                existing.Scene.IsValid() &&
+                existing.Scene.isLoaded)
+            {
+                networkManager.SceneManager.LoadConnectionScenes(
+                    connection,
+                    MultiplayerZoneSceneLoad.Create(existing.Scene, targetZoneId));
+            }
+            else
+            {
+                pendingPinBodies[targetZoneId] = targetBody.StableId;
+                networkManager.SceneManager.LoadConnectionScenes(
+                    connection,
+                    MultiplayerZoneSceneLoad.Create(zoneSceneName, targetZoneId));
+            }
+
+            networkManager.SceneManager.UnloadConnectionScenes(
+                connection,
+                new SceneUnloadData(sourceContext.gameObject.scene));
+            return true;
+        }
+
+        public bool IsHandoffPending(NetworkConnection connection)
+        {
+            return playerSpawner != null &&
+                connection != null &&
+                playerSpawner.IsHandoffPending(connection.ClientId);
+        }
+
+        MultiplayerSceneContext ResolveConnectionContext(
+            NetworkConnection connection)
+        {
+            NetworkObject firstObject = connection.FirstObject;
+            return firstObject != null
+                ? MultiplayerSceneContext.FindIn(firstObject.gameObject.scene)
+                : null;
+        }
+
+        int ResolveStartingBodyStableId()
+        {
+            if (startingBodyStableId == 0 &&
+                originAuthority != null &&
+                originAuthority.TryGetZone(
+                    MultiplayerZoneCatalog.StartingZoneId,
+                    out ZoneOriginState startingZone))
+            {
+                startingBodyStableId = startingZone.ReferenceBodyId;
+            }
+
+            return startingBodyStableId;
         }
 
         void SceneManager_OnClientPresenceChangeEnd(
@@ -197,11 +339,14 @@ namespace Farion.Multiplayer.World
             if (remove.IsValid)
             {
                 zones.Remove(remove);
-                if (zones.Count == 0)
-                {
-                    activeZoneId = GeneratedEntityId.None;
-                }
             }
+        }
+
+        public bool TryGetZone(
+            GeneratedEntityId zoneId,
+            out SimulationZoneContext context)
+        {
+            return zones.TryGetValue(zoneId, out context) && context != null;
         }
 
         static void SetConnectionZone(

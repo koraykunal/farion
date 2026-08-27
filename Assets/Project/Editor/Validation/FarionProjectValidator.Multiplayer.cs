@@ -227,7 +227,8 @@ namespace Farion.Editor.Validation
                 session.GetComponent<MultiplayerPlayerSpawner>() == null ||
                 session.GetComponent<MultiplayerWorldOriginAuthority>() == null ||
                 session.GetComponent<ZonePhysicsTickDriver>() == null ||
-                session.GetComponent<MultiplayerZoneCoordinator>() == null)
+                session.GetComponent<MultiplayerZoneCoordinator>() == null ||
+                session.GetComponent<ZoneHandoffMonitor>() == null)
             {
                 report.AddError($"{sessionPath}: incomplete networking composition.");
             }

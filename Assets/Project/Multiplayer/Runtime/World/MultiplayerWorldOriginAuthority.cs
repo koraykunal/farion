@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Farion.Core.Identity;
 using Farion.Simulation.Physics;
 using Farion.Simulation.World;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Transporting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Farion.Multiplayer.World
 {
@@ -17,39 +19,11 @@ namespace Farion.Multiplayer.World
 
         [SerializeField] NetworkManager networkManager;
 
-        readonly WorldOriginSequenceState state = new();
-        readonly List<CelestialSurfaceCollisionObserverState> trackingObservers = new();
-        WorldOriginRebaser rebaser;
-        GravitySimulation simulation;
-        Transform serverTrackingTarget;
-        MonoBehaviour serverTrackingObserverSource;
-        ICelestialSurfaceCollisionObserverGroup serverTrackingObserverGroup;
-        WorldOriginBroadcast pendingFrame;
-        bool hasPendingFrame;
+        readonly Dictionary<GeneratedEntityId, ZoneOriginState> zones = new();
+        readonly Dictionary<GeneratedEntityId, WorldOriginBroadcast> unboundFrames = new();
+        readonly List<ZoneOriginState> zoneBuffer = new();
 
-        public uint CurrentSequence => state.Sequence;
-
-        public bool SharesReferenceFrame(uint sequence)
-        {
-            if (sequence == state.Sequence)
-            {
-                return true;
-            }
-
-            if (state.TryGetReferenceBody(sequence, out int referenceBodyId))
-            {
-                return referenceBodyId == state.ReferenceBodyId;
-            }
-
-            if (hasPendingFrame && pendingFrame.Sequence == sequence)
-            {
-                return pendingFrame.ReferenceBodyId == state.ReferenceBodyId;
-            }
-
-            return false;
-        }
-
-        public event Action<Vector3> OriginShifted;
+        public event Action<GeneratedEntityId, Vector3> OriginShifted;
 
         void Awake()
         {
@@ -73,268 +47,187 @@ namespace Farion.Multiplayer.World
             networkManager.TimeManager.OnPostTick -= OnPostTick;
         }
 
-        public void BindRebaser(WorldOriginRebaser nextRebaser)
+        public ZoneOriginState BindZone(
+            GeneratedEntityId zoneId,
+            Scene scene,
+            WorldOriginRebaser rebaser,
+            GravitySimulation simulation,
+            MonoBehaviour observerSource)
         {
-            if (rebaser != null)
+            if (!zoneId.IsValid)
             {
-                rebaser.Rebased -= HandleRebased;
+                return null;
             }
 
-            rebaser = nextRebaser;
-            if (rebaser == null)
+            if (!zones.TryGetValue(zoneId, out ZoneOriginState zone))
             {
-                return;
+                zone = new ZoneOriginState(zoneId, scene);
+                zone.OriginShifted += offset =>
+                    OriginShifted?.Invoke(zoneId, offset);
+                zones[zoneId] = zone;
             }
 
-            rebaser.Rebased += HandleRebased;
-            rebaser.SetAutomaticRebasing(false);
-            Vector3 pendingDelta =
-                state.AccumulatedOrigin - rebaser.AccumulatedOriginOffset;
-            if (pendingDelta.sqrMagnitude > Mathf.Epsilon)
+            zone.Scene = scene;
+            zone.BindRuntime(rebaser, simulation, observerSource);
+            if (unboundFrames.Remove(zoneId, out WorldOriginBroadcast stashed))
             {
-                rebaser.Rebase(pendingDelta);
+                zone.StashPendingFrame(stashed);
+            }
+
+            return zone;
+        }
+
+        public bool TryGetZone(GeneratedEntityId zoneId, out ZoneOriginState zone)
+        {
+            return zones.TryGetValue(zoneId, out zone) && zone != null;
+        }
+
+        public void SetServerTrackingTarget(
+            GeneratedEntityId zoneId,
+            Transform target)
+        {
+            if (zones.TryGetValue(zoneId, out ZoneOriginState zone))
+            {
+                zone.SetTrackingTarget(target);
             }
         }
 
-        public void BindSimulation(GravitySimulation nextSimulation)
+        public void PinReferenceBody(GeneratedEntityId zoneId, int bodyStableId)
         {
-            simulation = nextSimulation;
-            if (simulation != null && state.Sequence > 0)
+            if (zones.TryGetValue(zoneId, out ZoneOriginState zone))
             {
-                simulation.ApplyNetworkPhysicsReferenceBody(
-                    state.ReferenceBodyId);
+                zone.PinReferenceBody(bodyStableId);
             }
-        }
-
-        public void SetServerTrackingTarget(Transform target)
-        {
-            serverTrackingTarget = target;
-            if (networkManager.IsServerStarted && rebaser != null)
-            {
-                rebaser.SetTrackingTarget(target);
-            }
-        }
-
-        public void SetServerTrackingObserverSource(MonoBehaviour source)
-        {
-            serverTrackingObserverSource = source;
-            serverTrackingObserverGroup =
-                source as ICelestialSurfaceCollisionObserverGroup;
-            trackingObservers.Clear();
         }
 
         public void ResetSession()
         {
-            state.Reset();
-            simulation = null;
-            serverTrackingTarget = null;
-            SetServerTrackingObserverSource(null);
-            pendingFrame = default;
-            hasPendingFrame = false;
-            if (rebaser != null)
+            foreach (ZoneOriginState zone in zones.Values)
             {
-                rebaser.Rebased -= HandleRebased;
+                zone.Reset();
             }
 
-            rebaser = null;
+            zones.Clear();
+            unboundFrames.Clear();
         }
 
-        void HandleRebased(Vector3 originOffset)
+        public bool AdoptRestoredOrigin(GeneratedEntityId zoneId)
         {
-            OriginShifted?.Invoke(originOffset);
-        }
-
-        public bool AdoptRestoredOrigin()
-        {
-            if (!networkManager.IsServerStarted || rebaser == null)
+            if (!networkManager.IsServerStarted ||
+                !zones.TryGetValue(zoneId, out ZoneOriginState zone) ||
+                !zone.AdoptRestoredOrigin())
             {
                 return false;
             }
 
-            if ((rebaser.AccumulatedOriginOffset - state.AccumulatedOrigin)
-                .sqrMagnitude <= Mathf.Epsilon)
-            {
-                return true;
-            }
-
-            state.RecordServerShift(
-                rebaser.AccumulatedOriginOffset,
-                simulation != null ? simulation.PhysicsReferenceStableId : state.ReferenceBodyId);
-            networkManager.ServerManager.Broadcast(
-                CreateCurrentBroadcast(networkManager.TimeManager.Tick),
-                requireAuthenticated: true,
-                channel: Channel.Reliable);
+            BroadcastToZone(
+                zone,
+                zone.CreateCurrentBroadcast(networkManager.TimeManager.Tick));
             return true;
         }
 
-        public void SendCurrentOrigin(NetworkConnection connection)
+        public void SendCurrentOrigin(
+            NetworkConnection connection,
+            GeneratedEntityId zoneId)
         {
-            if (connection == null || !networkManager.IsServerStarted)
+            if (connection == null ||
+                !networkManager.IsServerStarted ||
+                !zones.TryGetValue(zoneId, out ZoneOriginState zone))
             {
                 return;
             }
 
             networkManager.ServerManager.Broadcast(
                 connection,
-                hasPendingFrame
-                    ? pendingFrame
-                    : CreateCurrentBroadcast(networkManager.TimeManager.Tick),
+                zone.HasPendingFrame
+                    ? zone.PendingFrame
+                    : zone.CreateCurrentBroadcast(networkManager.TimeManager.Tick),
                 requireAuthenticated: true,
                 channel: Channel.Reliable);
         }
 
         void OnPreTick()
         {
-            if (!hasPendingFrame ||
-                !HasReachedTick(networkManager.TimeManager.Tick, pendingFrame.ApplyTick))
+            if (zones.Count == 0)
             {
                 return;
             }
 
-            WorldOriginBroadcast frame = pendingFrame;
-            hasPendingFrame = false;
-            pendingFrame = default;
-            if (!state.TryAccept(
-                    frame.Sequence,
-                    frame.AccumulatedOrigin,
-                    frame.ReferenceBodyId,
-                    out Vector3 delta))
+            zoneBuffer.Clear();
+            zoneBuffer.AddRange(zones.Values);
+            uint tick = networkManager.TimeManager.Tick;
+            for (int i = 0; i < zoneBuffer.Count; i++)
             {
-                return;
-            }
-
-            simulation?.ApplyNetworkPhysicsReferenceBody(frame.ReferenceBodyId);
-            if (rebaser != null && delta.sqrMagnitude > Mathf.Epsilon)
-            {
-                rebaser.Rebase(delta);
+                zoneBuffer[i].ApplyPendingFrameIfDue(tick);
             }
         }
 
         void OnPostTick()
         {
-            if (!networkManager.IsServerStarted || hasPendingFrame)
+            if (!networkManager.IsServerStarted || zones.Count == 0)
             {
                 return;
             }
 
-            int referenceBodyId = ResolveServerReferenceBodyId();
-            bool referenceChanged = referenceBodyId != state.ReferenceBodyId;
-            bool originChanged = TryResolveServerRebaseOffset(out Vector3 originDelta);
-            if (!referenceChanged && !originChanged)
+            zoneBuffer.Clear();
+            zoneBuffer.AddRange(zones.Values);
+            uint tick = networkManager.TimeManager.Tick;
+            for (int i = 0; i < zoneBuffer.Count; i++)
             {
-                return;
-            }
+                ZoneOriginState zone = zoneBuffer[i];
+                if (!zone.TryBuildNextFrame(
+                        tick,
+                        FrameChangeLeadTicks,
+                        out WorldOriginBroadcast frame))
+                {
+                    continue;
+                }
 
-            uint applyTick = networkManager.TimeManager.Tick + FrameChangeLeadTicks;
-            pendingFrame = new WorldOriginBroadcast(
-                state.Sequence + 1,
-                state.AccumulatedOrigin + originDelta,
-                referenceBodyId,
-                applyTick);
-            hasPendingFrame = true;
-            networkManager.ServerManager.Broadcast(
-                pendingFrame,
-                requireAuthenticated: true,
-                channel: Channel.Reliable);
+                zone.SetServerPendingFrame(frame);
+                BroadcastToZone(zone, frame);
+            }
         }
 
-        int ResolveServerReferenceBodyId()
+        void BroadcastToZone(ZoneOriginState zone, WorldOriginBroadcast frame)
         {
-            if (simulation == null || serverTrackingObserverSource == null)
+            foreach (NetworkConnection connection in
+                     networkManager.ServerManager.Clients.Values)
             {
-                return state.ReferenceBodyId;
+                if (connection.Scenes.Contains(zone.Scene))
+                {
+                    networkManager.ServerManager.Broadcast(
+                        connection,
+                        frame,
+                        requireAuthenticated: true,
+                        channel: Channel.Reliable);
+                }
             }
-
-            serverTrackingObserverGroup ??=
-                serverTrackingObserverSource as ICelestialSurfaceCollisionObserverGroup;
-            if (serverTrackingObserverGroup == null)
-            {
-                return simulation.PhysicsReferenceStableId;
-            }
-
-            trackingObservers.Clear();
-            serverTrackingObserverGroup.GetSurfaceCollisionObservers(trackingObservers);
-            CelestialBody candidate =
-                simulation.ResolvePhysicsReferenceBodyCandidate(trackingObservers);
-            return candidate != null
-                ? candidate.StableId
-                : simulation.PhysicsReferenceStableId;
-        }
-
-        bool TryResolveServerRebaseOffset(out Vector3 originDelta)
-        {
-            originDelta = Vector3.zero;
-            if (rebaser == null)
-            {
-                return false;
-            }
-
-            bool hasCollectivePosition =
-                TryResolveCollectiveTrackingPosition(out Vector3 trackingPosition);
-            if (!hasCollectivePosition && serverTrackingTarget == null)
-            {
-                return false;
-            }
-
-            if (!hasCollectivePosition)
-            {
-                trackingPosition = serverTrackingTarget.position;
-            }
-
-            if (serverTrackingTarget != null)
-            {
-                rebaser.SetTrackingTarget(serverTrackingTarget);
-            }
-
-            return rebaser.TryGetRebaseOffset(trackingPosition, out originDelta);
         }
 
         void OnOriginBroadcast(WorldOriginBroadcast message, Channel channel)
         {
-            if (networkManager.IsServerStarted ||
-                !state.CanAccept(message.Sequence) ||
-                (hasPendingFrame && message.Sequence <= pendingFrame.Sequence))
+            if (networkManager.IsServerStarted || message.ZoneId == 0UL)
             {
                 return;
             }
 
-            pendingFrame = message;
-            hasPendingFrame = true;
-        }
+            GeneratedEntityId zoneId = new(message.ZoneId);
+            if (zones.TryGetValue(zoneId, out ZoneOriginState zone))
+            {
+                zone.StashPendingFrame(message);
+                return;
+            }
 
-        WorldOriginBroadcast CreateCurrentBroadcast(uint applyTick)
-        {
-            return new WorldOriginBroadcast(
-                state.Sequence,
-                state.AccumulatedOrigin,
-                state.ReferenceBodyId,
-                applyTick);
+            if (!unboundFrames.TryGetValue(zoneId, out WorldOriginBroadcast existing) ||
+                message.Sequence > existing.Sequence)
+            {
+                unboundFrames[zoneId] = message;
+            }
         }
 
         internal static bool HasReachedTick(uint currentTick, uint targetTick)
         {
             return unchecked((int)(currentTick - targetTick)) >= 0;
-        }
-
-        bool TryResolveCollectiveTrackingPosition(out Vector3 position)
-        {
-            position = default;
-            trackingObservers.Clear();
-            if (serverTrackingObserverSource == null)
-            {
-                serverTrackingObserverGroup = null;
-                return false;
-            }
-
-            serverTrackingObserverGroup ??=
-                serverTrackingObserverSource as ICelestialSurfaceCollisionObserverGroup;
-            if (serverTrackingObserverGroup == null)
-            {
-                return false;
-            }
-
-            serverTrackingObserverGroup.GetSurfaceCollisionObservers(trackingObservers);
-            return TryResolveCollectiveTrackingPosition(trackingObservers, out position);
         }
 
         internal static bool TryResolveCollectiveTrackingPosition(

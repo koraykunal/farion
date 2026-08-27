@@ -15,7 +15,6 @@ namespace Farion.Multiplayer.Session
         const float WindowSeconds = 5f;
 
         [SerializeField] NetworkManager networkManager;
-        [SerializeField] MultiplayerWorldOriginAuthority originAuthority;
         [SerializeField, Min(0.1f)] float refreshInterval = 0.5f;
         [SerializeField] bool showDiagnostics;
         [SerializeField, Range(1, 25)] int maximumFrameTicks = 3;
@@ -38,7 +37,6 @@ namespace Farion.Multiplayer.Session
         void Awake()
         {
             networkManager ??= GetComponent<NetworkManager>();
-            originAuthority ??= GetComponent<MultiplayerWorldOriginAuthority>();
             if (networkManager != null)
             {
                 predictionManager = networkManager.GetComponent<PredictionManager>();
@@ -80,9 +78,7 @@ namespace Farion.Multiplayer.Session
             reconcileWindow = 0;
             reconcileWindowEnd = 0f;
             originShifts = 0;
-            lastOriginSequence = originAuthority != null
-                ? originAuthority.CurrentSequence
-                : 0u;
+            lastOriginSequence = ResolveLocalOriginSequence();
             PredictionDiagnostics.Reset();
         }
 
@@ -147,14 +143,20 @@ namespace Farion.Multiplayer.Session
                 peakWindowEnd = Time.unscaledTime + WindowSeconds;
             }
 
-            uint sequence = originAuthority != null
-                ? originAuthority.CurrentSequence
-                : 0u;
+            uint sequence = ResolveLocalOriginSequence();
             if (sequence != lastOriginSequence)
             {
                 lastOriginSequence = sequence;
                 originShifts++;
             }
+        }
+
+        static uint ResolveLocalOriginSequence()
+        {
+            ZoneOriginState zone = MultiplayerSceneContext.Active != null
+                ? MultiplayerSceneContext.Active.ZoneOrigin
+                : null;
+            return zone?.CurrentSequence ?? 0u;
         }
 
         void OnPostReconcile(uint clientTick, uint serverTick)

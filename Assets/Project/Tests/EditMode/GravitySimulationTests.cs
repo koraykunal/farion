@@ -257,6 +257,162 @@ namespace Farion.Tests.EditMode
             Assert.That(star.IntegratesOrbit, Is.False);
         }
 
+        [Test]
+        public void WorldSystemConversionRoundTripsInACorotatingFrame()
+        {
+            CelestialBody planet = CreateBody(
+                "Planet",
+                Vector3.zero,
+                16000f,
+                9.81f,
+                CelestialBodyMotionMode.KinematicOrbit,
+                new Vector3(0f, 0f, 30f),
+                initialAngularVelocity: new Vector3(0f, 0.5f, 0f));
+            GravitySimulation simulation = CreateSimulation(planet, planet);
+            simulation.RebuildAnalyticOrder();
+            simulation.SetSimulationTime(25d);
+
+            Vector3 worldPosition = planet.Position + new Vector3(16100f, 40f, -300f);
+            Vector3 worldVelocity = new(3f, -1f, 12f);
+            Quaternion worldRotation = Quaternion.Euler(10f, 80f, -5f);
+
+            Assert.That(
+                simulation.TryWorldToSystem(
+                    worldPosition,
+                    worldVelocity,
+                    out Vector3 systemPosition,
+                    out Vector3 systemVelocity),
+                Is.True);
+            Assert.That(
+                simulation.TrySystemToWorld(
+                    systemPosition,
+                    systemVelocity,
+                    out Vector3 roundTripPosition,
+                    out Vector3 roundTripVelocity),
+                Is.True);
+            Quaternion roundTripRotation = simulation.SystemToWorldRotation(
+                simulation.WorldToSystemRotation(worldRotation));
+
+            Assert.That(
+                Vector3.Distance(roundTripPosition, worldPosition),
+                Is.LessThan(0.001f));
+            Assert.That(
+                Vector3.Distance(roundTripVelocity, worldVelocity),
+                Is.LessThan(0.001f));
+            Assert.That(
+                Quaternion.Angle(roundTripRotation, worldRotation),
+                Is.LessThan(0.001f));
+        }
+
+        [Test]
+        public void SurfaceFixedPointCarriesSpinVelocityIntoSystemSpace()
+        {
+            CelestialBody planet = CreateBody(
+                "Planet",
+                Vector3.zero,
+                16000f,
+                9.81f,
+                CelestialBodyMotionMode.KinematicOrbit,
+                new Vector3(0f, 0f, 30f),
+                initialAngularVelocity: new Vector3(0f, 0.5f, 0f));
+            GravitySimulation simulation = CreateSimulation(planet, planet);
+            simulation.RebuildAnalyticOrder();
+            simulation.SetSimulationTime(10d);
+
+            Assert.That(
+                simulation.TryWorldToSystem(
+                    planet.Position,
+                    Vector3.zero,
+                    out _,
+                    out Vector3 centerSystemVelocity),
+                Is.True);
+            Assert.That(
+                Vector3.Distance(centerSystemVelocity, planet.SystemVelocity),
+                Is.LessThan(0.0001f));
+
+            Vector3 surfacePoint = planet.Position + Vector3.right * planet.Radius;
+            Assert.That(
+                simulation.TryWorldToSystem(
+                    surfacePoint,
+                    Vector3.zero,
+                    out _,
+                    out Vector3 surfaceSystemVelocity),
+                Is.True);
+            float expectedSpinSpeed = 0.5f * Mathf.Deg2Rad * planet.Radius;
+            Assert.That(
+                (surfaceSystemVelocity - planet.SystemVelocity).magnitude,
+                Is.EqualTo(expectedSpinSpeed).Within(0.001f));
+        }
+
+        [Test]
+        public void MoonCenterConvertsBetweenDifferentlyPinnedCopies()
+        {
+            (GravitySimulation planetPinned, CelestialBody _, CelestialBody movingMoon) =
+                CreateSystemCopy("A", pinMoon: false);
+            (GravitySimulation moonPinned, CelestialBody _, CelestialBody stillMoon) =
+                CreateSystemCopy("B", pinMoon: true);
+            planetPinned.SetSimulationTime(40d);
+            moonPinned.SetSimulationTime(40d);
+
+            Vector3 movingMoonVelocity = movingMoon.Velocity;
+            Assert.That(movingMoonVelocity.magnitude, Is.GreaterThan(0.1f));
+
+            Assert.That(
+                planetPinned.TryWorldToSystem(
+                    movingMoon.Position,
+                    movingMoonVelocity,
+                    out Vector3 systemPosition,
+                    out Vector3 systemVelocity),
+                Is.True);
+            Assert.That(
+                Vector3.Distance(systemPosition, movingMoon.SystemPosition),
+                Is.LessThan(0.5f));
+            Assert.That(
+                moonPinned.TrySystemToWorld(
+                    systemPosition,
+                    systemVelocity,
+                    out Vector3 worldPosition,
+                    out Vector3 worldVelocity),
+                Is.True);
+
+            Assert.That(
+                Vector3.Distance(worldPosition, stillMoon.Position),
+                Is.LessThan(0.5f));
+            Assert.That(worldVelocity.magnitude, Is.LessThan(0.05f));
+        }
+
+        (GravitySimulation, CelestialBody, CelestialBody) CreateSystemCopy(
+            string suffix,
+            bool pinMoon)
+        {
+            GameObject owner = new($"SystemCopy_{suffix}");
+            owner.transform.SetParent(root.transform);
+            CelestialBody planet = CreateBody(
+                $"Planet_{suffix}",
+                Vector3.zero,
+                1600f,
+                9.81f,
+                CelestialBodyMotionMode.KinematicOrbit,
+                new Vector3(0f, 0f, 30f),
+                owner.transform,
+                new Vector3(0f, 0.4f, 0f));
+            CelestialBody moon = CreateBody(
+                $"Moon_{suffix}",
+                Vector3.right * 13000f,
+                120f,
+                1.62f,
+                CelestialBodyMotionMode.KinematicOrbit,
+                new Vector3(0f, 0f, 45f),
+                owner.transform);
+            moon.SetOrbitAttractor(planet);
+            GravitySimulation simulation = CreateSimulation(
+                pinMoon ? moon : planet,
+                new[] { planet, moon },
+                owner);
+            simulation.RebuildAnalyticOrder();
+            return (simulation, planet, moon);
+        }
+
         GravitySimulation CreateSimulation(
             CelestialBody referenceBody,
             params CelestialBody[] bodies)

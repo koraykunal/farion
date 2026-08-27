@@ -1,3 +1,4 @@
+using Farion.Core.Identity;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
@@ -179,6 +180,87 @@ namespace Farion.Tests.EditMode
             Assert.That(
                 MultiplayerWorldOriginAuthority.HasReachedTick(2, uint.MaxValue - 1),
                 Is.True);
+        }
+
+        [Test]
+        public void ZoneOriginStatesAdvanceSequencesIndependently()
+        {
+            GeneratedEntityId zoneA = new(1UL);
+            GeneratedEntityId zoneB = new(2UL);
+            ZoneOriginState stateA = new(zoneA, default);
+            ZoneOriginState stateB = new(zoneB, default);
+
+            stateA.StashPendingFrame(new WorldOriginBroadcast(
+                zoneA.Value,
+                1,
+                new Vector3(500f, 0f, 0f),
+                7,
+                applyTick: 10));
+            stateA.ApplyPendingFrameIfDue(10);
+
+            Assert.That(stateA.CurrentSequence, Is.EqualTo(1u));
+            Assert.That(stateA.ReferenceBodyId, Is.EqualTo(7));
+            Assert.That(stateB.CurrentSequence, Is.Zero);
+            Assert.That(stateB.SharesReferenceFrame(0), Is.True);
+            Assert.That(stateA.SharesReferenceFrame(0), Is.False);
+        }
+
+        [Test]
+        public void ZoneOriginStateKeepsTranslationOnlyHistoryValid()
+        {
+            GeneratedEntityId zoneId = new(3UL);
+            ZoneOriginState state = new(zoneId, default);
+
+            state.StashPendingFrame(new WorldOriginBroadcast(
+                zoneId.Value,
+                1,
+                new Vector3(100f, 0f, 0f),
+                7,
+                applyTick: 5));
+            state.ApplyPendingFrameIfDue(5);
+            state.StashPendingFrame(new WorldOriginBroadcast(
+                zoneId.Value,
+                2,
+                new Vector3(300f, 0f, 0f),
+                7,
+                applyTick: 6));
+            state.ApplyPendingFrameIfDue(6);
+
+            Assert.That(state.SharesReferenceFrame(1), Is.True);
+
+            state.StashPendingFrame(new WorldOriginBroadcast(
+                zoneId.Value,
+                3,
+                new Vector3(300f, 0f, 0f),
+                9,
+                applyTick: 7));
+            state.ApplyPendingFrameIfDue(7);
+
+            Assert.That(state.SharesReferenceFrame(2), Is.False);
+            Assert.That(state.SharesReferenceFrame(3), Is.True);
+        }
+
+        [Test]
+        public void ZoneCatalogDerivesDistinctDeterministicZoneIds()
+        {
+            GeneratedEntityId moonZone =
+                MultiplayerZoneCatalog.ZoneIdForBody(1234, 555);
+            GeneratedEntityId moonZoneAgain =
+                MultiplayerZoneCatalog.ZoneIdForBody(1234, 555);
+            GeneratedEntityId otherZone =
+                MultiplayerZoneCatalog.ZoneIdForBody(4321, 555);
+            GeneratedEntityId startingZone =
+                MultiplayerZoneCatalog.ZoneIdForBody(555, 555);
+
+            Assert.That(moonZone.IsValid, Is.True);
+            Assert.That(moonZone, Is.EqualTo(moonZoneAgain));
+            Assert.That(moonZone, Is.Not.EqualTo(otherZone));
+            Assert.That(
+                startingZone,
+                Is.EqualTo(MultiplayerZoneCatalog.StartingZoneId));
+            Assert.That(
+                moonZone,
+                Is.Not.EqualTo(MultiplayerZoneCatalog.StartingZoneId));
         }
 
         [Test]

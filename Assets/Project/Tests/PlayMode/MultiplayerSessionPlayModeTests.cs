@@ -7,6 +7,7 @@ using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Session;
+using Farion.Multiplayer.World;
 using Farion.Rendering.Celestial;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
@@ -181,7 +182,10 @@ namespace Farion.Tests.PlayMode
                 testRoot.AddComponent<MultiplayerSceneContext>();
             TestFieldAccess.SetField(context, "gravitySimulation", simulation);
 
-            context.BindSession(null, null);
+            context.BindSession(
+                null,
+                null,
+                MultiplayerZoneCatalog.StartingZoneId);
 
             Assert.That(simulation.IntegrationEnabled, Is.False);
         }

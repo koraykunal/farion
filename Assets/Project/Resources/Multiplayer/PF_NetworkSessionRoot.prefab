@@ -28,6 +28,7 @@ GameObject:
   - component: {fileID: 5276536955756864813}
   - component: {fileID: 2188392981759217749}
   - component: {fileID: 1992692592472939406}
+  - component: {fileID: 5541689456251989351}
   m_Layer: 0
   m_Name: PF_NetworkSessionRoot
   m_TagString: Untagged
@@ -143,6 +144,7 @@ MonoBehaviour:
   zoneCoordinator: {fileID: 7090663307120114388}
   statusReporter: {fileID: 3819479187218231959}
   saveBridge: {fileID: 2066685435580944708}
+  physicsTickDriver: {fileID: 0}
   presentationSceneName: SC_GameplayShell
   startingZoneSceneName: SC_WorldZone
 --- !u!114 &4048371549262804779
@@ -221,6 +223,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.World.Zones.NetworkZoneCoordinator
   networkManager: {fileID: 8331091889345338321}
   physicsTickDriver: {fileID: 1582782594856200721}
+  originAuthority: {fileID: 0}
+  playerSpawner: {fileID: 0}
 --- !u!114 &468509653697274673
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -307,7 +311,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Session.NetworkStatusReporter
   networkManager: {fileID: 0}
-  originAuthority: {fileID: 0}
   refreshInterval: 0.5
   showDiagnostics: 1
   maximumFrameTicks: 3
@@ -325,6 +328,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Session.MultiplayerSaveBridge
   networkManager: {fileID: 8331091889345338321}
   playerSpawner: {fileID: 4048371549262804779}
+  originAuthority: {fileID: 0}
+  physicsTickDriver: {fileID: 0}
 --- !u!114 &5276536955756864813
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -379,3 +384,18 @@ MonoBehaviour:
     _latency: 0
     _outOfOrder: 0
     _packetLoss: 0
+--- !u!114 &5541689456251989351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9169958205229760162}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f06b3d511ef63a34297f21faddf9b64f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.World.ZoneHandoffMonitor
+  networkManager: {fileID: 0}
+  zoneCoordinator: {fileID: 0}
+  stableSeconds: 2.5

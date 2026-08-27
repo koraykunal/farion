@@ -28,9 +28,6 @@ namespace Farion.Multiplayer.Session
         const string MainMenuScene = "SC_MainMenu";
         const float ConnectionTimeoutSeconds = 30f;
         const float StopTimeoutSeconds = 5f;
-        static readonly GeneratedEntityId StartingZoneId =
-            GeneratedEntityId.FromHash(
-                StableHashUtility.Combine("zone.starting_system"));
 
         [SerializeField] NetworkManager networkManager;
         [SerializeField] MultiplayerPlayerSpawner playerSpawner;
@@ -56,6 +53,8 @@ namespace Farion.Multiplayer.Session
         bool assignedStarterShuttleReady;
         Coroutine stopRoutine;
         UiGameplaySceneShellController presentation;
+        Scene localZoneScene;
+        MultiplayerSceneContext localZoneContext;
 
         public static MultiplayerSessionController Active { get; private set; }
 
@@ -457,6 +456,9 @@ namespace Farion.Multiplayer.Session
 
         void OnSceneLoadEnd(SceneLoadEndEventArgs args)
         {
+            bool isZoneLoad = MultiplayerZoneSceneLoad.TryReadZoneId(
+                args,
+                out GeneratedEntityId zoneId);
             for (int i = 0; i < args.LoadedScenes.Length; i++)
             {
                 Scene scene = args.LoadedScenes[i];
@@ -490,7 +492,7 @@ namespace Farion.Multiplayer.Session
                     continue;
                 }
 
-                if (scene.name != startingZoneSceneName)
+                if (!isZoneLoad)
                 {
                     continue;
                 }
@@ -500,17 +502,95 @@ namespace Farion.Multiplayer.Session
                 if (context == null)
                 {
                     Debug.LogError(
-                        $"Starting zone scene '{scene.name}' has no multiplayer context.",
+                        $"Zone scene '{scene.name}' has no multiplayer context.",
                         this);
-                    FailAndReturnToMainMenu(
-                        MultiplayerFailureReason.SessionSetup);
-                    return;
+                    if (zoneId == MultiplayerZoneCatalog.StartingZoneId)
+                    {
+                        FailAndReturnToMainMenu(
+                            MultiplayerFailureReason.SessionSetup);
+                        return;
+                    }
+
+                    continue;
                 }
 
-                context.BindPresentation(presentation);
-                context.BindSession(playerSpawner, worldOriginAuthority);
-                BindSaveBridge(context);
+                context.BindSession(playerSpawner, worldOriginAuthority, zoneId);
+                if (IsLocalZoneLoad(args.QueueData))
+                {
+                    ApplyLocalZone(context, scene);
+                }
+                else
+                {
+                    context.SetPresentationActive(false);
+                    if (localZoneScene.IsValid() && localZoneScene.isLoaded)
+                    {
+                        UnityEngine.SceneManagement.SceneManager.SetActiveScene(
+                            localZoneScene);
+                    }
+                }
+
+                if (zoneId == MultiplayerZoneCatalog.StartingZoneId)
+                {
+                    BindSaveBridge(context);
+                }
             }
+        }
+
+        internal void NotifyLocalZone(MultiplayerSceneContext context)
+        {
+            if (context != null)
+            {
+                ApplyLocalZone(context, context.gameObject.scene);
+            }
+        }
+
+        void ApplyLocalZone(MultiplayerSceneContext context, Scene scene)
+        {
+            if (context == localZoneContext)
+            {
+                return;
+            }
+
+            if (localZoneContext != null)
+            {
+                localZoneContext.UnbindPresentation();
+                localZoneContext.SetPresentationActive(false);
+            }
+
+            localZoneContext = context;
+            localZoneScene = scene;
+            context.SetPresentationActive(true);
+            context.BindPresentation(presentation);
+            if (scene.IsValid() && scene.isLoaded)
+            {
+                UnityEngine.SceneManagement.SceneManager.SetActiveScene(scene);
+            }
+        }
+
+        bool IsLocalZoneLoad(LoadQueueData queueData)
+        {
+            if (!queueData.AsServer)
+            {
+                return true;
+            }
+
+            NetworkConnection localConnection =
+                networkManager.ClientManager.Connection;
+            if (localConnection == null || !localConnection.IsValid)
+            {
+                return false;
+            }
+
+            NetworkConnection[] connections = queueData.Connections;
+            for (int i = 0; i < connections.Length; i++)
+            {
+                if (connections[i] == localConnection)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         void BindSaveBridge(MultiplayerSceneContext context)
@@ -600,7 +680,7 @@ namespace Farion.Multiplayer.Session
                 !zoneCoordinator.LoadZoneForConnection(
                     connection,
                     startingZoneSceneName,
-                    StartingZoneId))
+                    MultiplayerZoneCatalog.StartingZoneId))
             {
                 zoneLoadRequests.Remove(connection.ClientId);
                 connection.Disconnect(immediately: true);
@@ -683,6 +763,8 @@ namespace Farion.Multiplayer.Session
             host = false;
             ResetReadiness();
             zoneLoadRequests.Clear();
+            localZoneScene = default;
+            localZoneContext = null;
             MultiplayerLobbyGateway.Service?.Leave();
             saveBridge?.UnbindZone();
             presentation = null;

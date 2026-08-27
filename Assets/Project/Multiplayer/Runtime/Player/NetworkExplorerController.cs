@@ -40,7 +40,7 @@ namespace Farion.Multiplayer.Player
         Rigidbody body;
         CapsuleCollider capsule;
         CelestialActorProbe celestialProbe;
-        MultiplayerWorldOriginAuthority originAuthority;
+        ZoneOriginState originState;
         MultiplayerSceneContext sceneContext;
         ZonePhysicsTickDriver tickDriver;
         float accumulatedYaw;
@@ -139,7 +139,7 @@ namespace Farion.Multiplayer.Player
                 sceneContext.AttachToShiftedWorld(transform);
                 BindScene(
                     sceneContext.CelestialFrameProvider,
-                    sceneContext.OriginAuthority);
+                    sceneContext.ZoneOrigin);
             }
 
             ApplyPossessionState(possessionActive.Value);
@@ -211,9 +211,9 @@ namespace Farion.Multiplayer.Player
 
         public void BindScene(
             CelestialFrameProvider frameProvider,
-            MultiplayerWorldOriginAuthority worldOriginAuthority)
+            ZoneOriginState zoneOriginState)
         {
-            originAuthority = worldOriginAuthority;
+            originState = zoneOriginState;
             celestialProbe.SetFrameProvider(frameProvider);
         }
 
@@ -257,10 +257,11 @@ namespace Farion.Multiplayer.Player
             ExplorerReplicateData data = new(
                 current.Movement,
                 accumulatedYaw,
+                motor.ViewPitchDegrees,
                 jumpQueued,
                 current.Sprint,
                 current.Jump,
-                originAuthority?.CurrentSequence ?? 0);
+                originState?.CurrentSequence ?? 0);
             accumulatedYaw = 0f;
             jumpQueued = false;
             return data;
@@ -280,13 +281,19 @@ namespace Farion.Multiplayer.Player
             ExplorerReplicateData clamped = new(
                 data.Movement,
                 data.YawDegrees,
+                data.PitchDegrees,
                 data.Jump,
                 data.Sprint,
                 data.SwimAscend,
                 data.OriginSequence);
+            if (!IsOwner)
+            {
+                motor.SetViewPitchDegrees(clamped.PitchDegrees);
+            }
+
             bool staleOrigin = IsServerStarted &&
-                originAuthority != null &&
-                !originAuthority.SharesReferenceFrame(clamped.OriginSequence);
+                originState != null &&
+                !originState.SharesReferenceFrame(clamped.OriginSequence);
             FirstPersonMotorInput motorInput = staleOrigin
                 ? FirstPersonMotorInput.None
                 : new FirstPersonMotorInput(
@@ -309,7 +316,7 @@ namespace Farion.Multiplayer.Player
             PerformReconcile(new ExplorerReconcileData(
                 predictionRigidbody,
                 motor.CaptureState(),
-                originAuthority?.CurrentSequence ?? 0));
+                originState?.CurrentSequence ?? 0));
         }
 
         internal void SetPossessionActive(bool active)
@@ -374,8 +381,8 @@ namespace Farion.Multiplayer.Player
             ExplorerReconcileData data,
             Channel channel = Channel.Unreliable)
         {
-            if (originAuthority != null &&
-                !originAuthority.SharesReferenceFrame(data.OriginSequence))
+            if (originState != null &&
+                !originState.SharesReferenceFrame(data.OriginSequence))
             {
                 return;
             }

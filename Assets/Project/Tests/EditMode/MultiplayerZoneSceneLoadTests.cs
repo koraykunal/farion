@@ -18,12 +18,29 @@ namespace Farion.Tests.EditMode
                 expected);
 
             Assert.That(data.Options.AllowStacking, Is.True);
-            Assert.That(data.Options.AutomaticallyUnload, Is.True);
+            Assert.That(data.Options.AutomaticallyUnload, Is.False);
             Assert.That(data.Options.LocalPhysics, Is.EqualTo(LocalPhysicsMode.Physics3D));
             Assert.That(data.ReplaceScenes, Is.EqualTo(ReplaceOption.None));
             Assert.That(
                 MultiplayerZoneSceneLoad.TryDecode(
                     data.Params.ClientParams,
+                    out GeneratedEntityId decoded),
+                Is.True);
+            Assert.That(decoded, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void ZoneSceneLoadReadsZoneIdWithoutServerParams()
+        {
+            GeneratedEntityId expected = new(0x1020304050607080UL);
+            SceneLoadData data = MultiplayerZoneSceneLoad.Create(
+                "SC_WorldZone",
+                expected);
+            data.Params.ServerParams = System.Array.Empty<object>();
+
+            Assert.That(
+                MultiplayerZoneSceneLoad.TryReadZoneId(
+                    data,
                     out GeneratedEntityId decoded),
                 Is.True);
             Assert.That(decoded, Is.EqualTo(expected));

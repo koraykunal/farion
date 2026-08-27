@@ -13,6 +13,7 @@ using Farion.Multiplayer.Spawning;
 using Farion.Multiplayer.World;
 using Farion.Rendering.Celestial;
 using Farion.Rendering.Lighting;
+using Farion.Rendering.Space;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Simulation.World;
@@ -67,12 +68,15 @@ namespace Farion.Multiplayer.Session
 
         MultiplayerPlayerSpawner playerSpawner;
         MultiplayerWorldOriginAuthority originAuthority;
+        ZoneOriginState zoneOrigin;
+        CelestialLodController lodController;
         NetworkExplorerController ownedPlayer;
         UiGameplayController gameplayUi;
         UiSpacecraftFlightHudPresenter flightHud;
         SpacecraftPostProcessRig postProcessRig;
         MultiplayerSurfaceCollisionObserverSource surfaceCollisionObservers;
         bool multiplayerConfigured;
+        bool presentationSuppressed;
         NetworkStarterShuttle ownedSpacecraft;
 
         public static MultiplayerSceneContext Active { get; private set; }
@@ -98,7 +102,7 @@ namespace Farion.Multiplayer.Session
             celestialFrameProvider;
         public GravitySimulation GravitySimulation => gravitySimulation;
         public GameplayRuntimeRoot RuntimeRoot => runtimeRoot;
-        public MultiplayerWorldOriginAuthority OriginAuthority => originAuthority;
+        public ZoneOriginState ZoneOrigin => zoneOrigin;
         public GeneratedEntityId ZoneId => simulationZoneContext != null
             ? simulationZoneContext.ZoneId
             : GeneratedEntityId.None;
@@ -142,7 +146,6 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
-            Active = this;
             ConfigureMultiplayer();
         }
 
@@ -179,16 +182,21 @@ namespace Farion.Multiplayer.Session
 
         public void BindSession(
             MultiplayerPlayerSpawner spawner,
-            MultiplayerWorldOriginAuthority worldOriginAuthority)
+            MultiplayerWorldOriginAuthority worldOriginAuthority,
+            GeneratedEntityId zoneId)
         {
             ConfigureMultiplayer();
             playerSpawner = spawner;
             originAuthority = worldOriginAuthority;
             BindOriginRebaser(originRebaser);
-            originAuthority?.BindRebaser(originRebaser);
-            originAuthority?.SetServerTrackingObserverSource(
-                surfaceCollisionObservers);
-            originAuthority?.BindSimulation(gravitySimulation);
+            zoneOrigin = originAuthority != null
+                ? originAuthority.BindZone(
+                    zoneId,
+                    gameObject.scene,
+                    originRebaser,
+                    gravitySimulation,
+                    surfaceCollisionObservers)
+                : null;
             playerSpawner?.BindContext(this, originAuthority);
         }
 
@@ -217,8 +225,56 @@ namespace Farion.Multiplayer.Session
 
             if (bindings.LodController != null)
             {
+                lodController = bindings.LodController;
                 bindings.LodController.SetCamera(bindings.Camera);
                 RegisterZoneVisuals(bindings.LodController);
+            }
+        }
+
+        public void UnbindPresentation()
+        {
+            for (int i = 0; i < surfacePatchSystems.Count; i++)
+            {
+                surfacePatchSystems[i]?.SetCamera(null);
+            }
+
+            if (lodController != null)
+            {
+                UnregisterZoneVisuals(lodController);
+                lodController = null;
+            }
+
+            flightHud?.SetPilotContext(null);
+            postProcessRig?.SetMotor(null);
+        }
+
+        public void SetPresentationActive(bool active)
+        {
+            if (active != presentationSuppressed)
+            {
+                return;
+            }
+
+            presentationSuppressed = !active;
+            GameObject[] roots = gameObject.scene.GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++)
+            {
+                SetBehavioursEnabled<CelestialLightSource>(roots[i], active);
+                SetBehavioursEnabled<NebulaVolume>(roots[i], active);
+                SetBehavioursEnabled<CelestialScaledSpaceVisual>(roots[i], active);
+                SetBehavioursEnabled<CelestialStarVisual>(roots[i], active);
+                SetBehavioursEnabled<TerrestrialPlanetVisual>(roots[i], active);
+                SetBehavioursEnabled<SurfaceDecorationRenderer>(roots[i], active);
+            }
+        }
+
+        static void SetBehavioursEnabled<T>(GameObject root, bool enabled)
+            where T : Behaviour
+        {
+            T[] behaviours = root.GetComponentsInChildren<T>(true);
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                behaviours[i].enabled = enabled;
             }
         }
 
@@ -417,17 +473,23 @@ namespace Farion.Multiplayer.Session
 
         public bool BindOwnedPlayer(NetworkExplorerController player)
         {
-            if (player == null ||
-                firstPersonCameraRig == null ||
+            if (player == null)
+            {
+                return false;
+            }
+
+            MultiplayerSessionController.Active?.NotifyLocalZone(this);
+            if (firstPersonCameraRig == null ||
                 viewReference == null ||
                 controlLock == null)
             {
                 return false;
             }
 
+            Active = this;
             ownedPlayer = player;
             player.ApplyPossessionState(true);
-            player.BindScene(celestialFrameProvider, originAuthority);
+            player.BindScene(celestialFrameProvider, zoneOrigin);
             player.Motor.SetViewReference(viewReference);
             player.Input.SetControlLock(controlLock);
             player.InteractionRaycaster?.SetViewReference(viewReference);
@@ -591,6 +653,11 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
+            if (Active == this)
+            {
+                Active = null;
+            }
+
             ownedPlayer = null;
             player.Input.SetControlLock(null);
             player.InteractionRaycaster?.SetControlLock(null);
@@ -650,6 +717,20 @@ namespace Farion.Multiplayer.Session
             }
 
             lod.ApplyLods();
+        }
+
+        void UnregisterZoneVisuals(CelestialLodController lod)
+        {
+            GameObject[] roots = gameObject.scene.GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++)
+            {
+                CelestialBodyVisual[] visuals =
+                    roots[i].GetComponentsInChildren<CelestialBodyVisual>(true);
+                for (int j = 0; j < visuals.Length; j++)
+                {
+                    lod.UnregisterVisual(visuals[j]);
+                }
+            }
         }
 
         void ApplyLocalPresentationMode()

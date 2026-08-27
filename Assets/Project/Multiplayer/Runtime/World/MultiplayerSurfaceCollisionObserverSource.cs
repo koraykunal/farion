@@ -18,6 +18,7 @@ namespace Farion.Multiplayer.World
             for (int i = 0; i < ships.Count; i++)
             {
                 if (ships[i] != null &&
+                    ships[i].gameObject.scene == gameObject.scene &&
                     ships[i].TryGetSurfaceCollisionObserver(
                         out CelestialSurfaceCollisionObserverState shipObserver))
                 {
@@ -30,6 +31,7 @@ namespace Farion.Multiplayer.World
             for (int i = 0; i < explorers.Count; i++)
             {
                 if (explorers[i] != null &&
+                    explorers[i].gameObject.scene == gameObject.scene &&
                     explorers[i].TryGetSurfaceCollisionObserver(
                         out CelestialSurfaceCollisionObserverState explorerObserver))
                 {

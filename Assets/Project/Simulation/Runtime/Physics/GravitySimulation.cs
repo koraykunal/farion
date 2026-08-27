@@ -301,6 +301,65 @@ namespace Farion.Simulation.Physics
             externalTimeSource = enabled;
         }
 
+        public bool TryWorldToSystem(
+            Vector3 worldPosition,
+            Vector3 worldVelocity,
+            out Vector3 systemPosition,
+            out Vector3 systemVelocity)
+        {
+            CelestialBody anchor = ResolveAnalyticAnchor();
+            if (anchor == null)
+            {
+                systemPosition = worldPosition;
+                systemVelocity = worldVelocity;
+                return false;
+            }
+
+            Quaternion inverseRotation =
+                Quaternion.Inverse(referenceFrameRotation);
+            systemPosition = anchor.SystemPosition +
+                inverseRotation * (worldPosition - anchor.Position);
+            systemVelocity = anchor.SystemVelocity + inverseRotation *
+                (worldVelocity + Vector3.Cross(
+                    referenceFrameAngularVelocity,
+                    worldPosition - referenceFrameOrigin));
+            return true;
+        }
+
+        public bool TrySystemToWorld(
+            Vector3 systemPosition,
+            Vector3 systemVelocity,
+            out Vector3 worldPosition,
+            out Vector3 worldVelocity)
+        {
+            CelestialBody anchor = ResolveAnalyticAnchor();
+            if (anchor == null)
+            {
+                worldPosition = systemPosition;
+                worldVelocity = systemVelocity;
+                return false;
+            }
+
+            worldPosition = anchor.Position + referenceFrameRotation *
+                (systemPosition - anchor.SystemPosition);
+            worldVelocity = referenceFrameRotation *
+                (systemVelocity - anchor.SystemVelocity) -
+                Vector3.Cross(
+                    referenceFrameAngularVelocity,
+                    worldPosition - referenceFrameOrigin);
+            return true;
+        }
+
+        public Quaternion WorldToSystemRotation(Quaternion worldRotation)
+        {
+            return Quaternion.Inverse(referenceFrameRotation) * worldRotation;
+        }
+
+        public Quaternion SystemToWorldRotation(Quaternion systemRotation)
+        {
+            return referenceFrameRotation * systemRotation;
+        }
+
         public void RebuildAnalyticOrder()
         {
             analyticOrder.Clear();

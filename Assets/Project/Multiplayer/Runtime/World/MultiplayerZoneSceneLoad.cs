@@ -59,10 +59,10 @@ namespace Farion.Multiplayer.World
             SceneLoadData data = new(lookup)
             {
                 ReplaceScenes = ReplaceOption.None,
-                PreferredActiveScene = new PreferredScene(lookup)
+                PreferredActiveScene = new PreferredScene(lookup, null)
             };
             data.Options.AllowStacking = true;
-            data.Options.AutomaticallyUnload = true;
+            data.Options.AutomaticallyUnload = false;
             data.Options.LocalPhysics = LocalPhysicsMode.Physics3D;
             data.Params.ServerParams = new object[] { zoneId };
             data.Params.ClientParams = Encode(zoneId);
@@ -73,15 +73,20 @@ namespace Farion.Multiplayer.World
             SceneLoadEndEventArgs args,
             out GeneratedEntityId zoneId)
         {
-            SceneLoadData data = args.QueueData?.SceneLoadData;
+            return TryReadZoneId(args.QueueData?.SceneLoadData, out zoneId);
+        }
+
+        public static bool TryReadZoneId(
+            SceneLoadData data,
+            out GeneratedEntityId zoneId)
+        {
             if (data == null)
             {
                 zoneId = GeneratedEntityId.None;
                 return false;
             }
 
-            if (args.QueueData.AsServer &&
-                data.Params?.ServerParams != null &&
+            if (data.Params?.ServerParams != null &&
                 data.Params.ServerParams.Length > 0 &&
                 data.Params.ServerParams[0] is GeneratedEntityId serverZoneId &&
                 serverZoneId.IsValid)

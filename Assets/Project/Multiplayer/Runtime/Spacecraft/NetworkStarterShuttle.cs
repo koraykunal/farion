@@ -63,7 +63,7 @@ namespace Farion.Multiplayer.Spacecraft
         Rigidbody pilotBody;
         readonly PredictionRigidbody predictionRigidbody = new();
         PredictionRigidbodySpacecraftPhysicsBody physicsBody;
-        MultiplayerWorldOriginAuthority originAuthority;
+        ZoneOriginState originState;
         MultiplayerSceneContext sceneContext;
         ZonePhysicsTickDriver tickDriver;
         CelestialBody parkedBody;
@@ -272,7 +272,7 @@ namespace Farion.Multiplayer.Spacecraft
                 BindScene(
                     sceneContext.GravitySimulation,
                     sceneContext.CelestialFrameProvider,
-                    sceneContext.OriginAuthority);
+                    sceneContext.ZoneOrigin);
             }
 
             if (input != null)
@@ -371,7 +371,7 @@ namespace Farion.Multiplayer.Spacecraft
                 : SpacecraftInputState.None;
             PerformReplicate(new SpacecraftReplicateData(
                 current,
-                originAuthority?.CurrentSequence ?? 0));
+                originState?.CurrentSequence ?? 0));
         }
 
         protected override void TimeManager_OnPostTick()
@@ -445,8 +445,8 @@ namespace Farion.Multiplayer.Spacecraft
             bool invalidServerInput = IsServerStarted &&
                 (!IsClaimed || !Owner.IsValid || OwnerId != claimedConnectionId);
             bool staleOrigin = IsServerStarted &&
-                originAuthority != null &&
-                !originAuthority.SharesReferenceFrame(data.OriginSequence);
+                originState != null &&
+                !originState.SharesReferenceFrame(data.OriginSequence);
             float deltaTime = (float)TimeManager.TickDelta;
             surfaceContactProbe?.BeginSimulationStep(deltaTime);
             celestialProbe?.RefreshSample(ResolveSimulationSeconds(data.GetTick()));
@@ -466,7 +466,7 @@ namespace Farion.Multiplayer.Spacecraft
             PerformReconcile(new SpacecraftReconcileData(
                 predictionRigidbody,
                 motor.CaptureState(),
-                originAuthority?.CurrentSequence ?? 0));
+                originState?.CurrentSequence ?? 0));
         }
 
         [Reconcile]
@@ -474,8 +474,8 @@ namespace Farion.Multiplayer.Spacecraft
             SpacecraftReconcileData data,
             Channel channel = Channel.Unreliable)
         {
-            if (originAuthority != null &&
-                !originAuthority.SharesReferenceFrame(data.OriginSequence))
+            if (originState != null &&
+                !originState.SharesReferenceFrame(data.OriginSequence))
             {
                 return;
             }
@@ -524,9 +524,9 @@ namespace Farion.Multiplayer.Spacecraft
         internal void BindScene(
             GravitySimulation gravitySimulation,
             CelestialFrameProvider frameProvider,
-            MultiplayerWorldOriginAuthority authority)
+            ZoneOriginState zoneOriginState)
         {
-            originAuthority = authority;
+            originState = zoneOriginState;
             motor.SetSimulation(gravitySimulation);
             GetComponent<CelestialActorProbe>()
                 ?.SetFrameProvider(frameProvider);

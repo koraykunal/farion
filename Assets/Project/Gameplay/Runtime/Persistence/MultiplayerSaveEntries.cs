@@ -16,6 +16,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] InventoryContainerSnapshot carriedInventory;
         [SerializeField] TransformPoseSnapshot explorerPose;
         [SerializeField] bool hasExplorerPose;
+        [SerializeField] ulong zoneId;
         [SerializeField] PlayerPossessionMode possessionMode =
             PlayerPossessionMode.OnFoot;
 
@@ -42,12 +43,18 @@ namespace Farion.Gameplay.Persistence
         public TransformPoseSnapshot ExplorerPose => explorerPose;
         public bool HasExplorerPose => hasExplorerPose;
         public PlayerPossessionMode PossessionMode => possessionMode;
+        public ulong ZoneId => zoneId;
         public bool IsValid => !string.IsNullOrWhiteSpace(persistentPlayerId);
 
         public void SetExplorerPose(TransformPoseSnapshot pose)
         {
             explorerPose = pose;
             hasExplorerPose = true;
+        }
+
+        public void SetZone(ulong value)
+        {
+            zoneId = value;
         }
 
         public void SetPossessionMode(PlayerPossessionMode mode)
@@ -74,6 +81,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] ResourcePool hull;
         [SerializeField] TransformPoseSnapshot shipPose;
         [SerializeField] bool hasShipPose;
+        [SerializeField] ulong zoneId;
 
         public MultiplayerShipSaveEntry()
         {
@@ -104,11 +112,17 @@ namespace Farion.Gameplay.Persistence
         public bool IsValid => HasOwner || formationSlot >= 0;
         public TransformPoseSnapshot ShipPose => shipPose;
         public bool HasShipPose => hasShipPose;
+        public ulong ZoneId => zoneId;
 
         public void SetShipPose(TransformPoseSnapshot pose)
         {
             shipPose = pose;
             hasShipPose = true;
+        }
+
+        public void SetZone(ulong value)
+        {
+            zoneId = value;
         }
 
         public void ShiftPose(Vector3 originOffset)
