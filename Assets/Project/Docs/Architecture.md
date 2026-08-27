@@ -415,9 +415,9 @@ new schema is allowed only after those runtime owners exist.
   patches carry metre-scale relief, and no level-dependent branch reintroduces
   split/merge popping.
 - `CelestialSurfacePatchSystem` publishes its angular sample footprint to
-  `PlanetSurfaceModel` on enable. Collision, placement, and rendered geometry
-  therefore resolve the same octaves, so scattered props sit on the mesh the
-  player actually walks on.
+  `PlanetSurfaceModel` on enable. Formation and decoration anchors additionally
+  query the committed patch grid, so props follow the exact triangulated mesh
+  the player actually walks on instead of a theoretical camera LOD.
 - Formation pieces are seated on their mesh base, not their pivot.
   `SurfaceFormationSpawner` measures each prefab's lowest mesh bound once and
   offsets by it, so `embedFraction` means the same thing whatever the source

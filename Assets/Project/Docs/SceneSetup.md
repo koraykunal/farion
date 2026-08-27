@@ -226,21 +226,21 @@ disables. Unsafe speed, missing coverage, a visual rebuild, ascent, or an
 observer change restores the global collider first. At no point may collision
 authority be empty.
 
-Each local collider copies the renderer's exact surface vertices and triangles
-into a dedicated mesh without visual skirts. Entry/exit hysteresis
-prevents rapid whole-system toggling; ghost border normals and patch skirts
-prevent lighting seams and visible cracks. Split/merge hysteresis prevents a
-branch from oscillating at its LOD boundary, and every adaptive level uses the
-same sampling footprint so a topology change does not resample shared vertices
-at a different height.
+Each local collider uses the renderer's exact surface mesh. A patch that owns
+collision disables visual geomorph so physics and presentation cannot become
+separate surfaces. Entry/exit hysteresis prevents rapid whole-system toggling;
+ghost border normals and snapped coarse-neighbour edges prevent lighting seams
+and visible cracks. Split/merge hysteresis prevents a branch from oscillating
+at its LOD boundary, and every adaptive level uses the same sampling footprint
+so a topology change does not resample shared vertices at a different height.
 
-Patch topology changes are transactional. New meshes and cooked colliders are
-prepared behind the currently active surface within the profile's per-frame
-build-count and millisecond budgets. The global terrain remains visible and
-collidable during first activation; an existing patch set remains authoritative
-during later refreshes. Only a fully prepared set may commit. Do not restore a
-single-frame rebuild path or disable the fallback terrain before staging
-finishes.
+Patch topology changes are transactional and cancellable. New meshes and
+required colliders are prepared behind the currently active surface within the
+profile's per-frame build-count and millisecond budgets. The global terrain
+remains visible and collidable during first activation; an existing patch set
+remains authoritative during later refreshes. Only a fully prepared set may
+commit. Do not restore a single-frame rebuild path or disable the fallback
+terrain before staging finishes.
 
 The default profile uses `16` cells per patch, subdivision level `6`, entry/exit
 altitude ratios `0.7/0.9`, collision within `0.16` body radii, a `0.75 s`
@@ -947,7 +947,8 @@ For the first-person camera:
 3. Add `FirstPersonCameraRig`.
 4. Assign `Player Explorer > FirstPersonMotor` to `Target`.
 5. Assign `Player Explorer > KeyboardFirstPersonInput` to `Input Source`.
-6. Start with `Eye Height = 1.65`.
+6. Start with `Eye Height = 0.65`; the explorer transform is the centre of its
+   two-metre capsule, so this places the camera about `1.65 m` above its feet.
 7. Keep `Lock Cursor On Enable` enabled in Play Mode.
 
 `FirstPersonCameraRig` smooths only the eye offset relative to the interpolated

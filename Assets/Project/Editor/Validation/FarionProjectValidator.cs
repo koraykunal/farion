@@ -1,4 +1,4 @@
-using Farion.Editor;
+﻿using Farion.Editor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -81,9 +81,11 @@ namespace Farion.Editor.Validation
         {
             FarionValidationReport report = new();
             ValidatePhysicsLayers(report);
+            ValidateShaders(report);
             ValidateBuildScenes(report);
             ValidateDefinitionRegistries(report);
             ValidateMultiplayerAssets(report);
+            ValidateCharacterAnimation(report);
             FarionUiValidator.ValidateProject(report);
             FarionCelestialVisualProjectValidator.ValidateProjectAssets(report);
             return report;
@@ -213,6 +215,7 @@ namespace Farion.Editor.Validation
                 if (isSimulationZone)
                 {
                     ValidateSimulationZoneScene(scene, path, zones, report);
+                    ValidateCelestialSystem(scene, path, report);
                 }
                 else
                 {

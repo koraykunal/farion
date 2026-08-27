@@ -771,10 +771,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Starting Star
   bodyType: 0
-  radius: 1200
+  radius: 12000
   surfaceGravity: 350
   initialVelocity: {x: 0, y: 0, z: 0}
-  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.01, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1
@@ -837,8 +837,8 @@ Transform:
   m_GameObject: {fileID: 651725576}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -60000, y: -1600, z: 0}
-  m_LocalScale: {x: 2400, y: 2400, z: 2400}
+  m_LocalPosition: {x: -600000, y: -15852.773, z: 0}
+  m_LocalScale: {x: 24000, y: 24000, z: 24000}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 349922872}
@@ -1156,7 +1156,7 @@ Transform:
   m_GameObject: {fileID: 1148478145}
   serializedVersion: 2
   m_LocalRotation: {x: -0.05925786, y: 0.47871935, z: 0.091452956, w: 0.87117887}
-  m_LocalPosition: {x: -60000, y: -1600, z: 170000}
+  m_LocalPosition: {x: -600000, y: -15852.773, z: 1700000}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1177,9 +1177,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Rime
   bodyType: 1
-  radius: 800
+  radius: 8000
   surfaceGravity: 5
-  initialVelocity: {x: -54.44911, y: 0, z: 0}
+  initialVelocity: {x: -172.18321, y: 0, z: 0}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.12, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
@@ -1517,7 +1517,7 @@ Transform:
   m_GameObject: {fileID: 1477076275}
   serializedVersion: 2
   m_LocalRotation: {x: 0.098648295, y: 0.2727923, z: -0.09920725, w: 0.951846}
-  m_LocalPosition: {x: -78000, y: -1600, z: 0}
+  m_LocalPosition: {x: -980000, y: -15852.773, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1640,9 +1640,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Ember
   bodyType: 1
-  radius: 500
+  radius: 5000
   surfaceGravity: 4
-  initialVelocity: {x: 0, y: 0, z: -167.332}
+  initialVelocity: {x: 0, y: 0, z: -364.1862}
   initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.25, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
@@ -2402,6 +2402,11 @@ MonoBehaviour:
   skippedUnchangedRefreshCount: 0
   lastTransitionBuildCount: 0
   lastTransitionCommitFrame: -1
+  resolvedSubdivisionLevel: 0
+  resolvedCollisionLevel: 0
+  resolvedEnterAltitude: 0
+  resolvedExitAltitude: 0
+  resolvedCollisionSafetyMarginAngle: 0
 --- !u!114 &1772746495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2537,10 +2542,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Starting Planet
   bodyType: 1
-  radius: 1600
+  radius: 16000
   surfaceGravity: 9.81
-  initialVelocity: {x: 0, y: 0, z: 91.65151}
-  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
+  initialVelocity: {x: 0, y: 0, z: 289.82755}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.3, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1
@@ -2659,8 +2664,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1772746492}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -1600, z: 0}
+  m_LocalRotation: {x: 0.93317366, y: -0, z: 0.35627058, w: 0.047520954}
+  m_LocalPosition: {x: 0, y: -15852.773, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2736,7 +2741,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialBodyVisual
   body: {fileID: 1781217933}
-  surfaceModel: {fileID: 0}
+  surfaceModel: {fileID: 1781217939}
   shapeProfile: {fileID: 11400000, guid: 81fcf92b2cd8c1f4eaabc9ad0ad4cb10, type: 2}
   surfaceProfile: {fileID: 11400000, guid: a4a9f7524b98c32409adc6a4a7227b8b, type: 2}
   meshObjectName: Terrain Mesh
@@ -2782,10 +2787,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Physics.CelestialBody
   bodyName: Starting Moon
   bodyType: 2
-  radius: 120
+  radius: 1200
   surfaceGravity: 1.62
-  initialVelocity: {x: 0, y: 0, z: 135.60394}
-  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0, z: 0}
+  initialVelocity: {x: 0, y: 0, z: 428.81732}
+  initialAngularVelocityDegreesPerSecond: {x: 0, y: 0.061257895, z: 0}
   deriveMassFromSurfaceGravity: 1
   explicitMass: 1e+9
   participatesInNBody: 1
@@ -2799,7 +2804,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1781217928}
   serializedVersion: 5
-  m_Mass: 233280000
+  m_Mass: 1e+9
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -2905,7 +2910,7 @@ Transform:
   m_GameObject: {fileID: 1781217928}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 13000, y: -1600, z: 0}
+  m_LocalPosition: {x: 130000, y: -15852.773, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2960,6 +2965,11 @@ MonoBehaviour:
   skippedUnchangedRefreshCount: 0
   lastTransitionBuildCount: 0
   lastTransitionCommitFrame: -1
+  resolvedSubdivisionLevel: 0
+  resolvedCollisionLevel: 0
+  resolvedEnterAltitude: 0
+  resolvedExitAltitude: 0
+  resolvedCollisionSafetyMarginAngle: 0
 --- !u!1 &1829898721
 GameObject:
   m_ObjectHideFlags: 0

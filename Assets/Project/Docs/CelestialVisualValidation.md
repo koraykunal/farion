@@ -59,8 +59,9 @@ Do not evaluate a surface from only one distance.
    enabled patch colliders. `LocalAuthoritative` is valid only when
    `Local Collision Coverage Ready` is true; in that state the global collider
    must be disabled.
-3. On an enabled patch, confirm its `MeshCollider.sharedMesh` is the dedicated
-   skirt-free collision mesh and contains fewer vertices than the render mesh.
+3. On an enabled patch, confirm its `MeshCollider.sharedMesh` is the exact mesh
+   used by the renderer. Collision-authoritative patches must not visually
+   geomorph away from that mesh.
 4. Stand still for at least ten seconds, then walk slowly across patch
    boundaries. The ground must not disappear, pulse, or shift vertically, and
    lighting must not reveal seams.
