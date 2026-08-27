@@ -14,6 +14,10 @@ namespace Farion.Core.Physics
         public static readonly LayerMask CameraObstacleMask =
             (1 << CelestialSurface) | (1 << SpacecraftExterior) | (1 << SpacecraftInterior);
 
+        public static readonly LayerMask GroundMask =
+            UnityEngine.Physics.DefaultRaycastLayers &
+            ~((1 << Explorer) | (1 << ExplorerInterior));
+
         public static readonly LayerMask InteractionMask =
             (1 << Interactable) | (1 << SpacecraftInterior) | (1 << SpacecraftExterior);
     }

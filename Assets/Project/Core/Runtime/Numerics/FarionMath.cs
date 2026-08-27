@@ -2,23 +2,13 @@ using UnityEngine;
 
 namespace Farion.Core.Numerics
 {
-    /// <summary>
-    /// Shared scalar helpers that were duplicated across shape profiles and thruster VFX.
-    /// </summary>
     public static class FarionMath
     {
-        /// <summary>
-        /// Frame-rate independent exponential approach: the fraction of the remaining
-        /// distance to close this frame, for a given response rate.
-        /// </summary>
         public static float Smooth(float current, float target, float response, float deltaTime)
         {
             return Mathf.Lerp(current, target, SmoothFactor(response, deltaTime));
         }
 
-        /// <summary>
-        /// Frame-rate independent interpolation factor for a given response rate.
-        /// </summary>
         public static float SmoothFactor(float response, float deltaTime)
         {
             return response <= 0f
@@ -26,7 +16,6 @@ namespace Farion.Core.Numerics
                 : 1f - Mathf.Exp(-response * Mathf.Max(0f, deltaTime));
         }
 
-        /// <summary>Polynomial smooth minimum; <paramref name="k"/> is the blend width.</summary>
         public static float SmoothMin(float a, float b, float k)
         {
             if (k <= 0f)
@@ -38,7 +27,6 @@ namespace Farion.Core.Numerics
             return a * h + b * (1f - h) - k * h * (1f - h);
         }
 
-        /// <summary>Polynomial smooth maximum; <paramref name="k"/> is the blend width.</summary>
         public static float SmoothMax(float a, float b, float k)
         {
             if (k <= 0f)
@@ -47,6 +35,15 @@ namespace Farion.Core.Numerics
             }
 
             return -SmoothMin(-a, -b, k);
+        }
+
+        public static bool IsSameRotation(Quaternion current, Quaternion target)
+        {
+            const float ComponentEpsilon = 1e-7f;
+            return Mathf.Abs(current.x - target.x) <= ComponentEpsilon &&
+                Mathf.Abs(current.y - target.y) <= ComponentEpsilon &&
+                Mathf.Abs(current.z - target.z) <= ComponentEpsilon &&
+                Mathf.Abs(current.w - target.w) <= ComponentEpsilon;
         }
     }
 }
