@@ -15,6 +15,7 @@ namespace Farion.Gameplay.Character
         public bool WalkableGround;
         public float GroundSlopeAngle;
         public float SurfaceSpeed;
+        public Vector3 SurfaceVelocity;
         public float VerticalSpeed;
         public bool TouchingWater;
         public bool Underwater;

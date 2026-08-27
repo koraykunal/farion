@@ -3,6 +3,7 @@ using Farion.Gameplay.Presentation.Character;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 namespace Farion.Editor.Validation
 {
@@ -16,12 +17,25 @@ namespace Farion.Editor.Validation
             {
                 ("MoveX", AnimatorControllerParameterType.Float),
                 ("MoveY", AnimatorControllerParameterType.Float),
-                ("Speed01", AnimatorControllerParameterType.Float),
                 ("StrideScale", AnimatorControllerParameterType.Float),
+                ("SwimSpeed01", AnimatorControllerParameterType.Float),
                 ("Submerged", AnimatorControllerParameterType.Float),
+                ("VerticalSpeed", AnimatorControllerParameterType.Float),
                 ("Grounded", AnimatorControllerParameterType.Bool),
-                ("VerticalSpeed", AnimatorControllerParameterType.Float)
+                ("PlanarSpeed", AnimatorControllerParameterType.Float)
             };
+
+        static readonly (string State, string Motion)[] ExplorerAnimatorStates =
+        {
+            ("Idle", "Idle_Breathing"),
+            ("MoveStart", "Walk_Start"),
+            ("Move", "Move"),
+            ("MoveStop", "Walk_Stop"),
+            ("JumpStart", "Jump_Start"),
+            ("Airborne", "Fall_Loop"),
+            ("Land", "Land"),
+            ("Swim", "Swim")
+        };
 
         static void ValidateCharacterAnimation(FarionValidationReport report)
         {
@@ -70,6 +84,8 @@ namespace Farion.Editor.Validation
             else
             {
                 ValidateExplorerAnimatorParameters(controller, report);
+                ValidateExplorerAnimatorStates(controller, report);
+                ValidateExplorerAnimatorIkPass(controller, report);
             }
 
             PlayerExplorerAnimator driver = visualRoot.GetComponent<PlayerExplorerAnimator>();
@@ -92,6 +108,99 @@ namespace Farion.Editor.Validation
             {
                 report.AddError(
                     $"{prefabPath}: PlayerExplorerAnimator must point at the character Animator.");
+            }
+
+            ValidateExplorerAimRig(prefabPath, visualRoot, animator, report);
+            ValidateExplorerFootIk(prefabPath, animator, report);
+        }
+
+        static void ValidateExplorerAimRig(
+            string prefabPath,
+            Transform visualRoot,
+            Animator animator,
+            FarionValidationReport report)
+        {
+            RigBuilder rigBuilder = animator.GetComponent<RigBuilder>();
+            Transform aimRigTransform = animator.transform.Find("AimRig");
+            Rig aimRig = aimRigTransform != null
+                ? aimRigTransform.GetComponent<Rig>()
+                : null;
+            if (rigBuilder == null || aimRig == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: aim rig is missing; run Farion/Character/Build Aim Rig.");
+                return;
+            }
+
+            bool layered = false;
+            foreach (RigLayer layer in rigBuilder.layers)
+            {
+                if (layer.rig == aimRig)
+                {
+                    layered = true;
+                }
+            }
+
+            if (!layered)
+            {
+                report.AddError(
+                    $"{prefabPath}: AimRig is not registered as a RigBuilder layer.");
+            }
+
+            if (aimRigTransform.GetComponentsInChildren<MultiAimConstraint>(true).Length == 0)
+            {
+                report.AddError(
+                    $"{prefabPath}: AimRig has no MultiAimConstraint, so view pitch never reaches the body.");
+            }
+
+            PlayerExplorerAimRig driver = visualRoot.GetComponent<PlayerExplorerAimRig>();
+            if (driver == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: VisualRoot is missing PlayerExplorerAimRig.");
+                return;
+            }
+
+            SerializedObject serialized = new(driver);
+            if (serialized.FindProperty("motor").objectReferenceValue == null ||
+                serialized.FindProperty("rig").objectReferenceValue == null ||
+                serialized.FindProperty("aimTarget").objectReferenceValue == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: PlayerExplorerAimRig needs motor, rig and aimTarget references.");
+            }
+        }
+
+        static void ValidateExplorerFootIk(
+            string prefabPath,
+            Animator animator,
+            FarionValidationReport report)
+        {
+            var solver = animator.GetComponent<PlayerExplorerFootIK>();
+            if (solver == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: the Animator needs PlayerExplorerFootIK beside it; run Farion/Character/Build Foot IK.");
+                return;
+            }
+
+            var serialized = new SerializedObject(solver);
+            if (serialized.FindProperty("motor").objectReferenceValue == null ||
+                serialized.FindProperty("animator").objectReferenceValue == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: PlayerExplorerFootIK needs motor and animator references.");
+            }
+        }
+
+        static void ValidateExplorerAnimatorIkPass(
+            AnimatorController controller,
+            FarionValidationReport report)
+        {
+            if (controller.layers.Length > 0 && !controller.layers[0].iKPass)
+            {
+                report.AddError(
+                    $"{ExplorerAnimatorControllerPath}: the base layer needs IK Pass on, otherwise foot IK never runs.");
             }
         }
 
@@ -124,6 +233,41 @@ namespace Farion.Editor.Validation
                 {
                     report.AddError(
                         $"{ExplorerAnimatorControllerPath}: PlayerExplorerAnimator writes {name}, which the controller does not declare.");
+                }
+            }
+        }
+
+        static void ValidateExplorerAnimatorStates(
+            AnimatorController controller,
+            FarionValidationReport report)
+        {
+            ChildAnimatorState[] states = controller.layers[0].stateMachine.states;
+            foreach ((string expectedState, string expectedMotion) in ExplorerAnimatorStates)
+            {
+                AnimatorState state = null;
+                foreach (ChildAnimatorState child in states)
+                {
+                    if (child.state.name == expectedState)
+                    {
+                        state = child.state;
+                        break;
+                    }
+                }
+
+                if (state == null || state.motion == null || state.motion.name != expectedMotion)
+                {
+                    report.AddError(
+                        $"{ExplorerAnimatorControllerPath}: state {expectedState} must use {expectedMotion}.");
+                }
+            }
+
+            foreach (ChildAnimatorState child in states)
+            {
+                if (child.state.name is "Jump" or "JumpDown" or "LandSoft" or "LandHard"
+                    or "GroundLocomotion" or "AirborneLoop")
+                {
+                    report.AddError(
+                        $"{ExplorerAnimatorControllerPath}: obsolete state {child.state.name} is still reachable.");
                 }
             }
         }

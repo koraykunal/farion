@@ -9,8 +9,9 @@ namespace Farion.Gameplay.Presentation.Character
     {
         static readonly int MoveXId = Animator.StringToHash("MoveX");
         static readonly int MoveYId = Animator.StringToHash("MoveY");
-        static readonly int Speed01Id = Animator.StringToHash("Speed01");
         static readonly int StrideScaleId = Animator.StringToHash("StrideScale");
+        static readonly int SwimSpeed01Id = Animator.StringToHash("SwimSpeed01");
+        static readonly int PlanarSpeedId = Animator.StringToHash("PlanarSpeed");
         static readonly int GroundedId = Animator.StringToHash("Grounded");
         static readonly int SubmergedId = Animator.StringToHash("Submerged");
         static readonly int VerticalSpeedId = Animator.StringToHash("VerticalSpeed");
@@ -21,20 +22,25 @@ namespace Farion.Gameplay.Presentation.Character
 
         [Header("Clip Calibration")]
         [Tooltip("Ground speed in metres per second that the walk clips were authored for. The walk ring of the locomotion blend tree sits at this speed.")]
-        [SerializeField] float walkClipSpeed = 1.5f;
-        [Tooltip("Ground speed in metres per second that the run clips were authored for. The run ring of the locomotion blend tree sits at this speed.")]
-        [SerializeField] float runClipSpeed = 3.6f;
+        [SerializeField] float walkClipSpeed = 1.7f;
+        [Tooltip("Ground speed in metres per second that the jog clip was authored for. The jog ring sits between walk and run so ordinary movement never blends two mismatched gaits.")]
+        [SerializeField] float jogClipSpeed = 2.9f;
+        [Tooltip("Ground speed in metres per second that the run clip was authored for. The run ring of the locomotion blend tree sits at this speed.")]
+        [SerializeField] float runClipSpeed = 4.8f;
         [Tooltip("Ground speed in metres per second that the swim clip was authored for. Reaching it blends fully from treading water to swimming.")]
         [SerializeField] float swimClipSpeed = 1.4f;
+        [Tooltip("Lower bound for the playback multiplier that keeps footfalls in step with real speed. Raise it when slow movement looks like slow motion.")]
+        [SerializeField] float minimumStrideScale = 0.65f;
         [Tooltip("Upper bound for the playback multiplier that keeps footfalls in step with real speed. Raise it when the character outruns its stride, lower it when the legs blur.")]
-        [SerializeField] float maximumStrideScale = 2.5f;
+        [SerializeField] float maximumStrideScale = 1.5f;
 
         [Header("Response")]
         [Tooltip("Seconds of smoothing applied to the movement axes so direction changes do not snap the blend tree.")]
         [SerializeField] float directionDamping = 0.1f;
+        [Tooltip("Seconds the animator keeps reporting solid ground after the motor loses contact. Absorbs single-frame probe dropouts on rough terrain without delaying a real jump.")]
+        [SerializeField] float groundedCoyoteTime = 0.08f;
 
-        bool previousGrounded = true;
-        float airborneVerticalSpeed;
+        float groundedHoldRemaining;
 
         void Reset()
         {
@@ -66,7 +72,7 @@ namespace Farion.Gameplay.Presentation.Character
             FirstPersonMotorState state = motor.CaptureState();
             float deltaTime = Time.deltaTime;
             Vector3 localVelocity =
-                motor.transform.InverseTransformDirection(motor.SurfaceVelocity);
+                motor.transform.InverseTransformDirection(state.SurfaceVelocity);
             Vector2 planar = new(localVelocity.x, localVelocity.z);
             float speed = planar.magnitude;
             float gait = ResolveGait(speed);
@@ -80,33 +86,36 @@ namespace Farion.Gameplay.Presentation.Character
                 directionDamping,
                 deltaTime);
             animator.SetFloat(
-                Speed01Id,
+                SwimSpeed01Id,
                 Mathf.Clamp01(speed / Mathf.Max(0.01f, swimClipSpeed)),
                 directionDamping,
                 deltaTime);
-            animator.SetBool(GroundedId, state.Grounded);
+            animator.SetFloat(PlanarSpeedId, speed);
+            animator.SetBool(GroundedId, ResolveGrounded(state, deltaTime));
             animator.SetFloat(
                 SubmergedId,
                 state.WaterSubmergedFraction,
                 directionDamping,
                 deltaTime);
-            animator.SetFloat(VerticalSpeedId, ResolveVerticalSpeed(state));
+            animator.SetFloat(VerticalSpeedId, state.VerticalSpeed);
         }
 
-        float ResolveVerticalSpeed(FirstPersonMotorState state)
+        bool ResolveGrounded(in FirstPersonMotorState state, float deltaTime)
         {
-            float verticalSpeed = state.VerticalSpeed;
-            if (!state.Grounded)
+            if (state.Grounded)
             {
-                airborneVerticalSpeed = verticalSpeed;
-            }
-            else if (!previousGrounded)
-            {
-                verticalSpeed = airborneVerticalSpeed;
+                groundedHoldRemaining = groundedCoyoteTime;
+                return true;
             }
 
-            previousGrounded = state.Grounded;
-            return verticalSpeed;
+            if (state.VerticalSpeed > 0.5f)
+            {
+                groundedHoldRemaining = 0f;
+                return false;
+            }
+
+            groundedHoldRemaining -= deltaTime;
+            return groundedHoldRemaining > 0f;
         }
 
         float ResolveGait(float speed)
@@ -117,8 +126,14 @@ namespace Farion.Gameplay.Presentation.Character
                 return speed / walk;
             }
 
-            float run = Mathf.Max(walk + 0.01f, runClipSpeed);
-            return 1f + Mathf.Clamp01((speed - walk) / (run - walk));
+            float jog = Mathf.Max(walk + 0.01f, jogClipSpeed);
+            if (speed <= jog)
+            {
+                return 1f + (speed - walk) / (jog - walk);
+            }
+
+            float run = Mathf.Max(jog + 0.01f, runClipSpeed);
+            return 2f + Mathf.Clamp01((speed - jog) / (run - jog));
         }
 
         float ResolveStrideScale(float speed, float gait)
@@ -128,11 +143,27 @@ namespace Farion.Gameplay.Presentation.Character
                 return 1f;
             }
 
-            float reference = Mathf.Lerp(
-                Mathf.Max(0.01f, walkClipSpeed),
-                Mathf.Max(0.01f, runClipSpeed),
-                Mathf.Clamp01(gait - 1f));
-            return Mathf.Clamp(speed / reference, 0.5f, Mathf.Max(1f, maximumStrideScale));
+            return Mathf.Clamp(
+                speed / ResolveRingSpeed(gait),
+                minimumStrideScale,
+                Mathf.Max(1f, maximumStrideScale));
+        }
+
+        float ResolveRingSpeed(float gait)
+        {
+            float walk = Mathf.Max(0.01f, walkClipSpeed);
+            if (gait <= 1f)
+            {
+                return walk;
+            }
+
+            float jog = Mathf.Max(walk + 0.01f, jogClipSpeed);
+            if (gait <= 2f)
+            {
+                return Mathf.Lerp(walk, jog, gait - 1f);
+            }
+
+            return Mathf.Lerp(jog, Mathf.Max(jog + 0.01f, runClipSpeed), Mathf.Clamp01(gait - 2f));
         }
 
     }

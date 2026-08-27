@@ -5,6 +5,7 @@
         "Farion.Core.Runtime",
         "Farion.Gameplay.Runtime",
         "Farion.Simulation.Runtime",
+        "Unity.Animation.Rigging",
         "Unity.VisualEffectGraph.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime"

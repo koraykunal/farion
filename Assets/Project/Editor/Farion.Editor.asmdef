@@ -14,6 +14,7 @@
         "Farion.UI.Runtime",
         "Farion.Multiplayer.Runtime",
         "Unity.InputSystem",
+        "Unity.Animation.Rigging",
         "Unity.Localization",
         "Unity.Localization.Editor",
         "Unity.TextMeshPro",

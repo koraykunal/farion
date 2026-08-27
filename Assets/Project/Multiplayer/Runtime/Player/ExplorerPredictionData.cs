@@ -8,6 +8,7 @@ namespace Farion.Multiplayer.Player
     {
         public Vector2 Movement;
         public float YawDegrees;
+        public float PitchDegrees;
         public bool Jump;
         public bool Sprint;
         public bool SwimAscend;
@@ -18,6 +19,7 @@ namespace Farion.Multiplayer.Player
         public ExplorerReplicateData(
             Vector2 movement,
             float yawDegrees,
+            float pitchDegrees,
             bool jump,
             bool sprint,
             bool swimAscend,
@@ -31,6 +33,10 @@ namespace Farion.Multiplayer.Player
                 swimAscend);
             Movement = input.Movement;
             YawDegrees = input.YawDegrees;
+            PitchDegrees = Mathf.Clamp(
+                float.IsFinite(pitchDegrees) ? pitchDegrees : 0f,
+                -FirstPersonMotor.MaximumViewPitchDegrees,
+                FirstPersonMotor.MaximumViewPitchDegrees);
             Jump = input.Jump;
             Sprint = input.Sprint;
             SwimAscend = input.SwimAscend;

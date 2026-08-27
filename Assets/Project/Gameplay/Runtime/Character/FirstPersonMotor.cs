@@ -14,10 +14,14 @@ namespace Farion.Gameplay.Character
     [RequireComponent(typeof(CelestialActorProbe))]
     public sealed class FirstPersonMotor : MonoBehaviour
     {
+        public const float MaximumViewPitchDegrees = 89f;
+
         const int MaxGroundHits = 16;
+        const float ForwardSprintThreshold = 0.5f;
         const float ProbeRadiusRatio = 0.9f;
         const float ProbeClearanceRatio = 0.1f;
         const float MaximumPenetrationCorrectionRatio = 2f;
+        const float MaximumSubmergedFractionForJump = 0.35f;
 
         [Header("Profile")]
         [SerializeField] FirstPersonMotorProfile profile;
@@ -44,6 +48,7 @@ namespace Farion.Gameplay.Character
         [SerializeField] float waterSubmergedFraction;
         [SerializeField] Vector3 localUp = Vector3.up;
         [SerializeField] Vector3 groundNormal = Vector3.up;
+        [SerializeField] float viewPitchDegrees;
 
         readonly RaycastHit[] groundHits = new RaycastHit[MaxGroundHits];
         Rigidbody cachedRigidbody;
@@ -75,6 +80,15 @@ namespace Farion.Gameplay.Character
         public Vector3 SurfaceVelocity => surfaceVelocity;
         public float YawDegreesPerMouseUnit =>
             profile != null ? profile.YawDegreesPerMouseUnit : 0f;
+        public float ViewPitchDegrees => viewPitchDegrees;
+
+        public void SetViewPitchDegrees(float degrees)
+        {
+            viewPitchDegrees = Mathf.Clamp(
+                float.IsFinite(degrees) ? degrees : 0f,
+                -MaximumViewPitchDegrees,
+                MaximumViewPitchDegrees);
+        }
 
         void Awake()
         {
@@ -107,7 +121,6 @@ namespace Farion.Gameplay.Character
             if (currentInput.Jump && !previousJumpHeld)
             {
                 jumpQueued = true;
-                lastJumpRequestTime = simulationTime;
             }
 
             previousJumpHeld = currentInput.Jump;
@@ -183,11 +196,12 @@ namespace Farion.Gameplay.Character
                 localUp,
                 deltaTime);
             ApplyGravity(physicsBody, gravityAcceleration, hasArtificialGravity || (applyCelestialGravity && celestialFrame.HasBody));
-            StabilizeGroundContact(physicsBody, gravityAcceleration, referenceVelocity, localUp, deltaTime);
+            bool jumpLaunching = ShouldLaunchJump();
+            StabilizeGroundContact(physicsBody, gravityAcceleration, referenceVelocity, localUp, jumpLaunching, deltaTime);
             ApplyMovement(physicsBody, referenceVelocity, localUp, input.Movement, input.Sprint, deltaTime);
             ApplySteepSlopeSlide(physicsBody, gravityAcceleration);
             ApplyWaterForces(physicsBody, environmentFrame, localUp, input.SwimAscend);
-            ApplyJump(physicsBody, gravityAcceleration, referenceVelocity, celestialFrame, hasArtificialGravity, localUp);
+            ApplyJump(physicsBody, gravityAcceleration, referenceVelocity, celestialFrame, hasArtificialGravity, localUp, jumpLaunching);
             ApplyOrientation(physicsBody, localUp, input.YawDegrees, deltaTime);
             physicsBody.Commit();
         }
@@ -224,6 +238,7 @@ namespace Farion.Gameplay.Character
                 WalkableGround = walkableGround,
                 GroundSlopeAngle = groundSlopeAngle,
                 SurfaceSpeed = surfaceSpeed,
+                SurfaceVelocity = surfaceVelocity,
                 VerticalSpeed = verticalSpeed,
                 TouchingWater = touchingWater,
                 Underwater = underwater,
@@ -247,6 +262,7 @@ namespace Farion.Gameplay.Character
             walkableGround = state.WalkableGround;
             groundSlopeAngle = state.GroundSlopeAngle;
             surfaceSpeed = state.SurfaceSpeed;
+            surfaceVelocity = state.SurfaceVelocity;
             verticalSpeed = state.VerticalSpeed;
             touchingWater = state.TouchingWater;
             underwater = state.Underwater;
@@ -290,6 +306,7 @@ namespace Farion.Gameplay.Character
             underwater = false;
             waterDepth = 0f;
             waterSubmergedFraction = 0f;
+            viewPitchDegrees = 0f;
             smoothedGroundNormal = Vector3.up;
             hasSmoothedGroundNormal = false;
 
@@ -533,7 +550,9 @@ namespace Farion.Gameplay.Character
             Vector3 movementPlaneNormal = ResolveMovementPlaneNormal(up);
             Vector3 desiredDirection = BuildMoveDirection(movementPlaneNormal, movement);
             float waterControl = Mathf.SmoothStep(0f, 1f, waterSubmergedFraction);
-            float drySpeed = sprint ? profile.SprintSpeed : profile.WalkSpeed;
+            float drySpeed = sprint && movement.y > ForwardSprintThreshold
+                ? profile.SprintSpeed
+                : profile.WalkSpeed;
             float speed = Mathf.Lerp(drySpeed, profile.UnderwaterMoveSpeed, waterControl);
             Vector3 desiredSurfaceVelocity = desiredDirection * speed;
             Vector3 relativeVelocity = physicsBody.LinearVelocity - referenceVelocity;
@@ -591,6 +610,7 @@ namespace Farion.Gameplay.Character
             Vector3 gravityAcceleration,
             Vector3 referenceVelocity,
             Vector3 up,
+            bool suppressStick,
             float deltaTime)
         {
             if (profile == null || !grounded || !walkableGround || waterSubmergedFraction >= 0.5f)
@@ -605,7 +625,7 @@ namespace Farion.Gameplay.Character
             verticalSpeed = Vector3.Dot(relativeVelocity, up);
             float normalSpeed = Vector3.Dot(relativeVelocity, contactNormal);
 
-            if (!jumpQueued && profile.GroundedVerticalDamping > 0f && Mathf.Abs(normalSpeed) > 0.001f)
+            if (!suppressStick && profile.GroundedVerticalDamping > 0f && Mathf.Abs(normalSpeed) > 0.001f)
             {
                 float damping = FarionMath.SmoothFactor(profile.GroundedVerticalDamping, deltaTime);
                 physicsBody.AddForce(
@@ -614,12 +634,27 @@ namespace Farion.Gameplay.Character
             }
 
             float stickAcceleration = CalculateGroundStickAcceleration(gravityAcceleration);
-            if (!jumpQueued && stickAcceleration > 0f)
+            if (!suppressStick && stickAcceleration > 0f)
             {
                 physicsBody.AddForce(
                     -contactNormal * stickAcceleration,
                     ForceMode.Acceleration);
             }
+        }
+
+        bool ShouldLaunchJump()
+        {
+            if (profile == null ||
+                waterSubmergedFraction >= MaximumSubmergedFractionForJump)
+            {
+                return false;
+            }
+
+            bool jumpRequested = jumpQueued ||
+                simulationTime - lastJumpRequestTime <= profile.JumpBufferTime;
+            return jumpRequested &&
+                simulationTime - lastWalkableGroundTime <= profile.CoyoteTime &&
+                simulationTime - lastJumpTime >= profile.JumpCooldown;
         }
 
         float CalculateGroundStickAcceleration(Vector3 gravityAcceleration)
@@ -645,46 +680,51 @@ namespace Farion.Gameplay.Character
             Vector3 referenceVelocity,
             CelestialFrameSample celestialFrame,
             bool hasArtificialGravity,
+            Vector3 up,
+            bool launch)
+        {
+            jumpQueued = false;
+            if (launch)
+            {
+                lastJumpRequestTime = float.NegativeInfinity;
+                LaunchJump(
+                    physicsBody,
+                    gravityAcceleration,
+                    referenceVelocity,
+                    celestialFrame,
+                    hasArtificialGravity,
+                    up);
+                return;
+            }
+
+            if (profile == null ||
+                waterSubmergedFraction >= MaximumSubmergedFractionForJump)
+            {
+                lastJumpRequestTime = float.NegativeInfinity;
+            }
+        }
+
+        void LaunchJump(
+            IFirstPersonPhysicsBody physicsBody,
+            Vector3 gravityAcceleration,
+            Vector3 referenceVelocity,
+            CelestialFrameSample celestialFrame,
+            bool hasArtificialGravity,
             Vector3 up)
         {
-            if (profile == null)
-            {
-                jumpQueued = false;
-                return;
-            }
-
-            if (!jumpQueued || simulationTime - lastJumpRequestTime > profile.JumpBufferTime)
-            {
-                jumpQueued = false;
-                return;
-            }
-
-            if (waterSubmergedFraction >= 0.35f)
-            {
-                jumpQueued = false;
-                return;
-            }
-
-            bool canJump = simulationTime - lastWalkableGroundTime <= profile.CoyoteTime &&
-                simulationTime - lastJumpTime >= profile.JumpCooldown;
-
-            if (canJump)
-            {
-                Vector3 relativeVelocity = physicsBody.LinearVelocity - referenceVelocity;
-                Vector3 tangentialVelocity = Vector3.ProjectOnPlane(relativeVelocity, up);
-                float jumpSpeed = CalculateJumpSpeed(
-                    gravityAcceleration,
-                    celestialFrame,
-                    hasArtificialGravity);
-                float upwardSpeed = Mathf.Max(Vector3.Dot(relativeVelocity, up), jumpSpeed);
-                physicsBody.LinearVelocity = referenceVelocity + tangentialVelocity + up * upwardSpeed;
-                lastJumpTime = simulationTime;
-                grounded = false;
-                walkableGround = false;
-                hasSmoothedGroundNormal = false;
-            }
-
-            jumpQueued = false;
+            Vector3 relativeVelocity = physicsBody.LinearVelocity - referenceVelocity;
+            Vector3 tangentialVelocity = Vector3.ProjectOnPlane(relativeVelocity, up);
+            float jumpSpeed = CalculateJumpSpeed(
+                gravityAcceleration,
+                celestialFrame,
+                hasArtificialGravity);
+            float upwardSpeed = Mathf.Max(Vector3.Dot(relativeVelocity, up), jumpSpeed);
+            physicsBody.LinearVelocity = referenceVelocity + tangentialVelocity + up * upwardSpeed;
+            lastJumpTime = simulationTime;
+            verticalSpeed = upwardSpeed;
+            grounded = false;
+            walkableGround = false;
+            hasSmoothedGroundNormal = false;
         }
 
         float CalculateJumpSpeed(

@@ -67,6 +67,7 @@ namespace Farion.Gameplay.Character
             ApplyFieldOfView();
             FirstPersonInputState input = resolvedInput?.CurrentInput ?? FirstPersonInputState.None;
             pitch = Mathf.Clamp(pitch - input.Look.y, -pitchLimit, pitchLimit);
+            target.SetViewPitchDegrees(pitch);
 
             Vector3 up = target.LocalUp.sqrMagnitude > 0.0001f ? target.LocalUp : target.transform.up;
             Vector3 targetPosition = target.transform.position;

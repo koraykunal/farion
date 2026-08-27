@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9efe13234b84b80b23650e508c22a4a, type: 3}
   m_Name: SO_DefaultFirstPersonMotorProfile
   m_EditorClassIdentifier: 
-  walkSpeed: 2.5
-  sprintSpeed: 6
+  walkSpeed: 2.9
+  sprintSpeed: 4.8
   groundAcceleration: 28
   airAcceleration: 8
   brakingAcceleration: 16

@@ -1,6 +1,8 @@
+using Farion.Gameplay.Character;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Farion.Editor.Authoring
 {
@@ -10,11 +12,40 @@ namespace Farion.Editor.Authoring
             "Assets/Project/Art/Models/Characters/PlayerExplorer/SM_PlayerExplorer_A.fbx";
         private const string ControllerPath =
             "Assets/Project/Art/Animations/Characters/PlayerExplorer/Controllers/AC_PlayerExplorer.controller";
+        private const string MotorProfilePath =
+            "Assets/Project/Design/Gameplay/Character/SO_DefaultFirstPersonMotorProfile.asset";
         private const string PreviewObjectName = "Player Animation Preview";
+        private const float PreviewLandingDuration = 0.8f;
+
+        private static FirstPersonMotorProfile motorProfile;
+
+        private static FirstPersonMotorProfile MotorProfile
+        {
+            get
+            {
+                if (motorProfile == null)
+                    motorProfile = AssetDatabase.LoadAssetAtPath<FirstPersonMotorProfile>(MotorProfilePath);
+                return motorProfile;
+            }
+        }
+
+        private static float PreviewGravity =>
+            MotorProfile != null ? MotorProfile.JumpReferenceGravity : 9.81f;
+
+        private static float PreviewJumpSpeed =>
+            MotorProfile != null
+                ? Mathf.Clamp(
+                    Mathf.Sqrt(2f * MotorProfile.JumpReferenceGravity * MotorProfile.JumpHeight),
+                    MotorProfile.MinimumJumpSpeed,
+                    MotorProfile.MaximumJumpSpeed)
+                : 5.24f;
 
         [SerializeField] private Animator animator;
+        [SerializeField] private Transform previewRoot;
 
         private bool initializedInPlayMode;
+        private Vector3 previewGroundPosition;
+        private double jumpStartedAt = -1d;
         [MenuItem("Farion/Character/Animation Preview")]
         private static void CreatePreview()
         {
@@ -67,6 +98,9 @@ namespace Farion.Editor.Authoring
 
             var window = GetWindow<FarionPlayerAnimationPreview>("Animation Preview");
             window.animator = previewAnimator;
+            window.previewRoot = instance.transform;
+            window.previewGroundPosition = instance.transform.position;
+            window.jumpStartedAt = -1d;
             window.initializedInPlayMode = false;
             window.Show();
 
@@ -79,7 +113,7 @@ namespace Farion.Editor.Authoring
             ResolveAnimator();
 
             EditorGUILayout.HelpBox(
-                "Play Mode'a gir; sonra asagidaki dugmelerle animasyonlari izle.",
+                "Play Mode'a gir. Tam jump akisi icin Space'e bas veya Full Jump'i kullan.",
                 MessageType.Info);
 
             animator = (Animator)EditorGUILayout.ObjectField("Animator", animator, typeof(Animator), true);
@@ -101,52 +135,141 @@ namespace Farion.Editor.Authoring
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Hareket", EditorStyles.boldLabel);
                 ButtonRow(
-                    ("Idle", () => SetPose(grounded: true)),
-                    ("Walk", () => SetPose(moveY: 1f, speed: 0.55f, grounded: true)),
-                    ("Run", () => SetPose(moveY: 2f, speed: 1f, grounded: true)));
+                    ("Idle", () => SetManualPose(grounded: true)),
+                    ("Walk", () => SetManualPose(moveY: 1f, grounded: true)),
+                    ("Jog", () => SetManualPose(moveY: 2f, grounded: true)),
+                    ("Run", () => SetManualPose(moveY: 3f, grounded: true)));
                 ButtonRow(
-                    ("Strafe Left", () => SetPose(moveX: -1f, speed: 0.55f, grounded: true)),
-                    ("Strafe Right", () => SetPose(moveX: 1f, speed: 0.55f, grounded: true)));
+                    ("Strafe Left", () => SetManualPose(moveX: -1f, grounded: true)),
+                    ("Strafe Right", () => SetManualPose(moveX: 1f, grounded: true)));
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Air", EditorStyles.boldLabel);
+                if (GUILayout.Button("Full Jump (Space)"))
+                    StartJumpSequence();
                 ButtonRow(
-                    ("Jump", () => SetPose(verticalSpeed: 4f)),
-                    ("Long Fall", () => SetPose(verticalSpeed: -9f)),
-                    ("Hard Land", () => SetPose(grounded: true, verticalSpeed: -8f)));
+                    ("Jump Start", () => PlayState("JumpStart", verticalSpeed: 4f)),
+                    ("Fall", () => PlayState("Airborne", verticalSpeed: -4f)),
+                    ("Land", () => PlayState("Land", true, -4f)));
 
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("Swim", EditorStyles.boldLabel);
                 ButtonRow(
-                    ("Swim Idle", () => SetPose(submerged: 1f)),
-                    ("Swim Forward", () => SetPose(moveY: 1f, speed: 1f, submerged: 1f)));
+                    ("Swim Idle", () => SetManualPose(submerged: 1f)),
+                    ("Swim Forward", () => SetManualPose(moveY: 1f, swimSpeed: 1f, submerged: 1f)));
             }
+        }
+
+        private void Update()
+        {
+            ResolveAnimator();
+            if (!EditorApplication.isPlaying || animator == null)
+                return;
+
+            if (Keyboard.current?.spaceKey.wasPressedThisFrame == true)
+                StartJumpSequence();
+
+            if (jumpStartedAt < 0d)
+                return;
+
+            float elapsed = (float)(EditorApplication.timeSinceStartup - jumpStartedAt);
+            float flightDuration = 2f * PreviewJumpSpeed / PreviewGravity;
+            if (elapsed < flightDuration)
+            {
+                float verticalSpeed = PreviewJumpSpeed - PreviewGravity * elapsed;
+                float height = PreviewJumpSpeed * elapsed - 0.5f * PreviewGravity * elapsed * elapsed;
+                previewRoot.position = previewGroundPosition + Vector3.up * height;
+                SetPose(verticalSpeed: verticalSpeed);
+            }
+            else if (elapsed < flightDuration + PreviewLandingDuration)
+            {
+                previewRoot.position = previewGroundPosition;
+                SetPose(grounded: true, verticalSpeed: -PreviewJumpSpeed);
+            }
+            else
+            {
+                jumpStartedAt = -1d;
+                previewRoot.position = previewGroundPosition;
+                SetPose(grounded: true);
+            }
+
+            Repaint();
+        }
+
+        private void StartJumpSequence()
+        {
+            ResolveAnimator();
+            if (!EditorApplication.isPlaying || animator == null || previewRoot == null)
+                return;
+
+            if (jumpStartedAt < 0d)
+                previewGroundPosition = previewRoot.position;
+            else
+                previewRoot.position = previewGroundPosition;
+
+            jumpStartedAt = EditorApplication.timeSinceStartup;
+            SetPose(verticalSpeed: PreviewJumpSpeed);
+        }
+
+        private void PlayState(
+            string state,
+            bool grounded = false,
+            float verticalSpeed = 0f)
+        {
+            StopJumpSequence();
+            SetPose(grounded: grounded, verticalSpeed: verticalSpeed);
+            animator.CrossFadeInFixedTime(state, 0.05f, 0, 0f);
+        }
+
+        private void StopJumpSequence()
+        {
+            if (jumpStartedAt >= 0d && previewRoot != null)
+                previewRoot.position = previewGroundPosition;
+
+            jumpStartedAt = -1d;
         }
 
         private void SetPose(
             float moveX = 0f,
             float moveY = 0f,
-            float speed = 0f,
+            float swimSpeed = 0f,
             float submerged = 0f,
             bool grounded = false,
             float verticalSpeed = 0f)
         {
             animator.SetFloat("MoveX", moveX);
             animator.SetFloat("MoveY", moveY);
-            animator.SetFloat("Speed01", speed);
+            animator.SetFloat("SwimSpeed01", swimSpeed);
             animator.SetFloat("StrideScale", 1f);
             animator.SetFloat("Submerged", submerged);
             animator.SetBool("Grounded", grounded);
+            animator.SetFloat("PlanarSpeed", new Vector2(moveX, moveY).magnitude * 1.7f);
             animator.SetFloat("VerticalSpeed", verticalSpeed);
+        }
+
+        private void SetManualPose(
+            float moveX = 0f,
+            float moveY = 0f,
+            float swimSpeed = 0f,
+            float submerged = 0f,
+            bool grounded = false,
+            float verticalSpeed = 0f)
+        {
+            StopJumpSequence();
+            SetPose(moveX, moveY, swimSpeed, submerged, grounded, verticalSpeed);
         }
 
         private void ResolveAnimator()
         {
-            if (animator != null)
+            if (animator != null && previewRoot != null)
                 return;
 
             var preview = GameObject.Find(PreviewObjectName);
             if (preview != null)
+            {
                 animator = preview.GetComponentInChildren<Animator>(true);
+                previewRoot = preview.transform;
+                previewGroundPosition = preview.transform.position;
+            }
         }
 
         private static void ButtonRow(params (string label, System.Action action)[] buttons)
