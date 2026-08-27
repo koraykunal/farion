@@ -26,7 +26,7 @@ Shader "Farion/Lighting/Star Emission"
         {
             "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
-            "Queue" = "Geometry"
+            "Queue" = "Background+10"
         }
 
         Pass
@@ -35,7 +35,7 @@ Shader "Farion/Lighting/Star Emission"
             Tags { "LightMode" = "UniversalForward" }
 
             Cull Back
-            ZWrite On
+            ZWrite Off
 
             HLSLPROGRAM
             #pragma target 3.5
