@@ -99,6 +99,37 @@ namespace Farion.Multiplayer.Spawning
             return bindings != null;
         }
 
+        internal bool TryGetRuntimeBindings(
+            Scene scene,
+            out GameplayRuntimeBindings bindings)
+        {
+            bindings = contexts.TryGetValue(
+                    scene.handle,
+                    out MultiplayerSceneContext context) &&
+                context != null &&
+                context.RuntimeRoot != null
+                    ? context.RuntimeRoot.Bindings
+                    : null;
+            return bindings != null;
+        }
+
+        internal bool TryGetStartingZoneBindings(
+            out GameplayRuntimeBindings bindings)
+        {
+            foreach (MultiplayerSceneContext context in contexts.Values)
+            {
+                if (context != null &&
+                    context.RuntimeRoot != null &&
+                    context.ZoneId == MultiplayerZoneCatalog.StartingZoneId)
+                {
+                    bindings = context.RuntimeRoot.Bindings;
+                    return true;
+                }
+            }
+
+            return TryGetRuntimeBindings(out bindings);
+        }
+
         void Awake()
         {
             networkManager ??= GetComponent<NetworkManager>();
@@ -806,12 +837,42 @@ namespace Farion.Multiplayer.Spawning
             if (hasHandoff)
             {
                 pendingHandoffs.Remove(connection.ClientId);
+                ApplyHandoffInventory(connection, player, handoff.CarriedInventory);
                 CompleteHandoff(
                     connection,
                     sceneContext,
                     handoff.Snapshot,
                     player,
                     handoffVelocity);
+            }
+        }
+
+        void ApplyHandoffInventory(
+            NetworkConnection connection,
+            NetworkObject player,
+            InventoryContainerSnapshot snapshot)
+        {
+            if (snapshot == null ||
+                !TryResolveDefinitions(out GameplayDefinitionRegistry registry))
+            {
+                return;
+            }
+
+            InventoryContainerComponent inventory =
+                player.GetComponentInChildren<InventoryContainerComponent>(true);
+            if (inventory == null)
+            {
+                return;
+            }
+
+            inventory.ApplyContainerSnapshot(snapshot, registry);
+            if (sessionPlayers.TryGetValue(
+                    connection.ClientId,
+                    out NetworkObject sessionObject) &&
+                sessionObject != null)
+            {
+                sessionObject.GetComponent<NetworkGameplayCommands>()
+                    ?.PushOwnerInventory(inventory);
             }
         }
 
@@ -846,14 +907,24 @@ namespace Farion.Multiplayer.Spawning
             NetworkSessionPlayer sessionPlayer =
                 sessionObject.GetComponent<NetworkSessionPlayer>();
             Rigidbody playerBody = playerObject.GetComponent<Rigidbody>();
-            sourceSimulation.TryWorldToSystem(
-                playerObject.transform.position,
-                playerBody != null ? playerBody.linearVelocity : Vector3.zero,
-                out Vector3 explorerSystemPosition,
-                out Vector3 explorerSystemVelocity);
+            if (!sourceSimulation.TryWorldToSystem(
+                    playerObject.transform.position,
+                    playerBody != null ? playerBody.linearVelocity : Vector3.zero,
+                    out Vector3 explorerSystemPosition,
+                    out Vector3 explorerSystemVelocity))
+            {
+                return false;
+            }
+
             Quaternion explorerSystemRotation =
                 sourceSimulation.WorldToSystemRotation(
                     playerObject.transform.rotation);
+            InventoryContainerComponent carriedInventory = playerObject
+                .GetComponentInChildren<InventoryContainerComponent>(true);
+            InventoryContainerSnapshot carriedSnapshot =
+                carriedInventory != null
+                    ? carriedInventory.CaptureContainerSnapshot()
+                    : null;
 
             GeneratedEntityId shipId = GeneratedEntityId.None;
             int shipSlot = -1;
@@ -870,11 +941,15 @@ namespace Farion.Multiplayer.Spawning
                 shuttle.gameObject.scene == sourceContext.gameObject.scene)
             {
                 Rigidbody shipBody = shuttle.GetComponent<Rigidbody>();
-                sourceSimulation.TryWorldToSystem(
-                    shuttle.transform.position,
-                    shipBody != null ? shipBody.linearVelocity : Vector3.zero,
-                    out shipSystemPosition,
-                    out shipSystemVelocity);
+                if (!sourceSimulation.TryWorldToSystem(
+                        shuttle.transform.position,
+                        shipBody != null ? shipBody.linearVelocity : Vector3.zero,
+                        out shipSystemPosition,
+                        out shipSystemVelocity))
+                {
+                    return false;
+                }
+
                 shipSystemRotation = sourceSimulation.WorldToSystemRotation(
                     shuttle.transform.rotation);
                 shipId = shuttle.EntityId;
@@ -906,7 +981,8 @@ namespace Farion.Multiplayer.Spawning
                     shipSlot,
                     shipSystemPosition,
                     shipSystemVelocity,
-                    shipSystemRotation));
+                    shipSystemRotation),
+                carriedSnapshot);
             return true;
         }
 
@@ -1075,14 +1151,17 @@ namespace Farion.Multiplayer.Spawning
         {
             public PendingZoneHandoff(
                 GeneratedEntityId zoneId,
-                ZoneHandoffSnapshot snapshot)
+                ZoneHandoffSnapshot snapshot,
+                InventoryContainerSnapshot carriedInventory)
             {
                 ZoneId = zoneId;
                 Snapshot = snapshot;
+                CarriedInventory = carriedInventory;
             }
 
             public GeneratedEntityId ZoneId { get; }
             public ZoneHandoffSnapshot Snapshot { get; }
+            public InventoryContainerSnapshot CarriedInventory { get; }
         }
 
         void SetHostTrackingTarget(Component target)

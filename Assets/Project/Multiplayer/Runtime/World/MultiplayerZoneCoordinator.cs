@@ -25,6 +25,8 @@ namespace Farion.Multiplayer.World
 
         readonly Dictionary<GeneratedEntityId, SimulationZoneContext> zones = new();
         readonly Dictionary<GeneratedEntityId, int> pendingPinBodies = new();
+        readonly Dictionary<GeneratedEntityId, List<NetworkConnection>> pendingZoneJoins = new();
+        readonly HashSet<GeneratedEntityId> pendingZoneLoads = new();
         string zoneSceneName;
         int startingBodyStableId;
         bool subscribed;
@@ -84,16 +86,62 @@ namespace Farion.Multiplayer.World
             }
 
             zoneSceneName = sceneName;
-            SceneLoadData load = zones.TryGetValue(
-                zoneId,
-                out SimulationZoneContext existingZone) &&
+            QueueZoneLoad(connection, zoneId);
+            return true;
+        }
+
+        void QueueZoneLoad(NetworkConnection connection, GeneratedEntityId zoneId)
+        {
+            if (zones.TryGetValue(zoneId, out SimulationZoneContext existingZone) &&
                 existingZone != null &&
                 existingZone.Scene.IsValid() &&
-                existingZone.Scene.isLoaded
-                    ? MultiplayerZoneSceneLoad.Create(existingZone.Scene, zoneId)
-                    : MultiplayerZoneSceneLoad.Create(sceneName, zoneId);
-            networkManager.SceneManager.LoadConnectionScenes(connection, load);
-            return true;
+                existingZone.Scene.isLoaded)
+            {
+                networkManager.SceneManager.LoadConnectionScenes(
+                    connection,
+                    MultiplayerZoneSceneLoad.Create(existingZone.Scene, zoneId));
+                return;
+            }
+
+            if (!pendingZoneLoads.Add(zoneId))
+            {
+                if (!pendingZoneJoins.TryGetValue(
+                        zoneId,
+                        out List<NetworkConnection> joins))
+                {
+                    joins = new List<NetworkConnection>();
+                    pendingZoneJoins[zoneId] = joins;
+                }
+
+                joins.Add(connection);
+                return;
+            }
+
+            networkManager.SceneManager.LoadConnectionScenes(
+                connection,
+                MultiplayerZoneSceneLoad.Create(zoneSceneName, zoneId));
+        }
+
+        void FlushPendingZoneJoins(GeneratedEntityId zoneId, Scene scene)
+        {
+            pendingZoneLoads.Remove(zoneId);
+            if (!pendingZoneJoins.Remove(zoneId, out List<NetworkConnection> joins))
+            {
+                return;
+            }
+
+            for (int i = 0; i < joins.Count; i++)
+            {
+                NetworkConnection connection = joins[i];
+                if (connection != null &&
+                    connection.IsActive &&
+                    !connection.Scenes.Contains(scene))
+                {
+                    networkManager.SceneManager.LoadConnectionScenes(
+                        connection,
+                        MultiplayerZoneSceneLoad.Create(scene, zoneId));
+                }
+            }
         }
 
         void Subscribe()
@@ -172,6 +220,7 @@ namespace Farion.Multiplayer.World
 
                 zones[zoneId] = context;
                 ApplyZonePin(zoneId, scene);
+                FlushPendingZoneJoins(zoneId, scene);
                 foreach (NetworkConnection connection in
                          networkManager.ServerManager.Clients.Values)
                 {
@@ -247,23 +296,18 @@ namespace Farion.Multiplayer.World
                 connection,
                 new SceneUnloadData(sourceContext.gameObject.scene));
 
-            if (zones.TryGetValue(targetZoneId, out SimulationZoneContext existing) &&
+            bool zoneReady = zones.TryGetValue(
+                    targetZoneId,
+                    out SimulationZoneContext existing) &&
                 existing != null &&
                 existing.Scene.IsValid() &&
-                existing.Scene.isLoaded)
-            {
-                networkManager.SceneManager.LoadConnectionScenes(
-                    connection,
-                    MultiplayerZoneSceneLoad.Create(existing.Scene, targetZoneId));
-            }
-            else
+                existing.Scene.isLoaded;
+            if (!zoneReady)
             {
                 pendingPinBodies[targetZoneId] = targetBody.StableId;
-                networkManager.SceneManager.LoadConnectionScenes(
-                    connection,
-                    MultiplayerZoneSceneLoad.Create(zoneSceneName, targetZoneId));
             }
 
+            QueueZoneLoad(connection, targetZoneId);
             return true;
         }
 

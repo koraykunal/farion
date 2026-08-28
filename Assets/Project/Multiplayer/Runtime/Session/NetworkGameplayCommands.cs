@@ -323,10 +323,6 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
-            // The client can't track the server's revision (snapshots carry no
-            // revision), so the server always addresses its own inventory at
-            // its own current revision instead of trusting anything from the
-            // wire.
             InventoryItemDefinition expectedItem = node.Definition?.YieldedItem;
             carriedBefore = expectedItem != null
                 ? destinationInventory.Count(expectedItem)
@@ -587,13 +583,32 @@ namespace Farion.Multiplayer.Session
             return true;
         }
 
-        bool IsShipDocked(Transform shipTransform)
+        Transform ResolveFleetTransform()
         {
-            Transform fleet = ZoneBindings?.Fleet != null
+            if (IsServerStarted)
+            {
+                MultiplayerPlayerSpawner spawner = sessionPlayer != null
+                    ? sessionPlayer.PlayerSpawner
+                    : null;
+                return spawner != null &&
+                    spawner.TryGetStartingZoneBindings(
+                        out GameplayRuntimeBindings bindings) &&
+                    bindings.Fleet != null
+                        ? bindings.Fleet.transform
+                        : null;
+            }
+
+            return ZoneBindings?.Fleet != null
                 ? ZoneBindings.Fleet.transform
                 : null;
+        }
+
+        bool IsShipDocked(Transform shipTransform)
+        {
+            Transform fleet = ResolveFleetTransform();
             return shipTransform != null &&
                 fleet != null &&
+                shipTransform.gameObject.scene == fleet.gameObject.scene &&
                 IsWithinHarvestDistance(
                     shipTransform.position,
                     fleet.position,
@@ -602,11 +617,10 @@ namespace Farion.Multiplayer.Session
 
         bool IsExplorerNearFleet(NetworkExplorerController explorer)
         {
-            Transform fleet = ZoneBindings?.Fleet != null
-                ? ZoneBindings.Fleet.transform
-                : null;
+            Transform fleet = ResolveFleetTransform();
             return explorer != null &&
                 fleet != null &&
+                explorer.gameObject.scene == fleet.gameObject.scene &&
                 IsWithinHarvestDistance(
                     explorer.transform.position,
                     fleet.position,
@@ -617,7 +631,8 @@ namespace Farion.Multiplayer.Session
         {
             bindings = null;
             MultiplayerPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
-            return spawner != null && spawner.TryGetRuntimeBindings(out bindings);
+            return spawner != null &&
+                spawner.TryGetStartingZoneBindings(out bindings);
         }
 
         void BroadcastCargoSnapshot(ShuttleCargoInventory cargo)
@@ -902,11 +917,12 @@ namespace Farion.Multiplayer.Session
             inventory = null;
             MultiplayerPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
             if (spawner == null ||
-                !spawner.TryGetRuntimeBindings(
-                    out bindings) ||
                 !spawner.TryGetSpawnedExplorer(
                     sessionPlayer,
-                    out explorer))
+                    out explorer) ||
+                !spawner.TryGetRuntimeBindings(
+                    explorer.gameObject.scene,
+                    out bindings))
             {
                 return false;
             }
