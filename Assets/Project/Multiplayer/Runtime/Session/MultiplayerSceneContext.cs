@@ -168,6 +168,11 @@ namespace Farion.Multiplayer.Session
                 Active = null;
             }
 
+            if (zoneOrigin != null && zoneOrigin.Rebaser == originRebaser)
+            {
+                zoneOrigin.Unbind();
+            }
+
             BindOriginRebaser(null);
             if (flightHud != null)
             {

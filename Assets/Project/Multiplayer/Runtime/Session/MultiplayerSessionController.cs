@@ -351,6 +351,7 @@ namespace Farion.Multiplayer.Session
             networkManager.SceneManager.OnClientLoadedStartScenes +=
                 OnClientLoadedStartScenes;
             networkManager.SceneManager.OnLoadEnd += OnSceneLoadEnd;
+            networkManager.SceneManager.OnUnloadEnd += OnSceneUnloadEnd;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded +=
                 OnUnitySceneLoaded;
         }
@@ -372,6 +373,7 @@ namespace Farion.Multiplayer.Session
             networkManager.SceneManager.OnClientLoadedStartScenes -=
                 OnClientLoadedStartScenes;
             networkManager.SceneManager.OnLoadEnd -= OnSceneLoadEnd;
+            networkManager.SceneManager.OnUnloadEnd -= OnSceneUnloadEnd;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -=
                 OnUnitySceneLoaded;
         }
@@ -533,6 +535,18 @@ namespace Farion.Multiplayer.Session
                 {
                     BindSaveBridge(context);
                 }
+            }
+        }
+
+        void OnSceneUnloadEnd(SceneUnloadEndEventArgs args)
+        {
+            if (localZoneScene.IsValid() &&
+                localZoneScene.isLoaded &&
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene() !=
+                    localZoneScene)
+            {
+                UnityEngine.SceneManagement.SceneManager.SetActiveScene(
+                    localZoneScene);
             }
         }
 

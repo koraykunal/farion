@@ -243,6 +243,10 @@ namespace Farion.Multiplayer.World
                 return false;
             }
 
+            networkManager.SceneManager.UnloadConnectionScenes(
+                connection,
+                new SceneUnloadData(sourceContext.gameObject.scene));
+
             if (zones.TryGetValue(targetZoneId, out SimulationZoneContext existing) &&
                 existing != null &&
                 existing.Scene.IsValid() &&
@@ -260,9 +264,6 @@ namespace Farion.Multiplayer.World
                     MultiplayerZoneSceneLoad.Create(zoneSceneName, targetZoneId));
             }
 
-            networkManager.SceneManager.UnloadConnectionScenes(
-                connection,
-                new SceneUnloadData(sourceContext.gameObject.scene));
             return true;
         }
 

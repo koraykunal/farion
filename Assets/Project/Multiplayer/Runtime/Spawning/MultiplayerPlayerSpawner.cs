@@ -934,7 +934,7 @@ namespace Farion.Multiplayer.Spawning
             Vector3 explorerVelocity)
         {
             Rigidbody playerBody = playerObject.GetComponent<Rigidbody>();
-            if (playerBody != null)
+            if (playerBody != null && !playerBody.isKinematic)
             {
                 playerBody.linearVelocity = explorerVelocity;
             }
@@ -968,12 +968,6 @@ namespace Farion.Multiplayer.Spawning
             Scene scene = sceneContext.gameObject.scene;
             networkManager.ServerManager.Spawn(ship, null, scene);
             sceneContext.AttachToShiftedWorld(ship.transform);
-            Rigidbody shipBody = ship.GetComponent<Rigidbody>();
-            if (shipBody != null)
-            {
-                shipBody.linearVelocity = shipVelocity;
-            }
-
             if (!starterShuttles.TryGetValue(
                     scene.handle,
                     out Dictionary<int, NetworkObject> ships))
@@ -992,18 +986,22 @@ namespace Farion.Multiplayer.Spawning
                 sessionObject != null
                     ? sessionObject.GetComponent<NetworkSessionPlayer>()
                     : null;
-            if (sessionPlayer == null || starterShuttle == null)
+            if (sessionPlayer != null && starterShuttle != null)
             {
-                return;
+                AssignStarterShuttle(connection, starterShuttle);
+                RestoreShuttleOccupancy(
+                    sessionPlayer,
+                    connection,
+                    playerObject,
+                    starterShuttle,
+                    snapshot.PossessionMode);
             }
 
-            AssignStarterShuttle(connection, starterShuttle);
-            RestoreShuttleOccupancy(
-                sessionPlayer,
-                connection,
-                playerObject,
-                starterShuttle,
-                snapshot.PossessionMode);
+            Rigidbody shipBody = ship.GetComponent<Rigidbody>();
+            if (shipBody != null && !shipBody.isKinematic)
+            {
+                shipBody.linearVelocity = shipVelocity;
+            }
         }
 
         void RestoreShuttleOccupancy(

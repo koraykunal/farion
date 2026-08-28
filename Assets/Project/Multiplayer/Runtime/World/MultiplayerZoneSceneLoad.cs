@@ -58,8 +58,7 @@ namespace Farion.Multiplayer.World
         {
             SceneLoadData data = new(lookup)
             {
-                ReplaceScenes = ReplaceOption.None,
-                PreferredActiveScene = new PreferredScene(lookup, null)
+                ReplaceScenes = ReplaceOption.None
             };
             data.Options.AllowStacking = true;
             data.Options.AutomaticallyUnload = false;
