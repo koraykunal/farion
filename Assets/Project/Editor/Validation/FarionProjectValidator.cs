@@ -591,7 +591,6 @@ namespace Farion.Editor.Validation
             FarionValidationReport report)
         {
             ValidateRequiredReference(scenePath, fleet, "persistentId", report);
-            ValidateRequiredReference(scenePath, fleet, "knowledge", report);
             ValidateRequiredReference(scenePath, fleet, "storage", report);
             if (!fleet.HasValidAuthoring)
             {

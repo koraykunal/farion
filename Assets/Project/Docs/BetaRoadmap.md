@@ -37,7 +37,7 @@ The project currently provides:
 - resource harvesting;
 - session-authorized atomic shuttle-cargo unload command;
 - local session identity and explicit scene composition;
-- schema-6 save/load for the active vertical-slice state;
+- current-schema save/load for the active vertical-slice state;
 - Fleet Knowledge snapshot state;
 - one typed iron-processing recipe and atomic Fleet-Storage exchange;
 - gameplay HUD, inventory, pause, settings, and save/load presentation;
@@ -59,7 +59,7 @@ Implemented code foundation:
 2. Explicit `GameplayRuntimeRoot` and session binding.
 3. Session-authorized, atomic unload from assigned shuttle cargo to Fleet
    Storage.
-4. Schema-6 persistence and schema 3-5 migration defaults.
+4. Current-schema persistence (older schemas regenerate).
 
 Implemented playable work:
 
@@ -87,7 +87,7 @@ Implemented:
 Remaining:
 
 1. Present success, insufficient input, and insufficient capacity.
-2. Prove the result persists through the existing Fleet-owned schema-6 model.
+2. Prove the result persists through the existing Fleet-owned save model.
 
 Do not add queues, timers, workers, power, heat, efficiency, maintenance, or a
 general machine aggregate yet.

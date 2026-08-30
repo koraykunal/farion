@@ -19,13 +19,6 @@ namespace Farion.Gameplay.ResourceNodes
         [Min(1)]
         [SerializeField] int amountPerHarvest = 1;
 
-        [Header("Requirements")]
-        [Min(0)]
-        [SerializeField] int requiredToolTier;
-        [Min(0f)]
-        [SerializeField] float harvestDurationSeconds;
-        [SerializeField] bool requiresScan;
-
         [Header("Presentation")]
         [SerializeField] GameObject visualPrefab;
         [Tooltip("Overrides the visual prefab's albedo with the biome preview colour. Leave off for authored art; it exists so untextured placeholder meshes stay distinguishable.")]
@@ -38,9 +31,6 @@ namespace Farion.Gameplay.ResourceNodes
         public int MinReserve => Mathf.Max(1, minReserve);
         public int MaxReserve => Mathf.Max(MinReserve, maxReserve);
         public int AmountPerHarvest => Mathf.Max(1, amountPerHarvest);
-        public int RequiredToolTier => Mathf.Max(0, requiredToolTier);
-        public float HarvestDurationSeconds => Mathf.Max(0f, harvestDurationSeconds);
-        public bool RequiresScan => requiresScan;
         public GameObject VisualPrefab => visualPrefab;
         public bool HasVisualPrefab => visualPrefab != null;
         public bool TintByBiome => tintByBiome;
@@ -60,8 +50,6 @@ namespace Farion.Gameplay.ResourceNodes
             minReserve = Mathf.Max(1, minReserve);
             maxReserve = Mathf.Max(minReserve, maxReserve);
             amountPerHarvest = Mathf.Max(1, amountPerHarvest);
-            requiredToolTier = Mathf.Max(0, requiredToolTier);
-            harvestDurationSeconds = Mathf.Max(0f, harvestDurationSeconds);
         }
 
         public int EvaluateInitialReserve(int seed)

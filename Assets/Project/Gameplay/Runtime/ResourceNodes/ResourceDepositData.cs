@@ -9,7 +9,6 @@ namespace Farion.Gameplay.ResourceNodes
     {
         public ResourceDepositData(
             GeneratedEntityId depositId,
-            GeneratedEntityId legacyDepositId,
             ResourceNodeDefinition resource,
             BiomeDefinition biome,
             TerrainFeatureDefinition terrainFeature,
@@ -20,7 +19,6 @@ namespace Farion.Gameplay.ResourceNodes
             int generationSeed)
         {
             DepositId = depositId;
-            LegacyDepositId = legacyDepositId;
             Resource = resource;
             Biome = biome;
             TerrainFeature = terrainFeature;
@@ -32,7 +30,6 @@ namespace Farion.Gameplay.ResourceNodes
         }
 
         public GeneratedEntityId DepositId { get; }
-        public GeneratedEntityId LegacyDepositId { get; }
         public ResourceNodeDefinition Resource { get; }
         public BiomeDefinition Biome { get; }
         public TerrainFeatureDefinition TerrainFeature { get; }

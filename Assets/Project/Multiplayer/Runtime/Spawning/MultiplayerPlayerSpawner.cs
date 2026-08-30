@@ -47,7 +47,6 @@ namespace Farion.Multiplayer.Spawning
         GameplayDefinitionRegistry definitions;
 
         public int SpawnedPlayerCount => players.Count;
-        public int SessionPlayerCount => sessionPlayers.Count;
 
         internal bool TryGetSpawnedExplorer(
             NetworkSessionPlayer player,

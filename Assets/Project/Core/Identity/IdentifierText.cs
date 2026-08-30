@@ -26,9 +26,5 @@ namespace Farion.Core.Identity
             return true;
         }
 
-        public static bool IsValidRaw(string value)
-        {
-            return IsValid(Normalize(value));
-        }
     }
 }

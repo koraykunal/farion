@@ -36,8 +36,6 @@ namespace Farion.Rendering.Celestial
         public float HeightStrength => Mathf.Clamp01(heightStrength);
         public Color EmissionTint => emissionTint;
         public float EmissionStrength => Mathf.Max(0f, emissionStrength);
-        public bool HasBaseMaterial => baseColor != null || normal != null;
-        public bool HasMaskData => roughness != null || ambientOcclusion != null || height != null;
         public bool HasSurfaceTextures =>
             baseColor != null
             && normal != null

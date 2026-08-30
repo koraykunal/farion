@@ -16,17 +16,22 @@ namespace Farion.Gameplay.Persistence
                    saveData.PlayerInventory != null &&
                    context.Definitions != null &&
                    context.PlayerInventory != null &&
-                   context.PlayerInventory.CanApplySnapshot(saveData.PlayerInventory, context.Definitions);
+                   context.PlayerInventory.CanApplyContainerSnapshot(
+                       saveData.PlayerInventory,
+                       context.Definitions);
         }
 
         public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
         {
-            capture.SetPlayerInventory(context.PlayerInventory.CaptureSnapshot());
+            capture.SetPlayerInventory(
+                context.PlayerInventory.CaptureContainerSnapshot());
         }
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)
         {
-            context.PlayerInventory.ApplySnapshot(saveData.PlayerInventory, context.Definitions);
+            context.PlayerInventory.ApplyContainerSnapshot(
+                saveData.PlayerInventory,
+                context.Definitions);
             return true;
         }
     }

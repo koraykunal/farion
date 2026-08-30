@@ -44,16 +44,6 @@ namespace Farion.Gameplay.ResourceNodes
 
         public void CollectAllowedRules(
             BiomeDefinition biome,
-            float altitude,
-            float slopeDegrees,
-            float resourceNoise,
-            List<ResourceSpawnRule> results)
-        {
-            CollectAllowedRules(biome, null, altitude, slopeDegrees, resourceNoise, results);
-        }
-
-        public void CollectAllowedRules(
-            BiomeDefinition biome,
             TerrainFeatureDefinition terrainFeature,
             float altitude,
             float slopeDegrees,

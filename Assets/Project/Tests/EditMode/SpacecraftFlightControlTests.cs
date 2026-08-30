@@ -367,9 +367,12 @@ namespace Farion.Tests.EditMode
         public void DepletedFuelStopsThrustButKeepsAttitudeControl()
         {
             GameObject shipObject = new("Fuel Test Ship");
+            SpacecraftFlightProfile profile =
+                ScriptableObject.CreateInstance<SpacecraftFlightProfile>();
             try
             {
                 SpacecraftMotor motor = shipObject.AddComponent<SpacecraftMotor>();
+                TestFieldAccess.SetField(motor, "flightProfile", profile);
                 SpacecraftInputState input = new(
                     new Vector3(0f, 0f, 1f),
                     new Vector2(1f, 0f),
@@ -398,6 +401,7 @@ namespace Farion.Tests.EditMode
             finally
             {
                 Object.DestroyImmediate(shipObject);
+                Object.DestroyImmediate(profile);
             }
         }
 

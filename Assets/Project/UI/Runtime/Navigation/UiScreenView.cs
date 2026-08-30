@@ -30,7 +30,6 @@ namespace Farion.UI.Navigation
         public bool LocksGameplayInput => locksGameplayInput;
         public bool VisibleOnAwake => visibleOnAwake;
         public bool BlocksRaycastsWhenVisible => blocksRaycastsWhenVisible;
-        public Selectable FirstSelection => firstSelection;
         public bool HasExplicitFirstSelection => firstSelection != null;
         public bool IsVisible { get; private set; }
 

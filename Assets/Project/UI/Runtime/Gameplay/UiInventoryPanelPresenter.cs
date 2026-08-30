@@ -47,11 +47,6 @@ namespace Farion.UI.Gameplay
         TMP_Text tooltipBodyText;
         bool subscribed;
 
-        public event Action<UiInventoryPanelPresenter, InventoryStack> FocusedStackChanged;
-        public InventoryContainerComponent Inventory => inventory;
-        public InventoryStack FocusedStack =>
-            focusedSlot != null ? focusedSlot.Stack : null;
-
         void Reset()
         {
             ResolveReferences();
@@ -216,7 +211,6 @@ namespace Farion.UI.Gameplay
             focusedSlot = slot;
             focusedSlot.SetCurrent(true);
             RefreshDetail(slot.Stack);
-            FocusedStackChanged?.Invoke(this, slot.Stack);
         }
 
         void HandleContextRequested(UiInventorySlotView slot)

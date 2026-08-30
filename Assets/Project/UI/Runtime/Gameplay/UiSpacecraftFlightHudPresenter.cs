@@ -736,13 +736,4 @@ namespace Farion.UI.Gameplay
         }
 
     }
-
-    static class SpacecraftFlightHudStringBuilderExtensions
-    {
-        public static StringBuilder AppendSignedPercent(this StringBuilder builder, float value)
-        {
-            int percent = Mathf.RoundToInt(Mathf.Clamp(value, -1f, 1f) * 100f);
-            return builder.Append(percent.ToString("+0;-0;0", CultureInfo.InvariantCulture)).Append('%');
-        }
-    }
 }

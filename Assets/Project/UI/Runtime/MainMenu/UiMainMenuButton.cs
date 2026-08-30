@@ -15,8 +15,6 @@ namespace Farion.UI.MainMenu
         [SerializeField] UiMainMenuController controller;
         [SerializeField] UiMenuButtonView view;
 
-        public UiMainMenuAction Action => action;
-
         void Reset()
         {
             ResolveReferences();
@@ -57,12 +55,6 @@ namespace Farion.UI.MainMenu
         {
             ResolveReferences();
             view?.SetAvailable(available);
-        }
-
-        public void ConfigureContent(string title, string subtitle, Sprite icon)
-        {
-            ResolveReferences();
-            view?.ConfigureContent(title, subtitle, icon);
         }
 
         void ResolveReferences()

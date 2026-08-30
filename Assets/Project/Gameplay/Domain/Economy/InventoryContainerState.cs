@@ -30,16 +30,7 @@ namespace Farion.Gameplay.Domain.Economy
         public PersistentEntityId ContainerId { get; }
         public int SlotCapacity { get; private set; }
         public long Revision { get; private set; }
-        public IEnumerable<InventoryStackState> Stacks
-        {
-            get
-            {
-                foreach (InventoryStackState stack in stacks.Values)
-                {
-                    yield return stack;
-                }
-            }
-        }
+        public IEnumerable<InventoryStackState> Stacks => stacks.Values;
 
         public int UsedSlots
         {
@@ -140,30 +131,6 @@ namespace Farion.Gameplay.Domain.Economy
             return TryApplyStackChanges(
                 new[] { new InventoryStackChange(definitionId, -quantity, stackLimit) },
                 expectedRevision);
-        }
-
-        public InventoryOperationResult TrySetSlotCapacity(
-            int slotCapacity,
-            long expectedRevision = AnyRevision)
-        {
-            if (!MatchesRevision(expectedRevision))
-            {
-                return InventoryOperationResult.StaleRevision;
-            }
-
-            if (slotCapacity < 1 || slotCapacity < UsedSlots)
-            {
-                return InventoryOperationResult.InsufficientCapacity;
-            }
-
-            if (slotCapacity == SlotCapacity)
-            {
-                return InventoryOperationResult.Succeeded;
-            }
-
-            IncrementRevision();
-            SlotCapacity = slotCapacity;
-            return InventoryOperationResult.Succeeded;
         }
 
         internal InventoryContainerState Clone()

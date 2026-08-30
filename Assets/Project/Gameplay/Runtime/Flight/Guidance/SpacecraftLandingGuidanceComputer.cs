@@ -13,20 +13,9 @@ namespace Farion.Gameplay.Flight
         [SerializeField] CelestialActorProbe celestialProbe;
         [SerializeField] SpacecraftMotor motor;
 
-        [Header("Runtime Guidance")]
-        [SerializeField] SpacecraftLandingGuidanceLevel level = SpacecraftLandingGuidanceLevel.Offline;
-        [SerializeField] SpacecraftLandingGuidanceCommand command = SpacecraftLandingGuidanceCommand.None;
-        [SerializeField] string advisory = "NO FRAME";
-        [SerializeField] float verticalSpeedRatio;
-        [SerializeField] float tangentialSpeedRatio;
-        [SerializeField] float stress;
-
         SpacecraftLandingGuidanceSample currentGuidance = SpacecraftLandingGuidanceSample.Offline;
 
         public SpacecraftLandingGuidanceSample CurrentGuidance => currentGuidance;
-        public SpacecraftLandingGuidanceLevel Level => level;
-        public SpacecraftLandingGuidanceCommand Command => command;
-        public string Advisory => advisory;
 
         void Awake()
         {
@@ -52,7 +41,6 @@ namespace Farion.Gameplay.Flight
                 !celestialProbe.HasSample)
             {
                 currentGuidance = SpacecraftLandingGuidanceSample.Offline;
-                ApplyRuntimeState();
                 return;
             }
 
@@ -60,7 +48,6 @@ namespace Farion.Gameplay.Flight
             if (!assessment.HasFrame)
             {
                 currentGuidance = SpacecraftLandingGuidanceSample.Offline;
-                ApplyRuntimeState();
                 return;
             }
 
@@ -80,7 +67,6 @@ namespace Farion.Gameplay.Flight
                 verticalRatio,
                 tangentialRatio,
                 assessment.NormalizedStress);
-            ApplyRuntimeState();
         }
 
         void ResolveComponents()
@@ -214,16 +200,6 @@ namespace Farion.Gameplay.Flight
                 SpacecraftLandingGuidanceCommand.ThrustDeficit => "THRUST BELOW GRAVITY",
                 _ => "MONITOR"
             };
-        }
-
-        void ApplyRuntimeState()
-        {
-            level = currentGuidance.Level;
-            command = currentGuidance.Command;
-            advisory = currentGuidance.Advisory;
-            verticalSpeedRatio = currentGuidance.VerticalSpeedRatio;
-            tangentialSpeedRatio = currentGuidance.TangentialSpeedRatio;
-            stress = currentGuidance.Stress;
         }
     }
 }

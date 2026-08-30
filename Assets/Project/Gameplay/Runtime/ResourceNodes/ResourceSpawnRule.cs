@@ -32,16 +32,6 @@ namespace Farion.Gameplay.ResourceNodes
         public int MinClusterSize => Mathf.Max(1, minClusterSize);
         public int MaxClusterSize => Mathf.Max(MinClusterSize, maxClusterSize);
 
-        public bool Allows(float altitude, float slopeDegrees, float noise)
-        {
-            return Allows(null, altitude, slopeDegrees, noise);
-        }
-
-        public bool Allows(BiomeDefinition biome, float altitude, float slopeDegrees, float noise)
-        {
-            return Allows(biome, null, altitude, slopeDegrees, noise);
-        }
-
         public bool Allows(
             BiomeDefinition biome,
             TerrainFeatureDefinition terrainFeature,

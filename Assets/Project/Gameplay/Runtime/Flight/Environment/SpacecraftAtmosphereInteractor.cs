@@ -18,16 +18,6 @@ namespace Farion.Gameplay.Flight
         [Header("Forces")]
         [SerializeField] bool applyDrag = true;
 
-        [Header("Runtime Atmosphere")]
-        [SerializeField] bool insideAtmosphere;
-        [SerializeField, Range(0f, 1f)] float atmosphereDensity;
-        [SerializeField] float relativeSpeed;
-        [SerializeField] float dynamicPressure;
-        [SerializeField, Range(0f, 1f)] float dynamicPressureLoad;
-        [SerializeField] float heatingRate;
-        [SerializeField, Range(0f, 1f)] float heatLoad;
-        [SerializeField] float dragAcceleration;
-
         Rigidbody cachedRigidbody;
         ISpacecraftPhysicsBody offlinePhysicsBody;
         SpacecraftAtmosphereInteractionSample currentInteraction;
@@ -77,24 +67,17 @@ namespace Farion.Gameplay.Flight
         {
             currentInteraction = SpacecraftAtmosphereInteractionSample.Empty(
                 celestialProbe != null ? celestialProbe.CurrentSample : default);
-            ApplyRuntimeState();
         }
 
         [ContextMenu("Refresh Atmosphere Interaction")]
         public void RefreshInteraction()
         {
             ResolveComponents();
-
-            if (profile == null || celestialProbe == null || !celestialProbe.HasSample)
-            {
-                currentInteraction = SpacecraftAtmosphereInteractionSample.Empty(
-                    celestialProbe != null ? celestialProbe.CurrentSample : default);
-                ApplyRuntimeState();
-                return;
-            }
-
-            currentInteraction = profile.Evaluate(celestialProbe.CurrentSample);
-            ApplyRuntimeState();
+            currentInteraction =
+                profile != null && celestialProbe != null && celestialProbe.HasSample
+                    ? profile.Evaluate(celestialProbe.CurrentSample)
+                    : SpacecraftAtmosphereInteractionSample.Empty(
+                        celestialProbe != null ? celestialProbe.CurrentSample : default);
         }
 
         void ApplyInteractionForce(ISpacecraftPhysicsBody physicsBody)
@@ -107,18 +90,6 @@ namespace Farion.Gameplay.Flight
             physicsBody.AddForce(
                 currentInteraction.DragAcceleration,
                 ForceMode.Acceleration);
-        }
-
-        void ApplyRuntimeState()
-        {
-            insideAtmosphere = currentInteraction.IsInsideAtmosphere;
-            atmosphereDensity = currentInteraction.AtmosphereDensity;
-            relativeSpeed = currentInteraction.RelativeSpeed;
-            dynamicPressure = currentInteraction.DynamicPressure;
-            dynamicPressureLoad = currentInteraction.DynamicPressureLoad;
-            heatingRate = currentInteraction.HeatingRate;
-            heatLoad = currentInteraction.HeatLoad;
-            dragAcceleration = currentInteraction.DragAcceleration.magnitude;
         }
 
         void ResolveComponents()

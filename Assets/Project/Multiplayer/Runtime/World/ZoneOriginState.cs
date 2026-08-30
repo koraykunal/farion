@@ -32,12 +32,9 @@ namespace Farion.Multiplayer.World
         public Scene Scene { get; internal set; }
         public uint CurrentSequence => state.Sequence;
         public int ReferenceBodyId => state.ReferenceBodyId;
-        public Vector3 AccumulatedOrigin => state.AccumulatedOrigin;
         internal bool HasPendingFrame => hasPendingFrame;
         internal WorldOriginBroadcast PendingFrame => pendingFrame;
-        internal GravitySimulation Simulation => simulation;
         internal WorldOriginRebaser Rebaser => rebaser;
-        internal int PinnedBodyId => pinnedBodyId;
 
         public event Action<Vector3> OriginShifted;
 

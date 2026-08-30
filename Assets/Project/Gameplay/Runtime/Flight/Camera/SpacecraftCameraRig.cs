@@ -124,11 +124,6 @@ namespace Farion.Gameplay.Flight
             ApplyCamera(forceSnap: false);
         }
 
-        public void SetTarget(Transform newTarget)
-        {
-            SetExteriorTarget(newTarget);
-        }
-
         public void SetExteriorTarget(Transform newTarget)
         {
             if (exteriorTarget != newTarget)

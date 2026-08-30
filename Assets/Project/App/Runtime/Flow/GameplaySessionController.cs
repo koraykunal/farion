@@ -69,11 +69,6 @@ namespace Farion.App.Flow
                     string.Empty);
         }
 
-        public bool ExitToMainMenu()
-        {
-            return ExitToMainMenuAsync() != null;
-        }
-
         public AsyncOperation ExitToMainMenuAsync()
         {
             return flowSettings != null
@@ -165,31 +160,10 @@ namespace Farion.App.Flow
             saveCoordinator ??= GetComponent<GameplaySaveCoordinator>();
         }
 
-        public CargoTransferResult CanLoadAssignedShuttleCargo(
-            CargoTransferRequest request)
-        {
-            return Commands?.CanLoadAssignedShuttleCargo(request) ??
-                   CargoTransferResult.MissingSource;
-        }
-
         public CargoTransferResult TryLoadAssignedShuttleCargo(
             CargoTransferRequest request)
         {
             return Commands?.TryLoadAssignedShuttleCargo(request) ??
-                   CargoTransferResult.MissingSource;
-        }
-
-        public CargoTransferResult CanUnloadAssignedShuttleCargo(
-            CargoTransferRequest request)
-        {
-            return Commands?.CanUnloadAssignedShuttleCargo(request) ??
-                   CargoTransferResult.MissingSource;
-        }
-
-        public CargoTransferResult TryUnloadAssignedShuttleCargo(
-            CargoTransferRequest request)
-        {
-            return Commands?.TryUnloadAssignedShuttleCargo(request) ??
                    CargoTransferResult.MissingSource;
         }
     }

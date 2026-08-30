@@ -22,7 +22,6 @@ namespace Farion.Multiplayer.World
         double simulationEpochSeconds;
 
         public int RegisteredZoneCount => zones.Count;
-        public double SimulationEpochSeconds => simulationEpochSeconds;
 
         void Awake()
         {

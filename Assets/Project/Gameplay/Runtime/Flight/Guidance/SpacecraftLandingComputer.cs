@@ -15,28 +15,12 @@ namespace Farion.Gameplay.Flight
         [SerializeField] CelestialActorProbe celestialProbe;
         [SerializeField] SpacecraftSurfaceContactProbe surfaceContactProbe;
 
-        [Header("Runtime Assessment")]
-        [SerializeField] SpacecraftApproachPhase phase = SpacecraftApproachPhase.NoFrame;
-        [SerializeField] SpacecraftLandingRiskFlags risks = SpacecraftLandingRiskFlags.NoFrame;
-        [SerializeField] float normalizedStress;
-        [SerializeField] float verticalSpeedLimit;
-        [SerializeField] float tangentialSpeedLimit;
-        [SerializeField] float surfaceSlopeAngle;
-        [SerializeField] float surfaceSlopeLimit;
-        [SerializeField] bool safeTouchdownWindow;
-        [SerializeField] bool impactRisk;
-        [SerializeField] bool hasSurfaceContact;
-        [SerializeField] bool touchdownConfirmed;
-        [SerializeField] bool unsafeSurfaceContact;
-
         SpacecraftLandingAssessment currentAssessment;
+        bool touchdownConfirmed;
+        bool unsafeSurfaceContact;
 
         public SpacecraftLandingAssessment CurrentAssessment => currentAssessment;
-        public SpacecraftApproachPhase Phase => phase;
-        public SpacecraftLandingRiskFlags Risks => risks;
-        public float NormalizedStress => normalizedStress;
-        public bool SafeTouchdownWindow => safeTouchdownWindow;
-        public bool ImpactRisk => impactRisk;
+        public SpacecraftApproachPhase Phase => currentAssessment.Phase;
         public bool TouchdownConfirmed => touchdownConfirmed;
         public bool UnsafeSurfaceContact => unsafeSurfaceContact;
 
@@ -60,15 +44,10 @@ namespace Farion.Gameplay.Flight
         {
             ResolveComponents();
 
-            if (profile == null || celestialProbe == null)
-            {
-                currentAssessment = default;
-                ApplyRuntimeState();
-                return;
-            }
-
-            currentAssessment = profile.Evaluate(celestialProbe.CurrentSample);
-            ApplyRuntimeState();
+            currentAssessment = profile != null && celestialProbe != null
+                ? profile.Evaluate(celestialProbe.CurrentSample)
+                : default;
+            RefreshTouchdownState();
         }
 
         void ResolveComponents()
@@ -84,46 +63,26 @@ namespace Farion.Gameplay.Flight
             }
         }
 
-        void ApplyRuntimeState()
+        void RefreshTouchdownState()
         {
             SpacecraftSurfaceContactSample contact = surfaceContactProbe != null
                 ? surfaceContactProbe.CurrentContact
                 : SpacecraftSurfaceContactSample.Empty;
-            hasSurfaceContact = contact.HasContact;
-
             if (!currentAssessment.HasFrame)
             {
-                phase = SpacecraftApproachPhase.NoFrame;
-                risks = SpacecraftLandingRiskFlags.NoFrame;
-                normalizedStress = 0f;
-                verticalSpeedLimit = 0f;
-                tangentialSpeedLimit = 0f;
-                surfaceSlopeAngle = 0f;
-                surfaceSlopeLimit = 0f;
-                safeTouchdownWindow = false;
-                impactRisk = false;
                 touchdownConfirmed = false;
-                unsafeSurfaceContact = hasSurfaceContact;
+                unsafeSurfaceContact = contact.HasContact;
                 return;
             }
 
-            phase = currentAssessment.Phase;
-            risks = currentAssessment.Risks;
-            normalizedStress = currentAssessment.NormalizedStress;
-            verticalSpeedLimit = currentAssessment.VerticalSpeedLimit;
-            tangentialSpeedLimit = currentAssessment.TangentialSpeedLimit;
-            surfaceSlopeAngle = currentAssessment.Frame.SurfaceSlopeAngleDegrees;
-            surfaceSlopeLimit = currentAssessment.SurfaceSlopeLimit;
-            safeTouchdownWindow = currentAssessment.IsSafeTouchdownWindow;
-            impactRisk = currentAssessment.HasImpactRisk;
             float gravityScale = profile.EvaluateGravitySpeedScale(currentAssessment.Frame);
             touchdownConfirmed = SpacecraftTouchdownEvaluator.IsSafe(
                 contact,
-                surfaceSlopeAngle,
+                currentAssessment.Frame.SurfaceSlopeAngleDegrees,
                 profile.SafeTouchdownVerticalSpeed * gravityScale,
                 profile.SafeTouchdownTangentialSpeed * gravityScale,
                 profile.SafeTouchdownSlopeAngle);
-            unsafeSurfaceContact = hasSurfaceContact && !touchdownConfirmed;
+            unsafeSurfaceContact = contact.HasContact && !touchdownConfirmed;
         }
     }
 }

@@ -108,14 +108,6 @@ namespace Farion.Gameplay.Presentation.Flight
         [Min(0f)]
         [SerializeField] float heatGlowResponse = 1.6f;
 
-        [Header("Runtime Debug")]
-        [SerializeField, Range(0f, 1f)] float debugNozzleLoad;
-        [SerializeField, Range(-1f, 1f)] float debugSideLoad;
-        [SerializeField, Range(0f, 1f)] float debugIgnitionFlare;
-        [SerializeField, Range(0f, 1f)] float debugHeatGlow;
-        [SerializeField] Vector3 debugSteeringEuler;
-        [SerializeField] Vector3 debugPlumeBend;
-
         Quaternion initialSteeringRotation = Quaternion.identity;
         Quaternion laggedWorldRotation = Quaternion.identity;
         Vector3 currentSteeringEuler;
@@ -236,7 +228,6 @@ namespace Farion.Gameplay.Presentation.Flight
             ApplyGraphs(frame, clampedDeltaTime);
             ApplyLight(frame);
             ApplyHeatGlow(frame, clampedDeltaTime);
-            ApplyDebug();
         }
 
         void UpdateIgnitionFlare(float previousNozzleLoad, float deltaTime)
@@ -534,16 +525,6 @@ namespace Farion.Gameplay.Presentation.Flight
                 heatGlowProperties.SetColor(HeatGlowIds.EmissionColor, emission);
                 target.SetPropertyBlock(heatGlowProperties);
             }
-        }
-
-        void ApplyDebug()
-        {
-            debugNozzleLoad = currentNozzleLoad;
-            debugSideLoad = currentSideLoad;
-            debugIgnitionFlare = currentIgnitionFlare;
-            debugHeatGlow = currentHeatGlow;
-            debugSteeringEuler = currentSteeringEuler;
-            debugPlumeBend = currentPlumeBend;
         }
 
         static void SetFloat(VisualEffect graph, int id, float value)

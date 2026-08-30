@@ -345,15 +345,6 @@ namespace Farion.UI.Settings
                 case UiSettingId.ReducedMotion:
                     preferences.SetReducedMotion(!preferences.ReducedMotion);
                     break;
-                case UiSettingId.Subtitles:
-                    preferences.SetSubtitlesEnabled(!preferences.SubtitlesEnabled);
-                    break;
-                case UiSettingId.SubtitleSize:
-                    preferences.SetSubtitleSize(
-                        preferences.SubtitleSize == UiSubtitleSize.Standard
-                            ? UiSubtitleSize.Large
-                            : UiSubtitleSize.Standard);
-                    break;
                 case UiSettingId.MasterVolume:
                     audioDirector?.AdjustBusVolume(AudioBusId.Master, direction);
                     break;
@@ -547,22 +538,6 @@ namespace Farion.UI.Settings
                         UiLocalization.Get(UiTextKeys.SettingsMotionTitle),
                         UiLocalization.Get(UiTextKeys.SettingsMotionDescription),
                         ResolveBoolean(preferences.ReducedMotion));
-                    option.SetAvailable(true);
-                    break;
-                case UiSettingId.Subtitles:
-                    option.ConfigureContent(
-                        UiLocalization.Get(UiTextKeys.SettingsSubtitlesTitle),
-                        UiLocalization.Get(UiTextKeys.SettingsSubtitlesDescription),
-                        ResolveBoolean(preferences.SubtitlesEnabled));
-                    option.SetAvailable(true);
-                    break;
-                case UiSettingId.SubtitleSize:
-                    option.ConfigureContent(
-                        UiLocalization.Get(UiTextKeys.SettingsSubtitleSizeTitle),
-                        UiLocalization.Get(UiTextKeys.SettingsSubtitleSizeDescription),
-                        preferences.SubtitleSize == UiSubtitleSize.Large
-                            ? UiLocalization.Get(UiTextKeys.ValueLarge)
-                            : UiLocalization.Get(UiTextKeys.ValueStandard));
                     option.SetAvailable(true);
                     break;
                 case UiSettingId.MasterVolume:

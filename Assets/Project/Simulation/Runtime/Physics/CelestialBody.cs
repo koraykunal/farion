@@ -95,14 +95,11 @@ namespace Farion.Simulation.Physics
         public bool IntegratesOrbit => motionMode != CelestialBodyMotionMode.Static;
         public bool SupportsNonConvexSurfaceCollider => IsKinematicBody;
         public bool UsesAnalyticMotion => motionMode != CelestialBodyMotionMode.DynamicNBody;
-        public bool HasOrbit => hasOrbit;
-        public OrbitalElements Orbit => orbit;
         public Vector3 SystemPosition => systemPosition;
         public Vector3 SystemVelocity => systemVelocity;
         public Vector3 EpochLocalOffset => localOffsetAtEpoch;
         public Vector3 AnalyticEpochOrigin => epochSystemOrigin;
         public bool HasAnalyticReference => hasAnalyticReference;
-        public float OrbitPeriodSeconds => hasOrbit ? (float)orbit.PeriodSeconds : 0f;
         public Vector3 Position => Rigidbody.position;
 
         public Rigidbody Rigidbody

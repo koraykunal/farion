@@ -245,7 +245,7 @@ namespace Farion.UI.MainMenu
                 : SaveGameSlotCatalog.DefaultSlotName;
         }
 
-        public bool Confirm(
+        void Confirm(
             string titleKey,
             string bodyKey,
             string confirmKey,
@@ -259,11 +259,10 @@ namespace Farion.UI.MainMenu
                     UiLocalization.Get(confirmKey),
                     onConfirm))
             {
-                return true;
+                return;
             }
 
             ShowFeedback(UiLocalization.Get(UiTextKeys.FeedbackScreenUnavailable));
-            return false;
         }
 
         public void ShowFeedback(

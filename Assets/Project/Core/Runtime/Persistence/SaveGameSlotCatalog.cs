@@ -37,11 +37,6 @@ namespace Farion.Core.Persistence
             return Path.Combine(GetSaveDirectory(), ResolveSlotFileName(slotName));
         }
 
-        public static bool SlotExists(string slotName)
-        {
-            return File.Exists(GetSlotPath(slotName));
-        }
-
         public static string ResolveSlotName(string slotName)
         {
             return string.IsNullOrWhiteSpace(slotName) ? DefaultSlotName : slotName.Trim();

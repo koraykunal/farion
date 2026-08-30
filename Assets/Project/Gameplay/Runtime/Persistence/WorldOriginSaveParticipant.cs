@@ -16,7 +16,7 @@ namespace Farion.Gameplay.Persistence
         {
             return saveData != null &&
                    context.OriginRebaser != null &&
-                   (saveData.SchemaVersion < 4 || saveData.WorldOrigin.IsSupported);
+                   saveData.WorldOrigin.IsSupported;
         }
 
         public void Capture(GameplaySaveCapture capture, GameplaySaveContext context)
@@ -26,12 +26,6 @@ namespace Farion.Gameplay.Persistence
 
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)
         {
-            if (saveData.SourceSchemaVersion < 4)
-            {
-                context.OriginRebaser.ResetRuntimeState();
-                return true;
-            }
-
             if (!saveData.WorldOrigin.IsSupported)
             {
                 return false;

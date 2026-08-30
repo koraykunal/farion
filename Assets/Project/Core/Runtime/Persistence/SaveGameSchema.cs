@@ -6,23 +6,11 @@ namespace Farion.Core.Persistence
 {
     public static class SaveGameSchema
     {
-        public const int MinimumSupportedVersion = 3;
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public static bool IsSupportedVersion(int version)
         {
-            return version >= MinimumSupportedVersion && version <= CurrentVersion;
-        }
-
-        public static bool PayloadLooksSupported(string payload)
-        {
-            return TryReadHeader(payload, out int version, out _) &&
-                   IsSupportedVersion(version);
-        }
-
-        public static bool TryReadVersion(string payload, out int version)
-        {
-            return TryReadHeader(payload, out version, out _);
+            return version == CurrentVersion;
         }
 
         public static bool TryReadHeader(

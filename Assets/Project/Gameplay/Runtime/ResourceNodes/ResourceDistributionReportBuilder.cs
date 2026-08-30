@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Text;
 using Farion.Simulation.Physics;
@@ -234,3 +235,4 @@ namespace Farion.Gameplay.ResourceNodes
         }
     }
 }
+#endif

@@ -100,7 +100,7 @@ namespace Farion.Gameplay.Interaction
             InteractionContext context,
             out ResourceHarvestRequest request)
         {
-            IInventoryContainer inventory = ResolveInventory(context);
+            InventoryContainerComponent inventory = ResolveInventory(context);
             if (inventory == null || !depositId.IsValid)
             {
                 request = default;
@@ -239,7 +239,7 @@ namespace Farion.Gameplay.Interaction
                 : string.Empty;
         }
 
-        static IInventoryContainer ResolveInventory(InteractionContext context)
+        static InventoryContainerComponent ResolveInventory(InteractionContext context)
         {
             if (context.Actor == null)
             {

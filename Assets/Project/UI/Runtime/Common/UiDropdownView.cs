@@ -79,9 +79,6 @@ namespace Farion.UI.Common
                 ? options[selectedIndex]
                 : string.Empty;
         public Selectable Selectable => this;
-        public int SelectedIndex => selectedIndex;
-        public int OptionCount => options.Count;
-        public bool IsExpanded => expanded;
 
         protected override void Awake()
         {

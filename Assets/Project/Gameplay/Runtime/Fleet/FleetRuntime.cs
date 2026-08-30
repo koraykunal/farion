@@ -7,12 +7,10 @@ namespace Farion.Gameplay.Fleet
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PersistentObjectId))]
-    [RequireComponent(typeof(FleetKnowledgeRuntime))]
     [RequireComponent(typeof(FleetStorageInventory))]
     public sealed class FleetRuntime : MonoBehaviour
     {
         [SerializeField] PersistentObjectId persistentId;
-        [SerializeField] FleetKnowledgeRuntime knowledge;
         [SerializeField] FleetStorageInventory storage;
 
         public PersistentEntityId FleetId
@@ -26,15 +24,6 @@ namespace Farion.Gameplay.Fleet
                            out PersistentEntityId id)
                     ? id
                     : PersistentEntityId.None;
-            }
-        }
-
-        public FleetKnowledgeRuntime Knowledge
-        {
-            get
-            {
-                ResolveReferences();
-                return knowledge;
             }
         }
 
@@ -53,9 +42,7 @@ namespace Farion.Gameplay.Fleet
             {
                 ResolveReferences();
                 return FleetId.IsValid &&
-                       knowledge != null &&
                        storage != null &&
-                       knowledge.gameObject == gameObject &&
                        storage.gameObject == gameObject &&
                        PersistentEntityId.TryCreate(
                            $"fleet_storage.{FleetId.Value}",
@@ -77,7 +64,6 @@ namespace Farion.Gameplay.Fleet
         void ResolveReferences()
         {
             persistentId ??= GetComponent<PersistentObjectId>();
-            knowledge ??= GetComponent<FleetKnowledgeRuntime>();
             storage ??= GetComponent<FleetStorageInventory>();
         }
     }

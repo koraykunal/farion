@@ -38,7 +38,6 @@ namespace Farion.Gameplay.ResourceNodes
         readonly List<DepositStreamingCandidate> spawnCandidates = new();
         readonly Dictionary<GeneratedEntityId, SpawnedDepositNode> spawnedNodes = new();
         readonly HashSet<GeneratedEntityId> generatedDepositIds = new();
-        readonly Dictionary<GeneratedEntityId, GeneratedEntityId> currentIdByLegacyId = new();
         readonly Dictionary<ResourceNodeDefinition, Stack<GameObject>> pooledNodesByDefinition = new();
         readonly List<GeneratedEntityId> nodesToRemove = new();
         readonly ResourceDepositDeltaStore depositDeltaStore = new();
@@ -312,22 +311,20 @@ namespace Farion.Gameplay.ResourceNodes
         }
 
         public void ApplyDeltaSnapshot(
-            IEnumerable<ResourceDepositDeltaSnapshot> snapshots,
-            bool useLegacyIds = false)
+            IEnumerable<ResourceDepositDeltaSnapshot> snapshots)
         {
             depositDeltaStore.Clear();
             if (snapshots != null)
             {
                 foreach (ResourceDepositDeltaSnapshot snapshot in snapshots)
                 {
-                    GeneratedEntityId depositId = ResolveSnapshotDepositId(snapshot.DepositId, useLegacyIds);
-                    if (!depositId.IsValid)
+                    if (!snapshot.DepositId.IsValid ||
+                        !generatedDepositIds.Contains(snapshot.DepositId))
                     {
                         continue;
                     }
 
-                    depositDeltaStore.ApplySnapshot(
-                        new ResourceDepositDeltaSnapshot(depositId, snapshot.ExtractedAmount));
+                    depositDeltaStore.ApplySnapshot(snapshot);
                 }
             }
 
@@ -339,19 +336,12 @@ namespace Farion.Gameplay.ResourceNodes
         void RebuildDepositIdentityLookup()
         {
             generatedDepositIds.Clear();
-            currentIdByLegacyId.Clear();
             for (int i = 0; i < deposits.Count; i++)
             {
                 ResourceDepositData deposit = deposits[i];
-                if (!deposit.DepositId.IsValid)
+                if (deposit.DepositId.IsValid)
                 {
-                    continue;
-                }
-
-                generatedDepositIds.Add(deposit.DepositId);
-                if (deposit.LegacyDepositId.IsValid)
-                {
-                    currentIdByLegacyId[deposit.LegacyDepositId] = deposit.DepositId;
+                    generatedDepositIds.Add(deposit.DepositId);
                 }
             }
         }
@@ -371,23 +361,6 @@ namespace Farion.Gameplay.ResourceNodes
 
             deposit = default;
             return false;
-        }
-
-        GeneratedEntityId ResolveSnapshotDepositId(GeneratedEntityId snapshotId, bool useLegacyIds)
-        {
-            if (!snapshotId.IsValid)
-            {
-                return GeneratedEntityId.None;
-            }
-
-            if (!useLegacyIds)
-            {
-                return generatedDepositIds.Contains(snapshotId) ? snapshotId : GeneratedEntityId.None;
-            }
-
-            return currentIdByLegacyId.TryGetValue(snapshotId, out GeneratedEntityId currentId)
-                ? currentId
-                : GeneratedEntityId.None;
         }
 
 #if UNITY_EDITOR

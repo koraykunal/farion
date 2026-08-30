@@ -55,11 +55,6 @@ namespace Farion.UI.Gameplay
         string displayedInteractionPrompt;
         UiInputDeviceKind displayedPromptDevice = (UiInputDeviceKind)(-1);
 
-        public event Action<UiScreenId> ScreenChanged;
-        public UiScreenId CurrentScreen => currentScreen;
-        public bool IsUiFocused => screenRouter != null && screenRouter.HasOpenScreen;
-        public GameplaySessionController SessionController => sessionController;
-
         public void SetInteractionRaycaster(PlayerInteractionRaycaster raycaster)
         {
             interactionRaycaster = raycaster;
@@ -169,7 +164,7 @@ namespace Farion.UI.Gameplay
             {
                 if (screenRouter != null && screenRouter.CancelHandledThisFrame)
                 {
-                    SynchronizeScreenStateFromRouter(notify: true);
+                    SynchronizeScreenStateFromRouter();
                     return;
                 }
 
@@ -183,17 +178,16 @@ namespace Farion.UI.Gameplay
             }
         }
 
-        void SynchronizeScreenStateFromRouter(bool notify)
+        void SynchronizeScreenStateFromRouter()
         {
             if (screenRouter == null)
             {
                 return;
             }
 
-            UiScreenId routedState = screenRouter.TopScreenId != UiScreenId.None
+            currentScreen = screenRouter.TopScreenId != UiScreenId.None
                 ? screenRouter.TopScreenId
                 : UiScreenId.GameplayHud;
-            SetCurrentScreen(routedState, notify);
             ApplyCursorState(screenRouter.HasOpenScreen);
             RefreshHud();
         }
@@ -220,7 +214,7 @@ namespace Farion.UI.Gameplay
                 return;
             }
 
-            SynchronizeScreenStateFromRouter(notify: true);
+            SynchronizeScreenStateFromRouter();
         }
 
         public void ToggleInventory()
@@ -329,20 +323,20 @@ namespace Farion.UI.Gameplay
             ResolveReferences();
             if (screenRouter == null)
             {
-                SetCurrentScreen(UiScreenId.GameplayHud, notify: false);
+                currentScreen = UiScreenId.GameplayHud;
                 RefreshHud();
                 return;
             }
 
             screenRouter.Open(UiScreenId.GameplayHud, animated: false);
             inventoryPanel?.SetInventory(playerInventory);
-            SynchronizeScreenStateFromRouter(notify: false);
+            SynchronizeScreenStateFromRouter();
             RefreshHud();
         }
 
         void HandleTopScreenChanged(UiScreenId _)
         {
-            SynchronizeScreenStateFromRouter(notify: true);
+            SynchronizeScreenStateFromRouter();
         }
 
         public void BindCommandEvents(IGameplayCommandEvents commandEvents)
@@ -478,20 +472,6 @@ namespace Farion.UI.Gameplay
             return snapshot == null
                 ? "--/-- SLOTS"
                 : $"{snapshot.Stacks.Count:00}/{snapshot.SlotCapacity:00} SLOTS";
-        }
-
-        void SetCurrentScreen(UiScreenId screenId, bool notify)
-        {
-            if (currentScreen == screenId)
-            {
-                return;
-            }
-
-            currentScreen = screenId;
-            if (notify)
-            {
-                ScreenChanged?.Invoke(currentScreen);
-            }
         }
 
         void ApplyCursorState(bool uiFocused)

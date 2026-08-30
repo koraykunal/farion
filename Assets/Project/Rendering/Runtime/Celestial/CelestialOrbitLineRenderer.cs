@@ -40,16 +40,6 @@ namespace Farion.Rendering.Celestial
         bool refreshRequested;
         float nextRefreshTime;
 
-        public bool ShowOrbitLines
-        {
-            get => showOrbitLines;
-            set
-            {
-                showOrbitLines = value;
-                SetAllLinesVisible(showOrbitLines);
-            }
-        }
-
         public void SetSimulation(GravitySimulation value)
         {
             if (simulation == value)

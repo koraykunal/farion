@@ -13,10 +13,6 @@ namespace Farion.UI.Localization
         public const string EnglishLocaleCode = "en";
         public const string TurkishLocaleCode = "tr";
 
-        static readonly HashSet<string> missingEntryKeys = new(StringComparer.Ordinal);
-
-        public static IReadOnlyCollection<string> MissingEntryKeys => missingEntryKeys;
-
         public static string Get(string entryKey)
         {
             if (string.IsNullOrWhiteSpace(entryKey))
@@ -30,13 +26,7 @@ namespace Farion.UI.Localization
                 : null;
 
             string value = table?.GetEntry(entryKey)?.GetLocalizedString();
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                missingEntryKeys.Add(entryKey);
-                return entryKey;
-            }
-
-            return value;
+            return string.IsNullOrWhiteSpace(value) ? entryKey : value;
         }
 
         public static string ToDisplayUpper(string value)

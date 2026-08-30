@@ -13,7 +13,7 @@ namespace Farion.Gameplay.Inventory
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PersistentObjectId))]
-    public abstract class InventoryContainerComponent : MonoBehaviour, IInventoryContainer
+    public abstract class InventoryContainerComponent : MonoBehaviour
     {
         const string DefaultContainerId = "inventory.local";
 

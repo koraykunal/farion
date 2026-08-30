@@ -35,10 +35,9 @@ namespace Farion.Gameplay.Persistence
         public bool Apply(GameplaySaveData saveData, GameplaySaveContext context)
         {
             IReadOnlyList<ResourceDepositRuntimeSpawner> streamers = context.ResourceStreamers;
-            bool useLegacyIds = saveData.SourceSchemaVersion < 4;
             for (int i = 0; i < streamers.Count; i++)
             {
-                streamers[i]?.ApplyDeltaSnapshot(saveData.ResourceDepositDeltas, useLegacyIds);
+                streamers[i]?.ApplyDeltaSnapshot(saveData.ResourceDepositDeltas);
             }
 
             return true;

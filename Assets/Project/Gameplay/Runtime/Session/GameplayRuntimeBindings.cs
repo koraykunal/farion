@@ -47,7 +47,6 @@ namespace Farion.Gameplay.Session
         public PlayerInventory LocalPlayerInventory { get; }
         public PlayerPossessionController Possession { get; }
         public FleetRuntime Fleet { get; }
-        public FleetKnowledgeRuntime FleetKnowledge => Fleet?.Knowledge;
         public FleetStorageInventory FleetStorage => Fleet?.Storage;
         public ShuttleRuntimeBinding AssignedShuttle { get; }
         public IReadOnlyList<ResourceDepositRuntimeSpawner> ResourceStreamers =>

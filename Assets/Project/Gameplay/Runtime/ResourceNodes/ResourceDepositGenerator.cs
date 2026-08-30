@@ -63,7 +63,6 @@ namespace Farion.Gameplay.ResourceNodes
             ulong bodyIdentitySeed = StableHashUtility.Combine((ulong)(uint)context.PlanetSeed, body.PersistentId);
             GeneratedEntityId bodyId = SeedDerivationUtility.DeriveId(
                 bodyIdentitySeed,
-                GenerationVersion.Current,
                 UniverseEntityKind.CelestialBody,
                 body.PersistentId);
             List<ResourceSpawnRule> allowedRules = new();
@@ -129,12 +128,6 @@ namespace Farion.Gameplay.ResourceNodes
                         sampleIndex * 397 + clusterIndex,
                         selectedRule.Resource.NodeId);
                     int initialReserve = selectedRule.Resource.EvaluateInitialReserve(depositSeed);
-                    GeneratedEntityId legacyDepositId = SeedDerivationUtility.DeriveId(
-                        (ulong)(uint)resourceSeed,
-                        GenerationVersion.Current,
-                        UniverseEntityKind.ResourceDeposit,
-                        selectedRule.Resource.NodeId,
-                        sampleIndex * 397L + clusterIndex);
                     GeneratedEntityId depositId = SeedDerivationUtility.DeriveChildId(
                         bodyId,
                         UniverseEntityKind.ResourceDeposit,
@@ -142,7 +135,6 @@ namespace Farion.Gameplay.ResourceNodes
                         sampleIndex * 397L + clusterIndex);
                     results.Add(new ResourceDepositData(
                         depositId,
-                        legacyDepositId,
                         selectedRule.Resource,
                         depositBiome,
                         depositTerrainFeature,

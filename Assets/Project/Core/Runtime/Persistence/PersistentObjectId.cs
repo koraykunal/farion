@@ -33,7 +33,7 @@ namespace Farion.Core.Persistence
 
         public static bool IsValid(string id)
         {
-            return IdentifierText.IsValidRaw(id);
+            return IdentifierText.IsValid(IdentifierText.Normalize(id));
         }
     }
 }

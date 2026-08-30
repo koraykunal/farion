@@ -355,14 +355,7 @@ namespace Farion.Multiplayer.Player
                 }
             }
 
-            bool simulate = active;
-            if (!simulate && !body.isKinematic)
-            {
-                body.linearVelocity = Vector3.zero;
-                body.angularVelocity = Vector3.zero;
-            }
-
-            body.isKinematic = !simulate;
+            body.isKinematic = !active;
             if (capsule != null)
             {
                 capsule.enabled = active;

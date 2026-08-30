@@ -21,19 +21,6 @@ namespace Farion.Gameplay.Flight
         [SerializeField] bool applyDrag = true;
         [SerializeField] bool dampAngularVelocity = true;
 
-        [Header("Runtime Ocean")]
-        [SerializeField] bool hasOcean;
-        [SerializeField] bool touchingWater;
-        [SerializeField] bool centerBelowWater;
-        [SerializeField] float submergedFraction;
-        [SerializeField] float waterDepth;
-        [SerializeField] float waterEntrySpeed;
-        [SerializeField] float buoyancyAcceleration;
-        [SerializeField] float dragAcceleration;
-        [SerializeField] float pressureStress;
-        [SerializeField] bool unsafeWaterEntry;
-        [SerializeField] bool crushingDepth;
-
         Rigidbody cachedRigidbody;
         ISpacecraftPhysicsBody offlinePhysicsBody;
         SpacecraftOceanInteractionSample currentInteraction;
@@ -101,7 +88,6 @@ namespace Farion.Gameplay.Flight
                     celestialProbe != null
                         ? celestialProbe.CurrentSample
                         : default);
-                ApplyRuntimeState();
                 return;
             }
 
@@ -129,7 +115,6 @@ namespace Farion.Gameplay.Flight
                 frame,
                 submergedSum / buoyancyPointCount,
                 buoyancySum);
-            ApplyRuntimeState();
         }
 
         void ApplyInteractionForces(
@@ -181,21 +166,6 @@ namespace Farion.Gameplay.Flight
                     buoyancyWorldPoints[i],
                     ForceMode.Acceleration);
             }
-        }
-
-        void ApplyRuntimeState()
-        {
-            hasOcean = currentInteraction.HasOcean;
-            touchingWater = currentInteraction.IsTouchingWater;
-            centerBelowWater = currentInteraction.IsCenterBelowWater;
-            submergedFraction = currentInteraction.SubmergedFraction;
-            waterDepth = currentInteraction.WaterDepth;
-            waterEntrySpeed = currentInteraction.WaterEntrySpeed;
-            buoyancyAcceleration = currentInteraction.BuoyancyAcceleration.magnitude;
-            dragAcceleration = currentInteraction.DragAcceleration.magnitude;
-            pressureStress = currentInteraction.PressureStress;
-            unsafeWaterEntry = currentInteraction.UnsafeWaterEntry;
-            crushingDepth = currentInteraction.CrushingDepth;
         }
 
         void ResolveComponents()

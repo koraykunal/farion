@@ -260,14 +260,9 @@ its first playable use case is implemented.
 
 `FleetRuntime` is the authored shared-progression owner. Its persistent Fleet
 id determines the Fleet Storage identity, and it references the co-located
-`FleetStorageInventory` and `FleetKnowledgeRuntime`.
-
-`FleetKnowledgeState` stores Fleet-owned capabilities, blueprints, and
-discoveries as independent id sets with one monotonic revision. Fleet Storage
-owns shared material stacks.
-
-Fleet Knowledge does not imply that a research terminal, research tree, or
-crafting system currently exists.
+`FleetStorageInventory`. Fleet Storage owns shared material stacks. A knowledge
+or research vertical does not exist yet; it will be added with its first
+playable unlock feature.
 
 Production spacecraft prefabs use the same authored composition roots:
 `VisualRoot`, `CollisionRoot`, `RuntimeRoot`, and `Anchors`. Physical colliders

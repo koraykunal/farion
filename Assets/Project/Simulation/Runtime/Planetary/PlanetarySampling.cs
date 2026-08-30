@@ -188,28 +188,6 @@ namespace Farion.Simulation.Planetary
             float persistence,
             float power,
             float gain,
-            int seed)
-        {
-            return SampleRidged01(
-                direction,
-                scale,
-                octaves,
-                lacunarity,
-                persistence,
-                power,
-                gain,
-                seed,
-                Vector3.zero);
-        }
-
-        public static float SampleRidged01(
-            Vector3 direction,
-            float scale,
-            int octaves,
-            float lacunarity,
-            float persistence,
-            float power,
-            float gain,
             int seed,
             Vector3 domainOffset)
         {

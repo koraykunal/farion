@@ -111,11 +111,6 @@ namespace Farion.Rendering.Celestial
                 Mathf.Min(altitude, Mathf.Max(0.01f, baseRadius) * ExitRadiusFraction));
         }
 
-        public float ResolveTriangleEdgeMeters(float baseRadius, int level)
-        {
-            return FaceArcLength(baseRadius) / ((1 << Mathf.Max(0, level)) * PatchResolution);
-        }
-
         int ResolveLevelForTriangleEdge(float baseRadius, float triangleEdgeMeters)
         {
             float patchesPerFaceEdge =

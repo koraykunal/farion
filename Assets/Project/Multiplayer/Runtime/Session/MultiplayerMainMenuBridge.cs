@@ -1,4 +1,5 @@
 using Farion.Core.Persistence;
+using Farion.Multiplayer.Spawning;
 using Farion.UI.Feedback;
 using Farion.UI.Localization;
 using Farion.UI.MainMenu;
@@ -10,8 +11,6 @@ namespace Farion.Multiplayer.Session
     [RequireComponent(typeof(UiMainMenuController))]
     public sealed class MultiplayerMainMenuBridge : MonoBehaviour
     {
-        const int MaximumCoopPlayers = 4;
-
         [SerializeField] UiMainMenuController mainMenu;
         [SerializeField] UiCoopScreenPresenter coopScreen;
 
@@ -85,7 +84,7 @@ namespace Farion.Multiplayer.Session
             if (MultiplayerLobbyGateway.IsAvailable)
             {
                 MultiplayerLobbyGateway.Service.HostLobby(
-                    MaximumCoopPlayers,
+                    MultiplayerPlayerSpawner.MaximumPlayers,
                     OnLobbyHosted);
                 return;
             }

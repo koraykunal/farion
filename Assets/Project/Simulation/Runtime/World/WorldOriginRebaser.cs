@@ -36,8 +36,6 @@ namespace Farion.Simulation.World
         public Vector3 AccumulatedOriginOffset => accumulatedOriginOffset;
         public Vector3 LastOriginOffset => lastOriginOffset;
         public int ShiftCount => shiftCount;
-        public int LastShiftFrame => lastShiftFrame;
-        public float TrackingDistanceFromOrigin => trackingDistanceFromOrigin;
         public Transform TrackingTarget => trackingTarget;
         public event Action<Vector3> Rebasing;
         public event Action<Vector3> Rebased;

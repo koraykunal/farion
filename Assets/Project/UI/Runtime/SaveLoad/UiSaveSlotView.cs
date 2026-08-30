@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Farion.Core.Persistence;
 using Farion.UI.Common;
 using Farion.UI.Foundation;
@@ -32,13 +32,12 @@ namespace Farion.UI.SaveLoad
 
         UiPointerFocusState focusState;
         bool current;
+        SaveGameSlotSummary summary;
 
         UiTheme Theme => theme = UiTheme.Resolve(theme);
 
         public event Action<UiSaveSlotView> Focused;
         public event Action<UiSaveSlotView> Submitted;
-        public SaveGameSlotSummary Summary { get; private set; }
-        public int DisplayIndex { get; private set; }
 
         protected override void Awake()
         {
@@ -75,8 +74,7 @@ namespace Farion.UI.SaveLoad
             string timestamp,
             string state)
         {
-            Summary = summary;
-            DisplayIndex = displayIndex;
+            this.summary = summary;
             SetText(indexText, displayIndex.ToString("00"));
             SetText(titleText, title);
             SetText(timestampText, timestamp);
@@ -182,7 +180,7 @@ namespace Farion.UI.SaveLoad
             {
                 titleText.color = emphasized
                     ? primary
-                    : Summary.HasData
+                    : summary.HasData
                         ? new Color(primary.r, primary.g, primary.b, 0.82f)
                         : secondary;
             }
@@ -200,7 +198,7 @@ namespace Farion.UI.SaveLoad
             if (stateMarker != null)
             {
                 Color markerColor = ResolveStateColor(emphasized);
-                markerColor.a = Summary.HasData ? 0.9f : 0.24f;
+                markerColor.a = summary.HasData ? 0.9f : 0.24f;
                 stateMarker.color = markerColor;
                 stateMarker.raycastTarget = false;
             }
@@ -211,7 +209,7 @@ namespace Farion.UI.SaveLoad
                     ? 0.94f
                     : focused
                         ? 0.58f
-                        : Summary.HasData
+                        : summary.HasData
                             ? 0.15f
                             : 0.08f;
                 selectionFrame.color = focus;
@@ -224,7 +222,7 @@ namespace Farion.UI.SaveLoad
             Color secondary = Theme.SecondaryText;
             Color supporting = Theme.SupportingText;
 
-            return Summary.State switch
+            return summary.State switch
             {
                 SaveGameSlotState.Unsupported => Theme.Caution,
                 SaveGameSlotState.Invalid => Theme.Critical,

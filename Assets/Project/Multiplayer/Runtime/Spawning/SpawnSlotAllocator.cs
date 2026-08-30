@@ -12,8 +12,6 @@ namespace Farion.Multiplayer.Spawning
             this.capacity = capacity > 0 ? capacity : 1;
         }
 
-        public int Count => slotsByConnection.Count;
-
         public bool TryGetReserved(int connectionId, out int slot)
         {
             return slotsByConnection.TryGetValue(connectionId, out slot);

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Farion.Core.Identity;
 using Farion.Gameplay.Domain.Systems;
-using Farion.Gameplay.Fleet;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.ResourceNodes;
@@ -14,11 +13,10 @@ namespace Farion.Gameplay.Persistence
     {
         readonly List<CelestialBodySnapshot> celestialBodies = new();
         readonly List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
-        PlayerInventorySnapshot playerInventory;
+        InventoryContainerSnapshot playerInventory;
         InventoryContainerSnapshot shuttleCargo;
         InventoryContainerSnapshot fleetStorage;
         PlayerPossessionSnapshot playerPossession;
-        FleetKnowledgeSnapshot fleetKnowledge;
         WorldOriginSnapshot worldOrigin;
         ResourcePool shuttleFuel;
         ResourcePool shuttleHull;
@@ -44,7 +42,7 @@ namespace Farion.Gameplay.Persistence
             CelestialLayoutHash = layoutHash;
         }
 
-        public void SetPlayerInventory(PlayerInventorySnapshot snapshot)
+        public void SetPlayerInventory(InventoryContainerSnapshot snapshot)
         {
             playerInventory = snapshot;
         }
@@ -62,11 +60,6 @@ namespace Farion.Gameplay.Persistence
         public void SetPlayerPossession(PlayerPossessionSnapshot snapshot)
         {
             playerPossession = snapshot;
-        }
-
-        public void SetFleetKnowledge(FleetKnowledgeSnapshot snapshot)
-        {
-            fleetKnowledge = snapshot;
         }
 
         public void SetWorldOrigin(WorldOriginSnapshot snapshot)
@@ -95,7 +88,6 @@ namespace Farion.Gameplay.Persistence
                 shuttleCargo,
                 fleetStorage,
                 playerPossession,
-                fleetKnowledge,
                 resourceDepositDeltas);
             snapshot.SetShuttleFuel(shuttleFuel);
             snapshot.SetShuttleHull(shuttleHull);

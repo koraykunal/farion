@@ -7,7 +7,7 @@ namespace Farion.Gameplay.Commands
     {
         public static ResourceHarvestResult CanExecute(
             ResourceNodeInteractable source,
-            IInventoryContainer destination)
+            InventoryContainerComponent destination)
         {
             if (source == null)
             {
@@ -35,7 +35,7 @@ namespace Farion.Gameplay.Commands
 
         public static ResourceHarvestResult TryExecute(
             ResourceNodeInteractable source,
-            IInventoryContainer destination)
+            InventoryContainerComponent destination)
         {
             ResourceHarvestResult validation = CanExecute(source, destination);
             if (validation != ResourceHarvestResult.Succeeded)

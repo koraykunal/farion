@@ -229,7 +229,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a98d2c67566d4fdda07c7fee87887c6d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Character.KeyboardFirstPersonInput
 --- !u!114 &101437579 stripped
 MonoBehaviour:
@@ -1139,7 +1139,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1148478148}
   generationProfile: {fileID: 11400000, guid: dfcdb85c483641668d1217535da4ccc2, type: 2}
@@ -1200,6 +1200,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1148478153}
+  surfacePatchSystem: {fileID: 0}
   observerCamera: {fileID: 0}
   applyInEditMode: 1
 --- !u!114 &1148478151
@@ -1538,6 +1539,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1477076281}
+  surfacePatchSystem: {fileID: 0}
   observerCamera: {fileID: 0}
   applyInEditMode: 1
 --- !u!114 &1477076279
@@ -1764,7 +1766,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1477076283}
   generationProfile: {fileID: 11400000, guid: 6d2813a2700548129c0c6d18e8009f6d, type: 2}
@@ -2370,6 +2372,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1772746499}
+  surfacePatchSystem: {fileID: 1772746494}
   observerCamera: {fileID: 0}
   applyInEditMode: 1
 --- !u!114 &1772746494
@@ -2389,6 +2392,8 @@ MonoBehaviour:
   targetCamera: {fileID: 0}
   collisionObserverSource: {fileID: 0}
   surfaceModeActive: 0
+  surfaceRenderActive: 0
+  surfaceRenderRequested: 0
   collisionAuthority: 0
   localCollisionCoverageReady: 0
   collisionObserverSpeed: 0
@@ -2458,7 +2463,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1772746501}
   generationProfile: {fileID: 11400000, guid: a9d263dcb6044288a2c0c264ca7a5880, type: 2}
@@ -2713,6 +2718,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialScaledSpaceVisual
   profile: {fileID: 11400000, guid: f45bf65f4cc94b258b8da314a7518303, type: 2}
   bodyVisual: {fileID: 1781217931}
+  surfacePatchSystem: {fileID: 1781217940}
   observerCamera: {fileID: 0}
   applyInEditMode: 1
 --- !u!114 &1781217930
@@ -2927,7 +2933,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b0d802c820549efb40fb77febee3aa3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetSurfaceModel
   body: {fileID: 1781217933}
   generationProfile: {fileID: 0}
@@ -2945,13 +2951,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d24e35f46a784b89ab12c3d4e5f60718, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.CelestialSurfacePatchSystem
   profile: {fileID: 11400000, guid: a34f56b78c904d12ae34f56b78c90d12, type: 2}
   bodyVisual: {fileID: 1781217931}
   targetCamera: {fileID: 0}
   collisionObserverSource: {fileID: 0}
   surfaceModeActive: 0
+  surfaceRenderActive: 0
+  surfaceRenderRequested: 0
   collisionAuthority: 0
   localCollisionCoverageReady: 0
   collisionObserverSpeed: 0
@@ -2980,7 +2988,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1829898729}
   - component: {fileID: 1829898728}
-  - component: {fileID: 1829898727}
   - component: {fileID: 1829898726}
   - component: {fileID: 1829898725}
   - component: {fileID: 1829898724}
@@ -3006,7 +3013,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetRuntime
   persistentId: {fileID: 1829898724}
-  knowledge: {fileID: 1829898727}
   storage: {fileID: 1829898723}
 --- !u!114 &1829898723
 MonoBehaviour:
@@ -3074,18 +3080,6 @@ MonoBehaviour:
   flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
   runtimeRoot: {fileID: 1829898725}
   saveCoordinator: {fileID: 1829898728}
---- !u!114 &1829898727
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1829898721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 501e0ea991a147569d712701c20e56e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Fleet.FleetKnowledgeRuntime
 --- !u!114 &1829898728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3161,6 +3155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f51b22b953e42e9a984584a2737ed88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.KeyboardBoardingInput
+  controlLock: {fileID: 0}
 --- !u!114 &1917591035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3392,6 +3387,7 @@ MonoBehaviour:
   - {fileID: 1148478148}
   referenceFrameVelocity: {x: 0, y: 0, z: 0}
   referenceFrameAcceleration: {x: 0, y: 0, z: 0}
+  referenceFrameAngularVelocity: {x: 0, y: 0, z: 0}
 --- !u!4 &1996413353
 Transform:
   m_ObjectHideFlags: 0

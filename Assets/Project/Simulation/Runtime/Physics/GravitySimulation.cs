@@ -44,10 +44,8 @@ namespace Farion.Simulation.Physics
 
         public bool IntegrationEnabled { get; private set; } = true;
         public double SimulationTime => simulationTime;
-        public bool UsesExternalTimeSource => externalTimeSource;
 
         public IReadOnlyList<CelestialBody> Bodies => simulationBodies;
-        public GravitySettings Settings => settings;
         public float GravitationalConstant => settings != null ? settings.GravitationalConstant : DefaultGravitationalConstant;
         public float MinimumInteractionDistance => settings != null && settings.UseMinimumInteractionDistance ? settings.MinimumInteractionDistance : 0f;
         public float MaxAcceleration => settings != null && settings.ClampAcceleration ? settings.MaxAcceleration : 0f;
@@ -666,42 +664,6 @@ namespace Farion.Simulation.Physics
 
             float distance = Vector3.Distance(body.Position, attractor.Position);
             return distance * Mathf.Pow(body.Mass / attractor.Mass, 0.4f);
-        }
-
-        public GravitySample FindNearestSurface(Vector3 point)
-        {
-            CelestialBody nearestBody = null;
-            CelestialSurfaceSample nearestSurface = default;
-            float nearestSurfaceDistance = float.PositiveInfinity;
-            Vector3 acceleration = Vector3.zero;
-
-            foreach (CelestialBody body in simulationBodies)
-            {
-                if (body == null)
-                {
-                    continue;
-                }
-
-                CelestialSurfaceSample surfaceSample = body.SampleSurface(point);
-                if (surfaceSample.SurfaceDistance >= nearestSurfaceDistance)
-                {
-                    continue;
-                }
-
-                nearestBody = body;
-                nearestSurface = surfaceSample;
-                nearestSurfaceDistance = surfaceSample.SurfaceDistance;
-                acceleration = body.ParticipatesInNBody ? CalculateAccelerationFromBody(point, body) : Vector3.zero;
-            }
-
-            return nearestBody != null
-                ? new GravitySample(
-                    nearestBody,
-                    acceleration,
-                    nearestSurface.CenterDistance,
-                    nearestSurface.SurfaceDistance,
-                    nearestSurface.Normal)
-                : GravitySample.Empty;
         }
 
         public void CaptureSnapshots(List<CelestialBodySnapshot> results)

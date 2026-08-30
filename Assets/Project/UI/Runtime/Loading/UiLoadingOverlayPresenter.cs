@@ -40,7 +40,6 @@ namespace Farion.UI.Loading
             UiLoadingPresentation.PreparingExpedition;
         Coroutine transitionRoutine;
 
-        public bool IsTransitionActive => transitionRoutine != null;
         public bool HasCompletePresentation =>
             systemLabelText != null &&
             titleText != null &&

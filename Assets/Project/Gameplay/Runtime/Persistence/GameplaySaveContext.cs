@@ -32,7 +32,6 @@ namespace Farion.Gameplay.Persistence
         public PlayerPossessionController PossessionController => Bindings?.Possession;
         public FleetRuntime Fleet => Bindings?.Fleet;
         public FleetStorageInventory FleetStorage => Bindings?.FleetStorage;
-        public FleetKnowledgeRuntime FleetKnowledge => Bindings?.FleetKnowledge;
         public ShuttleRuntimeBinding Shuttle => Bindings?.AssignedShuttle;
         public SpacecraftMotor ShuttleMotor =>
             Bindings?.AssignedShuttle != null

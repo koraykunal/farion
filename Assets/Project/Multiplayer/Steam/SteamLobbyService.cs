@@ -19,7 +19,6 @@ namespace Farion.Multiplayer.Steam
         CSteamID currentLobby;
 
         public bool IsAvailable => FarionSteamRuntime.IsReady;
-        public bool IsInLobby => currentLobby.IsValid();
         public string LocalDisplayName => IsAvailable
             ? SteamFriends.GetPersonaName()
             : string.Empty;

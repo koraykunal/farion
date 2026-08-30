@@ -46,15 +46,11 @@ namespace Farion.Simulation.Celestial
                 : -RadialUp;
             GravityUp = -GravityDirection;
             LocalUp = GravityUp.sqrMagnitude > 0.0001f ? GravityUp.normalized : RadialUp;
-            LocalEast = BuildLocalEast(LocalUp);
-            LocalNorth = Vector3.Cross(LocalUp, LocalEast).normalized;
             SpeedRelativeToBody = RelativeVelocity.magnitude;
             RadialVelocity = Vector3.Dot(RelativeVelocity, RadialUp);
-            TangentialVelocity = Vector3.ProjectOnPlane(RelativeVelocity, RadialUp);
-            TangentialSpeed = TangentialVelocity.magnitude;
+            TangentialSpeed = Vector3.ProjectOnPlane(RelativeVelocity, RadialUp).magnitude;
             SurfaceNormalVelocity = Vector3.Dot(SurfaceRelativeVelocity, SurfaceNormal);
-            SurfaceTangentialVelocity = Vector3.ProjectOnPlane(SurfaceRelativeVelocity, SurfaceNormal);
-            SurfaceTangentialSpeed = SurfaceTangentialVelocity.magnitude;
+            SurfaceTangentialSpeed = Vector3.ProjectOnPlane(SurfaceRelativeVelocity, SurfaceNormal).magnitude;
 
             HasOcean = environment.HasOcean;
             OceanAltitude = HasOcean
@@ -93,11 +89,7 @@ namespace Farion.Simulation.Celestial
         public Vector3 GravityDirection { get; }
         public Vector3 GravityUp { get; }
         public Vector3 LocalUp { get; }
-        public Vector3 LocalEast { get; }
-        public Vector3 LocalNorth { get; }
         public Vector3 RadialUp { get; }
-        public Vector3 TangentialVelocity { get; }
-        public Vector3 SurfaceTangentialVelocity { get; }
         public float CenterDistance { get; }
         public float SurfaceAltitude { get; }
         public float SurfaceSlopeAngleDegrees { get; }
@@ -115,7 +107,6 @@ namespace Farion.Simulation.Celestial
         public float AtmosphereAltitude { get; }
         public bool IsInsideAtmosphere { get; }
         public float AtmosphereNormalizedDepth { get; }
-        public bool IsDescending => RadialVelocity < 0f;
         public bool IsApproachingSurface => SurfaceNormalVelocity < 0f;
 
         public static CelestialFrameSample Empty(Vector3 position, Vector3 velocity)
@@ -136,15 +127,5 @@ namespace Farion.Simulation.Celestial
                 CelestialEnvironmentSample.Empty(null));
         }
 
-        static Vector3 BuildLocalEast(Vector3 up)
-        {
-            Vector3 east = Vector3.ProjectOnPlane(Vector3.forward, up);
-            if (east.sqrMagnitude <= 0.0001f)
-            {
-                east = Vector3.ProjectOnPlane(Vector3.right, up);
-            }
-
-            return east.sqrMagnitude > 0.0001f ? east.normalized : Vector3.right;
-        }
     }
 }

@@ -27,17 +27,6 @@ namespace Farion.Gameplay.ResourceNodes
             return UnityEngine.Mathf.Max(0, deposit.InitialReserve - GetExtractedAmount(deposit.DepositId));
         }
 
-        public void RecordExtraction(GeneratedEntityId depositId, int amount)
-        {
-            if (!depositId.IsValid || amount <= 0)
-            {
-                return;
-            }
-
-            int current = GetExtractedAmount(depositId);
-            extractedAmountByDeposit[depositId] = current + amount;
-        }
-
         public void RecordExtraction(GeneratedEntityId depositId, int amount, int maxExtractedAmount)
         {
             if (!depositId.IsValid || amount <= 0)
@@ -53,46 +42,6 @@ namespace Farion.Gameplay.ResourceNodes
             }
 
             extractedAmountByDeposit[depositId] = next;
-        }
-
-        public void Apply(ResourceDepositDelta delta)
-        {
-            if (delta.DepositId.IsValid && !delta.IsEmpty)
-            {
-                extractedAmountByDeposit[delta.DepositId] = delta.ExtractedAmount;
-            }
-        }
-
-        public void Apply(IEnumerable<ResourceDepositDelta> deltas)
-        {
-            if (deltas == null)
-            {
-                return;
-            }
-
-            foreach (ResourceDepositDelta delta in deltas)
-            {
-                Apply(delta);
-            }
-        }
-
-        public void CopyDeltas(List<ResourceDepositDelta> results)
-        {
-            if (results == null)
-            {
-                return;
-            }
-
-            results.Clear();
-            foreach (KeyValuePair<GeneratedEntityId, int> pair in extractedAmountByDeposit)
-            {
-                if (pair.Value > 0)
-                {
-                    results.Add(new ResourceDepositDelta(pair.Key, pair.Value));
-                }
-            }
-
-            results.Sort((a, b) => a.DepositId.Value.CompareTo(b.DepositId.Value));
         }
 
         public void CaptureSnapshot(List<ResourceDepositDeltaSnapshot> results)
@@ -136,19 +85,6 @@ namespace Farion.Gameplay.ResourceNodes
             {
                 extractedAmountByDeposit[snapshot.DepositId] = snapshot.ExtractedAmount;
             }
-        }
-
-        public bool TryGetDelta(GeneratedEntityId depositId, out ResourceDepositDelta delta)
-        {
-            int extractedAmount = GetExtractedAmount(depositId);
-            if (!depositId.IsValid || extractedAmount <= 0)
-            {
-                delta = default;
-                return false;
-            }
-
-            delta = new ResourceDepositDelta(depositId, extractedAmount);
-            return true;
         }
 
         public void Clear()

@@ -36,8 +36,6 @@ namespace Farion.UI.Navigation
         int cancelHandledFrame = -1;
         readonly List<IUiCancelConsumer> cancelConsumers = new();
 
-        public event Action<UiScreenId> ScreenOpened;
-        public event Action<UiScreenId> ScreenClosed;
         public event Action<UiScreenId> TopScreenChanged;
 
         public UiScreenId TopScreenId =>
@@ -124,7 +122,6 @@ namespace Farion.UI.Navigation
             if (next.Layer == UiScreenLayer.Hud)
             {
                 next.SetVisible(true, animated);
-                ScreenOpened?.Invoke(next.ScreenId);
                 return true;
             }
 
@@ -153,16 +150,8 @@ namespace Farion.UI.Navigation
             next.SetVisible(true, animated);
             focusController?.Focus(next);
             UpdateControlLock();
-            ScreenOpened?.Invoke(next.ScreenId);
             NotifyTopChanged();
             return true;
-        }
-
-        public bool Replace(UiScreenId screenId)
-        {
-            EnsureInitialized();
-            CloseAll(animated: Application.isPlaying);
-            return Open(screenId, Application.isPlaying);
         }
 
         public bool Close(UiScreenId screenId)
@@ -294,7 +283,6 @@ namespace Farion.UI.Navigation
 
             focusController?.Restore(closing.PreviousSelection, fallback);
             UpdateControlLock();
-            ScreenClosed?.Invoke(closing.Screen.ScreenId);
             NotifyTopChanged();
         }
 

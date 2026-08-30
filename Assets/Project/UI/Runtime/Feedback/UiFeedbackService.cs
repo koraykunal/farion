@@ -74,7 +74,6 @@ namespace Farion.UI.Feedback
         UiTheme Theme => theme = UiTheme.Resolve(theme);
 
         public event Action<string, UiFeedbackSeverity> MessageShown;
-        public bool IsPresenting => routine != null;
         public bool IncludesSeverityLabel => includeSeverityLabel;
 
         void Reset()

@@ -31,7 +31,6 @@ namespace Farion.Multiplayer.World
         int startingBodyStableId;
         bool subscribed;
 
-        public int LoadedZoneCount => zones.Count;
 
         void Awake()
         {

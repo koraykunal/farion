@@ -994,7 +994,11 @@ namespace Farion.Rendering.Celestial
                 }
 
                 collisionBakesThisFrame++;
-                CelestialMeshColliderBaker.BakeImmediate(patch.Mesh);
+                Mesh patchMesh = patch.Mesh;
+                if (patchMesh != null && patchMesh.vertexCount > 0)
+                {
+                    Physics.BakeMesh(patchMesh.GetEntityId(), false);
+                }
             }
 
             patch.CollisionBaked = true;

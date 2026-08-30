@@ -504,9 +504,9 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            if (bakeMeshCollider)
+            if (bakeMeshCollider && sourceMesh.vertexCount > 0)
             {
-                CelestialMeshColliderBaker.BakeImmediate(sourceMesh);
+                Physics.BakeMesh(sourceMesh.GetEntityId(), false);
             }
 
             meshCollider.sharedMesh = sourceMesh;

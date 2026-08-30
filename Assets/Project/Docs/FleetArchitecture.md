@@ -58,16 +58,14 @@ Implemented now:
 - `PlayerInventory`, `ShuttleCargoInventory`, and `FleetStorageInventory`
   Unity adapters;
 - explicit `ShuttleRuntimeBinding` for shuttle identity, motor, and cargo;
-- authored `FleetRuntime` identity with Fleet Storage and Fleet Knowledge;
-- `FleetKnowledgeState` and `FleetKnowledgeRuntime`;
+- authored `FleetRuntime` identity with Fleet Storage;
 - resource harvesting through the session command gateway;
 - session-authorized, atomic assigned-shuttle cargo unload;
 - an authored Capital Ship Fleet prefab with the imported model, box collision,
   navigation, docking, unload, artificial-gravity, and interaction boundaries;
 - one typed processing recipe and atomic Fleet-Storage exchange;
-- schema-6 save/load for local inventory, shuttle cargo, Fleet Storage, and
-  Fleet Knowledge;
-- migration defaults for schema 3, 4, and 5 saves.
+- current-schema save/load for local inventory, shuttle cargo, and Fleet
+  Storage; only the current schema version is readable.
 
 Not implemented now:
 
@@ -93,12 +91,6 @@ state and revision unchanged.
 `ShuttleRuntimeBinding` owns the persistent shuttle id and references its
 physical motor and cargo adapter. It is composition, not a general shuttle-stat
 aggregate.
-
-### Fleet Knowledge
-
-`FleetKnowledgeState` owns capability, blueprint, and discovery ids. Unlocks are
-monotonic and idempotent. It does not spend resources or select a technology
-branch by itself.
 
 ### Fleet Runtime
 
@@ -150,14 +142,13 @@ real scanner upgrade may own range and power requirements; a general
 
 ## Persistence Direction
 
-Schema `6` is the current baseline; schemas `3`, `4`, and `5` remain readable.
-Future Fleet save work requires:
+Only the current schema version is readable; older saves regenerate. Future
+Fleet save work requires:
 
 1. a live authored runtime owner;
 2. immutable snapshot DTOs;
-3. explicit migration defaults from schema `5`;
-4. validation of Fleet, shuttle, storage, and knowledge cross-references;
-5. atomic replacement of live state only after full validation.
+3. validation of Fleet, shuttle, and storage cross-references;
+4. atomic replacement of live state only after full validation.
 
 Persistence follows the playable ownership graph. It does not define that graph
 in advance.

@@ -3,7 +3,7 @@ using Farion.Core.Identity;
 
 namespace Farion.Gameplay.Domain.Identity
 {
-    public readonly struct DefinitionId : IEquatable<DefinitionId>, IComparable<DefinitionId>
+    public readonly struct DefinitionId : IEquatable<DefinitionId>
     {
         readonly string value;
 
@@ -36,11 +36,6 @@ namespace Farion.Gameplay.Domain.Identity
             return true;
         }
 
-        public static string Normalize(string value)
-        {
-            return IdentifierText.Normalize(value);
-        }
-
         public static bool operator ==(DefinitionId left, DefinitionId right)
         {
             return left.Equals(right);
@@ -64,11 +59,6 @@ namespace Farion.Gameplay.Domain.Identity
         public override int GetHashCode()
         {
             return StringComparer.Ordinal.GetHashCode(Value);
-        }
-
-        public int CompareTo(DefinitionId other)
-        {
-            return string.Compare(Value, other.Value, StringComparison.Ordinal);
         }
 
         public override string ToString()

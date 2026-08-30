@@ -172,12 +172,6 @@ namespace Farion.Simulation.Planetary
             Changed?.Invoke();
         }
 
-        public void SetShapeProfile(CelestialShapeProfile shape)
-        {
-            shapeProfile = shape;
-            Changed?.Invoke();
-        }
-
         public bool TrySampleSurface(CelestialBody sourceBody, Vector3 position, out CelestialSurfaceSample sample)
         {
             sample = default;

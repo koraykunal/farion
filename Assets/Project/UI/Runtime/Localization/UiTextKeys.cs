@@ -159,19 +159,13 @@ namespace Farion.UI.Localization
         public const string SettingsSectionDisplay = "settings.section.display";
         public const string SettingsSectionInterface = "settings.section.interface";
         public const string SettingsSubtitle = "settings.subtitle";
-        public const string SettingsSubtitleSizeDescription = "settings.subtitle_size.description";
-        public const string SettingsSubtitleSizeTitle = "settings.subtitle_size.title";
-        public const string SettingsSubtitlesDescription = "settings.subtitles.description";
-        public const string SettingsSubtitlesTitle = "settings.subtitles.title";
         public const string SettingsTitle = "settings.title";
         public const string SettingsVSyncDescription = "settings.display.vsync.description";
         public const string SettingsVSyncTitle = "settings.display.vsync.title";
         public const string ValueBorderless = "value.borderless";
         public const string ValueFullscreen = "value.fullscreen";
-        public const string ValueLarge = "value.large";
         public const string ValueOff = "value.off";
         public const string ValueOn = "value.on";
-        public const string ValueStandard = "value.standard";
         public const string ValueWindowed = "value.windowed";
     }
 }

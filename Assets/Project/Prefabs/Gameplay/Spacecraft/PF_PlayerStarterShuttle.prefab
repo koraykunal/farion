@@ -108,12 +108,6 @@ MonoBehaviour:
   heatGlowColor: {r: 2.6, g: 0.42, b: 0.06, a: 1}
   heatGlowPower: 2.2
   heatGlowResponse: 1.6
-  debugNozzleLoad: 0
-  debugSideLoad: 0
-  debugIgnitionFlare: 0
-  debugHeatGlow: 0
-  debugSteeringEuler: {x: 0, y: 0, z: 0}
-  debugPlumeBend: {x: 0, y: 0, z: 0}
 --- !u!1 &27378606692848115
 GameObject:
   m_ObjectHideFlags: 0
@@ -1381,18 +1375,6 @@ MonoBehaviour:
   profile: {fileID: 11400000, guid: 9ea8bc6b4a6d402396a4d2dfc86d3a9b, type: 2}
   celestialProbe: {fileID: 7190813019005924918}
   surfaceContactProbe: {fileID: 4585842710350534113}
-  phase: 0
-  risks: 1
-  normalizedStress: 0
-  verticalSpeedLimit: 0
-  tangentialSpeedLimit: 0
-  surfaceSlopeAngle: 0
-  surfaceSlopeLimit: 0
-  safeTouchdownWindow: 0
-  impactRisk: 0
-  hasSurfaceContact: 0
-  touchdownConfirmed: 0
-  unsafeSurfaceContact: 0
 --- !u!114 &4585842710350534113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1453,22 +1435,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftOrbitComputer
   simulation: {fileID: 0}
   celestialProbe: {fileID: 7190813019005924918}
-  regime: 0
-  gravitationalParameter: 0
-  radius: 0
-  altitude: 0
-  speed: 0
-  radialVelocity: 0
-  tangentialSpeed: 0
-  circularVelocity: 0
-  escapeVelocity: 0
-  specificOrbitalEnergy: 0
-  eccentricity: 0
-  semiMajorAxis: 0
-  periapsisAltitude: 0
-  apoapsisAltitude: 0
-  orbitalPeriod: 0
-  flightPathAngleDegrees: 0
 --- !u!114 &5218897094659780235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1484,12 +1450,6 @@ MonoBehaviour:
   landingComputer: {fileID: 3477643489446496465}
   celestialProbe: {fileID: 7190813019005924918}
   motor: {fileID: 3359784979145954321}
-  level: 0
-  command: 0
-  advisory: NO FRAME
-  verticalSpeedRatio: 0
-  tangentialSpeedRatio: 0
-  stress: 0
 --- !u!114 &789528504066411760
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1507,17 +1467,6 @@ MonoBehaviour:
   applyBuoyancy: 1
   applyDrag: 1
   dampAngularVelocity: 1
-  hasOcean: 0
-  touchingWater: 0
-  centerBelowWater: 0
-  submergedFraction: 0
-  waterDepth: 0
-  waterEntrySpeed: 0
-  buoyancyAcceleration: 0
-  dragAcceleration: 0
-  pressureStress: 0
-  unsafeWaterEntry: 0
-  crushingDepth: 0
 --- !u!114 &4839201847601284471
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1533,14 +1482,6 @@ MonoBehaviour:
   profile: {fileID: 11400000, guid: e2061abc651f4c93ae4cdee0dd0efa5a, type: 2}
   celestialProbe: {fileID: 7190813019005924918}
   applyDrag: 1
-  insideAtmosphere: 0
-  atmosphereDensity: 0
-  relativeSpeed: 0
-  dynamicPressure: 0
-  dynamicPressureLoad: 0
-  heatingRate: 0
-  heatLoad: 0
-  dragAcceleration: 0
 --- !u!114 &7591439062830295501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2278,12 +2219,6 @@ MonoBehaviour:
   heatGlowColor: {r: 2.6, g: 0.42, b: 0.06, a: 1}
   heatGlowPower: 2.2
   heatGlowResponse: 1.6
-  debugNozzleLoad: 0
-  debugSideLoad: 0
-  debugIgnitionFlare: 0
-  debugHeatGlow: 0
-  debugSteeringEuler: {x: 0, y: 0, z: 0}
-  debugPlumeBend: {x: 0, y: 0, z: 0}
 --- !u!1 &3782451695967674794
 GameObject:
   m_ObjectHideFlags: 0

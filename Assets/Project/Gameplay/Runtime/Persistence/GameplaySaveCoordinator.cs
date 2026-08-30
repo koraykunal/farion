@@ -27,7 +27,6 @@ namespace Farion.Gameplay.Persistence
             new ShuttleCargoSaveParticipant(),
             new ShuttleSystemsSaveParticipant(),
             new FleetStorageSaveParticipant(),
-            new FleetKnowledgeSaveParticipant(),
             new ResourceDepositSaveParticipant()
         };
 
@@ -261,17 +260,6 @@ namespace Farion.Gameplay.Persistence
             if (!saveData.IsSupported)
             {
                 result = SaveGameOperationResult.Failure(SaveGameOperationStatus.UnsupportedVersion, result.Path);
-                return false;
-            }
-
-            if (!GameplaySaveMigration.TryMigrateToCurrent(
-                    saveData,
-                    CreateContext(),
-                    out saveData))
-            {
-                result = SaveGameOperationResult.Failure(
-                    SaveGameOperationStatus.InvalidPayload,
-                    result.Path);
                 return false;
             }
 

@@ -74,7 +74,6 @@ namespace Farion.UI.Common
         float RestingAccentAmount => destructive ? 0.32f : 0f;
 
         public event Action Clicked;
-        public bool Available => available;
         public Button Button
         {
             get

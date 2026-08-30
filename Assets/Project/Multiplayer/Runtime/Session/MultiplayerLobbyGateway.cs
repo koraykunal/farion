@@ -6,7 +6,6 @@ namespace Farion.Multiplayer.Session
     public interface IMultiplayerLobbyService
     {
         bool IsAvailable { get; }
-        bool IsInLobby { get; }
         string LocalDisplayName { get; }
         string LocalPersistentId { get; }
 

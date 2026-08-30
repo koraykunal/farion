@@ -94,11 +94,6 @@ namespace Farion.UI.Settings
                 titleText.text = ToLabel(displayTitle);
             }
 
-            SetValue(value);
-        }
-
-        public void SetValue(string value)
-        {
             displayValue = value ?? string.Empty;
             if (valueText != null)
             {

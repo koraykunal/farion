@@ -17,29 +17,9 @@ namespace Farion.Gameplay.Flight
         [SerializeField] GravitySimulation simulation;
         [SerializeField] CelestialActorProbe celestialProbe;
 
-        [Header("Runtime Orbit")]
-        [SerializeField] SpacecraftOrbitRegime regime = SpacecraftOrbitRegime.NoFrame;
-        [SerializeField] float gravitationalParameter;
-        [SerializeField] float radius;
-        [SerializeField] float altitude;
-        [SerializeField] float speed;
-        [SerializeField] float radialVelocity;
-        [SerializeField] float tangentialSpeed;
-        [SerializeField] float circularVelocity;
-        [SerializeField] float escapeVelocity;
-        [SerializeField] float specificOrbitalEnergy;
-        [SerializeField] float eccentricity;
-        [SerializeField] float semiMajorAxis;
-        [SerializeField] float periapsisAltitude;
-        [SerializeField] float apoapsisAltitude;
-        [SerializeField] float orbitalPeriod;
-        [SerializeField] float flightPathAngleDegrees;
-
         SpacecraftOrbitSample currentOrbit = SpacecraftOrbitSample.NoFrame;
 
         public SpacecraftOrbitSample CurrentOrbit => currentOrbit;
-        public SpacecraftOrbitRegime Regime => regime;
-        public bool HasOrbit => currentOrbit.HasFrame;
 
         GravitySimulation Simulation => simulation;
 
@@ -68,15 +48,9 @@ namespace Farion.Gameplay.Flight
         {
             ResolveComponents();
 
-            if (celestialProbe == null || !celestialProbe.HasSample)
-            {
-                currentOrbit = SpacecraftOrbitSample.NoFrame;
-                ApplyRuntimeState();
-                return;
-            }
-
-            currentOrbit = EvaluateOrbit(celestialProbe.CurrentSample, Simulation);
-            ApplyRuntimeState();
+            currentOrbit = celestialProbe != null && celestialProbe.HasSample
+                ? EvaluateOrbit(celestialProbe.CurrentSample, Simulation)
+                : SpacecraftOrbitSample.NoFrame;
         }
 
         void ResolveComponents()
@@ -181,26 +155,6 @@ namespace Farion.Gameplay.Flight
             return eccentricity <= NearCircularEccentricity
                 ? SpacecraftOrbitRegime.NearCircular
                 : SpacecraftOrbitRegime.Elliptic;
-        }
-
-        void ApplyRuntimeState()
-        {
-            regime = currentOrbit.Regime;
-            gravitationalParameter = currentOrbit.GravitationalParameter;
-            radius = currentOrbit.Radius;
-            altitude = currentOrbit.Altitude;
-            speed = currentOrbit.Speed;
-            radialVelocity = currentOrbit.RadialVelocity;
-            tangentialSpeed = currentOrbit.TangentialSpeed;
-            circularVelocity = currentOrbit.CircularVelocity;
-            escapeVelocity = currentOrbit.EscapeVelocity;
-            specificOrbitalEnergy = currentOrbit.SpecificOrbitalEnergy;
-            eccentricity = currentOrbit.Eccentricity;
-            semiMajorAxis = currentOrbit.SemiMajorAxis;
-            periapsisAltitude = currentOrbit.PeriapsisAltitude;
-            apoapsisAltitude = currentOrbit.ApoapsisAltitude;
-            orbitalPeriod = currentOrbit.OrbitalPeriod;
-            flightPathAngleDegrees = currentOrbit.FlightPathAngleDegrees;
         }
     }
 }

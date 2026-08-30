@@ -62,19 +62,5 @@ namespace Farion.UI.Foundation
 
             return owned.ToArray();
         }
-
-        public static bool ShareScope(Component first, Component second)
-        {
-            if (first == null || second == null)
-            {
-                return false;
-            }
-
-            Canvas firstCanvas = FindOwningCanvas(first);
-            Canvas secondCanvas = FindOwningCanvas(second);
-            return firstCanvas != null
-                ? firstCanvas == secondCanvas
-                : first.transform.root == second.transform.root;
-        }
     }
 }

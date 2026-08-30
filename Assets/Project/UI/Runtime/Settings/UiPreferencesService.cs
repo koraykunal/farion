@@ -18,8 +18,6 @@ namespace Farion.UI.Settings
         const string LocaleKey = "farion.ui.locale";
         const string ScaleKey = "farion.ui.scale";
         const string ReducedMotionKey = "farion.ui.reducedMotion";
-        const string SubtitlesKey = "farion.ui.subtitles";
-        const string SubtitleSizeKey = "farion.ui.subtitleSize";
         const string DisplayModeKey = "farion.display.mode";
         const string ResolutionWidthKey = "farion.display.resolutionWidth";
         const string ResolutionHeightKey = "farion.display.resolutionHeight";
@@ -49,8 +47,6 @@ namespace Farion.UI.Settings
         string localeCode = UiLocalization.EnglishLocaleCode;
         int scaleIndex;
         bool reducedMotion;
-        bool subtitlesEnabled = true;
-        UiSubtitleSize subtitleSize = UiSubtitleSize.Standard;
         readonly List<Vector2Int> supportedResolutions = new();
         readonly List<RefreshRate> supportedRefreshRates = new();
         int resolutionIndex;
@@ -71,8 +67,6 @@ namespace Farion.UI.Settings
         public string LocaleCode => localeCode;
         public float UiScale => SupportedScales[Mathf.Clamp(scaleIndex, 0, SupportedScales.Length - 1)];
         public bool ReducedMotion => reducedMotion;
-        public bool SubtitlesEnabled => subtitlesEnabled;
-        public UiSubtitleSize SubtitleSize => subtitleSize;
         public FullScreenMode DisplayMode => displayMode;
         public IReadOnlyList<FullScreenMode> DisplayModes => SupportedDisplayModes;
         public int DisplayModeIndex => FindDisplayModeIndex(displayMode);
@@ -174,28 +168,6 @@ namespace Farion.UI.Settings
 
             reducedMotion = value;
             systemRoot?.SetReducedMotion(reducedMotion);
-            SaveAndNotify();
-        }
-
-        public void SetSubtitlesEnabled(bool value)
-        {
-            if (subtitlesEnabled == value)
-            {
-                return;
-            }
-
-            subtitlesEnabled = value;
-            SaveAndNotify();
-        }
-
-        public void SetSubtitleSize(UiSubtitleSize value)
-        {
-            if (subtitleSize == value)
-            {
-                return;
-            }
-
-            subtitleSize = value;
             SaveAndNotify();
         }
 
@@ -369,11 +341,6 @@ namespace Farion.UI.Settings
                 PlayerPrefs.GetString(LocaleKey, UiLocalization.EnglishLocaleCode));
             scaleIndex = FindClosestScaleIndex(PlayerPrefs.GetFloat(ScaleKey, 1f));
             reducedMotion = PlayerPrefs.GetInt(ReducedMotionKey, 0) != 0;
-            subtitlesEnabled = PlayerPrefs.GetInt(SubtitlesKey, 1) != 0;
-            subtitleSize = (UiSubtitleSize)Mathf.Clamp(
-                PlayerPrefs.GetInt(SubtitleSizeKey, (int)UiSubtitleSize.Standard),
-                (int)UiSubtitleSize.Standard,
-                (int)UiSubtitleSize.Large);
             displayMode = NormalizeDisplayMode(PlayerPrefs.GetInt(
                 DisplayModeKey,
                 (int)Screen.fullScreenMode));
@@ -467,8 +434,6 @@ namespace Farion.UI.Settings
             PlayerPrefs.SetString(LocaleKey, localeCode);
             PlayerPrefs.SetFloat(ScaleKey, UiScale);
             PlayerPrefs.SetInt(ReducedMotionKey, reducedMotion ? 1 : 0);
-            PlayerPrefs.SetInt(SubtitlesKey, subtitlesEnabled ? 1 : 0);
-            PlayerPrefs.SetInt(SubtitleSizeKey, (int)subtitleSize);
             Vector2Int savedResolution = supportedResolutions[Mathf.Clamp(
                 confirmedResolutionIndex,
                 0,

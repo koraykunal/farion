@@ -239,14 +239,14 @@ namespace Farion.Gameplay.Interaction
                 return false;
             }
 
-            PlayerPossessionPose.Apply(spacecraftRigidbody, spacecraftRoot, snapshot.SpacecraftPose);
+            ApplyPose(spacecraftRigidbody, spacecraftRoot, snapshot.SpacecraftPose);
 
             if (explorerRoot != null)
             {
                 explorerRoot.SetActive(true);
             }
 
-            PlayerPossessionPose.Apply(
+            ApplyPose(
                 explorerRigidbody,
                 explorerRoot != null ? explorerRoot.transform : null,
                 snapshot.ExplorerPose);
@@ -264,8 +264,8 @@ namespace Farion.Gameplay.Interaction
             }
 
             ResolveReferences();
-            return PlayerPossessionIdentity.SnapshotIdMatches(snapshot.ExplorerId, ResolveExplorerPersistentId()) &&
-                   PlayerPossessionIdentity.SnapshotIdMatches(snapshot.SpacecraftId, ResolveSpacecraftPersistentId());
+            return SnapshotIdMatches(snapshot.ExplorerId, ResolveExplorerPersistentId()) &&
+                   SnapshotIdMatches(snapshot.SpacecraftId, ResolveSpacecraftPersistentId());
         }
 
         void Awake()
@@ -581,7 +581,14 @@ namespace Farion.Gameplay.Interaction
 
         Transform ResolveSpacecraftExteriorCameraTarget()
         {
-            return PlayerPossessionCameraTargets.ResolveExterior(spacecraftCameraTarget, spacecraftRig, spacecraftRoot);
+            if (spacecraftCameraTarget != null)
+            {
+                return spacecraftCameraTarget;
+            }
+
+            return spacecraftRig != null && spacecraftRig.ChaseCameraTarget != null
+                ? spacecraftRig.ChaseCameraTarget
+                : spacecraftRoot;
         }
 
 
@@ -711,12 +718,48 @@ namespace Farion.Gameplay.Interaction
 
         string ResolveSpacecraftPersistentId()
         {
-            return PlayerPossessionIdentity.ResolveSpacecraftPersistentId(spacecraftRoot, spacecraftRigidbody);
+            return ResolvePersistentId(spacecraftRoot)
+                ?? ResolvePersistentId(spacecraftRigidbody)
+                ?? string.Empty;
         }
 
         string ResolveExplorerPersistentId()
         {
-            return PlayerPossessionIdentity.ResolveExplorerPersistentId(explorerRoot, explorerRigidbody);
+            return ResolvePersistentId(
+                    explorerRoot != null ? explorerRoot.transform : null)
+                ?? ResolvePersistentId(explorerRigidbody)
+                ?? string.Empty;
+        }
+
+        static void ApplyPose(
+            Rigidbody rigidbody,
+            Transform transformTarget,
+            TransformPoseSnapshot snapshot)
+        {
+            if (rigidbody != null)
+            {
+                snapshot.ApplyTo(rigidbody);
+                return;
+            }
+
+            snapshot.ApplyTo(transformTarget);
+        }
+
+        static bool SnapshotIdMatches(string snapshotId, string sceneId)
+        {
+            return !string.IsNullOrEmpty(snapshotId) &&
+                   !string.IsNullOrEmpty(sceneId) &&
+                   string.Equals(snapshotId, sceneId, System.StringComparison.Ordinal);
+        }
+
+        static string ResolvePersistentId(Component target)
+        {
+            if (target != null && target.TryGetComponent(out PersistentObjectId persistentObjectId))
+            {
+                return persistentObjectId.HasId ? persistentObjectId.Id : null;
+            }
+
+            return null;
         }
     }
 }

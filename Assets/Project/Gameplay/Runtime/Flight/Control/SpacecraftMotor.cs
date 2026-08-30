@@ -72,12 +72,6 @@ namespace Farion.Gameplay.Flight
     public sealed class SpacecraftMotor : MonoBehaviour
     {
         const float ReferenceVelocitySmoothingRate = 1.5f;
-        const float DefaultTranslationSpoolRate = 7f;
-        const float DefaultRotationSpoolRate = 8f;
-        const float DefaultBoostSpoolRate = 3.5f;
-        const float DefaultInputDeadZone = 0.04f;
-        const float DefaultFuelCapacity = 1000f;
-        const float DefaultFuelPerAccelerationUnit = 0.05f;
 
         [Header("Input")]
         [SerializeField] KeyboardSpacecraftInput inputSource;
@@ -155,10 +149,10 @@ namespace Farion.Gameplay.Flight
         public bool GravityExceedsThrust => gravityExceedsThrust;
         public float MaxForwardSpeed => flightProfile != null
             ? flightProfile.EvaluateMaxForwardSpeed(moduleBonuses)
-            : DefaultControlSettings.PositiveMaxSpeed.z;
+            : 0f;
         public float MaxReverseSpeed => flightProfile != null
             ? flightProfile.MaxReverseSpeed
-            : DefaultControlSettings.NegativeMaxSpeed.z;
+            : 0f;
         public Vector3 Velocity => Rigidbody.linearVelocity;
         public Vector3 RelativeVelocity => Rigidbody.linearVelocity - ResolveFlightReferenceVelocity();
         public float Speed => Velocity.magnitude;
@@ -226,6 +220,11 @@ namespace Farion.Gameplay.Flight
             float deltaTime,
             ISpacecraftPhysicsBody physicsBody)
         {
+            if (flightProfile == null)
+            {
+                return;
+            }
+
             ApplyGravity(physicsBody);
             UpdateReferenceVelocity(deltaTime, physicsBody.WorldCenterOfMass);
             UpdateSmoothedCommand(deltaTime);
@@ -655,47 +654,20 @@ namespace Farion.Gameplay.Flight
             return sample.BodyVelocity + spinVelocity * spinFade;
         }
 
-        SpacecraftFlightControlSettings ControlSettings => flightProfile != null
-            ? flightProfile.BuildControlSettings(moduleBonuses)
-            : DefaultControlSettings;
+        SpacecraftFlightControlSettings ControlSettings =>
+            flightProfile.BuildControlSettings(moduleBonuses);
 
         bool HasThrust => !driveDisabled && (fuel.Capacity <= 0f || !fuel.IsEmpty);
 
-        float TranslationSpoolRate =>
-            flightProfile != null ? flightProfile.TranslationSpoolRate : DefaultTranslationSpoolRate;
-        float RotationSpoolRate =>
-            flightProfile != null ? flightProfile.RotationSpoolRate : DefaultRotationSpoolRate;
-        float BoostSpoolRate =>
-            flightProfile != null ? flightProfile.BoostSpoolRate : DefaultBoostSpoolRate;
-        float InputDeadZone =>
-            flightProfile != null ? flightProfile.InputDeadZone : DefaultInputDeadZone;
+        float TranslationSpoolRate => flightProfile.TranslationSpoolRate;
+        float RotationSpoolRate => flightProfile.RotationSpoolRate;
+        float BoostSpoolRate => flightProfile.BoostSpoolRate;
+        float InputDeadZone => flightProfile.InputDeadZone;
         float FuelCapacity => flightProfile != null
             ? flightProfile.EvaluateFuelCapacity(moduleBonuses)
-            : DefaultFuelCapacity * moduleBonuses.FuelCapacityMultiplier;
-        float FuelPerAccelerationUnit => flightProfile != null
-            ? flightProfile.FuelPerAccelerationUnit
-            : DefaultFuelPerAccelerationUnit;
-        float IdleFuelPerSecond =>
-            flightProfile != null ? flightProfile.IdleFuelPerSecond : 0f;
-
-        static SpacecraftFlightControlSettings DefaultControlSettings => new(
-            new Vector3(60f, 60f, 250f),
-            new Vector3(60f, 60f, 650f),
-            new Vector3(60f, 60f, 90f),
-            new Vector3(18f, 24f, 32f),
-            new Vector3(18f, 24f, 60f),
-            new Vector3(18f, 24f, 30f),
-            new Vector3(65f, 35f, 110f) * Mathf.Deg2Rad,
-            new Vector3(180f, 120f, 280f) * Mathf.Deg2Rad,
-            new Vector3(2.8f, 2.8f, 2.2f),
-            new Vector3(7f, 7f, 9f),
-            3.2f,
-            compensateGravity: true,
-            limitManualFlightEnvelope: true,
-            manualEnvelopeStart: 0.85f,
-            boostSurgeStrength: 0.8f,
-            optimalSpeedBandEnd: 0.75f,
-            offBandAngularScale: 0.55f);
+            : 0f;
+        float FuelPerAccelerationUnit => flightProfile.FuelPerAccelerationUnit;
+        float IdleFuelPerSecond => flightProfile.IdleFuelPerSecond;
 
         static Vector3 DeadZone(Vector3 value, float deadZone)
         {
