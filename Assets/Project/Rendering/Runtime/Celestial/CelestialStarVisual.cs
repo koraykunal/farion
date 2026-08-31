@@ -160,11 +160,13 @@ namespace Farion.Rendering.Celestial
                     lightSource.Radius,
                     IsUsingScaledSpace);
 
+            float visualDiameter = Mathf.Max(0.0001f, lightSource.Radius) * 2f;
+
             if (!shouldUseScaledSpace)
             {
                 starVisualTransform.localPosition = Vector3.zero;
                 starVisualTransform.localRotation = Quaternion.identity;
-                starVisualTransform.localScale = Vector3.one;
+                starVisualTransform.localScale = Vector3.one * visualDiameter;
                 IsUsingScaledSpace = false;
                 return;
             }
@@ -175,7 +177,7 @@ namespace Farion.Rendering.Celestial
 
             starVisualTransform.position = displayPosition;
             starVisualTransform.localRotation = Quaternion.identity;
-            starVisualTransform.localScale = Vector3.one * scaleRatio;
+            starVisualTransform.localScale = Vector3.one * (visualDiameter * scaleRatio);
             IsUsingScaledSpace = true;
         }
 

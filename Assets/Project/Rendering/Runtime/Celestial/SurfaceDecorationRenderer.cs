@@ -257,7 +257,25 @@ namespace Farion.Rendering.Celestial
             runtime.StaleCells.Clear();
             foreach (SurfaceScatterCell cell in runtime.EvaluatedCells)
             {
-                if (!runtime.DesiredCells.Contains(cell))
+                if (runtime.DesiredCells.Contains(cell))
+                {
+                    continue;
+                }
+
+                float cellVisibility = SurfaceScatterPlacement.ResolveVisibilityDistance(
+                    distribution,
+                    runtime.ScanPlanetSeed,
+                    runtime.Rule.StableId,
+                    cell);
+                Vector3 staleCellCenter = SurfaceScatterPlacement.CandidateDirection(
+                    cell,
+                    runtime.ScanPlanetSeed,
+                    runtime.Rule.StableId) * runtime.ScanRadius;
+                if (IsCellReleased(
+                    staleCellCenter,
+                    runtime.AnchorLocalPosition,
+                    runtime.ScanCenter,
+                    distribution.ResolveReleaseDistance(cellVisibility)))
                 {
                     runtime.StaleCells.Add(cell);
                 }
@@ -812,6 +830,18 @@ namespace Farion.Rendering.Celestial
             bool altitudeLimited = decorationProfile.PlacementPauseAltitude > 0f &&
                 altitude >= decorationProfile.PlacementPauseAltitude;
             return speedLimited || altitudeLimited;
+        }
+
+        internal static bool IsCellReleased(
+            Vector3 cellCenter,
+            Vector3 anchorLocalPosition,
+            Vector3 scanCenter,
+            float releaseDistance)
+        {
+            float reach = Mathf.Min(
+                Vector3.Distance(cellCenter, anchorLocalPosition),
+                Vector3.Distance(cellCenter, scanCenter));
+            return reach > releaseDistance;
         }
 
         internal static float ResolveVisibilityScale(

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SO_ContinentRidgeShapeProfile
   m_EditorClassIdentifier: 
   seed: 4065
-  elevationScaleMeters: 24
+  elevationScaleMeters: 16
   featureReferenceRadiusMeters: 1600
   oceanDepthMultiplier: 5
   oceanFloorDepth: 1.36

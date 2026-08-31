@@ -129,6 +129,30 @@ namespace Farion.Rendering.PostProcessing
             CameraUnderwaterStates[cameraId] = isUnderwater;
         }
 
+        public static bool TryGetAtmosphereNear(Vector3 position, out CelestialAtmosphereEffectData data)
+        {
+            data = default;
+            bool found = false;
+            float bestScore = float.PositiveInfinity;
+            for (int i = PruneDestroyed() - 1; i >= 0; i--)
+            {
+                if (!Sources[i].TryGetAtmosphereEffectData(out CelestialAtmosphereEffectData candidate))
+                {
+                    continue;
+                }
+
+                float score = Vector3.Distance(position, candidate.Center) - candidate.AtmosphereRadius;
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    data = candidate;
+                    found = true;
+                }
+            }
+
+            return found;
+        }
+
         public static void CollectAtmosphere(Camera camera, List<CelestialAtmosphereEffectData> results)
         {
             results.Clear();

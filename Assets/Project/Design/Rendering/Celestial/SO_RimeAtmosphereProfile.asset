@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d6cc7670e7f4655a8f31b63a27c1f43, type: 3}
+  m_Name: SO_RimeAtmosphereProfile
+  m_EditorClassIdentifier: 
+  opticalDepthCompute: {fileID: 7200000, guid: 45124f49f67a475f8dd17b0f6e0d0cdd, type: 3}
+  textureSize: 256
+  inScatteringSteps: 16
+  opticalDepthSteps: 98
+  densityFalloff: 4
+  wavelengths: {x: 700, y: 540, z: 430}
+  scatteringStrength: 27
+  mieScatteringStrength: 0.8
+  mieAnisotropy: 0.76
+  mieExtinctionRatio: 1.1
+  mieDensityFalloff: 18
+  ozoneStrength: 2.8
+  ozonePeakHeight: 0.25
+  ozoneBandWidth: 0.15
+  intensity: 0.9
+  referenceLightIntensity: 1.1
+  ditherStrength: 1
+  ditherScale: 3.89
+  blueNoise: {fileID: 2800000, guid: 36f118343fc974119bee3d09e2111500, type: 3}

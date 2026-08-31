@@ -87,6 +87,35 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void CellsInsideReleaseDistanceAreNeverReclaimed()
+        {
+            Vector3 anchor = Vector3.up * 1600f;
+            Vector3 scanCenter = anchor + Vector3.forward * 80f;
+
+            Assert.That(
+                SurfaceDecorationRenderer.IsCellReleased(
+                    anchor + Vector3.forward * 100f,
+                    anchor,
+                    scanCenter,
+                    150f),
+                Is.False);
+            Assert.That(
+                SurfaceDecorationRenderer.IsCellReleased(
+                    anchor + Vector3.forward * 220f,
+                    anchor,
+                    scanCenter,
+                    150f),
+                Is.False);
+            Assert.That(
+                SurfaceDecorationRenderer.IsCellReleased(
+                    anchor - Vector3.forward * 200f,
+                    anchor,
+                    scanCenter,
+                    150f),
+                Is.True);
+        }
+
+        [Test]
         public void MeshGroundingPlacesTheRotatedBoundsOnTheSurface()
         {
             Bounds bounds = new(new Vector3(0f, 1f, 0f), new Vector3(2f, 2f, 2f));

@@ -451,7 +451,10 @@ namespace Farion.Rendering.Celestial
                 staleCells.Clear();
                 foreach (KeyValuePair<SurfaceScatterCell, FormationInstance> pair in runtime.Instances)
                 {
-                    if (NearestObserverDistance(pair.Value.LocalCenter) > pair.Value.ReleaseDistance)
+                    float reach = Mathf.Min(
+                        NearestObserverDistance(pair.Value.LocalCenter),
+                        Vector3.Distance(prefetchCenter, pair.Value.LocalCenter));
+                    if (reach > pair.Value.ReleaseDistance)
                     {
                         staleCells.Add(pair.Key);
                     }

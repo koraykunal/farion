@@ -1,3 +1,5 @@
+using Farion.Rendering.Celestial;
+using Farion.Rendering.PostProcessing;
 using Farion.Simulation.Celestial;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -32,6 +34,8 @@ namespace Farion.Rendering.Lighting
         [SerializeField] bool updateInEditMode = true;
         [SerializeField] bool updateEveryFrame = true;
 
+        readonly CelestialSkyReflectionBuilder skyReflectionBuilder = new();
+
         public CelestialLightingProfile Profile => profile;
 
         public void SetPrimarySource(CelestialLightSource source)
@@ -43,6 +47,11 @@ namespace Farion.Rendering.Lighting
         void OnEnable()
         {
             ApplyLighting();
+        }
+
+        void OnDisable()
+        {
+            skyReflectionBuilder.Release();
         }
 
         void OnValidate()
@@ -80,23 +89,67 @@ namespace Farion.Rendering.Lighting
 
             if (!CelestialLightingState.TryCreate(profile, source, focus, out CelestialLightingState state))
             {
-                ApplyRenderSettings(directionalLight);
+                ApplyRenderSettings(directionalLight, false, default, default);
                 ApplyCameraDefaults();
                 return;
             }
 
+            bool hasAtmosphericAmbient = TryResolveAtmosphericAmbient(
+                state,
+                focus,
+                out AtmosphericAmbientSample ambientSample);
+
             if (directionalLight != null)
             {
-                ApplyDirectionalLight(state, directionalLight);
+                ApplyDirectionalLight(
+                    state,
+                    directionalLight,
+                    hasAtmosphericAmbient ? ambientSample.DensityFactor : 0f);
             }
 
             ApplyPlanetshine(state, focus);
-            CelestialLightingGlobals.Apply(profile, state);
-            ApplyRenderSettings(directionalLight);
+            Color ambientGlobal = hasAtmosphericAmbient
+                ? profile.AmbientLight + ambientSample.Equator
+                : profile.AmbientLight;
+            CelestialLightingGlobals.Apply(profile, state, ambientGlobal);
+            ApplyRenderSettings(
+                directionalLight,
+                hasAtmosphericAmbient,
+                ambientSample,
+                state.DirectionToStar);
             ApplyCameraDefaults();
         }
 
-        void ApplyDirectionalLight(CelestialLightingState state, Light directionalLight)
+        bool TryResolveAtmosphericAmbient(
+            in CelestialLightingState state,
+            Transform focus,
+            out AtmosphericAmbientSample sample)
+        {
+            sample = default;
+            if (!profile.DeriveAmbientFromAtmosphere || focus == null)
+            {
+                return false;
+            }
+
+            if (!CelestialEffectRegistry.TryGetAtmosphereNear(
+                    focus.position,
+                    out CelestialAtmosphereEffectData atmosphere))
+            {
+                return false;
+            }
+
+            return CelestialAtmosphericAmbient.TrySample(
+                    atmosphere,
+                    focus.position,
+                    state.DirectionToStar,
+                    CelestialLightingGlobals.ResolveStarColor(profile, state),
+                    state.Intensity,
+                    profile,
+                    out sample)
+                && sample.DensityFactor > 0.001f;
+        }
+
+        void ApplyDirectionalLight(CelestialLightingState state, Light directionalLight, float atmosphereDensity)
         {
             directionalLight.type = LightType.Directional;
             if (syncLightPositionToSource)
@@ -113,7 +166,10 @@ namespace Farion.Rendering.Lighting
             directionalLight.colorTemperature = state.ColorTemperature;
             directionalLight.intensity = state.Intensity;
             directionalLight.shadows = profile.Shadows;
-            directionalLight.shadowStrength = profile.ShadowStrength;
+            directionalLight.shadowStrength = Mathf.Lerp(
+                profile.AirlessShadowStrength,
+                profile.ShadowStrength,
+                Mathf.Clamp01(atmosphereDensity));
             directionalLight.shadowNearPlane = profile.ShadowNearPlane;
 #if UNITY_EDITOR
             directionalLight.shadowAngle = profile.DirectionalShadowAngle;
@@ -172,7 +228,11 @@ namespace Farion.Rendering.Lighting
             planetshineLight.bounceIntensity = 0f;
         }
 
-        void ApplyRenderSettings(Light directionalLight)
+        void ApplyRenderSettings(
+            Light directionalLight,
+            bool hasAtmosphericAmbient,
+            in AtmosphericAmbientSample ambientSample,
+            Vector3 directionToStar)
         {
             if (!profile.ApplyRenderSettings)
             {
@@ -184,10 +244,31 @@ namespace Farion.Rendering.Lighting
                 RenderSettings.sun = directionalLight;
             }
 
-            RenderSettings.ambientMode = profile.AmbientMode;
-            RenderSettings.ambientLight = profile.AmbientLight;
+            if (hasAtmosphericAmbient)
+            {
+                Color baseAmbient = profile.AmbientLight;
+                RenderSettings.ambientMode = AmbientMode.Trilight;
+                RenderSettings.ambientSkyColor = baseAmbient + ambientSample.Sky;
+                RenderSettings.ambientEquatorColor = baseAmbient + ambientSample.Equator;
+                RenderSettings.ambientGroundColor = baseAmbient + ambientSample.Ground;
+            }
+            else
+            {
+                RenderSettings.ambientMode = profile.AmbientMode;
+                RenderSettings.ambientLight = profile.AmbientLight;
+            }
 
-            if (profile.ReflectionCubemap != null)
+            bool useSkyReflection = hasAtmosphericAmbient
+                && profile.DeriveReflectionFromAtmosphere
+                && ambientSample.DensityFactor > 0.02f;
+            if (useSkyReflection)
+            {
+                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+                RenderSettings.customReflectionTexture = skyReflectionBuilder.Update(
+                    ambientSample,
+                    directionToStar);
+            }
+            else if (profile.ReflectionCubemap != null)
             {
                 RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
                 RenderSettings.customReflectionTexture = profile.ReflectionCubemap;
@@ -366,18 +447,26 @@ namespace Farion.Rendering.Lighting
         static readonly int StarIntensityId = Shader.PropertyToID("_FarionStarIntensity");
         static readonly int AmbientColorId = Shader.PropertyToID("_FarionAmbientColor");
 
+        public static Color ResolveStarColor(
+            CelestialLightingProfile profile,
+            in CelestialLightingState state)
+        {
+            return profile.UseColorTemperature
+                ? profile.LightColor * Mathf.CorrelatedColorTemperatureToRGB(state.ColorTemperature)
+                : profile.LightColor;
+        }
+
         public static void Apply(
             CelestialLightingProfile profile,
-            CelestialLightingState state)
+            CelestialLightingState state,
+            Color ambientColor)
         {
             if (profile == null)
             {
                 return;
             }
 
-            Color starColor = profile.UseColorTemperature
-                ? profile.LightColor * Mathf.CorrelatedColorTemperatureToRGB(state.ColorTemperature)
-                : profile.LightColor;
+            Color starColor = ResolveStarColor(profile, state);
             Shader.SetGlobalVector(StarPositionId, new Vector4(
                 state.StarPosition.x,
                 state.StarPosition.y,
@@ -390,7 +479,7 @@ namespace Farion.Rendering.Lighting
                 0f));
             Shader.SetGlobalColor(StarColorId, starColor);
             Shader.SetGlobalFloat(StarIntensityId, state.Intensity);
-            Shader.SetGlobalColor(AmbientColorId, profile.AmbientLight);
+            Shader.SetGlobalColor(AmbientColorId, ambientColor);
         }
     }
 }

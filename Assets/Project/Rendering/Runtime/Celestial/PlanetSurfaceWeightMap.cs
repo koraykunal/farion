@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Farion.Rendering.Celestial
 {
-    internal sealed class PlanetSurfaceWeightMap : IDisposable
+    public sealed class PlanetSurfaceWeightMap : IDisposable
     {
         static readonly CubemapFace[] Faces =
         {
@@ -20,22 +20,51 @@ namespace Farion.Rendering.Celestial
         readonly Cubemap weightsA;
         readonly Cubemap weightsB;
         readonly Cubemap surfaceState;
+        readonly Cubemap surfaceNormal;
+        readonly bool ownsTextures;
 
-        PlanetSurfaceWeightMap(Cubemap weightsA, Cubemap weightsB, Cubemap surfaceState)
+        PlanetSurfaceWeightMap(
+            Cubemap weightsA,
+            Cubemap weightsB,
+            Cubemap surfaceState,
+            Cubemap surfaceNormal,
+            bool ownsTextures)
         {
             this.weightsA = weightsA;
             this.weightsB = weightsB;
             this.surfaceState = surfaceState;
+            this.surfaceNormal = surfaceNormal;
+            this.ownsTextures = ownsTextures;
+        }
+
+        public static PlanetSurfaceWeightMap FromBaked(PlanetSurfaceMapSet mapSet)
+        {
+            if (mapSet == null || !mapSet.IsComplete)
+            {
+                return null;
+            }
+
+            return new PlanetSurfaceWeightMap(
+                mapSet.WeightsA,
+                mapSet.WeightsB,
+                mapSet.SurfaceState,
+                mapSet.SurfaceNormal,
+                false);
+        }
+
+        public static bool CanBake(PlanetSurfaceModel surfaceModel, SurfaceVisualProfile visualProfile)
+        {
+            return surfaceModel != null &&
+                visualProfile != null &&
+                surfaceModel.GenerationProfile != null &&
+                surfaceModel.GenerationProfile.SurfaceMaterialDistribution != null;
         }
 
         public static PlanetSurfaceWeightMap Build(
             PlanetSurfaceModel surfaceModel,
             SurfaceVisualProfile visualProfile)
         {
-            if (surfaceModel == null ||
-                visualProfile == null ||
-                surfaceModel.GenerationProfile == null ||
-                surfaceModel.GenerationProfile.SurfaceMaterialDistribution == null)
+            if (!CanBake(surfaceModel, visualProfile))
             {
                 return null;
             }
@@ -44,42 +73,11 @@ namespace Farion.Rendering.Celestial
             Cubemap mapA = CreateMap(resolution, "Planet Surface Weights A");
             Cubemap mapB = CreateMap(resolution, "Planet Surface Weights B");
             Cubemap stateMap = CreateMap(resolution, "Planet Surface State");
-            List<SurfaceMaterialWeight> weights = new(SurfaceVisualProfile.MaxSurfaceSlots);
-            Color[] pixelsA = new Color[resolution * resolution];
-            Color[] pixelsB = new Color[resolution * resolution];
-            Color[] statePixels = new Color[resolution * resolution];
 
             try
             {
-                for (int faceIndex = 0; faceIndex < Faces.Length; faceIndex++)
-                {
-                    CubemapFace face = Faces[faceIndex];
-                    for (int y = 0; y < resolution; y++)
-                    {
-                        for (int x = 0; x < resolution; x++)
-                        {
-                            int pixelIndex = y * resolution + x;
-                            Vector3 direction = CubemapDirection(face, x, y, resolution);
-                            ResolveSample(
-                                surfaceModel,
-                                visualProfile,
-                                direction,
-                                weights,
-                                out pixelsA[pixelIndex],
-                                out pixelsB[pixelIndex],
-                                out statePixels[pixelIndex]);
-                        }
-                    }
-
-                    mapA.SetPixels(pixelsA, face);
-                    mapB.SetPixels(pixelsB, face);
-                    stateMap.SetPixels(statePixels, face);
-                }
-
-                mapA.Apply(true, false);
-                mapB.Apply(true, false);
-                stateMap.Apply(true, false);
-                return new PlanetSurfaceWeightMap(mapA, mapB, stateMap);
+                Bake(surfaceModel, visualProfile, mapA, mapB, stateMap);
+                return new PlanetSurfaceWeightMap(mapA, mapB, stateMap, null, true);
             }
             catch
             {
@@ -88,6 +86,82 @@ namespace Farion.Rendering.Celestial
                 Release(stateMap);
                 throw;
             }
+        }
+
+        public static void Bake(
+            PlanetSurfaceModel surfaceModel,
+            SurfaceVisualProfile visualProfile,
+            Cubemap mapA,
+            Cubemap mapB,
+            Cubemap stateMap)
+        {
+            int resolution = mapA.width;
+            List<SurfaceMaterialWeight> weights = new(SurfaceVisualProfile.MaxSurfaceSlots);
+            Color[] pixelsA = new Color[resolution * resolution];
+            Color[] pixelsB = new Color[resolution * resolution];
+            Color[] statePixels = new Color[resolution * resolution];
+
+            for (int faceIndex = 0; faceIndex < Faces.Length; faceIndex++)
+            {
+                CubemapFace face = Faces[faceIndex];
+                for (int y = 0; y < resolution; y++)
+                {
+                    for (int x = 0; x < resolution; x++)
+                    {
+                        int pixelIndex = y * resolution + x;
+                        Vector3 direction = CubemapDirection(face, x, y, resolution);
+                        ResolveSample(
+                            surfaceModel,
+                            visualProfile,
+                            direction,
+                            weights,
+                            out pixelsA[pixelIndex],
+                            out pixelsB[pixelIndex],
+                            out statePixels[pixelIndex]);
+                    }
+                }
+
+                mapA.SetPixels(pixelsA, face);
+                mapB.SetPixels(pixelsB, face);
+                stateMap.SetPixels(statePixels, face);
+            }
+
+            mapA.Apply(true, false);
+            mapB.Apply(true, false);
+            stateMap.Apply(true, false);
+        }
+
+        public static void BakeNormals(PlanetSurfaceModel surfaceModel, Cubemap normalMap)
+        {
+            int resolution = normalMap.width;
+            Color[] pixels = new Color[resolution * resolution];
+
+            for (int faceIndex = 0; faceIndex < Faces.Length; faceIndex++)
+            {
+                CubemapFace face = Faces[faceIndex];
+                for (int y = 0; y < resolution; y++)
+                {
+                    for (int x = 0; x < resolution; x++)
+                    {
+                        Vector3 direction = CubemapDirection(face, x, y, resolution);
+                        Vector3 localNormal = surfaceModel.TrySampleLocalTerrain(
+                            direction,
+                            out _,
+                            out Vector3 sampledNormal)
+                            ? sampledNormal
+                            : direction;
+                        pixels[y * resolution + x] = new Color(
+                            localNormal.x * 0.5f + 0.5f,
+                            localNormal.y * 0.5f + 0.5f,
+                            localNormal.z * 0.5f + 0.5f,
+                            1f);
+                    }
+                }
+
+                normalMap.SetPixels(pixels, face);
+            }
+
+            normalMap.Apply(true, false);
         }
 
         public void Apply(MaterialPropertyBlock propertyBlock)
@@ -101,6 +175,15 @@ namespace Farion.Rendering.Celestial
             propertyBlock.SetTexture("_SurfaceWeightsA", weightsA);
             propertyBlock.SetTexture("_SurfaceWeightsB", weightsB);
             propertyBlock.SetTexture("_SurfaceStateMap", surfaceState);
+            if (surfaceNormal != null)
+            {
+                propertyBlock.SetFloat("_SurfaceNormalMapEnabled", 1f);
+                propertyBlock.SetTexture("_SurfaceNormalMap", surfaceNormal);
+            }
+            else
+            {
+                propertyBlock.SetFloat("_SurfaceNormalMapEnabled", 0f);
+            }
         }
 
         public static void Clear(MaterialPropertyBlock propertyBlock)
@@ -108,14 +191,21 @@ namespace Farion.Rendering.Celestial
             if (propertyBlock != null)
             {
                 propertyBlock.SetFloat("_SurfaceWeightMapEnabled", 0f);
+                propertyBlock.SetFloat("_SurfaceNormalMapEnabled", 0f);
             }
         }
 
         public void Dispose()
         {
+            if (!ownsTextures)
+            {
+                return;
+            }
+
             Release(weightsA);
             Release(weightsB);
             Release(surfaceState);
+            Release(surfaceNormal);
         }
 
         static void ResolveSample(

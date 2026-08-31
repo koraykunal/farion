@@ -26,7 +26,7 @@ MonoBehaviour:
   brightenSpeed: 3.5
   darkenSpeed: 0.9
   minimumExposure: 0.5
-  maximumExposure: 2.2
+  maximumExposure: 5
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

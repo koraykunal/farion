@@ -23,6 +23,8 @@ namespace Farion.Rendering.Celestial
         [SerializeField] PlanetSurfaceModel surfaceModel;
         [SerializeField] CelestialShapeProfile shapeProfile;
         [SerializeField] CelestialSurfaceProfileBase surfaceProfile;
+        [Tooltip("Editor-baked surface weight maps. When set, the multi-second runtime bake at scene load is skipped entirely.")]
+        [SerializeField] PlanetSurfaceMapSet bakedSurfaceMaps;
 
         [Header("Mesh")]
         [SerializeField] string meshObjectName = DefaultMeshObjectName;
@@ -577,6 +579,12 @@ namespace Farion.Rendering.Celestial
         void RebuildSurfaceWeightMap()
         {
             ReplaceSurfaceWeightMap();
+            surfaceWeightMap = PlanetSurfaceWeightMap.FromBaked(bakedSurfaceMaps);
+            if (surfaceWeightMap != null)
+            {
+                return;
+            }
+
             if (surfaceModel == null ||
                 surfaceProfile is not TerrestrialSurfaceProfile terrestrialSurface ||
                 terrestrialSurface.SurfaceVisualProfile == null)

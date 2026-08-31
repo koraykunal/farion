@@ -1260,6 +1260,7 @@ MonoBehaviour:
   surfaceModel: {fileID: 1148478146}
   shapeProfile: {fileID: 11400000, guid: c93f6b21e40d4a8fb27c58e1d6094a3e, type: 2}
   surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
+  bakedSurfaceMaps: {fileID: 11400000, guid: d0e2f2c52dc90334994da415f33a54f9, type: 2}
   meshObjectName: Terrain Mesh
   renderResolution: 57
   lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
@@ -1406,7 +1407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
-  profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
+  profile: {fileID: 11400000, guid: e353f0fac4bd7374db2ec9a64746e3ba, type: 2}
   terrainVisual: {fileID: 1148478153}
   surfaceModel: {fileID: 1148478146}
   applyInEditMode: 1
@@ -1599,6 +1600,7 @@ MonoBehaviour:
   surfaceModel: {fileID: 1477076288}
   shapeProfile: {fileID: 11400000, guid: a71c4e08d5b34f2b9c6e1d73f0a25b48, type: 2}
   surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
+  bakedSurfaceMaps: {fileID: 11400000, guid: 1781c240bec53ab49a7efd11eed18ff0, type: 2}
   meshObjectName: Terrain Mesh
   renderResolution: 57
   lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
@@ -1786,7 +1788,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f988f7f4f7748d8a27ff4c7db180aa0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Rendering.Runtime::Farion.Rendering.Celestial.TerrestrialPlanetVisual
-  profile: {fileID: 11400000, guid: 70017e87531444b19a99c0347d5b9333, type: 2}
+  profile: {fileID: 11400000, guid: 9afdc26c465c377448eb8589f77a2b3f, type: 2}
   terrainVisual: {fileID: 1477076281}
   surfaceModel: {fileID: 1477076288}
   applyInEditMode: 1
@@ -2504,6 +2506,7 @@ MonoBehaviour:
   surfaceModel: {fileID: 1772746497}
   shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
   surfaceProfile: {fileID: 11400000, guid: d4ab7056b2fd44c9a9f0c64be849abb9, type: 2}
+  bakedSurfaceMaps: {fileID: 11400000, guid: aa050ade0b161074698e38cb90ff94ab, type: 2}
   meshObjectName: Terrain Mesh
   renderResolution: 57
   lodProfile: {fileID: 11400000, guid: 40777c0cbb7441f1b0c6eeaa386bd8bc, type: 2}
@@ -2750,6 +2753,7 @@ MonoBehaviour:
   surfaceModel: {fileID: 1781217939}
   shapeProfile: {fileID: 11400000, guid: 81fcf92b2cd8c1f4eaabc9ad0ad4cb10, type: 2}
   surfaceProfile: {fileID: 11400000, guid: a4a9f7524b98c32409adc6a4a7227b8b, type: 2}
+  bakedSurfaceMaps: {fileID: 0}
   meshObjectName: Terrain Mesh
   renderResolution: 64
   lodProfile: {fileID: 11400000, guid: 4ef0f81e8f084cda9864f3f5775c074e, type: 2}

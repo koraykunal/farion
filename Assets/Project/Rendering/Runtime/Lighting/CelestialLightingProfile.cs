@@ -55,6 +55,23 @@ namespace Farion.Rendering.Lighting
         [SerializeField] float ambientIntensity = 1f;
         [SerializeField] bool disableFog = true;
 
+        [Header("Atmospheric Ambient")]
+        [Tooltip("Inside an atmosphere, replace the flat space ambient with a trilight gradient derived from the body's scattering profile, so shadows fill with sky light instead of a constant colour.")]
+        [SerializeField] bool deriveAmbientFromAtmosphere = true;
+        [Tooltip("Fraction of the star intensity the day sky contributes as ambient.")]
+        [Min(0f)]
+        [SerializeField] float atmosphericAmbientIntensity = 0.32f;
+        [Tooltip("Average surface albedo used for the ground half of the ambient gradient.")]
+        [SerializeField] Color groundAlbedo = new(0.30f, 0.27f, 0.23f, 1f);
+        [Tooltip("Horizon tint blended in while the star sits near the horizon.")]
+        [ColorUsage(false, true)]
+        [SerializeField] Color duskColor = new(1f, 0.5f, 0.25f, 1f);
+        [Tooltip("Shadow strength on airless bodies. Atmospheric bodies blend towards the softer Shadows value with air density.")]
+        [Range(0f, 1f)]
+        [SerializeField] float airlessShadowStrength = 0.98f;
+        [Tooltip("Inside an atmosphere, replace the static space cubemap with an analytic sky cubemap so reflections match the sky instead of deep space.")]
+        [SerializeField] bool deriveReflectionFromAtmosphere = true;
+
         [Header("Environment Reflection")]
         [Tooltip("Specular environment for metals. The star dome skybox reflects near black, "
             + "which collapses every metallic surface to a flat unlit tone.")]
@@ -108,6 +125,12 @@ namespace Farion.Rendering.Lighting
         public AmbientMode AmbientMode => ambientMode;
         public Color AmbientLight => ambientLight * ambientIntensity;
         public bool DisableFog => disableFog;
+        public bool DeriveAmbientFromAtmosphere => deriveAmbientFromAtmosphere;
+        public float AtmosphericAmbientIntensity => atmosphericAmbientIntensity;
+        public Color GroundAlbedo => groundAlbedo;
+        public Color DuskColor => duskColor;
+        public float AirlessShadowStrength => airlessShadowStrength;
+        public bool DeriveReflectionFromAtmosphere => deriveReflectionFromAtmosphere;
         public Cubemap ReflectionCubemap => reflectionCubemap;
         public float ReflectionIntensity => Mathf.Max(0f, reflectionIntensity);
         public bool ApplyCameraDefaults => applyCameraDefaults;

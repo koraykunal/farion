@@ -51,6 +51,8 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
         _LandSmoothness("Land Smoothness", Range(0, 1)) = 0.2
         _BodyRadius("Body Radius", Float) = 1
         _RadiusMinMax("Radius Min Max", Vector) = (1, 1, 0, 0)
+        _FarNormalFadeStart("Far Normal Fade Start", Float) = 10000000
+        _FarNormalFadeEnd("Far Normal Fade End", Float) = 20000000
     }
 
     SubShader
@@ -105,6 +107,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray);
             TEXTURE2D_ARRAY(_SurfaceHeightArray);
             TEXTURE2D_ARRAY(_SurfaceEmissionArray);
+            TEXTURECUBE(_SurfaceNormalMap);
             TEXTURECUBE(_SurfaceWeightsA);
             TEXTURECUBE(_SurfaceWeightsB);
             TEXTURECUBE(_SurfaceStateMap);
@@ -169,6 +172,9 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 half4 _SurfaceAuxTextureParams[8];
                 half4 _SurfaceEmissionTints[8];
                 half _SurfaceWeightMapEnabled;
+                half _SurfaceNormalMapEnabled;
+                float _FarNormalFadeStart;
+                float _FarNormalFadeEnd;
                 half _LavaOverlayEnabled;
                 float _LavaWorldTileSize;
                 half _LavaNormalStrength;
@@ -516,6 +522,19 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             half4 Fragment(Varyings input) : SV_Target
             {
                 float3 normalOS = normalize(input.normalOS);
+                if (_SurfaceNormalMapEnabled > 0.5h)
+                {
+                    float3 bakedNormalOS = SAMPLE_TEXTURECUBE(
+                        _SurfaceNormalMap,
+                        sampler_NoiseTex,
+                        normalize(input.positionOS)).rgb * 2.0 - 1.0;
+                    float farWeight = smoothstep(
+                        _FarNormalFadeStart,
+                        _FarNormalFadeEnd,
+                        distance(_WorldSpaceCameraPos, input.positionWS));
+                    normalOS = normalize(lerp(normalOS, normalize(bakedNormalOS), farWeight));
+                }
+
                 FarionTriplanarFrame frame = FarionBuildTriplanarFrame(input.positionOS, normalOS);
 
                 half largeNoise = input.terrainData.x;

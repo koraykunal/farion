@@ -140,3 +140,6 @@ InitTestScene*.unity*
 /Assets/Toby Fredson.meta
 /Assets/Realistic Cliffs and Rocks/
 /Assets/Realistic Cliffs and Rocks.meta
+
+# Graphify knowledge-graph cache, tool output not project content
+/graphify-out/

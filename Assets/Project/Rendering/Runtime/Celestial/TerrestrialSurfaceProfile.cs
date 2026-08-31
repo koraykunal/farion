@@ -6,6 +6,9 @@ namespace Farion.Rendering.Celestial
     [CreateAssetMenu(menuName = "Farion/Rendering/Celestial/Terrestrial Surface Profile", fileName = "SO_TerrestrialSurfaceProfile")]
     public sealed class TerrestrialSurfaceProfile : CelestialSurfaceProfileBase
     {
+        const float FarNormalFadeStartRadiusFraction = 0.3f;
+        const float FarNormalFadeEndRadiusFraction = 0.8f;
+
         [Header("Material")]
         [SerializeField] Material material;
         [FormerlySerializedAs("biomeVisualProfile")]
@@ -110,6 +113,8 @@ namespace Farion.Rendering.Celestial
         {
             propertyBlock.SetFloat("_BodyRadius", bodyRadius);
             propertyBlock.SetVector("_RadiusMinMax", radiusMinMax);
+            propertyBlock.SetFloat("_FarNormalFadeStart", bodyRadius * FarNormalFadeStartRadiusFraction);
+            propertyBlock.SetFloat("_FarNormalFadeEnd", bodyRadius * FarNormalFadeEndRadiusFraction);
             propertyBlock.SetFloat("_HasOcean", hasOcean ? 1f : 0f);
             propertyBlock.SetFloat("_OceanLevel", Mathf.Clamp01(oceanLevelOverride));
             propertyBlock.SetFloat("_Metallic", metallic);

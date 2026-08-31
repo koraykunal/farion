@@ -136,6 +136,24 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
                     sampler_FarionCloudAtmosphereOpticalDepth));
         }
 
+        float3 AtmosphereViewTransmittance(float3 cameraPosition, float3 targetPosition)
+        {
+            return FarionAtmosphereViewTransmittance(
+                cameraPosition,
+                targetPosition,
+                _FarionCloudSphere.xyz,
+                _FarionCloudRadii.x,
+                _FarionCloudAtmosphereParams.x,
+                _FarionCloudAtmosphereParams.y,
+                _FarionCloudAtmosphereParams.z,
+                _FarionCloudAtmosphereRayleigh.rgb,
+                _FarionCloudAtmosphereOzone.rgb,
+                _FarionCloudAtmosphereParams.w,
+                TEXTURE2D_ARGS(
+                    _FarionCloudAtmosphereOpticalDepth,
+                    sampler_FarionCloudAtmosphereOpticalDepth));
+        }
+
         float SampleDensity(float3 worldPosition)
         {
             float3 center = _FarionCloudSphere.xyz;
@@ -578,6 +596,13 @@ Shader "Hidden/Farion/Celestial/Cloud Post Process"
             float3 directLight = _FarionStarColor.rgb * max(_FarionStarIntensity, 0.0);
             float3 ambientLight = max(_FarionAmbientColor.rgb, _FarionCloudAmbientColor.rgb);
             float3 cloudLight = lightEnergy * directLight + (1.0 - transmittance) * ambientLight;
+
+            float cloudEntryDistance = firstLength > 0.0 ? firstStart : secondStart;
+            float3 cloudEntryPoint = rayOrigin + rayDirection * max(cloudEntryDistance, 0.0);
+            float3 viewTransmittance = AtmosphereViewTransmittance(rayOrigin, cloudEntryPoint);
+            cloudLight = cloudLight * viewTransmittance
+                + ambientLight * (1.0 - viewTransmittance) * (1.0 - transmittance);
+
             cloud = half4(cloudLight, transmittance);
         }
 

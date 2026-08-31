@@ -199,6 +199,14 @@ namespace Farion.Gameplay.Character
             bool jumpLaunching = ShouldLaunchJump();
             StabilizeGroundContact(physicsBody, gravityAcceleration, referenceVelocity, localUp, jumpLaunching, deltaTime);
             ApplyMovement(physicsBody, referenceVelocity, localUp, input.Movement, input.Sprint, deltaTime);
+            ApplyStandAnchor(
+                physicsBody,
+                celestialFrame,
+                hasArtificialGravity,
+                localUp,
+                input.Movement,
+                jumpLaunching,
+                deltaTime);
             ApplySteepSlopeSlide(physicsBody, gravityAcceleration);
             ApplyWaterForces(physicsBody, environmentFrame, localUp, input.SwimAscend);
             ApplyJump(physicsBody, gravityAcceleration, referenceVelocity, celestialFrame, hasArtificialGravity, localUp, jumpLaunching);
@@ -225,6 +233,64 @@ namespace Farion.Gameplay.Character
             previousJumpHeld = false;
         }
 
+        const float StandAnchorReleaseDistance = 1.5f;
+        const float StandAnchorRecoveryMetersPerSecond = 4f;
+
+        bool hasStandAnchor;
+        int standAnchorBodyId;
+        Vector3 standAnchorLocalPosition;
+
+        void ApplyStandAnchor(
+            IFirstPersonPhysicsBody physicsBody,
+            in CelestialFrameSample frame,
+            bool hasArtificialGravity,
+            Vector3 up,
+            Vector2 movement,
+            bool jumpLaunching,
+            float deltaTime)
+        {
+            bool wantsAnchor = !hasArtificialGravity
+                && frame.HasBody
+                && grounded
+                && walkableGround
+                && !jumpLaunching
+                && !jumpQueued
+                && movement.sqrMagnitude <= 0.0001f
+                && waterSubmergedFraction < 0.5f;
+            if (!wantsAnchor)
+            {
+                hasStandAnchor = false;
+                return;
+            }
+
+            Transform bodyTransform = frame.Body.transform;
+            Vector3 position = physicsBody.Position;
+            if (!hasStandAnchor || standAnchorBodyId != frame.Body.StableId)
+            {
+                hasStandAnchor = true;
+                standAnchorBodyId = frame.Body.StableId;
+                standAnchorLocalPosition = bodyTransform.InverseTransformPoint(position);
+                return;
+            }
+
+            Vector3 anchorPosition = bodyTransform.TransformPoint(standAnchorLocalPosition);
+            Vector3 tangentialDelta = Vector3.ProjectOnPlane(anchorPosition - position, up);
+            float drift = tangentialDelta.magnitude;
+            if (drift > StandAnchorReleaseDistance)
+            {
+                standAnchorLocalPosition = bodyTransform.InverseTransformPoint(position);
+                return;
+            }
+
+            if (drift <= 0.0001f)
+            {
+                return;
+            }
+
+            float correction = Mathf.Min(drift, StandAnchorRecoveryMetersPerSecond * deltaTime);
+            physicsBody.SetPosition(position + tangentialDelta / drift * correction);
+        }
+
         public FirstPersonMotorState CaptureState()
         {
             return new FirstPersonMotorState
@@ -247,7 +313,10 @@ namespace Farion.Gameplay.Character
                 LocalUp = localUp,
                 GroundNormal = groundNormal,
                 SmoothedGroundNormal = smoothedGroundNormal,
-                HasSmoothedGroundNormal = hasSmoothedGroundNormal
+                HasSmoothedGroundNormal = hasSmoothedGroundNormal,
+                HasStandAnchor = hasStandAnchor,
+                StandAnchorBodyId = standAnchorBodyId,
+                StandAnchorLocalPosition = standAnchorLocalPosition
             };
         }
 
@@ -272,6 +341,9 @@ namespace Farion.Gameplay.Character
             groundNormal = state.GroundNormal;
             smoothedGroundNormal = state.SmoothedGroundNormal;
             hasSmoothedGroundNormal = state.HasSmoothedGroundNormal;
+            hasStandAnchor = state.HasStandAnchor;
+            standAnchorBodyId = state.StandAnchorBodyId;
+            standAnchorLocalPosition = state.StandAnchorLocalPosition;
         }
 
         public void SetArtificialGravitySource(ArtificialGravityVolume source)
