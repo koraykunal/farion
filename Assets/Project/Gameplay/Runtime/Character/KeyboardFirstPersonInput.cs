@@ -16,6 +16,7 @@ namespace Farion.Gameplay.Character
         [SerializeField] PlayerControlLock controlLock;
 
         public FirstPersonInputState CurrentInput { get; private set; }
+        bool lookInputEnabled = true;
 
         void OnEnable()
         {
@@ -32,10 +33,12 @@ namespace Farion.Gameplay.Character
 
             CurrentInput = new FirstPersonInputState(
                 FarionInputActions.OnFootMove.ReadValue<Vector2>(),
-                FarionInputActions.ReadLookDelta(
-                    FarionInputActions.OnFootLook,
-                    mouseSensitivity,
-                    gamepadLookDegreesPerSecond),
+                lookInputEnabled
+                    ? FarionInputActions.ReadLookDelta(
+                        FarionInputActions.OnFootLook,
+                        mouseSensitivity,
+                        gamepadLookDegreesPerSecond)
+                    : Vector2.zero,
                 FarionInputActions.OnFootJump.IsPressed(),
                 FarionInputActions.OnFootSprint.IsPressed(),
                 FarionInputActions.OnFootInteract.WasPressedThisFrame());
@@ -49,6 +52,11 @@ namespace Farion.Gameplay.Character
         public void SetControlLock(PlayerControlLock nextControlLock)
         {
             controlLock = nextControlLock;
+        }
+
+        public void SetLookInputEnabled(bool enabled)
+        {
+            lookInputEnabled = enabled;
         }
 
         bool IsGameplayInputLocked()

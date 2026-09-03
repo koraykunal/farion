@@ -9,6 +9,7 @@ namespace Farion.Gameplay.Input
         public const float ReferenceFieldOfView = 75f;
 
         const string FieldOfViewKey = "farion.view.fieldOfView";
+        const string ReducedMotionKey = "farion.ui.reducedMotion";
 
         static float fieldOfView = float.NaN;
 
@@ -39,6 +40,9 @@ namespace Farion.Gameplay.Input
         }
 
         public static float FieldOfViewOffset => FieldOfView - ReferenceFieldOfView;
+
+        public static bool ReducedMotion =>
+            PlayerPrefs.GetInt(ReducedMotionKey, 0) != 0;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetCache()

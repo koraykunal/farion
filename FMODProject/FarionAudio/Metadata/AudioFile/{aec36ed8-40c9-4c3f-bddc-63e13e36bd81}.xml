@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{aec36ed8-40c9-4c3f-bddc-63e13e36bd81}">
+		<property name="assetPath">
+			<value>Character/Footsteps/Soil/footstep_dirt_loose_walk_run_03.wav</value>
+		</property>
+	</object>
+</objects>

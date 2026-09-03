@@ -153,6 +153,7 @@ namespace Farion.Editor.Validation
             if (shells.Length != 1 ||
                 FindSceneComponents<Camera>(scene).Length != 1 ||
                 FindSceneComponents<FirstPersonCameraRig>(scene).Length != 1 ||
+                FindSceneComponents<FirstPersonViewEffects>(scene).Length != 1 ||
                 FindSceneComponents<SpacecraftCameraRig>(scene).Length != 1 ||
                 FindSceneComponents<PlayerControlLock>(scene).Length != 1 ||
                 FindSceneComponents<UiGameplayController>(scene).Length != 1 ||
@@ -161,8 +162,8 @@ namespace Farion.Editor.Validation
             {
                 report.AddError(
                     $"{scenePath}: gameplay presentation requires exactly one shell controller, " +
-                    "Camera, camera rigs, PlayerControlLock, UiGameplayController, " +
-                    "CelestialLightingRig, and CelestialLodController.");
+                    "Camera, camera rigs, FirstPersonViewEffects, PlayerControlLock, " +
+                    "UiGameplayController, CelestialLightingRig, and CelestialLodController.");
             }
             else if (!shells[0].IsValid ||
                      new SerializedObject(shells[0])

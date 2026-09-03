@@ -1,11 +1,11 @@
 ﻿<Solution>
   <Project Path="FishNet.Runtime.csproj" />
   <Project Path="FishNet.Codegen.Cecil.csproj" />
-  <Project Path="Farion.Gameplay.Runtime.csproj" />
-  <Project Path="Farion.Multiplayer.Runtime.csproj" />
   <Project Path="Farion.Simulation.Runtime.csproj" />
+  <Project Path="Farion.Gameplay.Runtime.csproj" />
   <Project Path="com.rlabrecque.steamworks.net.csproj" />
   <Project Path="Farion.Editor.csproj" />
+  <Project Path="Farion.Multiplayer.Runtime.csproj" />
   <Project Path="Farion.Gameplay.Presentation.csproj" />
   <Project Path="Farion.Audio.Runtime.csproj" />
   <Project Path="GameKit.Dependencies.csproj" />

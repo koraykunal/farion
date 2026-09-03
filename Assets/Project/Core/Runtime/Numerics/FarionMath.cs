@@ -16,6 +16,36 @@ namespace Farion.Core.Numerics
                 : 1f - Mathf.Exp(-response * Mathf.Max(0f, deltaTime));
         }
 
+        public static void Spring(
+            ref float position,
+            ref float velocity,
+            float target,
+            float stiffness,
+            float damping,
+            float deltaTime)
+        {
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
+
+            velocity += (stiffness * (target - position) - damping * velocity) * deltaTime;
+            position += velocity * deltaTime;
+        }
+
+        public static void Spring(
+            ref Vector3 position,
+            ref Vector3 velocity,
+            Vector3 target,
+            float stiffness,
+            float damping,
+            float deltaTime)
+        {
+            Spring(ref position.x, ref velocity.x, target.x, stiffness, damping, deltaTime);
+            Spring(ref position.y, ref velocity.y, target.y, stiffness, damping, deltaTime);
+            Spring(ref position.z, ref velocity.z, target.z, stiffness, damping, deltaTime);
+        }
+
         public static float SmoothMin(float a, float b, float k)
         {
             if (k <= 0f)

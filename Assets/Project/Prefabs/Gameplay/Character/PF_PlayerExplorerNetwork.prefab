@@ -78,6 +78,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6508252084040059505}
   m_SourcePrefab: {fileID: 100100000, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+--- !u!23 &129480021906103559 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7467828837744091028, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
+  m_PrefabInstance: {fileID: 7381135520629162643}
+  m_PrefabAsset: {fileID: 0}
 --- !u!137 &1247912751578742742 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 8592434533659934021, guid: 6110c5cd62cae4843887634c8ebf82bd, type: 3}
@@ -262,6 +267,7 @@ MonoBehaviour:
   - {fileID: 6836927110482722707}
   - {fileID: 1247912751578742742}
   - {fileID: 6413614858009339396}
+  - {fileID: 129480021906103559}
 --- !u!114 &7246138248365821139
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -66,8 +66,10 @@ namespace Farion.Gameplay.Character
         Vector3 smoothedGroundNormal = Vector3.up;
         bool hasSmoothedGroundNormal;
         ArtificialGravityVolume artificialGravitySource;
+        ArtificialWaterVolume artificialWaterSource;
         bool externalSimulation;
         float simulationTime;
+        int groundLayer = -1;
 
         public Rigidbody Rigidbody => cachedRigidbody != null ? cachedRigidbody : cachedRigidbody = GetComponent<Rigidbody>();
         public CapsuleCollider Capsule => cachedCapsule != null ? cachedCapsule : cachedCapsule = GetComponent<CapsuleCollider>();
@@ -78,6 +80,7 @@ namespace Farion.Gameplay.Character
         public Vector3 LocalUp => localUp;
         public Vector3 GroundNormal => groundNormal;
         public Vector3 SurfaceVelocity => surfaceVelocity;
+        public int GroundLayer => groundLayer;
         public float YawDegreesPerMouseUnit =>
             profile != null ? profile.YawDegreesPerMouseUnit : 0f;
         public float ViewPitchDegrees => viewPitchDegrees;
@@ -359,6 +362,19 @@ namespace Farion.Gameplay.Character
             }
         }
 
+        public void SetArtificialWaterSource(ArtificialWaterVolume source)
+        {
+            artificialWaterSource = source;
+        }
+
+        public void ClearArtificialWaterSource(ArtificialWaterVolume source)
+        {
+            if (artificialWaterSource == source)
+            {
+                artificialWaterSource = null;
+            }
+        }
+
         public void ResetMotorState()
         {
             currentInput = FirstPersonInputState.None;
@@ -418,6 +434,7 @@ namespace Farion.Gameplay.Character
             walkableGround = false;
             groundSlopeAngle = 0f;
             groundNormal = up;
+            groundLayer = -1;
             Vector3 detectedGroundNormal = up;
 
             if (profile == null)
@@ -467,6 +484,7 @@ namespace Farion.Gameplay.Character
 
                 closestDistance = hit.distance;
                 detectedGroundNormal = hit.normal.normalized;
+                groundLayer = hit.collider.gameObject.layer;
             }
 
             bool physicalGroundHitDetected = closestDistance < float.PositiveInfinity;
@@ -486,6 +504,7 @@ namespace Farion.Gameplay.Character
             {
                 closestGap = surfaceGap;
                 detectedGroundNormal = surfaceNormal;
+                groundLayer = FarionLayers.CelestialSurface;
             }
 
             grounded = closestGap <= profile.GroundProbeDistance;
@@ -759,7 +778,7 @@ namespace Farion.Gameplay.Character
             if (launch)
             {
                 lastJumpRequestTime = float.NegativeInfinity;
-                LaunchJump(
+                    LaunchJump(
                     physicsBody,
                     gravityAcceleration,
                     referenceVelocity,
@@ -919,17 +938,20 @@ namespace Farion.Gameplay.Character
             waterDepth = 0f;
             waterSubmergedFraction = 0f;
 
-            if (profile == null || !frame.HasOcean)
+            if (profile == null || (artificialWaterSource == null && !frame.HasOcean))
             {
                 return;
             }
 
+            float surfaceAltitude = artificialWaterSource != null
+                ? artificialWaterSource.SignedDistanceToSurface(frame.Position)
+                : frame.OceanAltitude;
             float capsuleHalfHeight = Mathf.Max(Capsule.height * 0.5f, Capsule.radius);
-            float immersionDepth = Mathf.Clamp(capsuleHalfHeight - frame.OceanAltitude, 0f, capsuleHalfHeight * 2f);
+            float immersionDepth = Mathf.Clamp(capsuleHalfHeight - surfaceAltitude, 0f, capsuleHalfHeight * 2f);
             waterSubmergedFraction = Mathf.Clamp01(immersionDepth / (capsuleHalfHeight * 2f));
             touchingWater = waterSubmergedFraction > 0f;
-            underwater = frame.IsBelowOceanLevel;
-            waterDepth = frame.WaterDepth;
+            underwater = surfaceAltitude < 0f;
+            waterDepth = Mathf.Max(0f, -surfaceAltitude);
         }
 
         void ApplyWaterForces(
@@ -944,7 +966,11 @@ namespace Farion.Gameplay.Character
             }
 
             float waterControl = Mathf.SmoothStep(0f, 1f, waterSubmergedFraction);
-            Vector3 relativeVelocity = physicsBody.LinearVelocity - frame.WaterPointVelocity;
+            float ascendControl = Mathf.InverseLerp(0.5f, 1f, waterSubmergedFraction);
+            Vector3 waterVelocity = artificialWaterSource != null
+                ? artificialWaterSource.ReferenceVelocityAt(frame.Position)
+                : frame.WaterPointVelocity;
+            Vector3 relativeVelocity = physicsBody.LinearVelocity - waterVelocity;
 
             if (profile.UnderwaterLinearDrag > 0f)
             {
@@ -953,7 +979,17 @@ namespace Farion.Gameplay.Character
 
             if (swimAscend && profile.UnderwaterAscendAcceleration > 0f)
             {
-                physicsBody.AddForce(up * (profile.UnderwaterAscendAcceleration * waterControl), ForceMode.Acceleration);
+                float upwardSpeed = Vector3.Dot(relativeVelocity, up);
+                if (ascendControl <= 0f && upwardSpeed > 0f)
+                {
+                    physicsBody.AddForce(-up * upwardSpeed, ForceMode.VelocityChange);
+                }
+                else
+                {
+                    physicsBody.AddForce(
+                        up * (profile.UnderwaterAscendAcceleration * waterControl * ascendControl),
+                        ForceMode.Acceleration);
+                }
             }
         }
 

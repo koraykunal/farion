@@ -31,7 +31,8 @@ namespace Farion.Gameplay.Session
                 spawnRotation = player.transform.rotation;
             }
 
-            LockCursor(true);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
 
         void Update()
@@ -40,19 +41,6 @@ namespace Farion.Gameplay.Session
             if (keyboard == null)
             {
                 return;
-            }
-
-            if (keyboard.escapeKey.wasPressedThisFrame)
-            {
-                LockCursor(false);
-            }
-
-            Mouse mouse = Mouse.current;
-            if (mouse != null &&
-                mouse.leftButton.wasPressedThisFrame &&
-                Cursor.lockState != CursorLockMode.Locked)
-            {
-                LockCursor(true);
             }
 
             if (player == null)
@@ -87,12 +75,6 @@ namespace Farion.Gameplay.Session
             {
                 Teleport(spawnPosition, spawnRotation);
             }
-        }
-
-        static void LockCursor(bool locked)
-        {
-            Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !locked;
         }
 
         void TeleportToPoint(int index)

@@ -86,6 +86,7 @@ namespace Farion.Editor.Validation
             ValidateDefinitionRegistries(report);
             ValidateMultiplayerAssets(report);
             ValidateCharacterAnimation(report);
+            ValidateExplorerFeel(report);
             FarionUiValidator.ValidateProject(report);
             FarionCelestialVisualProjectValidator.ValidateProjectAssets(report);
             return report;

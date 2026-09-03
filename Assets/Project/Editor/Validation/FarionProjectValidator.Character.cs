@@ -1,3 +1,4 @@
+using Farion.Audio.Character;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Presentation.Character;
 using UnityEditor;
@@ -27,13 +28,12 @@ namespace Farion.Editor.Validation
 
         static readonly (string State, string Motion)[] ExplorerAnimatorStates =
         {
-            ("Idle", "Idle_Breathing"),
-            ("MoveStart", "Walk_Start"),
+            ("Idle", "Idle"),
             ("Move", "Move"),
             ("MoveStop", "Walk_Stop"),
             ("JumpStart", "Jump_Start"),
-            ("Airborne", "Fall_Loop"),
-            ("Land", "Land"),
+            ("Airborne", "Jump_Loop"),
+            ("Land", "Jump_Land"),
             ("Swim", "Swim")
         };
 
@@ -112,6 +112,34 @@ namespace Farion.Editor.Validation
 
             ValidateExplorerAimRig(prefabPath, visualRoot, animator, report);
             ValidateExplorerFootIk(prefabPath, animator, report);
+        }
+
+        static void ValidateExplorerFeel(FarionValidationReport report)
+        {
+            string prefabPath = FarionAssetPaths.CoreExplorerPrefab;
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+            {
+                return;
+            }
+
+            if (prefab.GetComponent<ExplorerLocomotionSignals>() == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: root is missing ExplorerLocomotionSignals.");
+            }
+
+            if (prefab.GetComponent<ExplorerAudioController>() == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: root is missing ExplorerAudioController.");
+            }
+
+            if (prefab.GetComponentInChildren<VisorEyes>(true) == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: VisorEyes missing; run Farion/Character/Install Visor Eyes.");
+            }
         }
 
         static void ValidateExplorerAimRig(

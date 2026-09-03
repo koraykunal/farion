@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{a774e530-ccad-47a8-8290-21d29bfe159a}">
+		<property name="name">
+			<value>Wetness</value>
+		</property>
+		<relationship name="folder">
+			<destination>{ac06c5b8-c6ef-4d93-b5cc-f0837e12826a}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{36a4eee4-fc75-48d1-9f59-6fa4f8f018f5}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{36a4eee4-fc75-48d1-9f59-6fa4f8f018f5}" />
+</objects>

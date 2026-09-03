@@ -16,28 +16,123 @@ namespace Farion.Editor.Authoring
             "Assets/Project/Art/Animations/Characters/PlayerExplorer/Controllers/AC_PlayerExplorer.controller";
         const string PrefabPath =
             "Assets/Project/Prefabs/Gameplay/Character/PF_PlayerExplorerCore.prefab";
+        const string ModelPath =
+            "Assets/Project/Art/Models/Characters/PlayerExplorer/SM_PlayerExplorer_A.fbx";
 
         const float MoveEnterSpeed = 0.7f;
         const float MoveExitSpeed = 0.3f;
+        const float MinimumClipTimeScale = 0.6f;
+        const float MaximumClipTimeScale = 1.6f;
+        const float SampleRate = 60f;
+        const float Diagonal = 0.70710678f;
+
+        static readonly string[] Directions =
+        {
+            "Forward", "ForwardRight", "Right", "BackwardRight",
+            "Backward", "BackwardLeft", "Left", "ForwardLeft"
+        };
+
+        static readonly Vector2[] DirectionVectors =
+        {
+            new(0f, 1f), new(Diagonal, Diagonal), new(1f, 0f), new(Diagonal, -Diagonal),
+            new(0f, -1f), new(-Diagonal, -Diagonal), new(-1f, 0f), new(-Diagonal, Diagonal)
+        };
+
+        static readonly Dictionary<string, AnimationClip> clipCache = new();
+        static readonly Dictionary<string, float> speedCache = new();
 
         [MenuItem("Farion/Character/Rebuild Locomotion")]
         internal static void Run()
         {
-            CalibrateClipSpeeds();
+            clipCache.Clear();
+            speedCache.Clear();
+            MeasureClipSpeeds();
+            CalibrateDriver();
             RebuildController();
             AssetDatabase.SaveAssets();
             Debug.Log("[FarionPlayerLocomotionSetup] locomotion rebuilt.");
         }
 
-        static void CalibrateClipSpeeds()
+        static void MeasureClipSpeeds()
         {
-            var measured = new Dictionary<string, float>
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath);
+            if (model == null)
             {
-                ["walkClipSpeed"] = Measure("AN_PlayerExplorer_Walk_Forward_A"),
-                ["jogClipSpeed"] = Measure("AN_PlayerExplorer_Jog_Forward_A"),
-                ["runClipSpeed"] = Measure("AN_PlayerExplorer_Run_Forward_A")
-            };
+                throw new InvalidOperationException($"{ModelPath} is missing.");
+            }
 
+            GameObject instance = UnityEngine.Object.Instantiate(model);
+            instance.hideFlags = HideFlags.HideAndDontSave;
+            try
+            {
+                var animator = instance.GetComponentInChildren<Animator>();
+                Transform hips = animator.GetBoneTransform(HumanBodyBones.Hips);
+                Transform left = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+                Transform right = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+                AnimationMode.StartAnimationMode();
+                try
+                {
+                    foreach (string direction in Directions)
+                    {
+                        Measure(instance, hips, left, right, "Walk_" + direction);
+                        Measure(instance, hips, left, right, "Jog_" + direction);
+                    }
+
+                    Measure(instance, hips, left, right, "Run_Forward");
+                }
+                finally
+                {
+                    AnimationMode.StopAnimationMode();
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        static void Measure(
+            GameObject instance,
+            Transform hips,
+            Transform left,
+            Transform right,
+            string name)
+        {
+            AnimationClip clip = Clip(name);
+            int samples = Mathf.Max(8, Mathf.RoundToInt(clip.length * SampleRate));
+            float step = clip.length / samples;
+            var stanceSpeeds = new List<float>(samples);
+            Vector3 previousLeft = Vector3.zero;
+            Vector3 previousRight = Vector3.zero;
+            for (int i = 0; i <= samples; i++)
+            {
+                AnimationMode.BeginSampling();
+                AnimationMode.SampleAnimationClip(instance, clip, i * step);
+                AnimationMode.EndSampling();
+                Vector3 currentLeft = left.position - hips.position;
+                Vector3 currentRight = right.position - hips.position;
+                if (i > 0)
+                {
+                    bool leftPlanted = left.position.y <= right.position.y;
+                    Vector3 delta = leftPlanted
+                        ? currentLeft - previousLeft
+                        : currentRight - previousRight;
+                    delta.y = 0f;
+                    stanceSpeeds.Add(delta.magnitude / step);
+                }
+
+                previousLeft = currentLeft;
+                previousRight = currentRight;
+            }
+
+            stanceSpeeds.Sort();
+            float speed = stanceSpeeds[stanceSpeeds.Count / 2];
+            speedCache[name] = speed;
+            Debug.Log($"[FarionPlayerLocomotionSetup] {name}: {speed:F2} m/s over {clip.length:F2} s.");
+        }
+
+        static void CalibrateDriver()
+        {
             GameObject contents = PrefabUtility.LoadPrefabContents(PrefabPath);
             try
             {
@@ -49,30 +144,11 @@ namespace Farion.Editor.Authoring
                 }
 
                 var serialized = new SerializedObject(driver);
-                bool dirty = false;
-                foreach ((string field, float speed) in measured)
-                {
-                    SerializedProperty property = serialized.FindProperty(field);
-                    if (speed <= 0.05f)
-                    {
-                        Debug.LogWarning(
-                            $"[FarionPlayerLocomotionSetup] {field}: clip carries no root motion, " +
-                            $"keeping authored {property.floatValue:F2} m/s.");
-                        continue;
-                    }
-
-                    Debug.Log(
-                        $"[FarionPlayerLocomotionSetup] {field}: measured {speed:F2} m/s " +
-                        $"(was {property.floatValue:F2}).");
-                    property.floatValue = speed;
-                    dirty = true;
-                }
-
-                if (dirty)
-                {
-                    serialized.ApplyModifiedPropertiesWithoutUndo();
-                    PrefabUtility.SaveAsPrefabAsset(contents, PrefabPath);
-                }
+                serialized.FindProperty("walkClipSpeed").floatValue = speedCache["Walk_Forward"];
+                serialized.FindProperty("jogClipSpeed").floatValue = speedCache["Jog_Forward"];
+                serialized.FindProperty("runClipSpeed").floatValue = speedCache["Run_Forward"];
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(contents, PrefabPath);
             }
             finally
             {
@@ -80,56 +156,15 @@ namespace Farion.Editor.Authoring
             }
         }
 
-        static float Measure(string file)
-        {
-            string path = $"{ClipFolder}/{file}.fbx";
-            var importer = AssetImporter.GetAtPath(path) as ModelImporter;
-            if (importer == null)
-            {
-                return 0f;
-            }
-
-            ModelImporterClipAnimation[] clips = importer.clipAnimations;
-            if (clips.Length == 0)
-            {
-                return 0f;
-            }
-
-            bool rotation = clips[0].lockRootRotation;
-            bool height = clips[0].lockRootHeightY;
-            bool planar = clips[0].lockRootPositionXZ;
-            clips[0].lockRootRotation = false;
-            clips[0].lockRootHeightY = false;
-            clips[0].lockRootPositionXZ = false;
-            importer.clipAnimations = clips;
-            importer.SaveAndReimport();
-
-            float speed = LoadClip(path, clips[0].name) is { } measured
-                ? new Vector2(measured.averageSpeed.x, measured.averageSpeed.z).magnitude
-                : 0f;
-
-            clips = importer.clipAnimations;
-            clips[0].lockRootRotation = rotation;
-            clips[0].lockRootHeightY = height;
-            clips[0].lockRootPositionXZ = planar;
-            importer.clipAnimations = clips;
-            importer.SaveAndReimport();
-            return speed;
-        }
-
-        static AnimationClip LoadClip(string path, string name) =>
-            AssetDatabase
-                .LoadAllAssetsAtPath(path)
-                .OfType<AnimationClip>()
-                .FirstOrDefault(clip => clip.name == name);
-
-        static readonly Dictionary<string, AnimationClip> clipCache = new();
-
         static AnimationClip Clip(string name)
         {
             if (clipCache.Count == 0)
             {
-                foreach (string guid in AssetDatabase.FindAssets("t:Model", new[] { ClipFolder }))
+                string[] guids = AssetDatabase.FindAssets("t:AnimationClip", new[] { ClipFolder })
+                    .Concat(AssetDatabase.FindAssets("t:Model", new[] { ClipFolder }))
+                    .Distinct()
+                    .ToArray();
+                foreach (string guid in guids)
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
                     foreach (UnityEngine.Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
@@ -197,20 +232,17 @@ namespace Farion.Editor.Authoring
             machine.entryPosition = new Vector3(-280f, 120f, 0f);
             machine.exitPosition = new Vector3(-280f, 280f, 0f);
 
-            AnimatorState idle = AddState(machine, "Idle", new Vector3(40f, 120f, 0f), Clip("Idle_Breathing"));
-            AnimatorState moveStart = AddState(machine, "MoveStart", new Vector3(300f, 40f, 0f), Clip("Walk_Start"));
+            AnimatorState idle = AddState(machine, "Idle", new Vector3(40f, 120f, 0f), Clip("Idle"));
             AnimatorState move = AddState(machine, "Move", new Vector3(560f, 120f, 0f), BuildMoveTree(controller));
             AnimatorState moveStop = AddState(machine, "MoveStop", new Vector3(300f, 200f, 0f), Clip("Walk_Stop"));
             AnimatorState jump = AddState(machine, "JumpStart", new Vector3(40f, -160f, 0f), Clip("Jump_Start"));
-            AnimatorState airborne = AddState(machine, "Airborne", new Vector3(300f, -240f, 0f), Clip("Fall_Loop"));
-            AnimatorState land = AddState(machine, "Land", new Vector3(560f, -160f, 0f), Clip("Land"));
+            AnimatorState airborne = AddState(machine, "Airborne", new Vector3(300f, -240f, 0f), Clip("Jump_Loop"));
+            AnimatorState land = AddState(machine, "Land", new Vector3(560f, -160f, 0f), Clip("Jump_Land"));
             AnimatorState swim = AddState(machine, "Swim", new Vector3(40f, 380f, 0f), BuildSwimTree(controller));
 
             machine.defaultState = idle;
             move.speedParameter = "StrideScale";
             move.speedParameterActive = true;
-            moveStart.speedParameter = "StrideScale";
-            moveStart.speedParameterActive = true;
             moveStop.speed = 1.15f;
 
             AnimatorStateTransition toSwim = machine.AddAnyStateTransition(swim);
@@ -218,23 +250,21 @@ namespace Farion.Editor.Authoring
             toSwim.AddCondition(AnimatorConditionMode.Greater, 0.5f, "Submerged");
 
             AnimatorStateTransition toJump = machine.AddAnyStateTransition(jump);
-            Shape(toJump, 0.08f);
+            Shape(toJump, 0.05f);
             toJump.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
             toJump.AddCondition(AnimatorConditionMode.Greater, 0.5f, "VerticalSpeed");
             toJump.AddCondition(AnimatorConditionMode.Less, 0.5f, "Submerged");
 
             AnimatorStateTransition toAirborne = machine.AddAnyStateTransition(airborne);
-            Shape(toAirborne, 0.15f);
+            Shape(toAirborne, 0.2f);
             toAirborne.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
             toAirborne.AddCondition(AnimatorConditionMode.Less, 0.5f, "VerticalSpeed");
             toAirborne.AddCondition(AnimatorConditionMode.Less, 0.5f, "Submerged");
 
-            Moving(Shape(idle.AddTransition(moveStart), 0.1f), true);
+            Moving(Shape(idle.AddTransition(move), 0.12f), true);
             Moving(Shape(move.AddTransition(moveStop), 0.1f), false);
-            Moving(Shape(moveStart.AddTransition(idle), 0.15f), false);
             Moving(Shape(moveStop.AddTransition(move), 0.1f), true);
 
-            Shape(moveStart.AddTransition(move), 0.12f, ExitAfter(moveStart, 0.25f, 0.1f, 0.75f));
             Shape(moveStop.AddTransition(idle), 0.15f, ExitAfter(moveStop, 0.55f, 0.3f, 0.9f));
 
             Grounded(Shape(jump.AddTransition(land), 0.08f), true);
@@ -277,17 +307,27 @@ namespace Farion.Editor.Authoring
                 useAutomaticThresholds = false
             };
             AssetDatabase.AddObjectToAsset(tree, controller);
-            tree.children = new[]
-            {
-                Child(Clip("Idle_Breathing"), 0f, 0f),
-                Child(Clip("Walk_Forward"), 0f, 1f),
-                Child(Clip("Jog_Forward"), 0f, 2f),
-                Child(Clip("Run_Forward"), 0f, 3f),
-                Child(Clip("Walk_Backward"), 0f, -1f),
-                Child(Clip("Strafe_Left"), -1f, 0f),
-                Child(Clip("Strafe_Right"), 1f, 0f)
-            };
+
+            var children = new List<ChildMotion> { Child("Idle", Vector2.zero, 1f) };
+            AddRing(children, "Walk_", 1f);
+            AddRing(children, "Jog_", 2f);
+            children.Add(Child("Run_Forward", new Vector2(0f, 3f), 1f));
+            tree.children = children.ToArray();
             return tree;
+        }
+
+        static void AddRing(List<ChildMotion> children, string prefix, float radius)
+        {
+            float ringSpeed = speedCache[prefix + "Forward"];
+            for (int i = 0; i < Directions.Length; i++)
+            {
+                string name = prefix + Directions[i];
+                float timeScale = Mathf.Clamp(
+                    ringSpeed / Mathf.Max(0.01f, speedCache[name]),
+                    MinimumClipTimeScale,
+                    MaximumClipTimeScale);
+                children.Add(Child(name, DirectionVectors[i] * radius, timeScale));
+            }
         }
 
         static BlendTree BuildSwimTree(AnimatorController controller)
@@ -321,12 +361,12 @@ namespace Farion.Editor.Authoring
             return tree;
         }
 
-        static ChildMotion Child(AnimationClip clip, float x, float y) =>
+        static ChildMotion Child(string clip, Vector2 position, float timeScale) =>
             new()
             {
-                motion = clip,
-                position = new Vector2(x, y),
-                timeScale = 1f,
+                motion = Clip(clip),
+                position = position,
+                timeScale = timeScale,
                 directBlendParameter = "StrideScale"
             };
 

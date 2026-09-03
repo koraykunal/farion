@@ -26,11 +26,22 @@ namespace Farion.Gameplay.Character
 
         [Header("Field Of View")]
         [SerializeField] Camera viewCamera;
+        [Tooltip("Extra field of view blended in at full sprint speed; kept small to avoid an arcade feel.")]
+        [Min(0f)]
+        [SerializeField] float sprintFovIncrease = 5f;
+        [Tooltip("Smoothing response for the sprint field of view kick.")]
+        [Min(0f)]
+        [SerializeField] float sprintFovResponsiveness = 6f;
 
         KeyboardFirstPersonInput resolvedInput;
         float authoredFieldOfView;
         float pitch;
+        float smoothedSprintFovKick;
+        Vector3 smoothedLocalOffset;
+        Quaternion smoothedLocalRotation = Quaternion.identity;
         bool snapNextFrame = true;
+
+        public FirstPersonMotor Target => target;
 
         void OnEnable()
         {
@@ -72,13 +83,13 @@ namespace Farion.Gameplay.Character
             Vector3 up = target.LocalUp.sqrMagnitude > 0.0001f ? target.LocalUp : target.transform.up;
             Vector3 targetPosition = target.transform.position;
             Vector3 desiredLocalOffset = up * eyeHeight;
-            Vector3 currentLocalOffset = transform.position - targetPosition;
             Quaternion targetRotation = target.transform.rotation;
             Quaternion desiredLocalRotation = Quaternion.AngleAxis(pitch, Vector3.right);
-            Quaternion currentLocalRotation = Quaternion.Inverse(targetRotation) * transform.rotation;
 
-            if (snapNextFrame || Vector3.Distance(currentLocalOffset, desiredLocalOffset) > snapDistance)
+            if (snapNextFrame || Vector3.Distance(smoothedLocalOffset, desiredLocalOffset) > snapDistance)
             {
+                smoothedLocalOffset = desiredLocalOffset;
+                smoothedLocalRotation = desiredLocalRotation;
                 transform.SetPositionAndRotation(
                     targetPosition + desiredLocalOffset,
                     targetRotation * desiredLocalRotation);
@@ -88,12 +99,12 @@ namespace Farion.Gameplay.Character
 
             float positionT = FarionMath.SmoothFactor(positionResponsiveness, UnityEngine.Time.deltaTime);
             float rotationT = FarionMath.SmoothFactor(rotationResponsiveness, UnityEngine.Time.deltaTime);
-            Vector3 smoothedLocalOffset = Vector3.Lerp(
-                currentLocalOffset,
+            smoothedLocalOffset = Vector3.Lerp(
+                smoothedLocalOffset,
                 desiredLocalOffset,
                 positionT);
-            Quaternion smoothedLocalRotation = Quaternion.Slerp(
-                currentLocalRotation,
+            smoothedLocalRotation = Quaternion.Slerp(
+                smoothedLocalRotation,
                 desiredLocalRotation,
                 rotationT);
             transform.SetPositionAndRotation(
@@ -105,6 +116,7 @@ namespace Farion.Gameplay.Character
         {
             target = nextTarget;
             pitch = 0f;
+            smoothedSprintFovKick = 0f;
             snapNextFrame = true;
         }
 
@@ -136,12 +148,35 @@ namespace Farion.Gameplay.Character
                 return;
             }
 
-            float desiredFieldOfView =
-                PlayerViewPreferences.ResolveFieldOfView(authoredFieldOfView);
+            float desiredFieldOfView = Mathf.Min(
+                PlayerViewPreferences.ResolveFieldOfView(authoredFieldOfView) + ResolveSprintFovKick(),
+                PlayerViewPreferences.MaximumFieldOfView);
             if (!Mathf.Approximately(viewCamera.fieldOfView, desiredFieldOfView))
             {
                 viewCamera.fieldOfView = desiredFieldOfView;
             }
+        }
+
+        float ResolveSprintFovKick()
+        {
+            float targetKick = 0f;
+            if (sprintFovIncrease > 0f &&
+                !PlayerViewPreferences.ReducedMotion &&
+                target != null &&
+                target.Profile != null)
+            {
+                targetKick = Mathf.InverseLerp(
+                    target.Profile.WalkSpeed,
+                    target.Profile.SprintSpeed,
+                    target.SurfaceVelocity.magnitude) * sprintFovIncrease;
+            }
+
+            smoothedSprintFovKick = FarionMath.Smooth(
+                smoothedSprintFovKick,
+                targetKick,
+                sprintFovResponsiveness,
+                UnityEngine.Time.deltaTime);
+            return smoothedSprintFovKick;
         }
 
         void ResolveInputSource()

@@ -16,6 +16,9 @@ state; it never owns flight physics, possession, UI navigation, or scene flow.
   environment state into `ShipAudioTelemetry`.
 - `ShipAudioController` owns the spacecraft FMOD instances and pushes engine
   parameters. Flight code remains untouched.
+- `ExplorerAudioController` subscribes to `ExplorerLocomotionSignals` on the
+  explorer prefab and plays footstep, jump, and landing one-shots with surface
+  and intensity parameters. Locomotion code remains untouched.
 - `UiAudioFeedback` translates Selectable focus and activation into FMOD UI
   cues. `UiAudioBridge` handles screen-back, pause, success, and error state.
 
@@ -33,6 +36,8 @@ Gameplay/UI state
 
 ```text
 Assets/Project/Audio/Runtime
+|-- Character
+|   `-- ExplorerAudioController.cs
 |-- System
 |   |-- AudioDirector.cs
 |   `-- AudioSceneContext.cs
@@ -47,8 +52,23 @@ Assets/Project/Prefabs/Audio/PF_AudioDirector.prefab
 FMODProject/FarionAudio/FarionAudio.fspro
 FMODProject/FarionAudio/Assets
 FMODProject/FarionAudio/Build/Desktop
+FMODProject/Scripts/FarionCharacterEvents.js
 Assets/StreamingAssets
 ```
+
+`FarionCharacterEvents.js` authors `event:/Character/*` headlessly from
+`Assets/Character`; it lives outside `FarionAudio/Scripts` on purpose because
+Studio auto-runs anything in that folder on project load. Run from
+`FMODProject/`, then build and copy the banks:
+
+```text
+fmodstudiocl -script Scripts/FarionCharacterEvents.js FarionAudio/FarionAudio.fspro
+fmodstudiocl -build -platforms Desktop FarionAudio/FarionAudio.fspro
+copy FarionAudio\Build\Desktop\*.bank ..\Assets\StreamingAssets\
+```
+
+Footstep media per `Surface` label: Rock and Ice share concrete, Regolith is
+gravel, Soil is dirt, Metal is wood until a real deck recording exists.
 
 Unity `AudioSource`, `AudioMixer`, and duplicate audio media under
 `Assets/Project/Art/Audio` are intentionally absent. Author and build all
@@ -105,6 +125,18 @@ event:/Ships/StarterShuttle/BoostShutdown
 `Engine`, ignition, and shutdown route to `bus:/SFX`. The engine event keeps
 its existing `Speed`, `Roll`, `Boost`, `Load`, `Perspective`, and state
 contract. New audio logic must read produced telemetry, never raw input.
+
+Explorer one-shots (3D, routed to `bus:/SFX`):
+
+| Event | Parameters | Meaning |
+| --- | --- | --- |
+| `event:/Character/Footstep` | `Surface` labeled `0..4`, `Intensity` `0..1`, `Wetness` `0..1` | one step; `Intensity` scales with surface speed |
+| `event:/Character/Land` | `Surface` labeled `0..4`, `Intensity` `0..1` | grounding after a real fall; `1` is a hard impact |
+| `event:/Character/Jump` | none | short suit/effort cue on jump launch |
+
+`Surface` labels: `0` Rock, `1` Regolith, `2` Soil, `3` Ice, `4` Metal.
+`ExplorerAudioController` stays silent and logs one warning per missing event,
+so code can ship before the events are authored.
 
 ## Authoring Rules
 

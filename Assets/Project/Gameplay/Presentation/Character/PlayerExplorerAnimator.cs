@@ -41,6 +41,7 @@ namespace Farion.Gameplay.Presentation.Character
         [SerializeField] float groundedCoyoteTime = 0.08f;
 
         float groundedHoldRemaining;
+        bool swimming;
 
         void Reset()
         {
@@ -92,9 +93,18 @@ namespace Farion.Gameplay.Presentation.Character
                 deltaTime);
             animator.SetFloat(PlanarSpeedId, speed);
             animator.SetBool(GroundedId, ResolveGrounded(state, deltaTime));
+            if (state.WaterSubmergedFraction > 0.5f)
+            {
+                swimming = true;
+            }
+            else if (!state.TouchingWater || state.Grounded)
+            {
+                swimming = false;
+            }
+
             animator.SetFloat(
                 SubmergedId,
-                state.WaterSubmergedFraction,
+                swimming ? Mathf.Max(0.51f, state.WaterSubmergedFraction) : state.WaterSubmergedFraction,
                 directionDamping,
                 deltaTime);
             animator.SetFloat(VerticalSpeedId, state.VerticalSpeed);

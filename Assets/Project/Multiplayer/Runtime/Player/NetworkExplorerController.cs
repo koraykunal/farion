@@ -418,6 +418,8 @@ namespace Farion.Multiplayer.Player
             {
                 GetComponent<PersistentObjectId>()?.SetId(persistentId);
             }
+
+            GetComponentInChildren<VisorEyes>(true)?.SetIdentity(sessionPlayerId.Value);
         }
 
     }
