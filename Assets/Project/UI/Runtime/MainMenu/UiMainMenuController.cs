@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Farion.App.Flow;
 using Farion.Core.Persistence;
 using Farion.UI.Feedback;
 using Farion.UI.Foundation;
@@ -15,9 +14,6 @@ namespace Farion.UI.MainMenu
     [DisallowMultipleComponent]
     public sealed class UiMainMenuController : MonoBehaviour
     {
-        [Header("Scene Flow")]
-        [SerializeField] GameFlowSettings flowSettings;
-
         [Header("UI Foundation")]
         [SerializeField] UiSystemRoot uiSystemRoot;
         [SerializeField] UiScreenRouter screenRouter;
@@ -30,6 +26,7 @@ namespace Farion.UI.MainMenu
         [SerializeField] UiMainMenuButton continueButton;
         [SerializeField] UiMainMenuButton loadGameButton;
 
+        public event Action SoloHostRequested;
         public event Action CoopHostRequested;
 
         public bool HasSaveGame => SaveGameSlotService.TryGetMostRecentLoadable(out _);
@@ -83,7 +80,10 @@ namespace Farion.UI.MainMenu
                 case UiMainMenuAction.Continue:
                     if (HasSaveGame)
                     {
-                        StartGameplayLoad(ResolveGameplaySceneName(), SaveGameStartupMode.LoadGame, ResolveSaveSlotName());
+                        RequestSessionStart(
+                            SaveGameStartupMode.LoadGame,
+                            ResolveSaveSlotName(),
+                            coop: false);
                     }
                     break;
                 case UiMainMenuAction.NewGame:
@@ -128,13 +128,14 @@ namespace Farion.UI.MainMenu
             }
         }
 
-        void StartGameplayLoad(
-            string sceneName,
+        void RequestSessionStart(
             SaveGameStartupMode startupMode,
-            string requestedSlotName = null)
+            string requestedSlotName,
+            bool coop)
         {
             ResolveReferences();
-            if (string.IsNullOrWhiteSpace(sceneName) || loadingOverlay == null)
+            Action handler = coop ? CoopHostRequested : SoloHostRequested;
+            if (handler == null)
             {
                 ShowFeedback(
                     UiLocalization.Get(UiTextKeys.FeedbackGameplayUnavailable),
@@ -142,19 +143,24 @@ namespace Farion.UI.MainMenu
                 return;
             }
 
-            loadingOverlay.TryBegin(
-                () => GameFlowService.LoadGameplaySceneAsync(
-                    sceneName,
-                    startupMode,
-                    requestedSlotName),
-                UiLoadingPresentation.PreparingExpedition,
-                () =>
-                {
-                    OpenScreen(UiScreenId.MainMenu);
-                    ShowFeedback(
-                        UiLocalization.Get(UiTextKeys.FeedbackGameplayUnavailable),
-                        UiFeedbackSeverity.Error);
-                });
+            if (startupMode == SaveGameStartupMode.LoadGame)
+            {
+                SaveGameStartupRequest.RequestLoad(requestedSlotName);
+            }
+            else
+            {
+                SaveGameStartupRequest.RequestNewGame(requestedSlotName);
+            }
+
+            loadingOverlay?.Show(UiLoadingPresentation.PreparingExpedition);
+            handler();
+        }
+
+        public void CancelSessionStart()
+        {
+            ResolveReferences();
+            loadingOverlay?.Hide();
+            OpenScreen(UiScreenId.MainMenu);
         }
 
         void ResolveReferences()
@@ -181,11 +187,10 @@ namespace Farion.UI.MainMenu
         void OpenSlotScreen(SaveGameStartupMode startupMode)
         {
             ResolveReferences();
-            void StartSolo(string slotName) => StartGameplayLoad(
-                ResolveGameplaySceneName(),
-                startupMode,
-                slotName);
-            void StartCoop(string slotName) => RequestCoopHost(startupMode, slotName);
+            void StartSolo(string slotName) =>
+                RequestSessionStart(startupMode, slotName, coop: false);
+            void StartCoop(string slotName) =>
+                RequestSessionStart(startupMode, slotName, coop: true);
             Action<string> coopAction = CoopHostRequested != null
                 ? StartCoop
                 : null;
@@ -206,20 +211,6 @@ namespace Farion.UI.MainMenu
                 UiFeedbackSeverity.Error);
         }
 
-        void RequestCoopHost(SaveGameStartupMode startupMode, string slotName)
-        {
-            if (startupMode == SaveGameStartupMode.LoadGame)
-            {
-                SaveGameStartupRequest.RequestLoad(slotName);
-            }
-            else
-            {
-                SaveGameStartupRequest.RequestNewGame(slotName);
-            }
-
-            CoopHostRequested?.Invoke();
-        }
-
         void ApplySaveAvailability()
         {
             if (continueButton != null)
@@ -233,10 +224,6 @@ namespace Farion.UI.MainMenu
             }
         }
 
-        string ResolveGameplaySceneName()
-        {
-            return flowSettings != null ? flowSettings.GameplaySceneName : string.Empty;
-        }
 
         string ResolveSaveSlotName()
         {

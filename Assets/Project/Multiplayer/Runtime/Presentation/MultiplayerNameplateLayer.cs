@@ -5,6 +5,7 @@ using Farion.Multiplayer.Session;
 using Farion.UI.Styling;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Farion.Multiplayer.Presentation
 {
@@ -67,6 +68,9 @@ namespace Farion.Multiplayer.Presentation
         {
             IReadOnlyList<NetworkExplorerController> explorers =
                 NetworkExplorerController.ActiveExplorers;
+            Scene localScene = MultiplayerSceneContext.Active != null
+                ? MultiplayerSceneContext.Active.gameObject.scene
+                : default;
             Vector3 eye = resolvedCamera.transform.position;
             int used = 0;
             for (int i = 0; i < explorers.Count; i++)
@@ -74,7 +78,9 @@ namespace Farion.Multiplayer.Presentation
                 NetworkExplorerController explorer = explorers[i];
                 if (explorer == null ||
                     explorer.IsOwner ||
+                    !explorer.IsSpawned ||
                     !explorer.gameObject.activeInHierarchy ||
+                    explorer.gameObject.scene != localScene ||
                     !TryResolveDisplayName(
                         explorer.SessionPlayerId,
                         out string displayName))
@@ -90,7 +96,7 @@ namespace Farion.Multiplayer.Presentation
                         resolvedCamera,
                         anchor,
                         out Vector2 screenPoint) ||
-                    IsOccluded(eye, anchor))
+                    IsOccluded(explorer.gameObject.scene, eye, anchor))
                 {
                     continue;
                 }
@@ -146,12 +152,13 @@ namespace Farion.Multiplayer.Presentation
             }
         }
 
-        bool IsOccluded(Vector3 eye, Vector3 anchor)
+        bool IsOccluded(Scene scene, Vector3 eye, Vector3 anchor)
         {
             return hideWhenOccluded &&
-                Physics.Linecast(
+                scene.GetPhysicsScene().Raycast(
                     eye,
-                    anchor,
+                    anchor - eye,
+                    (anchor - eye).magnitude,
                     FarionLayers.CameraObstacleMask,
                     QueryTriggerInteraction.Ignore);
         }

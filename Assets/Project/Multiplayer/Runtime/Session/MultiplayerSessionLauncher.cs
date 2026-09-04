@@ -12,31 +12,34 @@ namespace Farion.Multiplayer.Session
         {
             if (!MultiplayerCommandLine.TryParse(
                     Environment.GetCommandLineArgs(),
-                    out MultiplayerLaunchRequest request) ||
+                    out MultiplayerLaunchMode mode,
+                    out MultiplayerEndpoint endpoint) ||
                 !TryCreateSession(out MultiplayerSessionController controller))
             {
                 return;
             }
 
-            if (request.Mode == MultiplayerLaunchMode.Host)
+            if (mode == MultiplayerLaunchMode.Host)
             {
-                controller.StartHost(request.Endpoint.Port);
+                controller.StartHost(endpoint.Port);
             }
             else
             {
-                controller.StartClient(request.Endpoint);
+                controller.StartClient(endpoint);
             }
         }
 
         public static bool TryCreateSession(
             out MultiplayerSessionController controller)
         {
-            controller = MultiplayerSessionController.Active;
-            if (controller != null)
+            MultiplayerSessionController active = MultiplayerSessionController.Active;
+            if (active != null)
             {
-                return controller.CanStartSession;
+                controller = active.CanStartSession ? active : null;
+                return controller != null;
             }
 
+            controller = null;
             GameObject prefab = Resources.Load<GameObject>(SessionPrefabPath);
             if (prefab == null)
             {

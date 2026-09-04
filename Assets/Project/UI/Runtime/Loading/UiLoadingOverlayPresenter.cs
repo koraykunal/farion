@@ -76,6 +76,25 @@ namespace Farion.UI.Loading
             ResolveReferences();
         }
 
+        public bool Show(UiLoadingPresentation nextPresentation)
+        {
+            ResolveReferences();
+            presentation = nextPresentation;
+            SetProgress(0f);
+            RefreshContent();
+            return screenRouter != null && screenRouter.Open(UiScreenId.Loading);
+        }
+
+        public void Hide()
+        {
+            if (transitionRoutine == null &&
+                screenRouter != null &&
+                screenRouter.IsOpen(UiScreenId.Loading))
+            {
+                screenRouter.Close(UiScreenId.Loading);
+            }
+        }
+
         public bool TryBegin(
             Func<AsyncOperation> beginOperation,
             UiLoadingPresentation nextPresentation,

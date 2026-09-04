@@ -8,29 +8,24 @@ namespace Farion.Gameplay.Interaction
     public sealed class ShuttleCargoHatchInteractable : MonoBehaviour, IInteractable
     {
 
+        [SerializeField] ShuttleCargoInventory cargo;
+
+        public string InteractionPrompt => InteractionPromptKeys.LoadCargo;
+        public bool HasValidAuthoring => cargo != null;
+
         void Awake()
         {
             InteractableLayerBinding.Apply(this);
         }
-        const string DefaultPrompt = "Load cargo";
-
-        [SerializeField] ShuttleCargoInventory cargo;
-        [SerializeField] string prompt = DefaultPrompt;
-
-        public string InteractionPrompt =>
-            string.IsNullOrWhiteSpace(prompt) ? DefaultPrompt : prompt.Trim();
-        public bool HasValidAuthoring => cargo != null;
 
         void Reset()
         {
             ResolveCargo();
-            prompt = DefaultPrompt;
         }
 
         void OnValidate()
         {
             ResolveCargo();
-            prompt = InteractionPrompt;
         }
 
         public bool CanInteract(InteractionContext context)

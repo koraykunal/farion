@@ -29,6 +29,27 @@ namespace Farion.UI.Localization
             return string.IsNullOrWhiteSpace(value) ? entryKey : value;
         }
 
+        public static string GetPrompt(string prompt)
+        {
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                return string.Empty;
+            }
+
+            int separator = prompt.IndexOf(
+                Farion.Gameplay.Interaction.InteractionPromptKeys.ArgumentSeparator);
+            if (separator < 0)
+            {
+                return Get(prompt.Trim());
+            }
+
+            string template = Get(prompt[..separator].Trim());
+            string argument = prompt[(separator + 1)..].Trim();
+            return template.Contains("{0}")
+                ? string.Format(template, argument)
+                : $"{template} {argument}";
+        }
+
         public static string ToDisplayUpper(string value)
         {
             return string.IsNullOrWhiteSpace(value)

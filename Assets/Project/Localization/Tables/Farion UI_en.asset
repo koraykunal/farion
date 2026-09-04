@@ -1013,6 +1013,134 @@ MonoBehaviour:
     m_Localized: ACCESSIBILITY
     m_Metadata:
       m_Items: []
+  - m_Id: 14092742110994432
+    m_Localized: Enter ship
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908992
+    m_Localized: Pilot seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908993
+    m_Localized: Toggle ramp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908994
+    m_Localized: Load cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908995
+    m_Localized: Unload shuttle cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908996
+    m_Localized: Process materials
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908997
+    m_Localized: Process {0}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908998
+    m_Localized: HOST
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908999
+    m_Localized: '{0} MS'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909000
+    m_Localized: m
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909001
+    m_Localized: km
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909002
+    m_Localized: Saving is unavailable until the session is ready.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909003
+    m_Localized: The main menu could not be loaded.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909004
+    m_Localized: PROCESSING COMPLETE.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909005
+    m_Localized: FLEET STORAGE LACKS THE REQUIRED INPUTS.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909006
+    m_Localized: MOVE CLOSER TO THE FLEET TO PROCESS.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909007
+    m_Localized: FLEET STORAGE IS UNAVAILABLE.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909008
+    m_Localized: FLEET STORAGE CHANGED. TRY AGAIN.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909009
+    m_Localized: PROCESSING FAILED.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909010
+    m_Localized: CARGO LOADED  /  EXPLORER {0}  /  SHUTTLE {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909011
+    m_Localized: UNLOAD COMPLETE  /  SHUTTLE {0}  /  FLEET STORAGE {1}
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909012
+    m_Localized: NO EXPLORER CARGO TO LOAD.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909013
+    m_Localized: SHUTTLE CARGO IS EMPTY.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909014
+    m_Localized: SHUTTLE CARGO HAS INSUFFICIENT CAPACITY.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909015
+    m_Localized: FLEET STORAGE HAS INSUFFICIENT CAPACITY.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909016
+    m_Localized: CARGO CONTAINS AN INCOMPATIBLE ITEM.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909017
+    m_Localized: CARGO CHANGED. TRY AGAIN.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909018
+    m_Localized: MOVE CLOSER TO YOUR SHUTTLE TO LOAD.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909019
+    m_Localized: DOCK CLOSER TO THE FLEET TO UNLOAD.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909020
+    m_Localized: CARGO TRANSFER FAILED.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909021
+    m_Localized: '{0}/{1} SLOTS'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909022
+    m_Localized: --/-- SLOTS
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

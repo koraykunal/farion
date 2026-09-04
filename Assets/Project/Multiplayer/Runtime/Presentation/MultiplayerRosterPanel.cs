@@ -59,7 +59,8 @@ namespace Farion.Multiplayer.Presentation
             nextRefreshTime = Time.unscaledTime + refreshInterval;
             IReadOnlyList<NetworkSessionPlayer> players =
                 NetworkSessionPlayer.ActivePlayers;
-            bool inSession = players.Count > 0;
+            MultiplayerSessionController session = MultiplayerSessionController.Active;
+            bool inSession = players.Count > 0 && session != null && !session.IsPrivate;
             if (content != null)
             {
                 content.SetActive(inSession);
@@ -117,7 +118,8 @@ namespace Farion.Multiplayer.Presentation
                     out NetworkExplorerController localExplorer) ||
                 !TryResolveExplorer(
                     player,
-                    out NetworkExplorerController remoteExplorer))
+                    out NetworkExplorerController remoteExplorer) ||
+                localExplorer.gameObject.scene != remoteExplorer.gameObject.scene)
             {
                 return;
             }
@@ -130,13 +132,15 @@ namespace Farion.Multiplayer.Presentation
             {
                 builder
                     .Append((distance / 1000f).ToString("0.0", CultureInfo.InvariantCulture))
-                    .Append(" km");
+                    .Append(' ')
+                    .Append(UiLocalization.Get(UiTextKeys.UnitKilometersShort));
                 return;
             }
 
             builder
                 .Append(distance.ToString("0", CultureInfo.InvariantCulture))
-                .Append(" m");
+                .Append(' ')
+                .Append(UiLocalization.Get(UiTextKeys.UnitMetersShort));
         }
 
         static bool TryResolveExplorer(
@@ -153,10 +157,13 @@ namespace Farion.Multiplayer.Presentation
                 NetworkExplorerController.ActiveExplorers;
             for (int i = 0; i < explorers.Count; i++)
             {
-                if (explorers[i] != null &&
-                    explorers[i].SessionPlayerId == player.SessionPlayerId)
+                NetworkExplorerController candidate = explorers[i];
+                if (candidate != null &&
+                    candidate.IsSpawned &&
+                    candidate.gameObject.activeInHierarchy &&
+                    candidate.SessionPlayerId == player.SessionPlayerId)
                 {
-                    explorer = explorers[i];
+                    explorer = candidate;
                     return true;
                 }
             }

@@ -12,12 +12,12 @@ This document describes the implemented architecture. Future features belong in
    or prefabs to compensate for missing authoring.
 5. New abstractions are added only when a playable workflow needs them.
 6. Save schema changes follow runtime ownership, never precede it.
-7. Single-player commands are designed so a later host can become the authority
-   without moving rules into UI or networking code.
+7. Every session, solo included, runs as a FishNet listen server. Gameplay
+   rules are authored once on the server side; there is no offline duplicate.
 
 ## Project Folder Ownership
 
-- `App`, `Audio`, `Core`, `Gameplay`, `Multiplayer`, `Rendering`, `Simulation`,
+- `Audio`, `Core`, `Gameplay`, `Multiplayer`, `Rendering`, `Simulation`,
   and `UI` contain C# runtime code. Assembly folders follow
   runtime ownership; files are not regrouped merely for visual symmetry.
 - `Resources` holds only assets that must load before any scene exists. Its
@@ -48,10 +48,9 @@ Farion.Gameplay.Domain    --> Core.Identity
 Farion.Simulation.Runtime --> Core
 Farion.Gameplay.Runtime   --> Core.Identity + Domain + Core + Simulation
 Farion.Gameplay.Presentation --> Gameplay + Simulation + VFX Graph
-Farion.App.Runtime        --> Core.Identity + Domain + Core + Gameplay
 Farion.Rendering.Runtime  --> Core + Simulation + URP
 Farion.Audio.Runtime      --> Core + Simulation + Gameplay + FMOD
-Farion.UI.Runtime         --> Core + Gameplay + Simulation + App + Audio
+Farion.UI.Runtime         --> Core + Gameplay + Simulation + Audio
 Farion.Multiplayer.Runtime --> Core + Simulation + Gameplay + Rendering + UI + FishNet
 Farion.Editor            --> every runtime assembly (Editor platform only)
 ```
@@ -139,21 +138,22 @@ widget. `Service` is a stateless or process-wide collaborator.
 - `Farion.Gameplay.Domain` has `noEngineReferences`. It currently owns
   `DefinitionId`, revisioned stack inventory state, and Fleet Knowledge state.
 - `Farion.Gameplay.Runtime` adapts domain and simulation contracts to Unity. It
-  owns character, flight, possession, resources, inventory adapters, the
-  assigned shuttle binding, Fleet identity, Fleet Storage, Fleet Knowledge, and
-  save participants.
+  owns character, flight, the possession transition policy, interior exit gate
+  and explorer placement rules, resources, inventory adapters, the shuttle
+  binding, Fleet identity, Fleet Storage, and world save participants.
 - `Farion.Gameplay.Presentation` owns gameplay-facing VFX components in
   `Farion.Gameplay.Presentation.Flight` and is the only gameplay assembly that
   references VFX Graph. It never shares a namespace with gameplay runtime code.
-- `Farion.App.Runtime` owns game flow, local-session composition, save
-  requests, and the command facade. Its current gameplay command surface
-  authorizes resource harvesting, assigned-shuttle cargo loading/unloading,
-  and the first Fleet processing exchange. Its request boundary carries only
-  identifiers and expected revisions: `ResourceHarvestRequest`,
-  `CargoTransferRequest`, and `FleetProcessingRequest` name a deposit,
-  container, or recipe by id. `SessionCommandScope` is the single authoritative
-  resolver; a caller cannot smuggle a runtime object past authorization, and a
-  stale caller view is rejected by revision instead of silently applied.
+- `Farion.Multiplayer.Runtime` owns the session lifecycle (`MultiplayerSessionController`
+  hosts solo as a private listen server and co-op as a public one), player and
+  starter-ship spawning, the ship possession loop (`NetworkStarterShuttle`
+  board, pilot seat, leave seat, walk-out exit), zone origins and handoffs, and
+  the command facade `NetworkGameplayCommands`. That facade authorizes resource
+  harvesting, assigned-shuttle cargo loading/unloading, and Fleet processing on
+  the server. Its request boundary carries only identifiers and expected
+  revisions: `ResourceHarvestRequest`, `CargoTransferRequest`, and
+  `FleetProcessingRequest` name a deposit, container, or recipe by id; a stale
+  caller view is rejected by revision instead of silently applied.
 - `Farion.UI.Runtime` presents menus, HUD, settings, save/load, inventory, and
   feedback. It requests application operations and never mutates domain state
   directly. Every player-facing string is a key in `UiTextKeys`; no English
@@ -214,21 +214,12 @@ scene. It explicitly references:
 - `CelestialFrameProvider` bound to the same simulation;
 - `WorldOriginRebaser`;
 - resource deposit streamers;
-- the local `PlayerInventory`;
-- `PlayerPossessionController`;
-- the assigned `ShuttleRuntimeBinding`;
-- `FleetRuntime`, which owns the Fleet identity and references Fleet Storage
-  and Fleet Knowledge.
+- `FleetRuntime`, which owns the Fleet identity and references Fleet Storage.
 
-`GameplayRuntimeBindings` is the immutable view of those references.
-`GameplaySessionRuntime`, `GameplaySessionController`, command handlers, and
-save participants consume that same view. The root assigns gravity and celestial
-frame authority to the session shuttle explicitly; production actors do not use
-static active-instance fallbacks or independent scene searches.
-
-`GameplaySessionIdentity` keeps Fleet, local player, explorer actor, assigned
-shuttle, and carried inventory ids distinct. Possession describes who is
-currently controlled; it does not decide which shuttle belongs to the session.
+`GameplayRuntimeBindings` is the immutable view of those references. Save
+participants, `MultiplayerSceneContext`, and `NetworkGameplayCommands` consume
+that same view. Players, explorers, and starter ships are spawned per session
+by `MultiplayerPlayerSpawner`; nothing player-owned is authored into the zone.
 
 ## Implemented Gameplay State
 
@@ -297,29 +288,23 @@ repair, queue, power, or maintenance commands in the application facade.
 
 ## Persistence
 
-Schema `7` persists:
+Schema `9` persists:
 
 - the celestial simulation time, which alone determines every body pose;
 - celestial body snapshots, kept only to prove the save belongs to this system;
 - world-origin metadata;
-- player inventory;
-- assigned shuttle cargo;
 - Fleet Storage;
-- player possession;
-- Fleet Knowledge;
-- resource extraction deltas.
+- resource extraction deltas;
+- one entry per known player (persistent id, carried inventory, pose, zone,
+  possession mode) and per starter ship (cargo, fuel, hull, pose, zone).
 
-Schemas `3` and `4` migrate to schema `7` with explicit empty shuttle-cargo,
-Fleet-Storage, and Fleet-Knowledge defaults. Schema `5` preserves its shuttle
-cargo and Fleet Knowledge while adding the authored Fleet Storage as empty.
-Schema `6` preserves everything and starts the celestial clock at its epoch.
-The serialized JSON field for shuttle cargo remains `personalShipCargo` for
-schema compatibility; runtime code exposes it as `ShuttleCargo`.
+Solo and co-op write the same format; `multiplayerSession` only marks saves
+that held more than one player. Older schemas are rejected as unsupported.
 
 The save system uses participants composed from `GameplayRuntimeRoot`, validates
 before applying, and restores a pre-load snapshot if application fails.
 
-Capital-ship state, shuttle upgrades, and equipment are not in schema `7`. A
+Capital-ship state, shuttle upgrades, and equipment are not in schema `9`. A
 new schema is allowed only after those runtime owners exist.
 
 ## Simulation and Presentation
@@ -331,17 +316,13 @@ new schema is allowed only after those runtime owners exist.
   `SimulationTime`. Spin is likewise `initialRotation` advanced by elapsed
   time. Nothing drifts, and two peers that agree on the time agree on every
   pose without replicating anything.
-- Offline the clock advances with `Time.fixedDeltaTime`. In multiplayer
-  `ZonePhysicsTickDriver` sets it to `Tick * TickDelta`, so a late joiner that
-  jumps straight to the shared tick lands on exactly the same pose. Saves
-  persist the clock; body snapshots only prove the save belongs to this system.
+- `ZonePhysicsTickDriver` sets the clock to `epoch + Tick * TickDelta` on every
+  peer, so a late joiner that jumps straight to the shared tick lands on exactly
+  the same pose. Saves persist the clock; body snapshots only prove the save
+  belongs to this system.
 - Bodies are positioned relative to the physics reference body, which is the
   anchor local space is built around. That keeps analytic motion compatible
   with world-origin rebasing without either system knowing about the other.
-- Offline possession binds its surface observer to `GravitySimulation`. A
-  reference transition preserves world poses and converts every dynamic
-  Rigidbody velocity into the new translating frame, so the explored body keeps
-  its terrain collider stationary without launching the actor.
 - Multiplayer keeps the authored translating frame on every peer. Prediction
   and reconciliation therefore never depend on a locally chosen body. Each
   actor still samples its own dominant body's point velocity, and adaptive
@@ -364,9 +345,9 @@ new schema is allowed only after those runtime owners exist.
 - `SpacecraftMotor` owns spacecraft motion and publishes telemetry.
 - Camera, HUD, FMOD, and thruster VFX consume telemetry and do not feed state
   back into flight physics.
-- Multiplayer uses a separate one-shot session mode. Offline save, inventory,
-  possession, shuttle control, and commands remain inactive during that mode;
-  the server owns player spawning, movement reconciliation, and origin shifts.
+- There is one session mode. The server owns player spawning, ship possession,
+  movement reconciliation, saves, and origin shifts; a solo game is the same
+  listen server with its player capacity set to one.
 - Gameplay composition is `SC_GameplayShell` for local presentation plus
   one shared `SC_WorldZone` connection scene with isolated 3D physics. The
   current origin authority is intentionally single-zone; loading a different
@@ -433,11 +414,9 @@ new schema is allowed only after those runtime owners exist.
 - Local presentation binding is shared: `LocalPlayerCameraBinding` owns which
   camera rig follows which actor and the cursor capture state, and
   `WorldFocusTracking` owns the origin-rebase and resource-streaming target.
-  Offline possession and the multiplayer scene context both call the same
-  owners instead of each duplicating the rules.
+  `MultiplayerSceneContext` is the only caller of those owners.
 - `ILocalPilotContext` is the single answer to what the local player controls
-  and from which viewpoint. `PlayerPossessionController` implements it offline
-  and `MultiplayerSceneContext` implements it online; the flight HUD, ship audio
+  and from which viewpoint. `MultiplayerSceneContext` implements it; the flight HUD, ship audio
   perspective, and pilot camera view read only that contract.
   `LocalPilotContextBinding` injects it into `ILocalPilotContextReceiver`
   components under the controlled actor, so no owner serializes a cross-scene

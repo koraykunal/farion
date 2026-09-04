@@ -4,10 +4,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Farion.Gameplay.Persistence;
-using Farion.Gameplay.Session;
 using Farion.Multiplayer.Spawning;
 using Farion.Multiplayer.World;
-using Farion.Simulation.World;
 using Farion.UI.Gameplay;
 using FishNet.Connection;
 using FishNet.Managing;
@@ -45,6 +43,8 @@ namespace Farion.Multiplayer.Session
 
         readonly HashSet<int> zoneLoadRequests = new();
         bool host;
+        bool privateSession;
+        ushort hostPort;
         bool sceneLoadRequested;
         bool gameplaySceneEntered;
         bool returningToMainMenu;
@@ -63,6 +63,11 @@ namespace Farion.Multiplayer.Session
         public MultiplayerFailureReason FailureReason { get; private set; } =
             MultiplayerFailureReason.None;
         public bool IsHost => host;
+        public bool IsPrivate => privateSession;
+        public ushort HostPort => hostPort;
+        public int PlayerCapacity => privateSession
+            ? 1
+            : MultiplayerPlayerSpawner.MaximumPlayers;
         public bool CanStartSession =>
             State == MultiplayerSessionState.Idle ||
             State == MultiplayerSessionState.Failed;
@@ -103,7 +108,6 @@ namespace Farion.Multiplayer.Session
             }
 
             Unsubscribe();
-            GameplaySessionModeRequest.Cancel();
             Active = null;
             Physics.simulationMode = authoredSimulationMode == SimulationMode.Script
                 ? SimulationMode.FixedUpdate
@@ -114,11 +118,21 @@ namespace Farion.Multiplayer.Session
                     : authoredSimulation2DMode;
         }
 
+        public void StartSolo()
+        {
+            StartListenServer(MultiplayerEndpoint.DefaultPort, privateSession: true);
+        }
+
         public void StartHost() => StartHost(MultiplayerEndpoint.DefaultPort);
 
         public void StartHost(ushort port)
         {
-            if (!CanStart())
+            StartListenServer(port, privateSession: false);
+        }
+
+        void StartListenServer(ushort port, bool privateSession)
+        {
+            if (!CanStartSession)
             {
                 return;
             }
@@ -126,21 +140,22 @@ namespace Farion.Multiplayer.Session
             ConfigureTransportTimeouts();
             SelectClientTransport(MultiplayerTransportKind.Direct);
             host = true;
+            this.privateSession = privateSession;
+            hostPort = port;
             ResetReadiness();
             FailureReason = MultiplayerFailureReason.None;
-            GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
             SetState(MultiplayerSessionState.Starting);
+            ApplyPlayerCapacity();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (!MultiplayerLobbyGateway.IsAvailable)
+            if (!privateSession && !MultiplayerLobbyGateway.IsAvailable)
             {
                 Debug.Log(
                     "[Farion Multiplayer] Steam is unavailable; hosting over direct connections only.");
             }
 #endif
-            networkManager.ServerManager.StartConnection(port);
-            if (!IsAnyServerTransportActive())
+            if (!StartServerTransports(port))
             {
-                FailAndStop();
+                FailAndStop(MultiplayerFailureReason.ConnectionFailed);
                 return;
             }
 
@@ -148,20 +163,31 @@ namespace Farion.Multiplayer.Session
                     MultiplayerEndpoint.LoopbackAddress,
                     port))
             {
-                FailAndStop();
+                FailAndStop(MultiplayerFailureReason.ConnectionFailed);
             }
         }
 
-        bool IsAnyServerTransportActive()
+        bool StartServerTransports(ushort port)
         {
             Transport transport = networkManager.TransportManager.Transport;
             if (transport is not Multipass multipass)
             {
+                networkManager.ServerManager.StartConnection(port);
                 return transport != null &&
                     transport.GetConnectionState(server: true) !=
                     LocalConnectionState.Stopped;
             }
 
+            if (privateSession)
+            {
+                int direct = (int)MultiplayerTransportKind.Direct;
+                multipass.Transports[direct].SetPort(port);
+                return multipass.StartConnection(true, direct) &&
+                    multipass.GetConnectionState(true, direct) !=
+                    LocalConnectionState.Stopped;
+            }
+
+            networkManager.ServerManager.StartConnection(port);
             for (int i = 0; i < multipass.Transports.Count; i++)
             {
                 if (multipass.GetConnectionState(true, i) !=
@@ -174,9 +200,25 @@ namespace Farion.Multiplayer.Session
             return false;
         }
 
+        void ApplyPlayerCapacity()
+        {
+            Transport transport = networkManager.TransportManager.Transport;
+            if (transport is Multipass multipass)
+            {
+                for (int i = 0; i < multipass.Transports.Count; i++)
+                {
+                    multipass.Transports[i].SetMaximumClients(PlayerCapacity);
+                }
+
+                return;
+            }
+
+            transport?.SetMaximumClients(PlayerCapacity);
+        }
+
         public void StartClient(string address)
         {
-            if (!CanStart())
+            if (!CanStartSession)
             {
                 return;
             }
@@ -185,8 +227,7 @@ namespace Farion.Multiplayer.Session
                     address,
                     out MultiplayerEndpoint endpoint))
             {
-                FailureReason = MultiplayerFailureReason.InvalidAddress;
-                SetState(MultiplayerSessionState.Failed);
+                FailAndStop(MultiplayerFailureReason.InvalidAddress);
                 return;
             }
 
@@ -195,29 +236,25 @@ namespace Farion.Multiplayer.Session
 
         public void StartClient(MultiplayerEndpoint endpoint)
         {
-            if (!CanStart())
+            if (!CanStartSession)
             {
                 return;
             }
 
             ConfigureTransportTimeouts();
             SelectClientTransport(MultiplayerTransportKind.Direct);
-            host = false;
-            ResetReadiness();
-            FailureReason = MultiplayerFailureReason.None;
-            GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
-            SetState(MultiplayerSessionState.Starting);
+            BeginClientSession();
             if (!networkManager.ClientManager.StartConnection(
                     endpoint.Address,
                     endpoint.Port))
             {
-                FailAndStop();
+                FailAndStop(MultiplayerFailureReason.ConnectionFailed);
             }
         }
 
         public void StartSteamClient(string hostAddress)
         {
-            if (!CanStart())
+            if (!CanStartSession)
             {
                 return;
             }
@@ -225,21 +262,25 @@ namespace Farion.Multiplayer.Session
             if (string.IsNullOrWhiteSpace(hostAddress) ||
                 !SelectClientTransport(MultiplayerTransportKind.Steam))
             {
-                FailureReason = MultiplayerFailureReason.InvalidAddress;
-                SetState(MultiplayerSessionState.Failed);
+                FailAndStop(MultiplayerFailureReason.InvalidAddress);
                 return;
             }
 
             ConfigureTransportTimeouts();
-            host = false;
-            ResetReadiness();
-            FailureReason = MultiplayerFailureReason.None;
-            GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
-            SetState(MultiplayerSessionState.Starting);
+            BeginClientSession();
             if (!networkManager.ClientManager.StartConnection(hostAddress.Trim()))
             {
-                FailAndStop();
+                FailAndStop(MultiplayerFailureReason.ConnectionFailed);
             }
+        }
+
+        void BeginClientSession()
+        {
+            host = false;
+            privateSession = false;
+            ResetReadiness();
+            FailureReason = MultiplayerFailureReason.None;
+            SetState(MultiplayerSessionState.Starting);
         }
 
         bool SelectClientTransport(MultiplayerTransportKind kind)
@@ -261,7 +302,6 @@ namespace Farion.Multiplayer.Session
 
         public void Stop()
         {
-            GameplaySessionModeRequest.Cancel();
             if (State == MultiplayerSessionState.Stopping)
             {
                 return;
@@ -284,27 +324,21 @@ namespace Farion.Multiplayer.Session
             stopRoutine ??= StartCoroutine(FinishStop());
         }
 
-        public void ReturnToMainMenu()
+        public AsyncOperation ReturnToMainMenu()
         {
             if (returningToMainMenu)
             {
-                return;
+                return null;
             }
 
             returningToMainMenu = true;
             Stop();
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name !=
-                MainMenuScene)
-            {
-                UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(
+            return UnityEngine.SceneManagement.SceneManager.GetActiveScene().name ==
+                MainMenuScene
+                ? null
+                : UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(
                     MainMenuScene,
                     LoadSceneMode.Single);
-            }
-        }
-
-        bool CanStart()
-        {
-            return CanStartSession;
         }
 
         void ConfigureTransportTimeouts()
@@ -383,7 +417,8 @@ namespace Farion.Multiplayer.Session
             if (host &&
                 args.ConnectionState == LocalConnectionState.Stopped &&
                 State != MultiplayerSessionState.Idle &&
-                State != MultiplayerSessionState.Stopping)
+                State != MultiplayerSessionState.Stopping &&
+                !networkManager.ServerManager.IsAnyServerStarted())
             {
                 FailAndReturnToMainMenu(MultiplayerFailureReason.ConnectionLost);
                 return;
@@ -413,9 +448,7 @@ namespace Farion.Multiplayer.Session
             if (args.ConnectionState == RemoteConnectionState.Stopped)
             {
                 zoneLoadRequests.Remove(connection.ClientId);
-                return;
             }
-
         }
 
         void OnClientLoadedStartScenes(
@@ -430,11 +463,6 @@ namespace Farion.Multiplayer.Session
 
         void OnClientConnectionState(ClientConnectionStateArgs args)
         {
-            if (args.ConnectionState == LocalConnectionState.Started)
-            {
-                return;
-            }
-
             if (args.ConnectionState != LocalConnectionState.Stopped ||
                 State == MultiplayerSessionState.Idle ||
                 State == MultiplayerSessionState.Stopping)
@@ -442,7 +470,10 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
-            FailAndReturnToMainMenu(MultiplayerFailureReason.ConnectionLost);
+            FailAndReturnToMainMenu(
+                State == MultiplayerSessionState.Starting
+                    ? MultiplayerFailureReason.ConnectionFailed
+                    : MultiplayerFailureReason.ConnectionLost);
         }
 
         void OnUnitySceneLoaded(Scene scene, LoadSceneMode _)
@@ -461,6 +492,18 @@ namespace Farion.Multiplayer.Session
             bool isZoneLoad = MultiplayerZoneSceneLoad.TryReadZoneId(
                 args,
                 out GeneratedEntityId zoneId);
+            if (!gameplaySceneEntered && WasPresentationSceneSkipped(args))
+            {
+                Scene loadedPresentation =
+                    UnityEngine.SceneManagement.SceneManager.GetSceneByName(
+                        presentationSceneName);
+                if (loadedPresentation.isLoaded &&
+                    !EnterPresentationScene(loadedPresentation, args.QueueData.AsServer))
+                {
+                    return;
+                }
+            }
+
             for (int i = 0; i < args.LoadedScenes.Length; i++)
             {
                 Scene scene = args.LoadedScenes[i];
@@ -471,24 +514,9 @@ namespace Farion.Multiplayer.Session
 
                 if (scene.name == presentationSceneName)
                 {
-                    gameplaySceneEntered = true;
-                    if (!ResolvePresentation(scene))
+                    if (!EnterPresentationScene(scene, args.QueueData.AsServer))
                     {
-                        Debug.LogError(
-                            $"Multiplayer presentation scene '{scene.name}' is incomplete.",
-                            this);
-                        FailAndReturnToMainMenu(
-                            MultiplayerFailureReason.SessionSetup);
                         return;
-                    }
-
-                    if (args.QueueData.AsServer)
-                    {
-                        foreach (NetworkConnection connection in
-                                 networkManager.ServerManager.Clients.Values)
-                        {
-                            RequestStartingZone(connection);
-                        }
                     }
 
                     continue;
@@ -536,6 +564,44 @@ namespace Farion.Multiplayer.Session
                     BindSaveBridge(context);
                 }
             }
+        }
+
+        bool WasPresentationSceneSkipped(SceneLoadEndEventArgs args)
+        {
+            string[] skipped = args.SkippedSceneNames;
+            for (int i = 0; skipped != null && i < skipped.Length; i++)
+            {
+                if (skipped[i] == presentationSceneName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        bool EnterPresentationScene(Scene scene, bool asServer)
+        {
+            gameplaySceneEntered = true;
+            if (!ResolvePresentation(scene))
+            {
+                Debug.LogError(
+                    $"Multiplayer presentation scene '{scene.name}' is incomplete.",
+                    this);
+                FailAndReturnToMainMenu(MultiplayerFailureReason.SessionSetup);
+                return false;
+            }
+
+            if (asServer)
+            {
+                foreach (NetworkConnection connection in
+                         networkManager.ServerManager.Clients.Values)
+                {
+                    RequestStartingZone(connection);
+                }
+            }
+
+            return true;
         }
 
         void OnSceneUnloadEnd(SceneUnloadEndEventArgs args)
@@ -632,7 +698,7 @@ namespace Farion.Multiplayer.Session
                 if (!loadResult.Succeeded)
                 {
                     Debug.LogError(
-                        $"Co-op load failed for slot '{saveBridge.SlotName}': {loadResult.Status}.",
+                        $"Session load failed for slot '{saveBridge.SlotName}': {loadResult.Status}.",
                         this);
                     FailAndReturnToMainMenu(
                         MultiplayerFailureReason.SaveLoadFailed);
@@ -725,15 +791,16 @@ namespace Farion.Multiplayer.Session
             }
 
             FailureReason = reason;
-            if (gameplaySceneEntered)
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name !=
+                MainMenuScene)
             {
                 MultiplayerSessionOutcome.Report(reason);
             }
         }
 
-        void FailAndStop()
+        void FailAndStop(MultiplayerFailureReason reason)
         {
-            ReportFailure(MultiplayerFailureReason.ConnectionFailed);
+            ReportFailure(reason);
             SetState(MultiplayerSessionState.Failed);
             Stop();
         }
@@ -775,6 +842,7 @@ namespace Farion.Multiplayer.Session
             gameplaySceneEntered = false;
             returningToMainMenu = false;
             host = false;
+            privateSession = false;
             ResetReadiness();
             zoneLoadRequests.Clear();
             localZoneScene = default;

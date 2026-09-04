@@ -1,6 +1,6 @@
 namespace Farion.Gameplay.Interaction
 {
-    static class PlayerPossessionTransitionPolicy
+    public static class PlayerPossessionTransitionPolicy
     {
         public static bool CanTransition(
             PlayerPossessionMode currentMode,

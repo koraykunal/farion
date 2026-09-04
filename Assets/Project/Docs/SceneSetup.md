@@ -31,9 +31,7 @@ matching reference-frame acceleration correction to actors. This keeps the
 explorable non-convex terrain collider stationary under the ship and explorer
 without falsifying relative orbits.
 
-Offline surface observers drive the explicit reference-frame transition. The
-transition converts dynamic Rigidbody velocities into the new frame. In
-multiplayer every peer retains the same authored reference frame; surface
+Every peer retains the same authored reference frame; surface
 observers select adaptive collision coverage per body but never choose a local
 network physics frame. This keeps FishNet prediction and reconciliation in one
 coordinate contract when players land on different bodies.
@@ -209,10 +207,9 @@ land on, or explore:
    `Assets/Project/Design/Rendering/Celestial/SO_CelestialSurfacePatchProfile.asset`.
 3. Assign the same body's `CelestialBodyVisual`.
 4. Assign the authored gameplay camera; do not use periodic camera discovery.
-5. Assign a `collisionObserverSource` that implements
-   `ICelestialSurfaceCollisionObserver`. The sandbox uses
-   `PlayerPossessionController`, which reports the spacecraft while piloting or
-   inside it and the explorer while on foot.
+5. Leave `collisionObserverSource` empty. `MultiplayerSceneContext` assigns
+   `MultiplayerSurfaceCollisionObserverSource`, which reports every spawned
+   explorer and piloted ship in the zone.
 6. Keep the body on a motion mode whose `CelestialBody` supports a non-convex
    surface collider.
 
@@ -780,8 +777,7 @@ For a camera:
 player is piloting and reads existing flight/landing telemetry.
 
 `UiSpacecraftFlightHudPresenter > Pilot Context Source` takes any component that
-implements `ILocalPilotContext`. Offline, that is `Player Possession` from `SC_WorldZone`.
-In multiplayer it is assigned at runtime by
+implements `ILocalPilotContext`. It is assigned at runtime by
 `MultiplayerSceneContext`; do not serialize a cross-scene reference there.
 
 ### Starter Shuttle Production Rig Gate
@@ -993,61 +989,28 @@ control owner that switches between `Player Explorer` and `Player Starter Shuttl
 
 ## Player Possession And Boarding
 
-Use this layer to switch between the spacecraft and the on-foot explorer. The
-ship motor stays enabled in both modes because it owns gravity and vehicle
-physics. Only the active input source and camera presenter change.
+Possession is server-driven and shared by solo and co-op sessions. Nothing
+player-owned is authored into `SC_WorldZone`; `MultiplayerPlayerSpawner` spawns
+the explorer and one `PF_PlayerStarterShuttleNetwork` per player at the
+formation slots. The starter ship prefab carries the whole loop:
 
-Create the boarding point:
+1. `VehicleBoardingPoint` (side hatch) binds to the ship at runtime. Interacting
+   while on foot within `Maximum Claim Distance` boards the explorer: it is
+   placed at `InteriorSpawnPoint`, switched to the `ExplorerInterior` layer, and
+   the ship is claimed by that player.
+2. `PilotSeatInteractable` binds to the ship. Interacting from inside takes the
+   seat, closes the ramp when `Close Ramp On Enter` is set, and hands the ship
+   to prediction.
+3. The `Exit Vehicle` key leaves the seat. With `Spawn Inside Ship On Pilot
+   Exit` the explorer returns to the interior; otherwise it is placed at the
+   exterior exit and snapped to the terrain.
+4. `SpacecraftRampController` toggles through the network while the claimant is
+   inside. Walking past `ExteriorExitPoint.forward` through an open ramp
+   releases the explorer (`ShipInteriorExitGate` distances live on
+   `NetworkStarterShuttle`), snaps it onto the surface, and clears the claim.
 
-1. Under `Player Starter Shuttle`, create an empty child named `BoardingPoint`.
-2. Place it near the hatch/door where the player should stand to re-enter.
-3. Match its forward direction to `ExteriorExitPoint` if it also drives a door
-   trigger.
-4. Add `VehicleBoardingPoint`.
-5. Use a trigger `BoxCollider` around the side hatch.
-6. Assign `ExteriorExitPoint` to `VehicleBoardingPoint > Exit Point`.
-
-Create the possession owner:
-
-1. Create an empty object under `Actors` named `Player Possession`.
-2. Add `KeyboardBoardingInput`.
-3. Add `PlayerPossessionController`.
-4. Set `Initial Mode = Spacecraft`.
-5. Assign `KeyboardBoardingInput` to `Boarding Input Source`.
-6. Assign `Player Starter Shuttle` to `Spacecraft Root`.
-7. Assign `Player Starter Shuttle > Rigidbody` to `Spacecraft Rigidbody`.
-8. Assign `Player Starter Shuttle > SpacecraftMotor` to `Spacecraft Motor`.
-9. Assign `Player Starter Shuttle > KeyboardSpacecraftInput` to `Spacecraft Input`.
-10. Assign the scene camera's `SpacecraftCameraRig` to `Spacecraft Camera Rig`.
-11. Assign `Player Starter Shuttle > ChaseCameraTarget` to `Spacecraft Camera Target`.
-12. Assign `Player Starter Shuttle > BoardingPoint` to `Boarding Point`.
-13. Assign `Player Explorer` to `Explorer Root`.
-14. Assign `Player Explorer > Rigidbody` to `Explorer Rigidbody`.
-15. Assign `Player Explorer > FirstPersonMotor` to `Explorer Motor`.
-16. Assign `Player Explorer > KeyboardFirstPersonInput` to `Explorer Input`.
-17. Assign the scene camera's `FirstPersonCameraRig` to `First Person Camera
-    Rig`.
-18. Assign `Simulation > WorldOriginRebaser` to `Origin Rebaser`.
-19. Keep `Update Origin Tracking Target` enabled.
-
-Controls:
-
-- `F`: exit the spacecraft.
-- `E`: enter the spacecraft while the explorer is inside the boarding radius.
-
-In Play Mode:
-
-1. Start in the ship.
-2. Press `F`. `Player Explorer` should activate at `InteriorSpawnPoint` in the
-   cockpit/interior.
-3. The ship should keep simulating physics, but `KeyboardSpacecraftInput` should
-   be disabled.
-4. `FirstPersonCameraRig` and `KeyboardFirstPersonInput` should be enabled.
-5. Open the boarding door/ramp, then walk through `ExteriorExitPoint.forward` to
-   transition from ship interior to on-foot outside.
-6. Walk back into `BoardingPoint` radius and press `E`.
-7. `Player Explorer` should deactivate, `SpacecraftCameraRig` should re-enable,
-   and `WorldOriginRebaser > Tracking Target` should return to `Player Starter Shuttle`.
+An unpiloted ship parks kinematically on the surface once it has contact and no
+relative speed; a ship left in flight keeps drifting under gravity.
 
 ## First Resource Loop
 
@@ -1310,10 +1273,10 @@ celestial bodies, resource streamers, spawn points, and the four starter-ship
 formations. It must not contain a camera, an audio listener, a `Light`, or a
 `CelestialLightingRig`; project validation rejects each of those.
 
-`UiGameplaySceneShellController` owns the shell references. Offline it loads and
-binds `SC_WorldZone`; multiplayer hands the same controller to
+`UiGameplaySceneShellController` owns the shell references. The session
+controller loads it as the global scene and hands it to
 `MultiplayerSceneContext.BindPresentation`, which assigns the camera to the LOD
-controller and every `CelestialSurfacePatchSystem`, the simulation to the orbit
+controller, the scaled-space visuals and every `CelestialSurfacePatchSystem`, the simulation to the orbit
 lines, the star light source to the lighting rig, and itself to the flight HUD
 as the pilot context. Leave those fields empty in the authored scenes; do not
 serialize a cross-scene reference to work around the runtime binding.

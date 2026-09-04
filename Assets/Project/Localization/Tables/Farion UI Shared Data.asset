@@ -1007,6 +1007,134 @@ MonoBehaviour:
     m_Key: settings.section.accessibility
     m_Metadata:
       m_Items: []
+  - m_Id: 14092742110994432
+    m_Key: interact.enter_ship
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908992
+    m_Key: interact.pilot_seat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908993
+    m_Key: interact.toggle_ramp
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908994
+    m_Key: interact.load_cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908995
+    m_Key: interact.unload_cargo
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908996
+    m_Key: interact.process_materials
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908997
+    m_Key: interact.process_recipe
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908998
+    m_Key: coop.status.host
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908999
+    m_Key: coop.status.ping
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909000
+    m_Key: unit.meters_short
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909001
+    m_Key: unit.kilometers_short
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909002
+    m_Key: feedback.save_unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909003
+    m_Key: feedback.main_menu_unavailable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909004
+    m_Key: feedback.processing.complete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909005
+    m_Key: feedback.processing.rejected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909006
+    m_Key: feedback.processing.out_of_range
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909007
+    m_Key: feedback.processing.missing_storage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909008
+    m_Key: feedback.processing.stale
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909009
+    m_Key: feedback.processing.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909010
+    m_Key: feedback.cargo.loaded
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909011
+    m_Key: feedback.cargo.unloaded
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909012
+    m_Key: feedback.cargo.empty_explorer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909013
+    m_Key: feedback.cargo.empty_shuttle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909014
+    m_Key: feedback.cargo.shuttle_full
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909015
+    m_Key: feedback.cargo.fleet_full
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909016
+    m_Key: feedback.cargo.incompatible
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909017
+    m_Key: feedback.cargo.stale
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909018
+    m_Key: feedback.cargo.load_out_of_range
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909019
+    m_Key: feedback.cargo.unload_out_of_range
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909020
+    m_Key: feedback.cargo.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909021
+    m_Key: feedback.cargo.slots
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909022
+    m_Key: feedback.cargo.slots_unknown
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

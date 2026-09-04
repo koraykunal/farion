@@ -7,12 +7,10 @@ namespace Farion.Multiplayer.Session
         static float worstPositionError;
         static float worstRotationError;
         static float lastPositionError;
-        static int samples;
 
         public static float WorstPositionError => worstPositionError;
         public static float WorstRotationError => worstRotationError;
         public static float LastPositionError => lastPositionError;
-        public static int Samples => samples;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         public static void Reset()
@@ -20,7 +18,6 @@ namespace Farion.Multiplayer.Session
             worstPositionError = 0f;
             worstRotationError = 0f;
             lastPositionError = 0f;
-            samples = 0;
         }
 
         public static void ReportReconcile(
@@ -34,7 +31,6 @@ namespace Farion.Multiplayer.Session
             float rotationError =
                 Quaternion.Angle(predictedRotation, authoritativeRotation);
             lastPositionError = positionError;
-            samples++;
             if (positionError > worstPositionError)
             {
                 worstPositionError = positionError;

@@ -2,9 +2,6 @@ namespace Farion.Gameplay.Persistence
 {
     public sealed class CelestialSimulationSaveParticipant : IGameplaySaveParticipant
     {
-        public GameplaySaveParticipantScope Scope =>
-            GameplaySaveParticipantScope.World;
-
         public bool CanCapture(GameplaySaveContext context)
         {
             return context.GravitySimulation != null;

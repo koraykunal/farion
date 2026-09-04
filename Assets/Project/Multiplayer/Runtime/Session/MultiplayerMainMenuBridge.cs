@@ -1,4 +1,3 @@
-using Farion.Core.Persistence;
 using Farion.Multiplayer.Spawning;
 using Farion.UI.Feedback;
 using Farion.UI.Localization;
@@ -35,15 +34,12 @@ namespace Farion.Multiplayer.Session
         void OnEnable()
         {
             ResolveReferences();
-            mainMenu.CoopHostRequested -= HandleHostRequested;
+            mainMenu.SoloHostRequested += HandleSoloRequested;
             mainMenu.CoopHostRequested += HandleHostRequested;
-            MultiplayerLobbyGateway.JoinRequested -= HandleLobbyJoinRequested;
             MultiplayerLobbyGateway.JoinRequested += HandleLobbyJoinRequested;
             if (coopScreen != null)
             {
-                coopScreen.JoinRequested -= HandleJoinRequested;
                 coopScreen.JoinRequested += HandleJoinRequested;
-                coopScreen.Closed -= HandleCoopScreenClosed;
                 coopScreen.Closed += HandleCoopScreenClosed;
             }
         }
@@ -53,6 +49,7 @@ namespace Farion.Multiplayer.Session
             MultiplayerLobbyGateway.JoinRequested -= HandleLobbyJoinRequested;
             if (mainMenu != null)
             {
+                mainMenu.SoloHostRequested -= HandleSoloRequested;
                 mainMenu.CoopHostRequested -= HandleHostRequested;
             }
 
@@ -71,10 +68,22 @@ namespace Farion.Multiplayer.Session
             coopScreen ??= GetComponentInChildren<UiCoopScreenPresenter>(true);
         }
 
+        void HandleSoloRequested()
+        {
+            if (!TryCreateSession())
+            {
+                mainMenu.CancelSessionStart();
+                return;
+            }
+
+            session.StartSolo();
+        }
+
         void HandleHostRequested()
         {
             if (!TryCreateSession())
             {
+                mainMenu.CancelSessionStart();
                 return;
             }
 
@@ -94,8 +103,9 @@ namespace Farion.Multiplayer.Session
 
         void OnLobbyHosted(bool succeeded)
         {
-            if (session == null)
+            if (session == null || !session.CanStartSession)
             {
+                MultiplayerLobbyGateway.Service?.Leave();
                 return;
             }
 
@@ -172,7 +182,10 @@ namespace Farion.Multiplayer.Session
         {
             if (state == MultiplayerSessionState.Failed)
             {
-                ReportFailure(ResolveFailureKey());
+                ReportFailure(ResolveFailureKey(
+                    session != null
+                        ? session.FailureReason
+                        : MultiplayerFailureReason.ConnectionFailed));
                 UnbindSession();
                 return;
             }
@@ -182,14 +195,6 @@ namespace Farion.Multiplayer.Session
                 coopScreen?.SetBusy(false);
                 UnbindSession();
             }
-        }
-
-        string ResolveFailureKey()
-        {
-            return ResolveFailureKey(
-                session != null
-                    ? session.FailureReason
-                    : MultiplayerFailureReason.ConnectionFailed);
         }
 
         static string ResolveFailureKey(MultiplayerFailureReason reason)
@@ -222,6 +227,7 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
+            mainMenu.CancelSessionStart();
             mainMenu.ShowFeedback(message, UiFeedbackSeverity.Error);
         }
 

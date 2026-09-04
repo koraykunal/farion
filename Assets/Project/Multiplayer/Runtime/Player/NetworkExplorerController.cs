@@ -35,6 +35,7 @@ namespace Farion.Multiplayer.Player
 
         readonly PredictionRigidbody predictionRigidbody = new();
         readonly SyncVar<bool> possessionActive = new(true);
+        readonly SyncVar<bool> insideShip = new(false);
         readonly SyncVar<ulong> sessionPlayerId = new();
         PredictionRigidbodyFirstPersonPhysicsBody physicsBody;
         Rigidbody body;
@@ -98,6 +99,32 @@ namespace Farion.Multiplayer.Player
             physicsBody = new PredictionRigidbodyFirstPersonPhysicsBody(
                 predictionRigidbody);
             possessionActive.OnChange += OnPossessionActiveChanged;
+            insideShip.OnChange += OnInsideShipChanged;
+        }
+
+        public bool IsInsideShip => insideShip.Value;
+
+        internal void SetInsideShip(bool inside)
+        {
+            if (!IsServerStarted)
+            {
+                return;
+            }
+
+            insideShip.Value = inside;
+            ApplyInsideShipLayer(inside);
+        }
+
+        void OnInsideShipChanged(bool previous, bool next, bool asServer)
+        {
+            ApplyInsideShipLayer(next);
+        }
+
+        void ApplyInsideShipLayer(bool inside)
+        {
+            gameObject.layer = inside
+                ? FarionLayers.ExplorerInterior
+                : FarionLayers.Explorer;
         }
 
         void Update()
@@ -233,8 +260,7 @@ namespace Farion.Multiplayer.Player
         {
             if (body == null ||
                 !body.gameObject.activeInHierarchy ||
-                !appliedPossessionActive ||
-                (!IsServerStarted && !IsOwner))
+                !appliedPossessionActive)
             {
                 observer = default;
                 return false;

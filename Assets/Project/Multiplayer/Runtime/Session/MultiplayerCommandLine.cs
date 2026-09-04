@@ -9,31 +9,19 @@ namespace Farion.Multiplayer.Session
         Client = 2
     }
 
-    public readonly struct MultiplayerLaunchRequest
-    {
-        public MultiplayerLaunchRequest(
-            MultiplayerLaunchMode mode,
-            MultiplayerEndpoint endpoint)
-        {
-            Mode = mode;
-            Endpoint = endpoint;
-        }
-
-        public MultiplayerLaunchMode Mode { get; }
-        public MultiplayerEndpoint Endpoint { get; }
-    }
-
     public static class MultiplayerCommandLine
     {
         const string ModePrefix = "-farion-net=";
         const string AddressPrefix = "-farion-address=";
+        const string SteamLobbyArgument = "+connect_lobby";
 
         public static bool TryParse(
             string[] arguments,
-            out MultiplayerLaunchRequest request)
+            out MultiplayerLaunchMode mode,
+            out MultiplayerEndpoint endpoint)
         {
-            MultiplayerLaunchMode mode = MultiplayerLaunchMode.None;
-            MultiplayerEndpoint endpoint = MultiplayerEndpoint.Loopback;
+            mode = MultiplayerLaunchMode.None;
+            endpoint = MultiplayerEndpoint.Loopback;
 
             for (int i = 0; arguments != null && i < arguments.Length; i++)
             {
@@ -55,8 +43,26 @@ namespace Farion.Multiplayer.Session
                 }
             }
 
-            request = new MultiplayerLaunchRequest(mode, endpoint);
             return mode != MultiplayerLaunchMode.None;
+        }
+
+        public static bool TryParseSteamLobby(string[] arguments, out ulong lobbyId)
+        {
+            lobbyId = 0UL;
+            for (int i = 0; arguments != null && i + 1 < arguments.Length; i++)
+            {
+                if (string.Equals(
+                        arguments[i],
+                        SteamLobbyArgument,
+                        StringComparison.OrdinalIgnoreCase) &&
+                    ulong.TryParse(arguments[i + 1], out lobbyId) &&
+                    lobbyId != 0UL)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         static MultiplayerLaunchMode ParseMode(string value)

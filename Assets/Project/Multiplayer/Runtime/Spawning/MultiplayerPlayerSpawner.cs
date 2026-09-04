@@ -75,27 +75,12 @@ namespace Farion.Multiplayer.Spawning
                 return true;
             }
 
-            if (TryGetRuntimeBindings(out GameplayRuntimeBindings bindings))
+            if (TryGetStartingZoneBindings(out GameplayRuntimeBindings bindings))
             {
                 registry = bindings.Definitions;
             }
 
             return registry != null;
-        }
-
-        internal bool TryGetRuntimeBindings(out GameplayRuntimeBindings bindings)
-        {
-            bindings = null;
-            foreach (MultiplayerSceneContext context in contexts.Values)
-            {
-                if (context != null && context.RuntimeRoot != null)
-                {
-                    bindings = context.RuntimeRoot.Bindings;
-                    break;
-                }
-            }
-
-            return bindings != null;
         }
 
         internal bool TryGetRuntimeBindings(
@@ -115,18 +100,24 @@ namespace Farion.Multiplayer.Spawning
         internal bool TryGetStartingZoneBindings(
             out GameplayRuntimeBindings bindings)
         {
+            bindings = null;
             foreach (MultiplayerSceneContext context in contexts.Values)
             {
-                if (context != null &&
-                    context.RuntimeRoot != null &&
-                    context.ZoneId == MultiplayerZoneCatalog.StartingZoneId)
+                if (context == null || context.RuntimeRoot == null)
+                {
+                    continue;
+                }
+
+                if (context.ZoneId == MultiplayerZoneCatalog.StartingZoneId)
                 {
                     bindings = context.RuntimeRoot.Bindings;
                     return true;
                 }
+
+                bindings ??= context.RuntimeRoot.Bindings;
             }
 
-            return TryGetRuntimeBindings(out bindings);
+            return bindings != null;
         }
 
         void Awake()
@@ -163,6 +154,7 @@ namespace Farion.Multiplayer.Spawning
         {
             contexts[sceneContext.gameObject.scene.handle] = sceneContext;
             BindOriginAuthority(worldOriginAuthority);
+            RefreshStarterShuttles(sceneContext);
             foreach (NetworkConnection connection in
                      networkManager.ServerManager.Clients.Values)
             {
@@ -171,8 +163,6 @@ namespace Farion.Multiplayer.Spawning
                     SpawnFor(connection, sceneContext);
                 }
             }
-
-            RefreshStarterShuttles(sceneContext);
         }
 
         public void LoadRestoredState(
@@ -228,6 +218,25 @@ namespace Farion.Multiplayer.Spawning
             }
 
             restoredPlayers.Remove(sessionPlayer.PersistentPlayerId);
+            RestoreOccupancy(sessionPlayer, explorer.NetworkObject, entry.PossessionMode);
+        }
+
+        void RestoreOccupancy(
+            NetworkSessionPlayer sessionPlayer,
+            NetworkObject explorer,
+            PlayerPossessionMode mode)
+        {
+            NetworkConnection connection = sessionPlayer.Owner;
+            if (mode == PlayerPossessionMode.OnFoot ||
+                connection == null ||
+                !slots.TryGetReserved(connection.ClientId, out int slot) ||
+                !TryGetStarterShuttleInSlot(slot, out NetworkStarterShuttle ship) ||
+                ship.gameObject.scene != explorer.gameObject.scene)
+            {
+                return;
+            }
+
+            ship.RestoreOccupancy(sessionPlayer, connection, explorer, mode);
         }
 
         void PreservePlayerState(int connectionId)
@@ -261,26 +270,39 @@ namespace Farion.Multiplayer.Spawning
             out MultiplayerPlayerSaveEntry entry)
         {
             entry = null;
-            if (!TryGetSpawnedExplorer(
+            int slot = slots.TryGetReserved(connectionId, out int reserved) ? reserved : -1;
+            if (TryGetSpawnedExplorer(
                     sessionPlayer,
                     out NetworkExplorerController explorer))
+            {
+                InventoryContainerComponent inventory =
+                    explorer.GetComponentInChildren<InventoryContainerComponent>(true);
+                entry = new MultiplayerPlayerSaveEntry(
+                    sessionPlayer.PersistentPlayerId,
+                    sessionPlayer.DisplayName,
+                    slot,
+                    inventory != null ? inventory.CaptureContainerSnapshot() : null);
+                entry.SetExplorerPose(
+                    TransformPoseSnapshot.Capture(
+                        explorer.GetComponent<Rigidbody>(),
+                        explorer.transform));
+                entry.SetPossessionMode(sessionPlayer.PossessionMode);
+                entry.SetZone(ResolveZoneIdValue(explorer.gameObject.scene));
+                return true;
+            }
+
+            if (!pendingHandoffs.TryGetValue(connectionId, out PendingZoneHandoff handoff))
             {
                 return false;
             }
 
-            InventoryContainerComponent inventory =
-                explorer.GetComponentInChildren<InventoryContainerComponent>(true);
             entry = new MultiplayerPlayerSaveEntry(
                 sessionPlayer.PersistentPlayerId,
                 sessionPlayer.DisplayName,
-                slots.TryGetReserved(connectionId, out int slot) ? slot : -1,
-                inventory != null ? inventory.CaptureContainerSnapshot() : null);
-            entry.SetExplorerPose(
-                TransformPoseSnapshot.Capture(
-                    explorer.GetComponent<Rigidbody>(),
-                    explorer.transform));
-            entry.SetPossessionMode(sessionPlayer.PossessionMode);
-            entry.SetZone(ResolveZoneIdValue(explorer.gameObject.scene));
+                slot,
+                handoff.CarriedInventory);
+            entry.SetPossessionMode(handoff.Snapshot.PossessionMode);
+            entry.SetZone(handoff.ZoneId.Value);
             return true;
         }
 
@@ -344,24 +366,13 @@ namespace Farion.Multiplayer.Spawning
                         continue;
                     }
 
-                    string owner = ResolveSlotOwner(pair.Key);
-                    if (!string.IsNullOrEmpty(owner))
+                    MultiplayerShipSaveEntry shipEntry = CreateShipEntry(ship, pair.Key);
+                    if (shipEntry.HasOwner)
                     {
-                        capturedOwners.Add(owner);
+                        capturedOwners.Add(shipEntry.PersistentPlayerId);
                     }
 
                     capturedSlots.Add(pair.Key);
-                    MultiplayerShipSaveEntry shipEntry = new(
-                        owner,
-                        pair.Key,
-                        ship.Cargo.CaptureContainerSnapshot(),
-                        ship.Motor.Fuel,
-                        ship.Hull != null ? ship.Hull.Integrity : default);
-                    shipEntry.SetShipPose(
-                        TransformPoseSnapshot.Capture(
-                            ship.GetComponent<Rigidbody>(),
-                            ship.transform));
-                    shipEntry.SetZone(ResolveZoneIdValue(ship.gameObject.scene));
                     shipCargo.Add(shipEntry);
                 }
             }
@@ -377,6 +388,22 @@ namespace Farion.Multiplayer.Spawning
                     shipCargo.Add(pending);
                 }
             }
+        }
+
+        MultiplayerShipSaveEntry CreateShipEntry(NetworkStarterShuttle ship, int slot)
+        {
+            MultiplayerShipSaveEntry entry = new(
+                ResolveSlotOwner(slot),
+                slot,
+                ship.Cargo.CaptureContainerSnapshot(),
+                ship.Motor.Fuel,
+                ship.Hull != null ? ship.Hull.Integrity : default);
+            entry.SetShipPose(
+                TransformPoseSnapshot.Capture(
+                    ship.GetComponent<Rigidbody>(),
+                    ship.transform));
+            entry.SetZone(ResolveZoneIdValue(ship.gameObject.scene));
+            return entry;
         }
 
         public void LoadRestoredShipCargo(
@@ -525,12 +552,7 @@ namespace Farion.Multiplayer.Spawning
                 return;
             }
 
-            MultiplayerShipSaveEntry entry = new(
-                ResolveSlotOwner(slot),
-                slot,
-                starterShuttle.Cargo.CaptureContainerSnapshot(),
-                starterShuttle.Motor.Fuel,
-                starterShuttle.Hull != null ? starterShuttle.Hull.Integrity : default);
+            MultiplayerShipSaveEntry entry = CreateShipEntry(starterShuttle, slot);
             if (!entry.IsValid)
             {
                 return;
@@ -717,13 +739,12 @@ namespace Farion.Multiplayer.Spawning
 
             if (args.Added)
             {
+                RefreshStarterShuttles(sceneContext);
                 SpawnFor(args.Connection, sceneContext);
-            }
-            else
-            {
-                DespawnAvatar(args.Connection, args.Scene);
+                return;
             }
 
+            DespawnAvatar(args.Connection, args.Scene);
             RefreshStarterShuttles(sceneContext);
         }
 
@@ -822,10 +843,6 @@ namespace Farion.Multiplayer.Spawning
             sceneContext.AttachToShiftedWorld(player.transform);
             players.Add(connection.ClientId, player);
             connection.SetFirstObject(player);
-            RestorePlayerState(
-                sessionPlayers[connection.ClientId]
-                    .GetComponent<NetworkSessionPlayer>());
-
             if (IsHostConnection(connection))
             {
                 originAuthority?.SetServerTrackingTarget(
@@ -843,7 +860,10 @@ namespace Farion.Multiplayer.Spawning
                     handoff.Snapshot,
                     player,
                     handoffVelocity);
+                return;
             }
+
+            RestorePlayerState(sessionPlayer);
         }
 
         void ApplyHandoffInventory(
@@ -1029,17 +1049,64 @@ namespace Farion.Multiplayer.Spawning
             Quaternion shipRotation =
                 sceneContext.GravitySimulation.SystemToWorldRotation(
                     snapshot.ShipSystemRotation);
-            NetworkObject ship = Instantiate(
-                starterShuttlePrefab,
+            NetworkStarterShuttle starterShuttle = SpawnStarterShuttle(
+                sceneContext,
+                snapshot.ShipId,
+                snapshot.ShipSlot,
                 shipPosition,
                 shipRotation);
+            if (starterShuttle == null)
+            {
+                return;
+            }
+
+            ApplyRestoredShipCargo(restoredShipCargo);
+            NetworkSessionPlayer sessionPlayer =
+                sessionPlayers.TryGetValue(
+                    connection.ClientId,
+                    out NetworkObject sessionObject) &&
+                sessionObject != null
+                    ? sessionObject.GetComponent<NetworkSessionPlayer>()
+                    : null;
+            if (sessionPlayer != null)
+            {
+                AssignStarterShuttle(connection, starterShuttle);
+                starterShuttle.RestoreOccupancy(
+                    sessionPlayer,
+                    connection,
+                    playerObject,
+                    snapshot.PossessionMode);
+            }
+
+            Rigidbody shipBody = starterShuttle.GetComponent<Rigidbody>();
+            if (shipBody != null && !shipBody.isKinematic)
+            {
+                shipBody.linearVelocity = shipVelocity;
+            }
+        }
+
+        NetworkStarterShuttle SpawnStarterShuttle(
+            MultiplayerSceneContext sceneContext,
+            GeneratedEntityId shipId,
+            int slot,
+            Vector3 position,
+            Quaternion rotation)
+        {
+            NetworkObject ship = Instantiate(starterShuttlePrefab, position, rotation);
             NetworkStarterShuttle starterShuttle =
                 ship.GetComponent<NetworkStarterShuttle>();
-            starterShuttle?.Initialize(snapshot.ShipId, snapshot.ShipSlot);
-            starterShuttle?.BindScene(
+            if (starterShuttle == null)
+            {
+                Destroy(ship.gameObject);
+                return null;
+            }
+
+            starterShuttle.Initialize(shipId, slot);
+            starterShuttle.BindScene(
                 sceneContext.GravitySimulation,
                 sceneContext.CelestialFrameProvider,
                 sceneContext.ZoneOrigin);
+            starterShuttle.OccupancyChanged += HandleOccupancyChanged;
             Scene scene = sceneContext.gameObject.scene;
             networkManager.ServerManager.Spawn(ship, null, scene);
             sceneContext.AttachToShiftedWorld(ship.transform);
@@ -1051,99 +1118,26 @@ namespace Farion.Multiplayer.Spawning
                 starterShuttles.Add(scene.handle, ships);
             }
 
-            ships[snapshot.ShipSlot] = ship;
-            ApplyRestoredShipCargo(restoredShipCargo);
-
-            NetworkSessionPlayer sessionPlayer =
-                sessionPlayers.TryGetValue(
-                    connection.ClientId,
-                    out NetworkObject sessionObject) &&
-                sessionObject != null
-                    ? sessionObject.GetComponent<NetworkSessionPlayer>()
-                    : null;
-            if (sessionPlayer != null && starterShuttle != null)
-            {
-                AssignStarterShuttle(connection, starterShuttle);
-                RestoreShuttleOccupancy(
-                    sessionPlayer,
-                    connection,
-                    playerObject,
-                    starterShuttle,
-                    snapshot.PossessionMode);
-            }
-
-            Rigidbody shipBody = ship.GetComponent<Rigidbody>();
-            if (shipBody != null && !shipBody.isKinematic)
-            {
-                shipBody.linearVelocity = shipVelocity;
-            }
+            ships[slot] = ship;
+            return starterShuttle;
         }
 
-        void RestoreShuttleOccupancy(
+        void HandleOccupancyChanged(
+            NetworkStarterShuttle ship,
             NetworkSessionPlayer sessionPlayer,
-            NetworkConnection connection,
-            NetworkObject playerObject,
-            NetworkStarterShuttle starterShuttle,
-            PlayerPossessionMode possessionMode)
+            NetworkObject explorer,
+            PlayerPossessionMode mode)
         {
-            if (possessionMode == PlayerPossessionMode.OnFoot ||
-                sessionPlayer.ClaimedStarterShuttleId != starterShuttle.EntityId)
+            NetworkConnection connection = sessionPlayer != null ? sessionPlayer.Owner : null;
+            if (!IsHostConnection(connection))
             {
                 return;
             }
 
-            if (possessionMode == PlayerPossessionMode.Spacecraft)
-            {
-                if (starterShuttle.Rig != null &&
-                    starterShuttle.Rig.PilotSeatPoint != null)
-                {
-                    PlaceExplorer(
-                        playerObject,
-                        starterShuttle.Rig.PilotSeatPoint.position,
-                        starterShuttle.Rig.PilotSeatPoint.rotation);
-                }
-
-                if (starterShuttle.TryClaim(
-                        sessionPlayer,
-                        connection,
-                        playerObject.transform.position) &&
-                    starterShuttle.TryBeginPiloting(sessionPlayer, playerObject))
-                {
-                    playerObject.GetComponent<NetworkExplorerController>()
-                        ?.SetPossessionActive(false);
-                    if (IsHostConnection(connection))
-                    {
-                        SetHostTrackingTarget(starterShuttle);
-                    }
-
-                    return;
-                }
-            }
-            else
-            {
-                if (starterShuttle.TryGetInteriorPose(
-                        out Vector3 interiorPosition,
-                        out Quaternion interiorRotation))
-                {
-                    PlaceExplorer(
-                        playerObject,
-                        interiorPosition,
-                        interiorRotation);
-                }
-
-                if (starterShuttle.TryClaim(
-                        sessionPlayer,
-                        connection,
-                        playerObject.transform.position))
-                {
-                    return;
-                }
-            }
-
-            sessionPlayer.SetClaimedStarterShuttle(GeneratedEntityId.None);
-            sessionPlayer.SetPossessionMode(PlayerPossessionMode.OnFoot);
-            playerObject.GetComponent<NetworkExplorerController>()
-                ?.SetPossessionActive(true);
+            Component target = mode == PlayerPossessionMode.Spacecraft
+                ? ship
+                : explorer;
+            SetHostTrackingTarget(target);
         }
 
         readonly struct PendingZoneHandoff
@@ -1184,12 +1178,8 @@ namespace Farion.Multiplayer.Spawning
             NetworkConnection connection,
             RemoteConnectionStateArgs args)
         {
-            if (connection == null)
-            {
-                return;
-            }
-
-            if (args.ConnectionState != RemoteConnectionState.Stopped)
+            if (connection == null ||
+                args.ConnectionState != RemoteConnectionState.Stopped)
             {
                 return;
             }
@@ -1254,6 +1244,7 @@ namespace Farion.Multiplayer.Spawning
             {
                 if (!connection.IsActive ||
                     !connection.Scenes.Contains(scene) ||
+                    !EnsureSessionPlayer(connection) ||
                     !slots.TryReserve(connection.ClientId, out int slot))
                 {
                     continue;
@@ -1299,32 +1290,30 @@ namespace Farion.Multiplayer.Spawning
                     rotation = restoredShipPose.Rotation;
                 }
 
-                NetworkObject ship = Instantiate(
-                    starterShuttlePrefab,
-                    position,
-                    rotation);
-                if (!restoredPose)
-                {
-                    CelestialSurfaceSettling.TrySettle(
-                        sceneContext.CelestialFrameProvider,
-                        ship.transform);
-                }
-
                 GeneratedEntityId shipId = GeneratedEntityId.FromHash(
                     StableHashUtility.Combine(
                         sceneContext.ZoneId.Value,
                         "starter_ship",
                         slot));
-                NetworkStarterShuttle starterShuttle =
-                    ship.GetComponent<NetworkStarterShuttle>();
-                starterShuttle?.Initialize(shipId, slot);
-                starterShuttle?.BindScene(
-                    sceneContext.GravitySimulation,
-                    sceneContext.CelestialFrameProvider,
-                    sceneContext.ZoneOrigin);
-                networkManager.ServerManager.Spawn(ship, null, scene);
-                sceneContext.AttachToShiftedWorld(ship.transform);
-                ships[slot] = ship;
+                NetworkStarterShuttle starterShuttle = SpawnStarterShuttle(
+                    sceneContext,
+                    shipId,
+                    slot,
+                    position,
+                    rotation);
+                if (starterShuttle == null)
+                {
+                    failedConnections.Add(connection);
+                    continue;
+                }
+
+                if (!restoredPose)
+                {
+                    CelestialSurfaceSettling.TrySettle(
+                        sceneContext.CelestialFrameProvider,
+                        starterShuttle.transform);
+                }
+
                 if (!AssignStarterShuttle(connection, starterShuttle))
                 {
                     failedConnections.Add(connection);
@@ -1374,55 +1363,43 @@ namespace Farion.Multiplayer.Spawning
             }
         }
 
-        internal bool TryUseStarterShuttle(
+        internal bool TryBoardStarterShuttle(
             NetworkSessionPlayer sessionPlayer,
             GeneratedEntityId requestedShipId)
         {
-            if (!TryResolveStarterShuttle(
+            return TryResolveStarterShuttle(
                     sessionPlayer,
                     requestedShipId,
                     out NetworkConnection connection,
                     out NetworkObject player,
-                    out NetworkStarterShuttle starterShuttle))
-            {
-                return false;
-            }
+                    out NetworkStarterShuttle starterShuttle) &&
+                starterShuttle.TryBoard(sessionPlayer, connection, player);
+        }
 
-            if (sessionPlayer.PossessionMode == PlayerPossessionMode.OnFoot)
-            {
-                return TryClaimStarterShuttle(
+        internal bool TryPilotStarterShuttle(
+            NetworkSessionPlayer sessionPlayer,
+            GeneratedEntityId requestedShipId)
+        {
+            return TryResolveStarterShuttle(
                     sessionPlayer,
                     requestedShipId,
-                    connection,
-                    player,
-                    starterShuttle);
-            }
+                    out _,
+                    out NetworkObject player,
+                    out NetworkStarterShuttle starterShuttle) &&
+                starterShuttle.TryTakePilotSeat(sessionPlayer, player);
+        }
 
-            if (sessionPlayer.PossessionMode != PlayerPossessionMode.ShipInterior ||
-                sessionPlayer.ClaimedStarterShuttleId != requestedShipId ||
-                !starterShuttle.TryBeginPiloting(sessionPlayer, player))
-            {
-                return false;
-            }
-
-            player.GetComponent<NetworkExplorerController>()
-                ?.SetPossessionActive(false);
-            if (IsHostConnection(connection))
-            {
-                SetHostTrackingTarget(starterShuttle);
-            }
-
-            if (starterShuttle.Rig != null &&
-                starterShuttle.Rig.PilotSeatPoint != null)
-            {
-                PlaceExplorer(
-                    player,
-                    starterShuttle.Rig.PilotSeatPoint.position,
-                    starterShuttle.Rig.PilotSeatPoint.rotation);
-            }
-
-            sessionPlayer.SetPossessionMode(PlayerPossessionMode.Spacecraft);
-            return true;
+        internal bool TryLeavePilotSeat(
+            NetworkSessionPlayer sessionPlayer,
+            GeneratedEntityId requestedShipId)
+        {
+            return TryResolveStarterShuttle(
+                    sessionPlayer,
+                    requestedShipId,
+                    out _,
+                    out NetworkObject player,
+                    out NetworkStarterShuttle starterShuttle) &&
+                starterShuttle.TryLeavePilotSeat(sessionPlayer, player);
         }
 
         bool AssignStarterShuttle(
@@ -1447,70 +1424,6 @@ namespace Farion.Multiplayer.Spawning
             }
 
             sessionPlayer.SetAssignedStarterShuttle(starterShuttle.EntityId);
-            return true;
-        }
-
-        bool TryClaimStarterShuttle(
-            NetworkSessionPlayer sessionPlayer,
-            GeneratedEntityId requestedShipId,
-            NetworkConnection connection,
-            NetworkObject player,
-            NetworkStarterShuttle starterShuttle)
-        {
-            if (sessionPlayer.ClaimedStarterShuttleId.IsValid ||
-                !starterShuttle.TryGetInteriorPose(
-                    out Vector3 interiorPosition,
-                    out Quaternion interiorRotation) ||
-                !starterShuttle.TryClaim(
-                    sessionPlayer,
-                    connection,
-                    player.transform.position))
-            {
-                return false;
-            }
-
-            PlaceExplorer(
-                player,
-                interiorPosition,
-                interiorRotation);
-            sessionPlayer.SetClaimedStarterShuttle(requestedShipId);
-            sessionPlayer.SetPossessionMode(
-                PlayerPossessionMode.ShipInterior);
-            return true;
-        }
-
-        internal bool TryExitStarterShuttle(
-            NetworkSessionPlayer sessionPlayer,
-            GeneratedEntityId requestedShipId)
-        {
-            if (!TryResolveStarterShuttle(
-                    sessionPlayer,
-                    requestedShipId,
-                    out _,
-                    out NetworkObject player,
-                    out NetworkStarterShuttle starterShuttle) ||
-                sessionPlayer.PossessionMode != PlayerPossessionMode.Spacecraft ||
-                sessionPlayer.ClaimedStarterShuttleId != requestedShipId ||
-                !starterShuttle.IsPiloted ||
-                !starterShuttle.IsClaimedBy(sessionPlayer.SessionPlayerId) ||
-                !starterShuttle.TryGetExitPose(
-                    out Vector3 exitPosition,
-                    out Quaternion exitRotation))
-            {
-                return false;
-            }
-
-            PlaceExplorer(player, exitPosition, exitRotation);
-            player.GetComponent<NetworkExplorerController>()
-                ?.SetPossessionActive(true);
-            if (IsHostConnection(sessionPlayer.Owner))
-            {
-                SetHostTrackingTarget(player);
-            }
-
-            sessionPlayer.SetClaimedStarterShuttle(GeneratedEntityId.None);
-            sessionPlayer.SetPossessionMode(PlayerPossessionMode.OnFoot);
-            starterShuttle.ClearClaim();
             return true;
         }
 
@@ -1557,27 +1470,6 @@ namespace Farion.Multiplayer.Spawning
                 connection.ClientId == local.ClientId;
         }
 
-        static void PlaceExplorer(
-            NetworkObject player,
-            Vector3 position,
-            Quaternion rotation)
-        {
-            if (player.TryGetComponent(out Rigidbody body))
-            {
-                body.position = position;
-                body.rotation = rotation;
-                if (!body.isKinematic)
-                {
-                    body.linearVelocity = Vector3.zero;
-                    body.angularVelocity = Vector3.zero;
-                }
-
-                return;
-            }
-
-            player.transform.SetPositionAndRotation(position, rotation);
-        }
-
         void ReleaseStarterShuttleClaims(int connectionId)
         {
             foreach (Dictionary<int, NetworkObject> ships in starterShuttles.Values)
@@ -1588,40 +1480,7 @@ namespace Farion.Multiplayer.Spawning
                         ship != null
                             ? ship.GetComponent<NetworkStarterShuttle>()
                             : null;
-                    if (starterShuttle != null)
-                    {
-                        ulong claimedSessionPlayerId =
-                            starterShuttle.ClaimedBySessionPlayerId;
-                        if (starterShuttle.ReleaseClaim(connectionId))
-                        {
-                            ClearSessionClaim(claimedSessionPlayerId);
-                        }
-                    }
-                }
-            }
-        }
-
-        void ClearSessionClaim(ulong sessionPlayerId)
-        {
-            if (sessionPlayerId == 0UL)
-            {
-                return;
-            }
-
-            foreach (NetworkObject sessionObject in sessionPlayers.Values)
-            {
-                NetworkSessionPlayer sessionPlayer =
-                    sessionObject != null
-                        ? sessionObject.GetComponent<NetworkSessionPlayer>()
-                        : null;
-                if (sessionPlayer != null &&
-                    sessionPlayer.SessionPlayerId == sessionPlayerId)
-                {
-                    sessionPlayer.SetClaimedStarterShuttle(
-                        GeneratedEntityId.None);
-                    sessionPlayer.SetPossessionMode(
-                        PlayerPossessionMode.OnFoot);
-                    return;
+                    starterShuttle?.ReleaseClaim(connectionId);
                 }
             }
         }
@@ -1639,12 +1498,13 @@ namespace Farion.Multiplayer.Spawning
             NetworkStarterShuttle starterShuttle =
                 ship.GetComponent<NetworkStarterShuttle>();
             PreserveStarterShuttleState(starterShuttle, slot);
-            if (starterShuttle != null && starterShuttle.IsClaimed)
+            if (starterShuttle != null)
             {
-                ulong claimedSessionPlayerId =
-                    starterShuttle.ClaimedBySessionPlayerId;
-                starterShuttle.ClearClaim();
-                ClearSessionClaim(claimedSessionPlayerId);
+                starterShuttle.OccupancyChanged -= HandleOccupancyChanged;
+                if (starterShuttle.IsClaimed)
+                {
+                    starterShuttle.ClearClaim();
+                }
             }
 
             if (ship.IsSpawned)

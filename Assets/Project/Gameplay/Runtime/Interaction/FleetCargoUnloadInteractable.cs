@@ -9,29 +9,24 @@ namespace Farion.Gameplay.Interaction
     public sealed class FleetCargoUnloadInteractable : MonoBehaviour, IInteractable
     {
 
+        [SerializeField] ShuttleDockingBoundary dockingBoundary;
+
+        public string InteractionPrompt => InteractionPromptKeys.UnloadCargo;
+        public bool HasValidAuthoring => dockingBoundary != null;
+
         void Awake()
         {
             InteractableLayerBinding.Apply(this);
         }
-        const string DefaultPrompt = "Unload shuttle cargo";
-
-        [SerializeField] ShuttleDockingBoundary dockingBoundary;
-        [SerializeField] string prompt = DefaultPrompt;
-
-        public string InteractionPrompt =>
-            string.IsNullOrWhiteSpace(prompt) ? DefaultPrompt : prompt.Trim();
-        public bool HasValidAuthoring => dockingBoundary != null;
 
         void Reset()
         {
             ResolveBoundary();
-            prompt = DefaultPrompt;
         }
 
         void OnValidate()
         {
             ResolveBoundary();
-            prompt = InteractionPrompt;
         }
 
         public bool CanInteract(InteractionContext context)

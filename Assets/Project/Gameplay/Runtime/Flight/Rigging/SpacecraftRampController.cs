@@ -8,7 +8,6 @@ namespace Farion.Gameplay.Flight
     {
         [Header("Ramp")]
         [SerializeField] Transform rampPivot;
-        [SerializeField] string interactionPrompt = "Toggle ramp";
         [SerializeField] bool captureInitialPoseAsClosed = true;
         [SerializeField] Vector3 closedLocalEulerAngles;
         [SerializeField] Vector3 openLocalEulerAngles = new(-70f, 0f, 0f);
@@ -23,10 +22,17 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float normalizedOpen;
 
         float targetOpen;
+        IInteractable host;
 
         public bool IsOpen => isOpen;
         public float NormalizedOpen => normalizedOpen;
-        public string InteractionPrompt => interactionPrompt;
+        public bool IsCommandedOpen => targetOpen >= 0.5f;
+        public string InteractionPrompt => InteractionPromptKeys.ToggleRamp;
+
+        public void Bind(IInteractable interactable)
+        {
+            host = interactable;
+        }
 
         void Awake()
         {
@@ -78,11 +84,17 @@ namespace Farion.Gameplay.Flight
 
         public bool CanInteract(InteractionContext context)
         {
-            return true;
+            return host == null || host.CanInteract(context);
         }
 
         public void Interact(InteractionContext context)
         {
+            if (host != null)
+            {
+                host.Interact(context);
+                return;
+            }
+
             Toggle();
         }
 

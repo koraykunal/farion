@@ -11,27 +11,18 @@ namespace Farion.Tests.PlayMode
 {
     public sealed class CelestialSurfacePatchPlayModeTests
     {
+        const string SurfaceSlot = "playmode-surface-patch";
+
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            yield return SoloSessionTestScope.Stop(SurfaceSlot);
+        }
+
         [UnityTest]
         public IEnumerator GameplayShellHandsNonReferenceSurfaceCollisionOffWithoutAnAuthorityGap()
         {
-            AsyncOperation load = SceneManager.LoadSceneAsync(
-                "SC_GameplayShell",
-                LoadSceneMode.Single);
-            Assert.That(load, Is.Not.Null);
-            while (!load.isDone)
-            {
-                yield return null;
-            }
-
-            float zoneLoadDeadline = Time.realtimeSinceStartup + 90f;
-            while (Time.realtimeSinceStartup < zoneLoadDeadline &&
-                   !SceneManager.GetSceneByName("SC_WorldZone").isLoaded)
-            {
-                yield return null;
-            }
-
-            Assert.That(SceneManager.GetSceneByName("SC_WorldZone").isLoaded, Is.True);
-            yield return null;
+            yield return SoloSessionTestScope.Start(SurfaceSlot);
 
             GravitySimulation simulation =
                 Object.FindAnyObjectByType<GravitySimulation>();

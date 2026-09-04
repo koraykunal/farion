@@ -11,14 +11,17 @@ namespace Farion.Multiplayer.Steam
         const string HostAddressKey = "farion.host";
         const string GameNameKey = "farion.game";
         const string GameName = "Farion";
+        const uint LobbyEnterSuccess = 1;
 
         Callback<LobbyCreated_t> lobbyCreated;
         Callback<GameLobbyJoinRequested_t> joinRequested;
         Callback<LobbyEnter_t> lobbyEntered;
         Action<bool> hostCompleted;
         CSteamID currentLobby;
+        bool launchLobbyConsumed;
 
         public bool IsAvailable => FarionSteamRuntime.IsReady;
+        public bool HasLobby => currentLobby.IsValid();
         public string LocalDisplayName => IsAvailable
             ? SteamFriends.GetPersonaName()
             : string.Empty;
@@ -35,6 +38,20 @@ namespace Farion.Multiplayer.Steam
                 Callback<GameLobbyJoinRequested_t>.Create(OnGameLobbyJoinRequested);
             lobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
             MultiplayerLobbyGateway.Register(this);
+        }
+
+        void Start()
+        {
+            if (launchLobbyConsumed ||
+                !MultiplayerCommandLine.TryParseSteamLobby(
+                    Environment.GetCommandLineArgs(),
+                    out ulong lobbyId))
+            {
+                return;
+            }
+
+            launchLobbyConsumed = true;
+            JoinLobby(lobbyId);
         }
 
         void OnDisable()
@@ -57,10 +74,22 @@ namespace Farion.Multiplayer.Steam
                 return;
             }
 
+            Leave();
             hostCompleted = completed;
             SteamMatchmaking.CreateLobby(
                 ELobbyType.k_ELobbyTypeFriendsOnly,
                 Mathf.Max(1, maximumPlayers));
+        }
+
+        public void JoinLobby(ulong lobbyId)
+        {
+            if (!IsAvailable || lobbyId == 0UL || !CanJoinAnotherSession())
+            {
+                return;
+            }
+
+            Leave();
+            SteamMatchmaking.JoinLobby(new CSteamID(lobbyId));
         }
 
         public void Leave()
@@ -104,16 +133,29 @@ namespace Farion.Multiplayer.Steam
 
             Action<bool> completed = hostCompleted;
             hostCompleted = null;
-            completed?.Invoke(succeeded);
+            if (completed == null)
+            {
+                Leave();
+                return;
+            }
+
+            completed(succeeded);
         }
 
         void OnGameLobbyJoinRequested(GameLobbyJoinRequested_t callback)
         {
-            SteamMatchmaking.JoinLobby(callback.m_steamIDLobby);
+            JoinLobby(callback.m_steamIDLobby.m_SteamID);
         }
 
         void OnLobbyEntered(LobbyEnter_t callback)
         {
+            if (callback.m_EChatRoomEnterResponse != LobbyEnterSuccess)
+            {
+                Debug.LogWarning(
+                    $"[Steam] Could not enter lobby {callback.m_ulSteamIDLobby} (response {callback.m_EChatRoomEnterResponse}).");
+                return;
+            }
+
             CSteamID lobby = new(callback.m_ulSteamIDLobby);
             currentLobby = lobby;
             string hostAddress =
@@ -126,6 +168,12 @@ namespace Farion.Multiplayer.Steam
 
             SteamFriends.SetRichPresence("connect", hostAddress);
             JoinRequested?.Invoke(hostAddress);
+        }
+
+        static bool CanJoinAnotherSession()
+        {
+            MultiplayerSessionController session = MultiplayerSessionController.Active;
+            return session == null || session.CanStartSession;
         }
     }
 }

@@ -28,7 +28,6 @@ namespace Farion.Tests.PlayMode
         {
             MultiplayerSessionController.Active?.Stop();
             yield return null;
-            GameplaySessionModeRequest.Cancel();
             if (testRoot != null)
             {
                 UnityEngine.Object.Destroy(testRoot);
@@ -37,7 +36,7 @@ namespace Farion.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator SessionFactoryReusesTheActiveRootAndIdleStopClearsMode()
+        public IEnumerator SessionFactoryReusesTheActiveRootAndIdleStopClearsActive()
         {
             Assert.That(
                 MultiplayerSessionLauncher.TryCreateSession(
@@ -49,15 +48,10 @@ namespace Farion.Tests.PlayMode
                 Is.True);
             Assert.That(second, Is.SameAs(first));
 
-            GameplaySessionModeRequest.Request(
-                GameplaySessionMode.Multiplayer);
             first.Stop();
             yield return null;
 
             Assert.That(MultiplayerSessionController.Active, Is.Null);
-            Assert.That(
-                GameplaySessionModeRequest.RequestedOrDefault,
-                Is.EqualTo(GameplaySessionMode.Offline));
         }
 
         [UnityTest]
@@ -96,45 +90,6 @@ namespace Farion.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator MultiplayerConfigurationUsesOnlyFirstPersonCameraRig()
-        {
-            testRoot = new GameObject("MultiplayerCameraTest");
-            testRoot.SetActive(false);
-
-            GameplayRuntimeRoot runtimeRoot =
-                testRoot.AddComponent<GameplayRuntimeRoot>();
-            MultiplayerSceneContext context =
-                testRoot.AddComponent<MultiplayerSceneContext>();
-            Rigidbody spacecraftRigidbody = testRoot.AddComponent<Rigidbody>();
-            SpacecraftCameraRig spacecraftCameraRig =
-                new GameObject("SpacecraftCameraRig")
-                    .AddComponent<SpacecraftCameraRig>();
-            spacecraftCameraRig.transform.SetParent(testRoot.transform);
-            FirstPersonCameraRig firstPersonCameraRig =
-                new GameObject("FirstPersonCameraRig")
-                    .AddComponent<FirstPersonCameraRig>();
-            firstPersonCameraRig.transform.SetParent(testRoot.transform);
-            firstPersonCameraRig.enabled = false;
-
-            TestFieldAccess.SetField(context, "runtimeRoot", runtimeRoot);
-            TestFieldAccess.SetField(context, "spacecraftRigidbody", spacecraftRigidbody);
-            TestFieldAccess.SetField(context, "spacecraftCameraRig", spacecraftCameraRig);
-            TestFieldAccess.SetField(context, "firstPersonCameraRig", firstPersonCameraRig);
-
-            GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
-            testRoot.SetActive(true);
-
-            spacecraftCameraRig.enabled = true;
-            firstPersonCameraRig.enabled = false;
-            yield return null;
-
-            Assert.That(spacecraftCameraRig.enabled, Is.False);
-            Assert.That(firstPersonCameraRig.enabled, Is.True);
-            Assert.That(spacecraftRigidbody.isKinematic, Is.True);
-            LogAssert.NoUnexpectedReceived();
-        }
-
-        [UnityTest]
         public IEnumerator FrozenMultiplayerSimulationKeepsReferenceBodyStationary()
         {
             testRoot = new GameObject("MultiplayerReferenceFrameTest");
@@ -161,7 +116,6 @@ namespace Farion.Tests.PlayMode
             TestFieldAccess.SetField(context, "runtimeRoot", runtimeRoot);
             TestFieldAccess.SetField(context, "gravitySimulation", simulation);
 
-            GameplaySessionModeRequest.Request(GameplaySessionMode.Multiplayer);
             testRoot.SetActive(true);
             yield return null;
 

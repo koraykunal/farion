@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Farion.App.Flow;
 using Farion.Audio.Direction;
 using Farion.Core.Identity;
 using Farion.Core.Persistence;
@@ -284,21 +283,9 @@ namespace Farion.Editor.Validation
                     isSimulationZone,
                     report);
 
-                if (gameObject.TryGetComponent(out PlayerPossessionController possessionController))
-                {
-                    ValidatePossessionController(scenePath, possessionController, report);
-                }
-
                 if (gameObject.TryGetComponent(out SpacecraftMotor spacecraftMotor))
                 {
                     ValidateSpacecraft(scenePath, spacecraftMotor, report);
-                }
-
-                if (gameObject.TryGetComponent(out GameplaySessionController sessionController))
-                {
-                    ValidateRequiredReference(scenePath, sessionController, "flowSettings", report);
-                    ValidateRequiredReference(scenePath, sessionController, "runtimeRoot", report);
-                    ValidateGameplaySession(scenePath, sessionController, report);
                 }
 
                 if (gameObject.TryGetComponent(out CelestialFrameProvider frameProvider))
@@ -452,36 +439,6 @@ namespace Farion.Editor.Validation
             containerIds.Add(containerId, container);
         }
 
-        static void ValidatePossessionController(
-            string scenePath,
-            PlayerPossessionController controller,
-            FarionValidationReport report)
-        {
-            SerializedObject serialized = new(controller);
-            if (scenePath != WorldZoneScenePath)
-            {
-                ValidateRequiredReference(scenePath, controller, "controlLock", report);
-            }
-
-            Transform spacecraftRoot =
-                serialized.FindProperty("spacecraftRoot")?.objectReferenceValue as Transform;
-            if (spacecraftRoot == null)
-            {
-                report.AddError($"{scenePath}: {controller.name} has no spacecraft root.");
-                return;
-            }
-
-            if (spacecraftRoot.GetComponentInChildren<PilotSeatInteractable>(true) == null)
-            {
-                report.AddError($"{scenePath}: {spacecraftRoot.name} has no pilot-seat interactable.");
-            }
-
-            if (spacecraftRoot.GetComponentInChildren<VehicleBoardingPoint>(true) == null)
-            {
-                report.AddError($"{scenePath}: {spacecraftRoot.name} has no vehicle boarding point.");
-            }
-        }
-
         static void ValidateSaveCoordinator(
             string scenePath,
             GameplaySaveCoordinator coordinator,
@@ -550,39 +507,12 @@ namespace Farion.Editor.Validation
             ValidateRequiredReference(scenePath, runtimeRoot, "gravitySimulation", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "celestialFrameProvider", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "originRebaser", report);
-            ValidateRequiredReference(scenePath, runtimeRoot, "localPlayerInventory", report);
-            ValidateRequiredReference(scenePath, runtimeRoot, "possession", report);
-            ValidateRequiredReference(scenePath, runtimeRoot, "assignedShuttle", report);
             ValidateRequiredReference(scenePath, runtimeRoot, "fleet", report);
 
             if (!runtimeRoot.HasValidAuthoring)
             {
                 report.AddError(
                     $"{scenePath}: {runtimeRoot.name} cannot compose valid gameplay runtime bindings.");
-            }
-        }
-
-        static void ValidateGameplaySession(
-            string scenePath,
-            GameplaySessionController controller,
-            FarionValidationReport report)
-        {
-            SerializedProperty localPlayerId =
-                new SerializedObject(controller).FindProperty("localPlayerId");
-            if (localPlayerId == null ||
-                !PersistentEntityId.TryCreate(
-                    localPlayerId.stringValue,
-                    out _))
-            {
-                report.AddError(
-                    $"{scenePath}: {controller.name} has an invalid local player id.");
-                return;
-            }
-
-            if (!controller.TryGetRuntime(out _))
-            {
-                report.AddError(
-                    $"{scenePath}: {controller.name} cannot compose its local gameplay session.");
             }
         }
 

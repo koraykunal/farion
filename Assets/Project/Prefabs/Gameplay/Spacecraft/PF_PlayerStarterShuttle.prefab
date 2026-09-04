@@ -2317,7 +2317,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.ShuttleCargoHatchInteractable
   cargo: {fileID: 6649556196873618115}
-  prompt: Load cargo
 --- !u!1 &4139728744491462224
 GameObject:
   m_ObjectHideFlags: 0
@@ -2744,8 +2743,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e54bf8ba8c5843beaad0c313ddeb5c68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.PilotSeatInteractable
-  possessionController: {fileID: 0}
-  prompt: Pilot ship
 --- !u!1 &4658993452979958163
 GameObject:
   m_ObjectHideFlags: 0
@@ -4497,8 +4494,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Interaction.VehicleBoardingPoint
   exitPoint: {fileID: 4781495207676866640}
-  possessionController: {fileID: 0}
-  prompt: Enter ship
 --- !u!65 &3209807718926970522
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4973,7 +4968,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftRampController
   rampPivot: {fileID: 8320704032222260744}
-  interactionPrompt: Toggle boarding door
   captureInitialPoseAsClosed: 0
   closedLocalEulerAngles: {x: 0, y: 90, z: 0}
   openLocalEulerAngles: {x: -90, y: 90, z: 0}

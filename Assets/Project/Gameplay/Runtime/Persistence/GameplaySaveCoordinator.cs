@@ -13,7 +13,6 @@ namespace Farion.Gameplay.Persistence
     {
         [Header("Slot")]
         [SerializeField] string slotName = SaveGameSlotCatalog.DefaultSlotName;
-        [SerializeField] bool consumeStartupRequestOnStart = true;
 
         [Header("Runtime")]
         [SerializeField] GameplayRuntimeRoot runtimeRoot;
@@ -22,10 +21,6 @@ namespace Farion.Gameplay.Persistence
         {
             new WorldOriginSaveParticipant(),
             new CelestialSimulationSaveParticipant(),
-            new PlayerPossessionSaveParticipant(),
-            new PlayerInventorySaveParticipant(),
-            new ShuttleCargoSaveParticipant(),
-            new ShuttleSystemsSaveParticipant(),
             new FleetStorageSaveParticipant(),
             new ResourceDepositSaveParticipant()
         };
@@ -47,29 +42,8 @@ namespace Farion.Gameplay.Persistence
             multiplayerSource = source;
         }
 
-        void Start()
+        public void SetSlotName(string requestedSlotName)
         {
-            if (ResolveRuntimeRoot()?.Mode == GameplaySessionMode.Multiplayer)
-            {
-                return;
-            }
-
-            if (!consumeStartupRequestOnStart)
-            {
-                return;
-            }
-
-            if (!SaveGameStartupRequest.Consume(out SaveGameStartupMode startupMode, out string requestedSlotName))
-            {
-                return;
-            }
-
-            if (startupMode == SaveGameStartupMode.LoadGame)
-            {
-                Load(requestedSlotName);
-                return;
-            }
-
             slotName = SaveGameSlotCatalog.ResolveSlotName(requestedSlotName);
         }
 
@@ -169,16 +143,10 @@ namespace Farion.Gameplay.Persistence
             GameplaySaveCapture capture = new(DateTime.UtcNow.ToString("O"));
             for (int i = 0; i < saveParticipants.Length; i++)
             {
-                if (!ParticipatesInCapture(saveParticipants[i], context))
-                {
-                    continue;
-                }
-
                 saveParticipants[i].Capture(capture, context);
             }
 
             GameplaySaveData snapshot = capture.CreateSnapshot();
-            snapshot.SetSessionMode(context.Mode);
             if (multiplayerSource != null)
             {
                 capturedPlayers.Clear();
@@ -195,32 +163,13 @@ namespace Farion.Gameplay.Persistence
             GameplaySaveContext context = CreateContext();
             for (int i = 0; i < saveParticipants.Length; i++)
             {
-                if (ParticipatesInCapture(saveParticipants[i], context) &&
-                    !saveParticipants[i].CanCapture(context))
+                if (!saveParticipants[i].CanCapture(context))
                 {
                     return false;
                 }
             }
 
             return true;
-        }
-
-        static bool ParticipatesInCapture(
-            IGameplaySaveParticipant participant,
-            GameplaySaveContext context)
-        {
-            return participant.Scope != GameplaySaveParticipantScope.LocalPlayer ||
-                !context.IsMultiplayer;
-        }
-
-        static bool ParticipatesInApply(
-            IGameplaySaveParticipant participant,
-            GameplaySaveData saveData,
-            GameplaySaveContext context)
-        {
-            return ParticipatesInCapture(participant, context) &&
-                (participant.Scope != GameplaySaveParticipantScope.LocalPlayer ||
-                    saveData.SessionMode != GameplaySessionMode.Multiplayer);
         }
 
         bool TryReadSaveData(
@@ -276,8 +225,7 @@ namespace Farion.Gameplay.Persistence
             GameplaySaveContext context = CreateContext();
             for (int i = 0; i < saveParticipants.Length; i++)
             {
-                if (ParticipatesInApply(saveParticipants[i], saveData, context) &&
-                    !saveParticipants[i].CanApply(saveData, context))
+                if (!saveParticipants[i].CanApply(saveData, context))
                 {
                     return false;
                 }
@@ -291,8 +239,7 @@ namespace Farion.Gameplay.Persistence
             GameplaySaveContext context = CreateContext();
             for (int i = 0; i < saveParticipants.Length; i++)
             {
-                if (ParticipatesInApply(saveParticipants[i], saveData, context) &&
-                    !saveParticipants[i].Apply(saveData, context))
+                if (!saveParticipants[i].Apply(saveData, context))
                 {
                     return false;
                 }
@@ -307,9 +254,7 @@ namespace Farion.Gameplay.Persistence
 
         GameplaySaveContext CreateContext()
         {
-            return new GameplaySaveContext(
-                RuntimeBindings,
-                ResolveRuntimeRoot()?.Mode ?? GameplaySessionMode.Offline);
+            return new GameplaySaveContext(RuntimeBindings);
         }
 
         GameplayRuntimeRoot ResolveRuntimeRoot()

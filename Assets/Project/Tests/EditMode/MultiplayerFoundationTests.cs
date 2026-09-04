@@ -1,6 +1,5 @@
 using Farion.Core.Identity;
 using Farion.Gameplay.Character;
-using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.Spawning;
@@ -13,39 +12,6 @@ namespace Farion.Tests.EditMode
 {
     public sealed class MultiplayerFoundationTests
     {
-        [TearDown]
-        public void TearDown()
-        {
-            GameplaySessionModeRequest.Cancel();
-        }
-
-        [Test]
-        public void SessionModeSurvivesRepeatedSceneComposition()
-        {
-            GameplaySessionModeRequest.Request(
-                GameplaySessionMode.Multiplayer);
-
-            Assert.That(
-                GameplaySessionModeRequest.RequestedOrDefault,
-                Is.EqualTo(GameplaySessionMode.Multiplayer));
-            Assert.That(
-                GameplaySessionModeRequest.RequestedOrDefault,
-                Is.EqualTo(GameplaySessionMode.Multiplayer));
-        }
-
-        [Test]
-        public void SessionModeRequestCanBeCancelledBeforeSceneComposition()
-        {
-            GameplaySessionModeRequest.Request(
-                GameplaySessionMode.Multiplayer);
-
-            GameplaySessionModeRequest.Cancel();
-
-            Assert.That(
-                GameplaySessionModeRequest.RequestedOrDefault,
-                Is.EqualTo(GameplaySessionMode.Offline));
-        }
-
         [Test]
         public void MotorInputClampsUntrustedMovementAndYaw()
         {
@@ -326,13 +292,20 @@ namespace Farion.Tests.EditMode
             Assert.That(
                 MultiplayerCommandLine.TryParse(
                     new[] { "game.exe", "-farion-net=client", "-farion-address=10.0.0.5" },
-                    out MultiplayerLaunchRequest request),
+                    out MultiplayerLaunchMode mode,
+                    out MultiplayerEndpoint endpoint),
                 Is.True);
-            Assert.That(request.Mode, Is.EqualTo(MultiplayerLaunchMode.Client));
-            Assert.That(request.Endpoint.Address, Is.EqualTo("10.0.0.5"));
+            Assert.That(mode, Is.EqualTo(MultiplayerLaunchMode.Client));
+            Assert.That(endpoint.Address, Is.EqualTo("10.0.0.5"));
             Assert.That(
-                request.Endpoint.Port,
+                endpoint.Port,
                 Is.EqualTo(MultiplayerEndpoint.DefaultPort));
+            Assert.That(
+                MultiplayerCommandLine.TryParseSteamLobby(
+                    new[] { "game.exe", "+connect_lobby", "109775241" },
+                    out ulong lobbyId),
+                Is.True);
+            Assert.That(lobbyId, Is.EqualTo(109775241UL));
         }
 
         [TestCase("10.0.0.5", "10.0.0.5", MultiplayerEndpoint.DefaultPort)]

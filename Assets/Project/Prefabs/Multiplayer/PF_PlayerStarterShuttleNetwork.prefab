@@ -178,6 +178,16 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 6343661596808606471}
   _tickCallbacks: 6
   maximumClaimDistance: 6
+  spawnInsideShipOnPilotExit: 1
+  openRampOnPilotExit: 0
+  closeRampOnEnter: 1
+  exteriorTransitionDistance: 1.5
+  exteriorTransitionCooldownSeconds: 0.35
+  exteriorTransitionProgressDistance: 0.75
+  exitPoseClearance: 0.25
+  snapExplorerToExteriorSurface: 1
+  exteriorGroundClearance: 0.08
+  exteriorSurfaceClearance: 0.15
 --- !u!114 &2714981275018643201
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,6 +1,6 @@
 namespace Farion.Gameplay.Interaction
 {
-    enum PlayerPossessionTransitionRequest
+    public enum PlayerPossessionTransitionRequest
     {
         Bootstrap = 0,
         RestoreSnapshot = 1,

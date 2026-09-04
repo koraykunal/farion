@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Interaction
 {
-    sealed class ShipInteriorExitGate
+    public sealed class ShipInteriorExitGate
     {
         float enteredAt = float.NegativeInfinity;
         float entryExitDistance;

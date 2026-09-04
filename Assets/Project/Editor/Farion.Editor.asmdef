@@ -8,7 +8,6 @@
         "Farion.Gameplay.Domain",
         "Farion.Gameplay.Runtime",
         "Farion.Gameplay.Presentation",
-        "Farion.App.Runtime",
         "Farion.Rendering.Runtime",
         "Farion.Audio.Runtime",
         "Farion.UI.Runtime",

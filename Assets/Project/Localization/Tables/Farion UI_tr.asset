@@ -1019,7 +1019,137 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 8691678500000000
-    m_Localized: "ERİŞİLEBİLİRLİK"
+    m_Localized: "ER\u0130\u015E\u0130LEB\u0130L\u0130RL\u0130K"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742110994432
+    m_Localized: Gemiye gir
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908992
+    m_Localized: "Pilot koltu\u011Fu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908993
+    m_Localized: "Rampay\u0131 a\xE7/kapat"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908994
+    m_Localized: "Kargo y\xFCkle"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908995
+    m_Localized: "Mekik kargosunu bo\u015Falt"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908996
+    m_Localized: "Malzemeleri i\u015Fle"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908997
+    m_Localized: "{0} i\u015Fle"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908998
+    m_Localized: SUNUCU
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173908999
+    m_Localized: '{0} MS'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909000
+    m_Localized: m
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909001
+    m_Localized: km
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909002
+    m_Localized: "Oturum haz\u0131r olana kadar kay\u0131t yap\u0131lamaz."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909003
+    m_Localized: "Ana men\xFC y\xFCklenemedi."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909004
+    m_Localized: "\u0130\u015ELEME TAMAMLANDI."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909005
+    m_Localized: "F\u0130LO DEPOSUNDA GEREKL\u0130 G\u0130RD\u0130LER YOK."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909006
+    m_Localized: "\u0130\u015ELEMEK \u0130\xC7\u0130N F\u0130LOYA YAKLA\u015E."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909007
+    m_Localized: "F\u0130LO DEPOSU KULLANILAMIYOR."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909008
+    m_Localized: "F\u0130LO DEPOSU DE\u011E\u0130\u015ET\u0130. TEKRAR DENE."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909009
+    m_Localized: "\u0130\u015ELEME BA\u015EARISIZ."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909010
+    m_Localized: "KARGO Y\xDCKLEND\u0130  /  K\xC2\u015E\u0130F {0}  /  MEK\u0130K
+      {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909011
+    m_Localized: "BO\u015EALTMA TAMAMLANDI  /  MEK\u0130K {0}  /  F\u0130LO DEPOSU
+      {1}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909012
+    m_Localized: "Y\xDCKLENECEK K\xC2\u015E\u0130F KARGOSU YOK."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909013
+    m_Localized: "MEK\u0130K KARGOSU BO\u015E."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909014
+    m_Localized: "MEK\u0130K KARGO KAPAS\u0130TES\u0130 YETERS\u0130Z."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909015
+    m_Localized: "F\u0130LO DEPO KAPAS\u0130TES\u0130 YETERS\u0130Z."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909016
+    m_Localized: "KARGODA UYUMSUZ B\u0130R E\u015EYA VAR."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909017
+    m_Localized: "KARGO DE\u011E\u0130\u015ET\u0130. TEKRAR DENE."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909018
+    m_Localized: "Y\xDCKLEMEK \u0130\xC7\u0130N MEK\u0130\u011E\u0130NE YAKLA\u015E."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909019
+    m_Localized: "BO\u015EALTMAK \u0130\xC7\u0130N F\u0130LOYA DAHA YAKIN KENETLEN."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909020
+    m_Localized: "KARGO AKTARIMI BA\u015EARISIZ."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909021
+    m_Localized: '{0}/{1} YUVA'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909022
+    m_Localized: --/-- YUVA
     m_Metadata:
       m_Items: []
   references:

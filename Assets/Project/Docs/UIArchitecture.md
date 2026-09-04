@@ -207,9 +207,9 @@ blocking. It remains a direct Canvas sibling of `UI_SystemRoot`.
 feature controller, opens the system screen for one rendered frame, then maps
 Unity's `0..0.9` asynchronous load range to a player-facing `0..100%` value.
 It does not choose destinations, save startup modes, or scene names.
-`UiMainMenuController` chooses expedition loading;
-`UiGameplayController` chooses the return-to-menu presentation;
-`GameFlowService` remains the scene-loading authority.
+`UiMainMenuController` raises `SoloHostRequested` or `CoopHostRequested` and
+shows the overlay; `UiGameplayController` chooses the return-to-menu
+presentation; `MultiplayerSessionController` remains the scene-loading authority.
 
 Load failure closes the system layer and returns control to the existing screen
 stack with visible error feedback. Loading never uses fake tips, decorative
@@ -255,9 +255,10 @@ manual slots.
   state without depending on gameplay types.
 - `UiSaveLoadScreenPresenter` owns selection, localized copy, overwrite/delete
   confirmation, and action availability.
-- `UiMainMenuController` supplies the load callback and destination scene.
-- `UiGameplayController` supplies the save callback through
-  `GameplaySessionController`.
+- `UiMainMenuController` records the startup request and asks the session
+  bridge to host.
+- `UiGameplayController` receives the save callback from
+  `MultiplayerSessionController` and opens the same slot screen for it.
 
 Continue resolves the newest compatible record. Unsupported or damaged records
 remain visible for diagnosis and deletion but cannot be loaded. The screen does

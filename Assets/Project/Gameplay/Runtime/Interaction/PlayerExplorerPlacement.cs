@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Farion.Gameplay.Interaction
 {
-    internal readonly struct PlayerExplorerPlacementContext
+    public readonly struct PlayerExplorerPlacementContext
     {
         public PlayerExplorerPlacementContext(
             GameObject explorerRoot,
@@ -46,7 +46,7 @@ namespace Farion.Gameplay.Interaction
         public float ExteriorSurfaceClearance { get; }
     }
 
-    internal static class PlayerExplorerPlacement
+    public static class PlayerExplorerPlacement
     {
         const float DirectionEpsilon = 0.0001f;
 

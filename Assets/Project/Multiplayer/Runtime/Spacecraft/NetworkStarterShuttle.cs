@@ -3,10 +3,12 @@ using Farion.Core.Identity;
 using System;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Actors;
+using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Presentation.Flight;
 using Farion.Gameplay.Ships;
+using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Session;
 using Farion.Multiplayer.World;
 using Farion.Simulation.Celestial;
@@ -30,9 +32,7 @@ namespace Farion.Multiplayer.Spacecraft
         ICelestialSurfaceCollisionObserver
     {
         const float UnwrittenHullIntegrity = -1f;
-
-        const string ClaimPrompt = "Enter ship";
-        const string PilotPrompt = "Pilot ship";
+        const float ParkSpeedThreshold = 0.5f;
 
         readonly SyncVar<ulong> entityId = new();
         readonly SyncVar<byte> formationSlot = new();
@@ -40,13 +40,44 @@ namespace Farion.Multiplayer.Spacecraft
         readonly SyncVar<bool> piloted = new();
         readonly SyncVar<bool> landingGearDeployed = new();
         readonly SyncVar<bool> floodlightsOn = new();
+        readonly SyncVar<bool> rampOpen = new();
         readonly SyncVar<float> hullIntegrity = new(UnwrittenHullIntegrity);
 
+        [Header("Boarding")]
+        [Tooltip("Explorers farther than this from the boarding point cannot enter the ship.")]
         [Min(0.1f)]
         [SerializeField] float maximumClaimDistance = 6f;
+        [Tooltip("Leaving the pilot seat puts the explorer inside the ship instead of outside it.")]
+        [SerializeField] bool spawnInsideShipOnPilotExit = true;
+        [Tooltip("Opens the ramp automatically when the pilot leaves the seat.")]
+        [SerializeField] bool openRampOnPilotExit;
+        [Tooltip("Closes the ramp automatically when the pilot takes the seat.")]
+        [SerializeField] bool closeRampOnEnter = true;
+
+        [Header("Interior Exit")]
+        [Tooltip("Metres the explorer must walk past the exterior exit point before the ship releases them.")]
+        [Min(0.1f)]
+        [SerializeField] float exteriorTransitionDistance = 1.5f;
+        [Tooltip("Seconds after entering the ship before walking out can release the explorer.")]
+        [Min(0f)]
+        [SerializeField] float exteriorTransitionCooldownSeconds = 0.35f;
+        [Tooltip("Extra distance beyond the entry distance required to count as walking out.")]
+        [Min(0f)]
+        [SerializeField] float exteriorTransitionProgressDistance = 0.75f;
+        [Tooltip("Vertical clearance applied to explorer placement points.")]
+        [Min(0f)]
+        [SerializeField] float exitPoseClearance = 0.25f;
+        [Tooltip("Snaps the explorer onto the terrain surface when they leave the ship.")]
+        [SerializeField] bool snapExplorerToExteriorSurface = true;
+        [Min(0f)]
+        [SerializeField] float exteriorGroundClearance = 0.08f;
+        [Min(0f)]
+        [SerializeField] float exteriorSurfaceClearance = 0.15f;
+
         PersistentObjectId persistentObjectId;
         ShuttleCargoInventory cargo;
         VehicleBoardingPoint boardingPoint;
+        PilotSeatInteractable pilotSeat;
         SpacecraftRig spacecraftRig;
         SpacecraftMotor motor;
         SpacecraftHull hull;
@@ -62,6 +93,7 @@ namespace Farion.Multiplayer.Spacecraft
         Rigidbody body;
         Rigidbody pilotBody;
         readonly PredictionRigidbody predictionRigidbody = new();
+        readonly ShipInteriorExitGate interiorExitGate = new();
         PredictionRigidbodySpacecraftPhysicsBody physicsBody;
         ZoneOriginState originState;
         MultiplayerSceneContext sceneContext;
@@ -70,9 +102,14 @@ namespace Farion.Multiplayer.Spacecraft
         Vector3 parkedLocalPosition;
         Quaternion parkedLocalRotation;
         int claimedConnectionId = -1;
+        NetworkSessionPlayer occupantPlayer;
+        NetworkObject occupant;
         bool localPiloting;
 
         static readonly List<NetworkStarterShuttle> activeShips = new();
+
+        internal event Action<NetworkStarterShuttle, NetworkSessionPlayer, NetworkObject, PlayerPossessionMode>
+            OccupancyChanged;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetActiveShips()
@@ -103,15 +140,14 @@ namespace Farion.Multiplayer.Spacecraft
             claimedBySessionPlayerId.Value;
         public bool IsClaimed => ClaimedBySessionPlayerId != 0UL;
         public bool IsPiloted => piloted.Value;
+        public bool IsRampOpen => rampOpen.Value;
         public SpacecraftRig Rig => spacecraftRig;
         public ShuttleCargoInventory Cargo => cargo;
         public SpacecraftMotor Motor => motor;
         public SpacecraftHull Hull => hull;
         public KeyboardSpacecraftInput Input => input;
         public KeyboardBoardingInput BoardingInput => boardingInput;
-        public string InteractionPrompt => CanLocalPilot()
-            ? PilotPrompt
-            : ClaimPrompt;
+        public string InteractionPrompt => InteractionPromptKeys.EnterShip;
 
         void Awake()
         {
@@ -119,7 +155,10 @@ namespace Farion.Multiplayer.Spacecraft
             cargo = GetComponent<ShuttleCargoInventory>();
             boardingPoint = GetComponentInChildren<VehicleBoardingPoint>(true);
             boardingPoint?.Bind((IInteractable)this);
+            pilotSeat = GetComponentInChildren<PilotSeatInteractable>(true);
+            pilotSeat?.Bind(new PilotSeatHost(this));
             spacecraftRig = GetComponent<SpacecraftRig>();
+            spacecraftRig?.RampController?.Bind(new RampHost(this));
             motor = GetComponent<SpacecraftMotor>();
             hull = GetComponent<SpacecraftHull>();
             input = GetComponent<KeyboardSpacecraftInput>();
@@ -144,6 +183,7 @@ namespace Farion.Multiplayer.Spacecraft
             piloted.OnChange += OnPilotedChanged;
             landingGearDeployed.OnChange += OnLandingGearDeployedChanged;
             floodlightsOn.OnChange += OnFloodlightsOnChanged;
+            rampOpen.OnChange += OnRampOpenChanged;
             hullIntegrity.OnChange += OnHullIntegrityChanged;
         }
 
@@ -199,7 +239,7 @@ namespace Farion.Multiplayer.Spacecraft
 
             if (boarding.ExitVehicle)
             {
-                NetworkSessionPlayer.Local?.RequestExitStarterShuttle(EntityId);
+                NetworkSessionPlayer.Local?.RequestLeavePilotSeat(EntityId);
             }
         }
 
@@ -221,6 +261,15 @@ namespace Farion.Multiplayer.Spacecraft
             }
         }
 
+        [ServerRpc]
+        void RequestToggleRamp()
+        {
+            if (IsClaimed && !IsPiloted)
+            {
+                rampOpen.Value = !rampOpen.Value;
+            }
+        }
+
         void OnLandingGearDeployedChanged(bool previous, bool next, bool asServer)
         {
             landingGear?.SetCommandedDeployed(next);
@@ -229,6 +278,11 @@ namespace Farion.Multiplayer.Spacecraft
         void OnFloodlightsOnChanged(bool previous, bool next, bool asServer)
         {
             floodlights?.SetOn(next);
+        }
+
+        void OnRampOpenChanged(bool previous, bool next, bool asServer)
+        {
+            spacecraftRig?.RampController?.SetOpen(next);
         }
 
         protected override void OnValidate()
@@ -254,6 +308,8 @@ namespace Farion.Multiplayer.Spacecraft
             landingGearDeployed.Value =
                 landingGear != null && landingGear.IsCommandedDeployed;
             floodlightsOn.Value = floodlights != null && floodlights.IsOn;
+            rampOpen.Value = spacecraftRig?.RampController != null &&
+                spacecraftRig.RampController.IsCommandedOpen;
             ApplyPersistentId();
         }
 
@@ -282,6 +338,7 @@ namespace Farion.Multiplayer.Spacecraft
 
             landingGear?.SetCommandedDeployed(landingGearDeployed.Value);
             floodlights?.SetOn(floodlightsOn.Value);
+            spacecraftRig?.RampController?.SetOpen(rampOpen.Value);
             if (!IsServerStarted &&
                 hull != null &&
                 hullIntegrity.Value >= 0f)
@@ -350,17 +407,29 @@ namespace Farion.Multiplayer.Spacecraft
         {
             NetworkSessionPlayer sessionPlayer = NetworkSessionPlayer.Local;
             return sessionPlayer != null &&
-                   EntityId.IsValid &&
-                   ((!sessionPlayer.ClaimedStarterShuttleId.IsValid &&
-                     sessionPlayer.AssignedStarterShuttleId == EntityId &&
-                     !IsClaimed &&
-                     sessionPlayer.PossessionMode == PlayerPossessionMode.OnFoot) ||
-                    CanLocalPilot());
+                EntityId.IsValid &&
+                sessionPlayer.PossessionMode == PlayerPossessionMode.OnFoot &&
+                sessionPlayer.AssignedStarterShuttleId == EntityId &&
+                (!IsClaimed || IsClaimedBy(sessionPlayer.SessionPlayerId));
         }
 
         public void Interact(InteractionContext context)
         {
-            NetworkSessionPlayer.Local?.RequestUseStarterShuttle(EntityId);
+            NetworkSessionPlayer.Local?.RequestBoardStarterShuttle(EntityId);
+        }
+
+        bool CanLocalTakeSeat()
+        {
+            NetworkSessionPlayer sessionPlayer = NetworkSessionPlayer.Local;
+            return sessionPlayer != null &&
+                sessionPlayer.PossessionMode == PlayerPossessionMode.ShipInterior &&
+                sessionPlayer.ClaimedStarterShuttleId == EntityId &&
+                IsClaimedBy(sessionPlayer.SessionPlayerId);
+        }
+
+        bool CanLocalToggleRamp()
+        {
+            return IsOwner && CanLocalTakeSeat();
         }
 
         protected override void TimeManager_OnTick()
@@ -380,6 +449,8 @@ namespace Farion.Multiplayer.Spacecraft
             if (IsServerStarted)
             {
                 MaintainParkAnchor();
+                ParkWhenSettled();
+                UpdateInteriorExit();
             }
 
             StepHull();
@@ -437,13 +508,13 @@ namespace Farion.Multiplayer.Spacecraft
             ReplicateState state = ReplicateState.Invalid,
             Channel channel = Channel.Unreliable)
         {
-            if (!IsPiloted)
+            if (body.isKinematic)
             {
                 return;
             }
 
             bool invalidServerInput = IsServerStarted &&
-                (!IsClaimed || !Owner.IsValid || OwnerId != claimedConnectionId);
+                (!IsPiloted || !IsClaimed || !Owner.IsValid || OwnerId != claimedConnectionId);
             bool staleOrigin = IsServerStarted &&
                 originState != null &&
                 !originState.SharesReferenceFrame(data.OriginSequence);
@@ -454,7 +525,7 @@ namespace Farion.Multiplayer.Spacecraft
             oceanInteractor?.Simulate(deltaTime, physicsBody);
             surfaceContactStabilizer?.Simulate(deltaTime, physicsBody);
             motor.Simulate(
-                invalidServerInput || staleOrigin
+                !IsPiloted || invalidServerInput || staleOrigin
                     ? SpacecraftInputState.None
                     : data.Input,
                 deltaTime,
@@ -495,18 +566,179 @@ namespace Farion.Multiplayer.Spacecraft
 #endif
         }
 
-        internal bool TryClaim(
+        internal bool TryBoard(
             NetworkSessionPlayer sessionPlayer,
             NetworkConnection connection,
-            Vector3 explorerPosition)
+            NetworkObject explorer)
         {
             if (!IsServerStarted ||
                 sessionPlayer == null ||
-                connection == null ||
+                explorer == null ||
+                !PlayerPossessionTransitionPolicy.CanTransition(
+                    sessionPlayer.PossessionMode,
+                    PlayerPossessionMode.ShipInterior,
+                    PlayerPossessionTransitionRequest.EnterShipInterior) ||
+                !IsWithinClaimDistance(explorer.transform.position) ||
+                !TryGetInteriorPose(out Vector3 position, out Quaternion rotation) ||
+                !TryClaim(sessionPlayer, connection))
+            {
+                return false;
+            }
+
+            EnterInterior(sessionPlayer, explorer, position, rotation);
+            return true;
+        }
+
+        internal bool TryTakePilotSeat(
+            NetworkSessionPlayer sessionPlayer,
+            NetworkObject explorer)
+        {
+            if (!IsServerStarted ||
+                sessionPlayer == null ||
+                explorer == null ||
+                !IsClaimedBy(sessionPlayer.SessionPlayerId) ||
+                !PlayerPossessionTransitionPolicy.CanTransition(
+                    sessionPlayer.PossessionMode,
+                    PlayerPossessionMode.Spacecraft,
+                    PlayerPossessionTransitionRequest.EnterPilotSeat) ||
+                spacecraftRig == null ||
+                spacecraftRig.PilotSeatPoint == null ||
+                (explorer.transform.position -
+                 spacecraftRig.PilotSeatPoint.position).sqrMagnitude >
+                maximumClaimDistance * maximumClaimDistance)
+            {
+                return false;
+            }
+
+            BeginPiloting(sessionPlayer, explorer);
+            return true;
+        }
+
+        internal bool TryLeavePilotSeat(
+            NetworkSessionPlayer sessionPlayer,
+            NetworkObject explorer)
+        {
+            PlayerPossessionMode nextMode = spawnInsideShipOnPilotExit
+                ? PlayerPossessionMode.ShipInterior
+                : PlayerPossessionMode.OnFoot;
+            if (!IsServerStarted ||
+                sessionPlayer == null ||
+                explorer == null ||
+                !IsPiloted ||
+                !IsClaimedBy(sessionPlayer.SessionPlayerId) ||
+                !PlayerPossessionTransitionPolicy.CanTransition(
+                    sessionPlayer.PossessionMode,
+                    nextMode,
+                    PlayerPossessionTransitionRequest.ExitPilotSeat))
+            {
+                return false;
+            }
+
+            StopPiloting();
+            NetworkExplorerController controller =
+                explorer.GetComponent<NetworkExplorerController>();
+            controller?.SetPossessionActive(true);
+            if (nextMode == PlayerPossessionMode.ShipInterior)
+            {
+                Transform target = spacecraftRig != null
+                    ? spacecraftRig.InteriorSpawnPoint ?? spacecraftRig.PilotSeatPoint
+                    : null;
+                if (target == null)
+                {
+                    nextMode = PlayerPossessionMode.OnFoot;
+                }
+                else
+                {
+                    EnterInterior(sessionPlayer, explorer, target.position, target.rotation);
+                    if (openRampOnPilotExit)
+                    {
+                        rampOpen.Value = true;
+                    }
+
+                    return true;
+                }
+            }
+
+            PlayerExplorerPlacement.PlaceAtTransform(
+                CreatePlacementContext(explorer),
+                ResolveExteriorExitTransform(),
+                snapExplorerToExteriorSurface);
+            ReleaseOccupant(sessionPlayer, explorer);
+            return true;
+        }
+
+        internal void RestoreOccupancy(
+            NetworkSessionPlayer sessionPlayer,
+            NetworkConnection connection,
+            NetworkObject explorer,
+            PlayerPossessionMode mode)
+        {
+            if (!IsServerStarted ||
+                sessionPlayer == null ||
+                explorer == null ||
+                mode == PlayerPossessionMode.OnFoot ||
+                !TryGetInteriorPose(out Vector3 position, out Quaternion rotation) ||
+                !TryClaim(sessionPlayer, connection))
+            {
+                return;
+            }
+
+            EnterInterior(sessionPlayer, explorer, position, rotation);
+            if (mode == PlayerPossessionMode.Spacecraft)
+            {
+                BeginPiloting(sessionPlayer, explorer);
+            }
+        }
+
+        internal bool ReleaseClaim(int connectionId)
+        {
+            if (claimedConnectionId != connectionId)
+            {
+                return false;
+            }
+
+            ClearClaim();
+            return true;
+        }
+
+        internal void ClearClaim()
+        {
+            NetworkSessionPlayer player = occupantPlayer;
+            NetworkObject explorer = occupant;
+            StopPiloting();
+            claimedBySessionPlayerId.Value = 0UL;
+            claimedConnectionId = -1;
+            occupantPlayer = null;
+            occupant = null;
+            interiorExitGate.Clear();
+            if (Owner.IsValid)
+            {
+                RemoveOwnership();
+            }
+
+            if (player == null)
+            {
+                return;
+            }
+
+            player.SetClaimedStarterShuttle(GeneratedEntityId.None);
+            player.SetPossessionMode(PlayerPossessionMode.OnFoot);
+            if (explorer != null)
+            {
+                NetworkExplorerController controller =
+                    explorer.GetComponent<NetworkExplorerController>();
+                controller?.SetInsideShip(false);
+                controller?.SetPossessionActive(true);
+            }
+
+            OccupancyChanged?.Invoke(this, player, explorer, PlayerPossessionMode.OnFoot);
+        }
+
+        bool TryClaim(NetworkSessionPlayer sessionPlayer, NetworkConnection connection)
+        {
+            if (connection == null ||
                 !connection.IsActive ||
-                !IsWithinClaimDistance(explorerPosition) ||
-                (IsClaimed &&
-                 ClaimedBySessionPlayerId != sessionPlayer.SessionPlayerId))
+                (IsClaimed && ClaimedBySessionPlayerId != sessionPlayer.SessionPlayerId))
             {
                 return false;
             }
@@ -519,6 +751,164 @@ namespace Farion.Multiplayer.Spacecraft
             }
 
             return true;
+        }
+
+        void EnterInterior(
+            NetworkSessionPlayer sessionPlayer,
+            NetworkObject explorer,
+            Vector3 position,
+            Quaternion rotation)
+        {
+            occupantPlayer = sessionPlayer;
+            occupant = explorer;
+            NetworkExplorerController controller =
+                explorer.GetComponent<NetworkExplorerController>();
+            controller?.SetPossessionActive(true);
+            controller?.SetInsideShip(true);
+            PlaceExplorer(explorer, position, rotation);
+            sessionPlayer.SetClaimedStarterShuttle(EntityId);
+            sessionPlayer.SetPossessionMode(PlayerPossessionMode.ShipInterior);
+            interiorExitGate.Reset(
+                Time.time,
+                spacecraftRig,
+                explorer.gameObject,
+                explorer.GetComponent<Rigidbody>());
+            OccupancyChanged?.Invoke(
+                this,
+                sessionPlayer,
+                explorer,
+                PlayerPossessionMode.ShipInterior);
+        }
+
+        void BeginPiloting(NetworkSessionPlayer sessionPlayer, NetworkObject explorer)
+        {
+            if (closeRampOnEnter)
+            {
+                rampOpen.Value = false;
+            }
+
+            if (spacecraftRig != null && spacecraftRig.PilotSeatPoint != null)
+            {
+                PlaceExplorer(
+                    explorer,
+                    spacecraftRig.PilotSeatPoint.position,
+                    spacecraftRig.PilotSeatPoint.rotation);
+            }
+
+            explorer.GetComponent<NetworkExplorerController>()?.SetPossessionActive(false);
+            pilotBody = explorer.GetComponent<Rigidbody>();
+            piloted.Value = true;
+            ApplyPilotedState(true);
+            interiorExitGate.Clear();
+            sessionPlayer.SetPossessionMode(PlayerPossessionMode.Spacecraft);
+            OccupancyChanged?.Invoke(
+                this,
+                sessionPlayer,
+                explorer,
+                PlayerPossessionMode.Spacecraft);
+        }
+
+        void StopPiloting()
+        {
+            pilotBody = null;
+            if (piloted.Value)
+            {
+                piloted.Value = false;
+            }
+
+            ApplyPilotedState(false);
+        }
+
+        void ReleaseOccupant(NetworkSessionPlayer sessionPlayer, NetworkObject explorer)
+        {
+            NetworkExplorerController controller =
+                explorer.GetComponent<NetworkExplorerController>();
+            controller?.SetInsideShip(false);
+            occupantPlayer = null;
+            occupant = null;
+            interiorExitGate.Clear();
+            claimedBySessionPlayerId.Value = 0UL;
+            claimedConnectionId = -1;
+            if (Owner.IsValid)
+            {
+                RemoveOwnership();
+            }
+
+            sessionPlayer.SetClaimedStarterShuttle(GeneratedEntityId.None);
+            sessionPlayer.SetPossessionMode(PlayerPossessionMode.OnFoot);
+            OccupancyChanged?.Invoke(this, sessionPlayer, explorer, PlayerPossessionMode.OnFoot);
+        }
+
+        void UpdateInteriorExit()
+        {
+            if (IsPiloted ||
+                occupant == null ||
+                occupantPlayer == null ||
+                occupantPlayer.PossessionMode != PlayerPossessionMode.ShipInterior ||
+                !interiorExitGate.CanTransitionOutside(
+                    Time.time,
+                    spacecraftRig,
+                    occupant.gameObject,
+                    occupant.GetComponent<Rigidbody>(),
+                    exteriorTransitionDistance,
+                    exteriorTransitionCooldownSeconds,
+                    exteriorTransitionProgressDistance))
+            {
+                return;
+            }
+
+            NetworkSessionPlayer player = occupantPlayer;
+            NetworkObject explorer = occupant;
+            PlayerExplorerPlacement.SnapToExteriorSurface(CreatePlacementContext(explorer));
+            ReleaseOccupant(player, explorer);
+        }
+
+        PlayerExplorerPlacementContext CreatePlacementContext(NetworkObject explorer)
+        {
+            return new PlayerExplorerPlacementContext(
+                explorer.gameObject,
+                explorer.GetComponent<Rigidbody>(),
+                explorer.GetComponent<FirstPersonMotor>(),
+                explorer.GetComponent<CelestialActorProbe>(),
+                transform,
+                body,
+                celestialProbe,
+                exitPoseClearance,
+                snapExplorerToExteriorSurface,
+                exteriorGroundClearance,
+                exteriorSurfaceClearance);
+        }
+
+        Transform ResolveExteriorExitTransform()
+        {
+            if (boardingPoint != null && boardingPoint.HasExplicitExitPoint)
+            {
+                return boardingPoint.ExitPoint;
+            }
+
+            if (spacecraftRig != null && spacecraftRig.ExteriorExitPoint != null)
+            {
+                return spacecraftRig.ExteriorExitPoint;
+            }
+
+            return boardingPoint != null ? boardingPoint.ExitPoint : transform;
+        }
+
+        static void PlaceExplorer(NetworkObject explorer, Vector3 position, Quaternion rotation)
+        {
+            if (explorer.TryGetComponent(out Rigidbody explorerBody))
+            {
+                explorerBody.position = position;
+                explorerBody.rotation = rotation;
+                if (!explorerBody.isKinematic)
+                {
+                    explorerBody.linearVelocity = Vector3.zero;
+                    explorerBody.angularVelocity = Vector3.zero;
+                }
+            }
+
+            explorer.transform.SetPositionAndRotation(position, rotation);
+            explorer.GetComponent<FirstPersonMotor>()?.ResetMotorState();
         }
 
         internal void BindScene(
@@ -537,8 +927,7 @@ namespace Farion.Multiplayer.Spacecraft
         {
             if (body == null ||
                 !body.gameObject.activeInHierarchy ||
-                !IsPiloted ||
-                (!IsServerStarted && !IsOwner))
+                body.isKinematic)
             {
                 observer = default;
                 return false;
@@ -568,75 +957,9 @@ namespace Farion.Multiplayer.Spacecraft
             return true;
         }
 
-        internal bool TryBeginPiloting(
-            NetworkSessionPlayer sessionPlayer,
-            NetworkObject explorer)
-        {
-            if (!IsServerStarted ||
-                sessionPlayer == null ||
-                explorer == null ||
-                !IsClaimedBy(sessionPlayer.SessionPlayerId) ||
-                spacecraftRig == null ||
-                spacecraftRig.PilotSeatPoint == null ||
-                (explorer.transform.position -
-                 spacecraftRig.PilotSeatPoint.position).sqrMagnitude >
-                maximumClaimDistance * maximumClaimDistance)
-            {
-                return false;
-            }
-
-            pilotBody = explorer.GetComponent<Rigidbody>();
-            piloted.Value = true;
-            ApplyPilotedState(true);
-            return true;
-        }
-
-        internal bool TryGetExitPose(
-            out Vector3 position,
-            out Quaternion rotation)
-        {
-            Transform target = spacecraftRig != null
-                ? spacecraftRig.ExteriorExitPoint
-                : null;
-            if (target == null)
-            {
-                position = default;
-                rotation = default;
-                return false;
-            }
-
-            position = target.position;
-            rotation = target.rotation;
-            return true;
-        }
-
         internal bool IsClaimedBy(ulong sessionPlayerId) =>
             sessionPlayerId != 0UL &&
             ClaimedBySessionPlayerId == sessionPlayerId;
-
-        internal bool ReleaseClaim(int connectionId)
-        {
-            if (claimedConnectionId != connectionId)
-            {
-                return false;
-            }
-
-            ClearClaim();
-            return true;
-        }
-
-        internal void ClearClaim()
-        {
-            piloted.Value = false;
-            pilotBody = null;
-            ApplyPilotedState(false);
-            claimedBySessionPlayerId.Value = 0UL;
-            claimedConnectionId = -1;
-            if (Owner.IsValid)
-            {
-                RemoveOwnership();
-            }
-        }
 
         void ApplyPersistentId()
         {
@@ -657,15 +980,6 @@ namespace Farion.Multiplayer.Spacecraft
             float maximumDistance = Mathf.Max(0.1f, maximumClaimDistance);
             return (explorerPosition - target).sqrMagnitude <=
                    maximumDistance * maximumDistance;
-        }
-
-        bool CanLocalPilot()
-        {
-            NetworkSessionPlayer sessionPlayer = NetworkSessionPlayer.Local;
-            return sessionPlayer != null &&
-                sessionPlayer.PossessionMode == PlayerPossessionMode.ShipInterior &&
-                sessionPlayer.ClaimedStarterShuttleId == EntityId &&
-                IsClaimedBy(sessionPlayer.SessionPlayerId);
         }
 
         bool IsLocalPilot()
@@ -726,22 +1040,61 @@ namespace Farion.Multiplayer.Spacecraft
                 return;
             }
 
-            bool simulate = active;
-            if (!simulate && !body.isKinematic)
+            if (active)
+            {
+                body.isKinematic = false;
+                parkedBody = null;
+                return;
+            }
+
+            if (!IsServerStarted)
+            {
+                return;
+            }
+
+            if (HasSettledOnSurface())
+            {
+                Park();
+            }
+        }
+
+        bool HasSettledOnSurface()
+        {
+            if (surfaceContactProbe == null || !surfaceContactProbe.HasContact)
+            {
+                return body.isKinematic;
+            }
+
+            Vector3 referenceVelocity =
+                celestialProbe != null && celestialProbe.HasSample
+                    ? celestialProbe.CurrentSample.BodyPointVelocity
+                    : Vector3.zero;
+            Vector3 relativeVelocity = body.isKinematic
+                ? Vector3.zero
+                : body.linearVelocity - referenceVelocity;
+            return relativeVelocity.sqrMagnitude <= ParkSpeedThreshold * ParkSpeedThreshold;
+        }
+
+        void Park()
+        {
+            if (!body.isKinematic)
             {
                 body.linearVelocity = Vector3.zero;
                 body.angularVelocity = Vector3.zero;
+                body.isKinematic = true;
             }
 
-            body.isKinematic = !simulate;
-            if (simulate)
+            CaptureParkAnchor();
+        }
+
+        void ParkWhenSettled()
+        {
+            if (IsPiloted || body.isKinematic || !HasSettledOnSurface())
             {
-                parkedBody = null;
+                return;
             }
-            else
-            {
-                CaptureParkAnchor();
-            }
+
+            Park();
         }
 
         void CaptureParkAnchor()
@@ -810,5 +1163,39 @@ namespace Farion.Multiplayer.Spacecraft
             }
         }
 
+        sealed class PilotSeatHost : IInteractable
+        {
+            readonly NetworkStarterShuttle ship;
+
+            public PilotSeatHost(NetworkStarterShuttle ship) => this.ship = ship;
+
+            public string InteractionPrompt => InteractionPromptKeys.PilotSeat;
+
+            public bool CanInteract(InteractionContext context) => ship.CanLocalTakeSeat();
+
+            public void Interact(InteractionContext context)
+            {
+                NetworkSessionPlayer.Local?.RequestPilotStarterShuttle(ship.EntityId);
+            }
+        }
+
+        sealed class RampHost : IInteractable
+        {
+            readonly NetworkStarterShuttle ship;
+
+            public RampHost(NetworkStarterShuttle ship) => this.ship = ship;
+
+            public string InteractionPrompt => InteractionPromptKeys.ToggleRamp;
+
+            public bool CanInteract(InteractionContext context) => ship.CanLocalToggleRamp();
+
+            public void Interact(InteractionContext context)
+            {
+                if (ship.CanLocalToggleRamp())
+                {
+                    ship.RequestToggleRamp();
+                }
+            }
+        }
     }
 }

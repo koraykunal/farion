@@ -5,6 +5,7 @@ using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Inventory;
 using Farion.Gameplay.Presentation.Flight;
 using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
@@ -33,15 +34,8 @@ namespace Farion.Multiplayer.Session
         const int DryLandSampleCount = 128;
         const float GoldenAngleRadians = 2.39996323f;
 
-        [Header("Mode")]
+        [Header("Runtime")]
         [SerializeField] GameplayRuntimeRoot runtimeRoot;
-
-        [Header("Offline Owners")]
-        [SerializeField] GameObject offlineExplorer;
-        [SerializeField] PlayerPossessionController possession;
-        [SerializeField] SpacecraftMotor spacecraftMotor;
-        [SerializeField] KeyboardSpacecraftInput spacecraftInput;
-        [SerializeField] Rigidbody spacecraftRigidbody;
 
         [Header("Shared Simulation")]
         [SerializeField] GravitySimulation gravitySimulation;
@@ -53,10 +47,6 @@ namespace Farion.Multiplayer.Session
         [SerializeField] List<SurfaceFormationSpawner> formationSpawners = new();
 
         [Header("Local Presentation")]
-        [SerializeField] SpacecraftCameraRig spacecraftCameraRig;
-        [SerializeField] FirstPersonCameraRig firstPersonCameraRig;
-        [SerializeField] Transform viewReference;
-        [SerializeField] PlayerControlLock controlLock;
         [SerializeField] SpacecraftPilotCameraView pilotCameraView =
             SpacecraftPilotCameraView.Exterior;
 
@@ -69,13 +59,18 @@ namespace Farion.Multiplayer.Session
         MultiplayerPlayerSpawner playerSpawner;
         MultiplayerWorldOriginAuthority originAuthority;
         ZoneOriginState zoneOrigin;
+        SpacecraftCameraRig spacecraftCameraRig;
+        FirstPersonCameraRig firstPersonCameraRig;
+        Transform viewReference;
+        PlayerControlLock controlLock;
+        Camera presentationCamera;
         CelestialLodController lodController;
         NetworkExplorerController ownedPlayer;
+        NetworkSessionPlayer ownedSessionPlayer;
         UiGameplayController gameplayUi;
         UiSpacecraftFlightHudPresenter flightHud;
         SpacecraftPostProcessRig postProcessRig;
         MultiplayerSurfaceCollisionObserverSource surfaceCollisionObservers;
-        bool multiplayerConfigured;
         bool presentationSuppressed;
         NetworkStarterShuttle ownedSpacecraft;
 
@@ -89,8 +84,8 @@ namespace Farion.Multiplayer.Session
             Active = null;
         }
 
-        public PlayerPossessionMode CurrentMode => ownedSpacecraft != null
-            ? PlayerPossessionMode.Spacecraft
+        public PlayerPossessionMode CurrentMode => ownedSessionPlayer != null
+            ? ownedSessionPlayer.PossessionMode
             : NetworkSessionPlayer.Local != null
                 ? NetworkSessionPlayer.Local.PossessionMode
                 : PlayerPossessionMode.OnFoot;
@@ -141,25 +136,8 @@ namespace Farion.Multiplayer.Session
 
         void Awake()
         {
-            if (!IsMultiplayerMode)
-            {
-                return;
-            }
-
-            ConfigureMultiplayer();
+            ApplyZoneAuthority();
         }
-
-        void Start()
-        {
-            if (IsMultiplayerMode)
-            {
-                ApplyLocalPresentationMode();
-            }
-        }
-
-        bool IsMultiplayerMode =>
-            runtimeRoot == null ||
-            runtimeRoot.Mode == GameplaySessionMode.Multiplayer;
 
         void OnDestroy()
         {
@@ -174,6 +152,7 @@ namespace Farion.Multiplayer.Session
             }
 
             BindOriginRebaser(null);
+            BindOwnedSessionPlayer(null);
             if (flightHud != null)
             {
                 flightHud.SetPilotContext(null);
@@ -190,7 +169,7 @@ namespace Farion.Multiplayer.Session
             MultiplayerWorldOriginAuthority worldOriginAuthority,
             GeneratedEntityId zoneId)
         {
-            ConfigureMultiplayer();
+            ApplyZoneAuthority();
             playerSpawner = spawner;
             originAuthority = worldOriginAuthority;
             BindOriginRebaser(originRebaser);
@@ -216,6 +195,7 @@ namespace Farion.Multiplayer.Session
             firstPersonCameraRig = bindings.FirstPersonCameraRig;
             viewReference = bindings.ViewReference;
             controlLock = bindings.ControlLock;
+            presentationCamera = bindings.Camera;
             gameplayUi = bindings.GameplayUi;
             flightHud = bindings.FlightHud;
             postProcessRig = bindings.PostProcessRig;
@@ -225,13 +205,14 @@ namespace Farion.Multiplayer.Session
             bindings.BindWorldOrigin(originRebaser);
             for (int i = 0; i < surfacePatchSystems.Count; i++)
             {
-                surfacePatchSystems[i]?.SetCamera(bindings.Camera);
+                surfacePatchSystems[i]?.SetCamera(presentationCamera);
             }
 
+            SetScaledSpaceObserverCamera(presentationCamera);
             if (bindings.LodController != null)
             {
                 lodController = bindings.LodController;
-                bindings.LodController.SetCamera(bindings.Camera);
+                bindings.LodController.SetCamera(presentationCamera);
                 RegisterZoneVisuals(bindings.LodController);
             }
         }
@@ -243,6 +224,7 @@ namespace Farion.Multiplayer.Session
                 surfacePatchSystems[i]?.SetCamera(null);
             }
 
+            SetScaledSpaceObserverCamera(null);
             if (lodController != null)
             {
                 UnregisterZoneVisuals(lodController);
@@ -280,6 +262,20 @@ namespace Farion.Multiplayer.Session
             for (int i = 0; i < behaviours.Length; i++)
             {
                 behaviours[i].enabled = enabled;
+            }
+        }
+
+        void SetScaledSpaceObserverCamera(Camera camera)
+        {
+            GameObject[] roots = gameObject.scene.GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++)
+            {
+                CelestialScaledSpaceVisual[] visuals =
+                    roots[i].GetComponentsInChildren<CelestialScaledSpaceVisual>(true);
+                for (int j = 0; j < visuals.Length; j++)
+                {
+                    visuals[j].SetObserverCamera(camera);
+                }
             }
         }
 
@@ -493,6 +489,7 @@ namespace Farion.Multiplayer.Session
 
             Active = this;
             ownedPlayer = player;
+            BindOwnedSessionPlayer(NetworkSessionPlayer.Local);
             player.ApplyPossessionState(true);
             player.BindScene(celestialFrameProvider, zoneOrigin);
             player.Motor.SetViewReference(viewReference);
@@ -500,6 +497,8 @@ namespace Farion.Multiplayer.Session
             player.InteractionRaycaster?.SetViewReference(viewReference);
             player.InteractionRaycaster?.SetControlLock(controlLock);
             gameplayUi?.SetInteractionRaycaster(player.InteractionRaycaster);
+            gameplayUi?.SetPlayerInventory(
+                player.GetComponentInChildren<InventoryContainerComponent>(true));
             LocalPlayerCameraBinding.FollowExplorer(
                 firstPersonCameraRig,
                 spacecraftCameraRig,
@@ -618,6 +617,30 @@ namespace Farion.Multiplayer.Session
             ModeChanged?.Invoke(CurrentMode);
         }
 
+        void BindOwnedSessionPlayer(NetworkSessionPlayer sessionPlayer)
+        {
+            if (ownedSessionPlayer == sessionPlayer)
+            {
+                return;
+            }
+
+            if (ownedSessionPlayer != null)
+            {
+                ownedSessionPlayer.PossessionModeChanged -= OnPossessionModeChanged;
+            }
+
+            ownedSessionPlayer = sessionPlayer;
+            if (ownedSessionPlayer != null)
+            {
+                ownedSessionPlayer.PossessionModeChanged += OnPossessionModeChanged;
+            }
+        }
+
+        void OnPossessionModeChanged(PlayerPossessionMode mode)
+        {
+            ModeChanged?.Invoke(mode);
+        }
+
         void SetTrackingTarget(Transform target)
         {
             WorldFocusTracking.Apply(originRebaser, resourceStreamers, target);
@@ -664,9 +687,11 @@ namespace Farion.Multiplayer.Session
             }
 
             ownedPlayer = null;
+            BindOwnedSessionPlayer(null);
             player.Input.SetControlLock(null);
             player.InteractionRaycaster?.SetControlLock(null);
             gameplayUi?.SetInteractionRaycaster(null);
+            gameplayUi?.SetPlayerInventory(null);
             LocalPlayerCameraBinding.Release(firstPersonCameraRig, null);
             LocalPlayerCameraBinding.SetCursorCaptured(false);
             ModeChanged?.Invoke(CurrentMode);
@@ -735,63 +760,6 @@ namespace Farion.Multiplayer.Session
                 {
                     lod.UnregisterVisual(visuals[j]);
                 }
-            }
-        }
-
-        void ApplyLocalPresentationMode()
-        {
-            if (spacecraftMotor != null)
-            {
-                spacecraftMotor.enabled = false;
-            }
-
-            if (spacecraftInput != null)
-            {
-                spacecraftInput.enabled = false;
-            }
-
-            if (ownedSpacecraft == null)
-            {
-                LocalPlayerCameraBinding.Release(null, spacecraftCameraRig);
-                if (firstPersonCameraRig != null)
-                {
-                    firstPersonCameraRig.enabled = true;
-                }
-            }
-        }
-
-        void ConfigureMultiplayer()
-        {
-            ApplyZoneAuthority();
-            if (multiplayerConfigured)
-            {
-                return;
-            }
-
-            multiplayerConfigured = true;
-            if (offlineExplorer != null)
-            {
-                offlineExplorer.SetActive(false);
-            }
-
-            if (possession != null)
-            {
-                possession.enabled = false;
-            }
-
-            if (spacecraftMotor != null)
-            {
-                spacecraftMotor.gameObject.SetActive(false);
-            }
-
-            ApplyLocalPresentationMode();
-
-            if (spacecraftRigidbody != null &&
-                !spacecraftRigidbody.isKinematic)
-            {
-                spacecraftRigidbody.linearVelocity = Vector3.zero;
-                spacecraftRigidbody.angularVelocity = Vector3.zero;
-                spacecraftRigidbody.isKinematic = true;
             }
         }
 

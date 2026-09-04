@@ -75,18 +75,19 @@ namespace Farion.Multiplayer.Presentation
         void Refresh()
         {
             nextRefreshTime = Time.unscaledTime + refreshInterval;
-            bool hosting = MultiplayerSessionController.Active != null &&
-                MultiplayerSessionController.Active.IsHost;
-            bool steamReady = MultiplayerLobbyGateway.IsAvailable;
+            MultiplayerSessionController session = MultiplayerSessionController.Active;
+            bool hosting = session != null && session.IsHost && !session.IsPrivate;
+            bool lobbyReady = MultiplayerLobbyGateway.IsAvailable &&
+                MultiplayerLobbyGateway.Service.HasLobby;
 
             if (inviteButton != null)
             {
-                inviteButton.gameObject.SetActive(hosting && steamReady);
+                inviteButton.gameObject.SetActive(hosting && lobbyReady);
                 inviteButton.SetTitle(UiLocalization.Get(UiTextKeys.CoopInvite));
             }
 
-            string address = hosting ? ResolveHostAddress() : string.Empty;
-            bool showAddress = hosting && !steamReady && address.Length > 0;
+            string address = hosting ? ResolveHostAddress(session.HostPort) : string.Empty;
+            bool showAddress = hosting && !lobbyReady && address.Length > 0;
 
             if (copyAddressButton != null)
             {
@@ -117,7 +118,10 @@ namespace Farion.Multiplayer.Presentation
 
         void CopyAddress()
         {
-            string address = ResolveHostAddress();
+            MultiplayerSessionController session = MultiplayerSessionController.Active;
+            string address = session != null
+                ? ResolveHostAddress(session.HostPort)
+                : string.Empty;
             if (address.Length == 0)
             {
                 return;
@@ -131,7 +135,7 @@ namespace Farion.Multiplayer.Presentation
             }
         }
 
-        static string ResolveHostAddress()
+        static string ResolveHostAddress(ushort port)
         {
             cachedLocalAddress ??= ResolveLocalIPv4();
             if (cachedLocalAddress.Length == 0)
@@ -139,7 +143,7 @@ namespace Farion.Multiplayer.Presentation
                 return string.Empty;
             }
 
-            return $"{cachedLocalAddress}:{MultiplayerEndpoint.DefaultPort}";
+            return $"{cachedLocalAddress}:{port}";
         }
 
         static string ResolveLocalIPv4()

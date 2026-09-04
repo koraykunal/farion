@@ -4,9 +4,6 @@ namespace Farion.Gameplay.Persistence
 {
     public sealed class WorldOriginSaveParticipant : IGameplaySaveParticipant
     {
-        public GameplaySaveParticipantScope Scope =>
-            GameplaySaveParticipantScope.World;
-
         public bool CanCapture(GameplaySaveContext context)
         {
             return context.OriginRebaser != null;

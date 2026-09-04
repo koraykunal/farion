@@ -329,7 +329,7 @@ Run `Farion.Editor.Authoring.FarionPlayerAnimationIntake.Run` in batchmode after
 dropping new clips in. It sets every clip to humanoid with the avatar copied
 from `SM_PlayerExplorer_A`, rebuilds `AC_PlayerExplorer` from scratch, and binds
 the controller plus `PlayerExplorerAnimator` onto `PF_PlayerExplorerCore`, which
-the offline and network variants inherit. Editing the controller by hand works
+the network variant inherits. Editing the controller by hand works
 until the next run of the intake, which overwrites it.
 
 `PlayerExplorerAnimator` reads the motor's body-relative surface velocity, never

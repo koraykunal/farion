@@ -1,12 +1,7 @@
 using System.Collections.Generic;
-using Farion.Gameplay.Actors;
 using Farion.Gameplay.Definitions;
 using Farion.Gameplay.Fleet;
-using Farion.Gameplay.Flight;
-using Farion.Gameplay.Interaction;
-using Farion.Gameplay.Inventory;
 using Farion.Gameplay.ResourceNodes;
-using Farion.Gameplay.Ships;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Simulation.World;
@@ -27,18 +22,10 @@ namespace Farion.Gameplay.Session
         [SerializeField] WorldOriginRebaser originRebaser;
         [SerializeField] List<ResourceDepositRuntimeSpawner> resourceStreamers = new();
 
-        [Header("Local Session")]
-        [SerializeField] PlayerInventory localPlayerInventory;
-        [SerializeField] PlayerPossessionController possession;
-        [SerializeField] ShuttleRuntimeBinding assignedShuttle;
-
         [Header("Fleet")]
         [SerializeField] FleetRuntime fleet;
 
         GameplayRuntimeBindings bindings;
-
-        public GameplaySessionMode Mode { get; private set; } =
-            GameplaySessionMode.Offline;
 
         public GameplayRuntimeBindings Bindings =>
             bindings ??= new GameplayRuntimeBindings(
@@ -46,45 +33,10 @@ namespace Farion.Gameplay.Session
                 gravitySimulation,
                 celestialFrameProvider,
                 originRebaser,
-                localPlayerInventory,
-                possession,
                 fleet,
-                assignedShuttle,
                 resourceStreamers);
 
         public bool HasValidAuthoring => Bindings.IsValid;
-
-        void Awake()
-        {
-            Mode = GameplaySessionModeRequest.RequestedOrDefault;
-            if (Mode == GameplaySessionMode.Offline)
-            {
-                ApplySimulationAuthority();
-            }
-        }
-
-        void Start()
-        {
-            if (Mode != GameplaySessionMode.Offline)
-            {
-                return;
-            }
-
-            SettleOnSurface(assignedShuttle != null ? assignedShuttle.transform : null);
-            SettleOnSurface(possession != null && possession.ExplorerRoot != null
-                ? possession.ExplorerRoot.transform
-                : null);
-        }
-
-        void SettleOnSurface(Transform target)
-        {
-            if (target == null)
-            {
-                return;
-            }
-
-            CelestialSurfaceSettling.TrySettle(celestialFrameProvider, target);
-        }
 
         void OnValidate()
         {
@@ -92,21 +44,6 @@ namespace Farion.Gameplay.Session
             resourceStreamers ??= new List<ResourceDepositRuntimeSpawner>();
             resourceStreamers.RemoveAll(streamer => streamer == null);
             bindings = null;
-        }
-
-        void ApplySimulationAuthority()
-        {
-            Physics.simulationMode = SimulationMode.FixedUpdate;
-            if (assignedShuttle?.Motor == null)
-            {
-                return;
-            }
-
-            assignedShuttle.Motor.SetSimulation(gravitySimulation);
-            assignedShuttle.Motor.GetComponent<CelestialActorProbe>()
-                ?.SetFrameProvider(celestialFrameProvider);
-            assignedShuttle.Motor.GetComponent<SpacecraftOrbitComputer>()
-                ?.SetSimulation(gravitySimulation);
         }
     }
 }

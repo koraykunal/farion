@@ -8,7 +8,6 @@
         "Farion.Gameplay.Runtime",
         "Farion.Rendering.Runtime",
         "Farion.UI.Runtime",
-        "Farion.App.Runtime",
         "Farion.Multiplayer.Runtime",
         "FishNet.Runtime",
         "Unity.InputSystem",

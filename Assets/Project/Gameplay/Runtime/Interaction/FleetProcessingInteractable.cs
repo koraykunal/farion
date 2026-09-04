@@ -9,14 +9,14 @@ namespace Farion.Gameplay.Interaction
     [DisallowMultipleComponent]
     public sealed class FleetProcessingInteractable : MonoBehaviour, IInteractable
     {
-        const string DefaultPrompt = "Process materials";
-
         [SerializeField] ProcessingRecipeDefinition recipe;
         [SerializeField] FleetRuntime fleet;
 
         public string InteractionPrompt => recipe != null
-            ? $"Process {recipe.DisplayName}"
-            : DefaultPrompt;
+            ? InteractionPromptKeys.WithArgument(
+                InteractionPromptKeys.ProcessRecipe,
+                recipe.DisplayName)
+            : InteractionPromptKeys.ProcessMaterials;
 
         void Awake()
         {

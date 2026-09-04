@@ -6,10 +6,12 @@ namespace Farion.Multiplayer.Session
     public interface IMultiplayerLobbyService
     {
         bool IsAvailable { get; }
+        bool HasLobby { get; }
         string LocalDisplayName { get; }
         string LocalPersistentId { get; }
 
         void HostLobby(int maximumPlayers, Action<bool> completed);
+        void JoinLobby(ulong lobbyId);
         void Leave();
         void OpenInviteOverlay();
 

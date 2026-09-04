@@ -45,9 +45,9 @@ The project currently provides:
 
 The production capital-ship visual alignment, processing result presentation,
 upgrade application, and multiplayer gameplay replication are not complete yet.
-The first FishNet/Tugboat networking foundation now provides a separate
-development-only host/client path, four predicted explorers, server spawning,
-and one shared floating-origin bubble without changing offline saves.
+Every session now runs on the FishNet/Tugboat listen server: solo is a private
+host, co-op adds up to three predicted clients, and both share one save format
+and one zone-keyed floating origin.
 
 ## Phase 1: Complete the Unload Workflow
 

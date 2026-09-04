@@ -26,7 +26,6 @@
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="FishNet.Transporting.FishySteamworks.csproj" />
   <Project Path="FMODUnityResonance.csproj" />
-  <Project Path="Farion.App.Runtime.csproj" />
   <Project Path="Farion.Multiplayer.Steam.csproj" />
   <Project Path="Farion.Core.Identity.csproj" />
   <Project Path="Farion.Tests.Support.csproj" />

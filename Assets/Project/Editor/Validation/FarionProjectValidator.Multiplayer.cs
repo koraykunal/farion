@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Farion.Editor;
-using Farion.App.Flow;
 using Farion.Audio.Direction;
 using Farion.Core.Identity;
 using Farion.Core.Persistence;
@@ -165,12 +164,10 @@ namespace Farion.Editor.Validation
                     "Camera, camera rigs, FirstPersonViewEffects, PlayerControlLock, " +
                     "UiGameplayController, CelestialLightingRig, and CelestialLodController.");
             }
-            else if (!shells[0].IsValid ||
-                     new SerializedObject(shells[0])
-                         .FindProperty("worldSceneName")?.stringValue != "SC_WorldZone")
+            else if (!shells[0].IsValid)
             {
                 report.AddError(
-                    $"{scenePath}: gameplay shell bindings or world-scene routing are incomplete.");
+                    $"{scenePath}: gameplay shell bindings are incomplete.");
             }
 
             if (FindSceneComponents<UiSpacecraftFlightHudPresenter>(scene).Length != 1 ||
@@ -305,9 +302,11 @@ namespace Farion.Editor.Validation
             if (tugboat != null)
             {
                 SerializedObject tugboatSerialized = new(tugboat);
-                if (tugboatSerialized.FindProperty("_maximumClients").intValue != 4)
+                if (tugboatSerialized.FindProperty("_maximumClients").intValue !=
+                    MultiplayerPlayerSpawner.MaximumPlayers)
                 {
-                    report.AddError($"{sessionPath}: Tugboat must allow exactly four clients.");
+                    report.AddError(
+                        $"{sessionPath}: Tugboat must allow exactly {MultiplayerPlayerSpawner.MaximumPlayers} clients.");
                 }
             }
 
@@ -433,6 +432,15 @@ namespace Farion.Editor.Validation
                     $"{starterShuttlePath}: parked network starter ship composition is invalid.");
             }
 
+            if (starterShuttle.GetComponentInChildren<VehicleBoardingPoint>(true) == null ||
+                starterShuttle.GetComponentInChildren<PilotSeatInteractable>(true) == null ||
+                starterShuttleRig == null ||
+                starterShuttleRig.RampController == null)
+            {
+                report.AddError(
+                    $"{starterShuttlePath}: the starter ship needs a boarding point, a pilot seat and a ramp controller for the shared possession loop.");
+            }
+
             MultiplayerPlayerSpawner playerSpawner =
                 session.GetComponent<MultiplayerPlayerSpawner>();
             SerializedProperty sessionPlayerReference = playerSpawner == null
@@ -530,10 +538,11 @@ namespace Farion.Editor.Validation
             }
 
             if (new SerializedObject(steam)
-                    .FindProperty("_maximumClients").intValue != 4)
+                    .FindProperty("_maximumClients").intValue !=
+                MultiplayerPlayerSpawner.MaximumPlayers)
             {
                 report.AddError(
-                    $"{sessionPath}: the Steam transport must allow exactly four clients.");
+                    $"{sessionPath}: the Steam transport must allow exactly {MultiplayerPlayerSpawner.MaximumPlayers} clients.");
             }
         }
 

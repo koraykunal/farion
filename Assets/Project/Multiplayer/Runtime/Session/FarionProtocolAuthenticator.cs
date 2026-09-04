@@ -155,7 +155,10 @@ namespace Farion.Multiplayer.Session
                 }
             }
 
-            return occupied < MultiplayerPlayerSpawner.MaximumPlayers
+            int capacity = MultiplayerSessionController.Active != null
+                ? MultiplayerSessionController.Active.PlayerCapacity
+                : MultiplayerPlayerSpawner.MaximumPlayers;
+            return occupied < capacity
                 ? MultiplayerFailureReason.None
                 : MultiplayerFailureReason.ServerFull;
         }

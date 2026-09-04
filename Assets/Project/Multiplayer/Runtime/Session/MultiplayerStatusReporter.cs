@@ -1,5 +1,6 @@
 using Farion.Multiplayer.World;
 using Farion.UI.Gameplay;
+using Farion.UI.Localization;
 using FishNet.Managing;
 using FishNet.Managing.Predicting;
 using UnityEngine;
@@ -10,12 +11,11 @@ namespace Farion.Multiplayer.Session
     [RequireComponent(typeof(NetworkManager))]
     public sealed class MultiplayerStatusReporter : MonoBehaviour
     {
-        const string HostLabel = "HOST";
-        const string ConnectingLabel = "CONNECTING";
         const float WindowSeconds = 5f;
 
         [SerializeField] NetworkManager networkManager;
         [SerializeField, Min(0.1f)] float refreshInterval = 0.5f;
+        [Tooltip("Developer overlay: frame drops, origin shifts and reconcile error under the connection headline.")]
         [SerializeField] bool showDiagnostics;
         [SerializeField, Range(1, 25)] int maximumFrameTicks = 3;
 
@@ -92,8 +92,17 @@ namespace Farion.Multiplayer.Session
 
         void Update()
         {
-            SampleDiagnostics();
-            if (gameplayUi == null || Time.unscaledTime < nextRefreshTime)
+            if (gameplayUi == null)
+            {
+                return;
+            }
+
+            if (showDiagnostics)
+            {
+                SampleDiagnostics();
+            }
+
+            if (Time.unscaledTime < nextRefreshTime)
             {
                 return;
             }
@@ -111,9 +120,7 @@ namespace Farion.Multiplayer.Session
 
         void SampleDiagnostics()
         {
-            if (networkManager == null ||
-                !networkManager.IsClientStarted ||
-                networkManager.TimeManager == null)
+            if (networkManager == null || !networkManager.IsClientStarted)
             {
                 return;
             }
@@ -174,19 +181,20 @@ namespace Farion.Multiplayer.Session
 
         string BuildStatus()
         {
-            if (networkManager == null || !networkManager.IsClientStarted)
+            MultiplayerSessionController session = MultiplayerSessionController.Active;
+            if (networkManager == null ||
+                !networkManager.IsClientStarted ||
+                session == null ||
+                (session.IsPrivate && !showDiagnostics))
             {
                 return null;
             }
 
-            if (networkManager.TimeManager == null)
-            {
-                return ConnectingLabel;
-            }
-
             string headline = networkManager.IsServerStarted
-                ? HostLabel
-                : $"{networkManager.TimeManager.RoundTripTime} MS";
+                ? UiLocalization.Get(UiTextKeys.CoopStatusHost)
+                : string.Format(
+                    UiLocalization.Get(UiTextKeys.CoopStatusPing),
+                    networkManager.TimeManager.RoundTripTime);
             if (!showDiagnostics)
             {
                 return headline;

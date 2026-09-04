@@ -131,7 +131,6 @@ namespace Farion.Audio.Spacecraft
             surfaceContactProbe ??= GetComponentInParent<SpacecraftSurfaceContactProbe>();
             oceanInteractor ??= GetComponentInParent<SpacecraftOceanInteractor>();
             atmosphereInteractor ??= GetComponentInParent<SpacecraftAtmosphereInteractor>();
-            pilotContextSource ??= GetComponentInParent<PlayerPossessionController>();
             pilotContext ??= pilotContextSource as ILocalPilotContext;
         }
 

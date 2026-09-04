@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using Farion.Gameplay.Interaction;
 using Farion.Multiplayer.Spawning;
-using Farion.Simulation.World;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -21,7 +20,7 @@ namespace Farion.Multiplayer.Session
         readonly SyncVar<ulong> currentZoneId = new();
         readonly SyncVar<ulong> assignedStarterShuttleId = new();
         readonly SyncVar<ulong> claimedStarterShuttleId = new();
-        readonly SyncVar<PlayerPossessionMode> possessionMode = new();
+        readonly SyncVar<PlayerPossessionMode> possessionMode = new(PlayerPossessionMode.OnFoot);
         MultiplayerPlayerSpawner playerSpawner;
 
         static readonly List<NetworkSessionPlayer> activePlayers = new();
@@ -34,19 +33,15 @@ namespace Farion.Multiplayer.Session
         public ulong SessionPlayerId => sessionPlayerId.Value;
         public string DisplayName => displayName.Value;
         internal string PersistentPlayerId => persistentPlayerId;
-        public GeneratedEntityId CurrentZoneId => currentZoneId.Value == 0UL
-            ? GeneratedEntityId.None
-            : new GeneratedEntityId(currentZoneId.Value);
+        public GeneratedEntityId CurrentZoneId => ToEntityId(currentZoneId.Value);
         public GeneratedEntityId AssignedStarterShuttleId =>
-            assignedStarterShuttleId.Value == 0UL
-                ? GeneratedEntityId.None
-                : new GeneratedEntityId(assignedStarterShuttleId.Value);
+            ToEntityId(assignedStarterShuttleId.Value);
         public GeneratedEntityId ClaimedStarterShuttleId =>
-            claimedStarterShuttleId.Value == 0UL
-                ? GeneratedEntityId.None
-                : new GeneratedEntityId(claimedStarterShuttleId.Value);
+            ToEntityId(claimedStarterShuttleId.Value);
         public PlayerPossessionMode PossessionMode => possessionMode.Value;
         internal MultiplayerPlayerSpawner PlayerSpawner => playerSpawner;
+
+        public event Action<PlayerPossessionMode> PossessionModeChanged;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetLocal()
@@ -58,6 +53,7 @@ namespace Farion.Multiplayer.Session
         void Awake()
         {
             assignedStarterShuttleId.OnChange += OnAssignedStarterShuttleChanged;
+            possessionMode.OnChange += OnPossessionModeChanged;
             if (!activePlayers.Contains(this))
             {
                 activePlayers.Add(this);
@@ -105,9 +101,7 @@ namespace Farion.Multiplayer.Session
             string requestedPersistentId,
             NetworkConnection sender = null)
         {
-            if (sender == null ||
-                !sender.IsActive ||
-                sender.ClientId != OwnerId)
+            if (!IsRequestFromOwner(sender))
             {
                 return;
             }
@@ -116,12 +110,23 @@ namespace Farion.Multiplayer.Session
                 requestedName,
                 MaximumDisplayNameLength,
                 sessionPlayerId.Value);
-            if (persistentPlayerId.Length == 0 &&
-                !string.IsNullOrWhiteSpace(requestedPersistentId))
+            if (persistentPlayerId.Length > 0 ||
+                string.IsNullOrWhiteSpace(requestedPersistentId))
             {
-                persistentPlayerId = requestedPersistentId.Trim();
-                playerSpawner?.RestorePlayerState(this);
+                return;
             }
+
+            string trimmed = requestedPersistentId.Trim();
+            if (IsPersistentIdInUse(trimmed))
+            {
+                Debug.LogWarning(
+                    $"Session player {sessionPlayerId.Value} requested a persistent id that is already active; it will not restore saved state.",
+                    this);
+                return;
+            }
+
+            persistentPlayerId = trimmed;
+            playerSpawner?.RestorePlayerState(this);
         }
 
         public override void OnOwnershipClient(NetworkConnection prevOwner)
@@ -137,62 +142,64 @@ namespace Farion.Multiplayer.Session
             }
         }
 
-        public bool RequestUseStarterShuttle(GeneratedEntityId shipId)
+        public bool RequestBoardStarterShuttle(GeneratedEntityId shipId)
         {
             if (!IsOwner || !shipId.IsValid)
             {
                 return false;
             }
 
-            RequestUseStarterShuttleServerRpc(shipId.Value);
+            BoardStarterShuttleServerRpc(shipId.Value);
             return true;
         }
 
-        [ServerRpc]
-        void RequestUseStarterShuttleServerRpc(
-            ulong shipId,
-            NetworkConnection sender = null)
-        {
-            if (sender == null ||
-                !sender.IsActive ||
-                sender.ClientId != OwnerId ||
-                shipId == 0UL)
-            {
-                return;
-            }
-
-            playerSpawner?.TryUseStarterShuttle(
-                this,
-                new GeneratedEntityId(shipId));
-        }
-
-        public bool RequestExitStarterShuttle(GeneratedEntityId shipId)
+        public bool RequestPilotStarterShuttle(GeneratedEntityId shipId)
         {
             if (!IsOwner || !shipId.IsValid)
             {
                 return false;
             }
 
-            RequestExitStarterShuttleServerRpc(shipId.Value);
+            PilotStarterShuttleServerRpc(shipId.Value);
+            return true;
+        }
+
+        public bool RequestLeavePilotSeat(GeneratedEntityId shipId)
+        {
+            if (!IsOwner || !shipId.IsValid)
+            {
+                return false;
+            }
+
+            LeavePilotSeatServerRpc(shipId.Value);
             return true;
         }
 
         [ServerRpc]
-        void RequestExitStarterShuttleServerRpc(
-            ulong shipId,
-            NetworkConnection sender = null)
+        void BoardStarterShuttleServerRpc(ulong shipId, NetworkConnection sender = null)
         {
-            if (sender == null ||
-                !sender.IsActive ||
-                sender.ClientId != OwnerId ||
-                shipId == 0UL)
+            if (IsRequestFromOwner(sender) && shipId != 0UL)
             {
-                return;
+                playerSpawner?.TryBoardStarterShuttle(this, new GeneratedEntityId(shipId));
             }
+        }
 
-            playerSpawner?.TryExitStarterShuttle(
-                this,
-                new GeneratedEntityId(shipId));
+        [ServerRpc]
+        void PilotStarterShuttleServerRpc(ulong shipId, NetworkConnection sender = null)
+        {
+            if (IsRequestFromOwner(sender) && shipId != 0UL)
+            {
+                playerSpawner?.TryPilotStarterShuttle(this, new GeneratedEntityId(shipId));
+            }
+        }
+
+        [ServerRpc]
+        void LeavePilotSeatServerRpc(ulong shipId, NetworkConnection sender = null)
+        {
+            if (IsRequestFromOwner(sender) && shipId != 0UL)
+            {
+                playerSpawner?.TryLeavePilotSeat(this, new GeneratedEntityId(shipId));
+            }
         }
 
         internal void SetCurrentZone(GeneratedEntityId value)
@@ -215,6 +222,32 @@ namespace Farion.Multiplayer.Session
             possessionMode.Value = value;
         }
 
+        bool IsRequestFromOwner(NetworkConnection sender)
+        {
+            return sender != null && sender.IsActive && sender.ClientId == OwnerId;
+        }
+
+        static bool IsPersistentIdInUse(string candidate)
+        {
+            for (int i = 0; i < activePlayers.Count; i++)
+            {
+                NetworkSessionPlayer other = activePlayers[i];
+                if (other != null &&
+                    other.IsSpawned &&
+                    string.Equals(other.persistentPlayerId, candidate, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        static GeneratedEntityId ToEntityId(ulong value)
+        {
+            return value == 0UL ? GeneratedEntityId.None : new GeneratedEntityId(value);
+        }
+
         void RefreshLocalBinding()
         {
             if (IsOwner)
@@ -231,6 +264,14 @@ namespace Farion.Multiplayer.Session
         void OnAssignedStarterShuttleChanged(ulong previous, ulong next, bool asServer)
         {
             NotifyAssignedStarterShuttleReady();
+        }
+
+        void OnPossessionModeChanged(
+            PlayerPossessionMode previous,
+            PlayerPossessionMode next,
+            bool asServer)
+        {
+            PossessionModeChanged?.Invoke(next);
         }
 
         void NotifyAssignedStarterShuttleReady()

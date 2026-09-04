@@ -1471,7 +1471,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f02b833af00a43b986ee3fad6802609a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.UI.Runtime::Farion.UI.MainMenu.MainMenuController
-  flowSettings: {fileID: 11400000, guid: ae52a5c6d62a45caa3041be3b45faef4, type: 2}
   uiSystemRoot: {fileID: 1506823812}
   screenRouter: {fileID: 1506823814}
   feedbackService: {fileID: 0}

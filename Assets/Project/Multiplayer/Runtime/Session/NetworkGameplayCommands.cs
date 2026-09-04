@@ -33,6 +33,7 @@ namespace Farion.Multiplayer.Session
 
         NetworkSessionPlayer sessionPlayer;
         NetworkExplorerController ownerExplorer;
+        MultiplayerSceneContext ownerContext;
         InventoryContainerComponent ownerInventory;
         NetworkStarterShuttle ownerCargo;
 
@@ -55,25 +56,32 @@ namespace Farion.Multiplayer.Session
             }
 
             ownerExplorer = player;
+            ownerContext = MultiplayerSceneContext.FindIn(player.gameObject.scene);
             ownerInventory =
                 player.GetComponentInChildren<InventoryContainerComponent>(true);
+            ownerCargo = null;
             PlayerInteractionRaycaster raycaster =
                 player.GetComponentInChildren<PlayerInteractionRaycaster>(true);
             raycaster?.SetCommandGateway(this);
             RequestSessionStateServerRpc();
         }
 
-        static GameplayRuntimeBindings ZoneBindings =>
-            MultiplayerSceneContext.Active != null &&
-            MultiplayerSceneContext.Active.RuntimeRoot != null
-                ? MultiplayerSceneContext.Active.RuntimeRoot.Bindings
-                : null;
+        GameplayRuntimeBindings ZoneBindings
+        {
+            get
+            {
+                MultiplayerSceneContext context = ownerContext != null
+                    ? ownerContext
+                    : MultiplayerSceneContext.Active;
+                return context != null && context.RuntimeRoot != null
+                    ? context.RuntimeRoot.Bindings
+                    : null;
+            }
+        }
 
-        static GameplayDefinitionRegistry ZoneDefinitions =>
-            ZoneBindings?.Definitions;
+        GameplayDefinitionRegistry ZoneDefinitions => ZoneBindings?.Definitions;
 
-        static FleetStorageInventory ZoneFleetStorage =>
-            ZoneBindings?.FleetStorage;
+        FleetStorageInventory ZoneFleetStorage => ZoneBindings?.FleetStorage;
 
         public ResourceHarvestResult CanHarvest(ResourceHarvestRequest request)
         {
@@ -245,20 +253,20 @@ namespace Farion.Multiplayer.Session
 
         ShuttleCargoInventory ResolveOwnerCargo()
         {
-            GeneratedEntityId claimed = sessionPlayer != null
-                ? sessionPlayer.ClaimedStarterShuttleId
+            GeneratedEntityId assigned = sessionPlayer != null
+                ? sessionPlayer.AssignedStarterShuttleId
                 : GeneratedEntityId.None;
-            if (!claimed.IsValid)
+            if (!assigned.IsValid)
             {
                 return null;
             }
 
-            if (ownerCargo != null && ownerCargo.EntityId == claimed)
+            if (ownerCargo != null && ownerCargo.EntityId == assigned)
             {
                 return ownerCargo.Cargo;
             }
 
-            ownerCargo = NetworkStarterShuttle.FindByEntityId(claimed);
+            ownerCargo = NetworkStarterShuttle.FindByEntityId(assigned);
             return ownerCargo != null ? ownerCargo.Cargo : null;
         }
 
@@ -541,7 +549,7 @@ namespace Farion.Multiplayer.Session
             if (sender == null ||
                 !sender.IsActive ||
                 sender.ClientId != OwnerId ||
-                !sessionPlayer.ClaimedStarterShuttleId.IsValid ||
+                !sessionPlayer.AssignedStarterShuttleId.IsValid ||
                 !TryResolveServerBindings(out GameplayRuntimeBindings bindings) ||
                 !sessionPlayer.PlayerSpawner.TryGetSpawnedExplorer(
                     sessionPlayer,
@@ -551,9 +559,9 @@ namespace Farion.Multiplayer.Session
             }
 
             NetworkStarterShuttle ship = NetworkStarterShuttle.FindByEntityId(
-                sessionPlayer.ClaimedStarterShuttleId);
+                sessionPlayer.AssignedStarterShuttleId);
             if (ship == null ||
-                !ship.IsClaimedBy(sessionPlayer.SessionPlayerId))
+                ship.gameObject.scene != explorer.gameObject.scene)
             {
                 failure = CargoTransferResult.MissingSource;
                 return false;
@@ -698,7 +706,7 @@ namespace Farion.Multiplayer.Session
                         : ZoneFleetStorage?.CaptureContainerSnapshot()));
         }
 
-        static void ApplyCargoSnapshot(string cargoContainerId, string snapshotJson)
+        void ApplyCargoSnapshot(string cargoContainerId, string snapshotJson)
         {
             IReadOnlyList<NetworkStarterShuttle> ships = NetworkStarterShuttle.ActiveShips;
             for (int i = 0; i < ships.Count; i++)
@@ -712,7 +720,7 @@ namespace Farion.Multiplayer.Session
             }
         }
 
-        static void ApplySnapshot(
+        void ApplySnapshot(
             InventoryContainerComponent container,
             string snapshotJson)
         {
@@ -748,7 +756,11 @@ namespace Farion.Multiplayer.Session
                 !sender.IsActive ||
                 sender.ClientId != OwnerId ||
                 spawner == null ||
+                !spawner.TryGetSpawnedExplorer(
+                    sessionPlayer,
+                    out NetworkExplorerController explorer) ||
                 !spawner.TryGetRuntimeBindings(
+                    explorer.gameObject.scene,
                     out GameplayRuntimeBindings bindings))
             {
                 return;
@@ -772,26 +784,23 @@ namespace Farion.Multiplayer.Session
                     snapshot.ExtractedAmount);
             }
 
-            if (bindings.FleetStorage != null)
+            if (spawner.TryGetStartingZoneBindings(
+                    out GameplayRuntimeBindings startingBindings) &&
+                startingBindings.FleetStorage != null)
             {
                 FleetStorageSnapshotTargetRpc(
                     sender,
                     JsonUtility.ToJson(
-                        bindings.FleetStorage.CaptureContainerSnapshot()));
+                        startingBindings.FleetStorage.CaptureContainerSnapshot()));
             }
 
-            if (spawner.TryGetSpawnedExplorer(
-                    sessionPlayer,
-                    out NetworkExplorerController explorer))
+            InventoryContainerComponent carried =
+                explorer.GetComponentInChildren<InventoryContainerComponent>(true);
+            if (carried != null)
             {
-                InventoryContainerComponent carried =
-                    explorer.GetComponentInChildren<InventoryContainerComponent>(true);
-                if (carried != null)
-                {
-                    OwnerInventorySnapshotTargetRpc(
-                        sender,
-                        JsonUtility.ToJson(carried.CaptureContainerSnapshot()));
-                }
+                OwnerInventorySnapshotTargetRpc(
+                    sender,
+                    JsonUtility.ToJson(carried.CaptureContainerSnapshot()));
             }
 
             IReadOnlyList<NetworkStarterShuttle> ships = NetworkStarterShuttle.ActiveShips;

@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Farion.Core.Identity;
-using Farion.Gameplay.Domain.Systems;
-using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Inventory;
 using Farion.Gameplay.ResourceNodes;
 using Farion.Simulation.Physics;
@@ -13,13 +11,8 @@ namespace Farion.Gameplay.Persistence
     {
         readonly List<CelestialBodySnapshot> celestialBodies = new();
         readonly List<ResourceDepositDeltaSnapshot> resourceDepositDeltas = new();
-        InventoryContainerSnapshot playerInventory;
-        InventoryContainerSnapshot shuttleCargo;
         InventoryContainerSnapshot fleetStorage;
-        PlayerPossessionSnapshot playerPossession;
         WorldOriginSnapshot worldOrigin;
-        ResourcePool shuttleFuel;
-        ResourcePool shuttleHull;
 
         public GameplaySaveCapture(string savedAtUtc)
         {
@@ -42,39 +35,14 @@ namespace Farion.Gameplay.Persistence
             CelestialLayoutHash = layoutHash;
         }
 
-        public void SetPlayerInventory(InventoryContainerSnapshot snapshot)
-        {
-            playerInventory = snapshot;
-        }
-
-        public void SetShuttleCargo(InventoryContainerSnapshot snapshot)
-        {
-            shuttleCargo = snapshot;
-        }
-
         public void SetFleetStorage(InventoryContainerSnapshot snapshot)
         {
             fleetStorage = snapshot;
         }
 
-        public void SetPlayerPossession(PlayerPossessionSnapshot snapshot)
-        {
-            playerPossession = snapshot;
-        }
-
         public void SetWorldOrigin(WorldOriginSnapshot snapshot)
         {
             worldOrigin = snapshot;
-        }
-
-        public void SetShuttleFuel(ResourcePool fuel)
-        {
-            shuttleFuel = fuel;
-        }
-
-        public void SetShuttleHull(ResourcePool hull)
-        {
-            shuttleHull = hull;
         }
 
         public GameplaySaveData CreateSnapshot()
@@ -84,13 +52,8 @@ namespace Farion.Gameplay.Persistence
                 CelestialSimulationTime,
                 celestialBodies,
                 worldOrigin,
-                playerInventory,
-                shuttleCargo,
                 fleetStorage,
-                playerPossession,
                 resourceDepositDeltas);
-            snapshot.SetShuttleFuel(shuttleFuel);
-            snapshot.SetShuttleHull(shuttleHull);
             snapshot.SetCelestialLayoutHash(CelestialLayoutHash);
             return snapshot;
         }

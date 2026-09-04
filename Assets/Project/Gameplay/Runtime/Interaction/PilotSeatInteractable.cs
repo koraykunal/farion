@@ -5,37 +5,29 @@ namespace Farion.Gameplay.Interaction
     [DisallowMultipleComponent]
     public sealed class PilotSeatInteractable : MonoBehaviour, IInteractable
     {
+        IInteractable host;
+
+        public string InteractionPrompt => InteractionPromptKeys.PilotSeat;
+        public bool IsBound => host != null;
 
         void Awake()
         {
             InteractableLayerBinding.Apply(this);
         }
-        [SerializeField] PlayerPossessionController possessionController;
-        [SerializeField] string prompt = "Pilot seat";
 
-        public string InteractionPrompt => prompt;
-        public bool IsBound => possessionController != null;
-
-        void Reset()
+        public void Bind(IInteractable interactable)
         {
-            possessionController = GetComponentInParent<PlayerPossessionController>();
-        }
-
-        public void Bind(PlayerPossessionController controller)
-        {
-            possessionController = controller;
+            host = interactable;
         }
 
         public bool CanInteract(InteractionContext context)
         {
-            return possessionController != null &&
-                   possessionController.IsInShipInterior &&
-                   possessionController.CanEnterSpacecraft;
+            return host != null && host.CanInteract(context);
         }
 
         public void Interact(InteractionContext context)
         {
-            possessionController?.EnterPilotSeat();
+            host?.Interact(context);
         }
     }
 }

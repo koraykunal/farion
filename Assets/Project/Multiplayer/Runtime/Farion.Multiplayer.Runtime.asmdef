@@ -12,7 +12,6 @@
         "Farion.UI.Runtime",
         "UnityEngine.UI",
         "Unity.TextMeshPro",
-        "Farion.App.Runtime",
         "FishNet.Runtime"
     ],
     "includePlatforms": [],
