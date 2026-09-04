@@ -65,6 +65,9 @@ namespace Farion.Rendering.PostProcessing
 
         sealed class CloudPass : ScriptableRenderPass
         {
+            const float OrbitStepScale = 0.5f;
+            const int MinimumOrbitViewSteps = 16;
+            const int MinimumOrbitLightSteps = 3;
             static readonly int CloudTextureId = Shader.PropertyToID("_FarionCloudTexture");
             static readonly int CloudTextureTexelSizeId = Shader.PropertyToID("_FarionCloudTexture_TexelSize");
             static readonly int CloudSphereId = Shader.PropertyToID("_FarionCloudSphere");
@@ -135,7 +138,7 @@ namespace Farion.Rendering.PostProcessing
                 material.SetVector(
                     CloudTextureTexelSizeId,
                     new Vector4(1f / cloudDesc.width, 1f / cloudDesc.height, cloudDesc.width, cloudDesc.height));
-                ApplyMaterialProperties(effectData);
+                ApplyMaterialProperties(effectData, cameraData.camera.transform.position);
 
                 AddRaymarchPass(renderGraph, source, cloudTexture, material);
 
@@ -191,10 +194,11 @@ namespace Farion.Rendering.PostProcessing
                 });
             }
 
-            void ApplyMaterialProperties(CelestialCloudEffectData effectData)
+            void ApplyMaterialProperties(CelestialCloudEffectData effectData, Vector3 cameraPosition)
             {
                 CelestialCloudProfile profile = effectData.Profile;
                 Vector3 center = effectData.Center;
+                ResolveStepCounts(effectData, cameraPosition, out int viewSteps, out int lightSteps);
                 material.SetVector(CloudSphereId, new Vector4(center.x, center.y, center.z, effectData.OuterRadius));
                 material.SetVector(CloudRadiiId, new Vector4(effectData.SurfaceRadius, effectData.InnerRadius, effectData.OuterRadius, 0f));
                 material.SetMatrix(WorldToLocalId, effectData.WorldToLocalRotation);
@@ -235,7 +239,7 @@ namespace Farion.Rendering.PostProcessing
                         0f));
                 material.SetVector(
                     SamplingParamsId,
-                    new Vector4(profile.ViewSteps, profile.LightSteps, profile.DitherStrength, 0f));
+                    new Vector4(viewSteps, lightSteps, profile.DitherStrength, 0f));
                 material.SetVector(LayerParamsId, profile.LayerParameters);
                 material.SetColor(AmbientColorId, profile.AmbientLight);
                 double time = Time.timeAsDouble;
@@ -252,6 +256,25 @@ namespace Farion.Rendering.PostProcessing
                 material.SetVector(
                     WeatherMotionId,
                     new Vector4(Mathf.Sin(weatherAngle), Mathf.Cos(weatherAngle), 0f, 0f));
+            }
+
+            static void ResolveStepCounts(
+                CelestialCloudEffectData effectData,
+                Vector3 cameraPosition,
+                out int viewSteps,
+                out int lightSteps)
+            {
+                CelestialCloudProfile profile = effectData.Profile;
+                float altitude = Vector3.Distance(cameraPosition, effectData.Center) - effectData.OuterRadius;
+                float orbitBlend = effectData.OuterRadius > 0f
+                    ? Mathf.Clamp01(altitude / effectData.OuterRadius)
+                    : 0f;
+                viewSteps = Mathf.Max(
+                    MinimumOrbitViewSteps,
+                    Mathf.RoundToInt(Mathf.Lerp(profile.ViewSteps, profile.ViewSteps * OrbitStepScale, orbitBlend)));
+                lightSteps = Mathf.Max(
+                    MinimumOrbitLightSteps,
+                    Mathf.RoundToInt(Mathf.Lerp(profile.LightSteps, profile.LightSteps * OrbitStepScale, orbitBlend)));
             }
 
             void ApplyAtmosphereProperties(CelestialCloudEffectData effectData)

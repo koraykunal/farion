@@ -23,10 +23,15 @@ namespace Farion.Gameplay.Presentation.Flight
         [SerializeField] float nearClearance = 4f;
 
         [Header("Response")]
+        [Tooltip("Streaks start fading in above this relative speed in m/s.")]
         [Min(0f)]
         [SerializeField] float fadeInSpeed = 8f;
+        [Tooltip("Streaks reach full opacity at this relative speed; the response is logarithmic so cruise and boost stay distinguishable.")]
         [Min(1f)]
         [SerializeField] float fullOpacitySpeed = 90f;
+        [Tooltip("Speed at which streak length, spread and density reach their maximum. Zero uses the flight profile boost speed.")]
+        [Min(0f)]
+        [SerializeField] float maximumResponseSpeed;
         [Range(0f, 1f)]
         [SerializeField] float maximumOpacity = 0.55f;
         [Min(0.001f)]
@@ -48,6 +53,8 @@ namespace Farion.Gameplay.Presentation.Flight
         Mesh quadMesh;
         MaterialPropertyBlock propertyBlock;
         RenderParams renderParams;
+        SpacecraftOceanInteractor oceanInteractor;
+        Camera cachedCamera;
         bool seeded;
         Vector3 lastCenter;
 
@@ -61,6 +68,9 @@ namespace Farion.Gameplay.Presentation.Flight
         void OnEnable()
         {
             motor ??= GetComponentInParent<SpacecraftMotor>();
+            oceanInteractor = motor != null
+                ? motor.GetComponent<SpacecraftOceanInteractor>()
+                : null;
             seeded = false;
         }
 
@@ -77,11 +87,15 @@ namespace Farion.Gameplay.Presentation.Flight
                 return;
             }
 
+            if (oceanInteractor != null && oceanInteractor.CurrentInteraction.IsTouchingWater)
+            {
+                seeded = false;
+                return;
+            }
+
             Vector3 velocity = motor.Telemetry.WorldRelativeVelocity;
             float speed = velocity.magnitude;
-            float opacity = fullOpacitySpeed > fadeInSpeed
-                ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(fadeInSpeed, fullOpacitySpeed, speed))
-                : 0f;
+            float opacity = Mathf.SmoothStep(0f, 1f, LogResponse(speed, fadeInSpeed, fullOpacitySpeed));
             opacity *= maximumOpacity;
             if (opacity <= 0.001f)
             {
@@ -89,11 +103,14 @@ namespace Farion.Gameplay.Presentation.Flight
                 return;
             }
 
+            float response = LogResponse(speed, fadeInSpeed, ResolveMaximumResponseSpeed());
+            float radius = fieldRadius * (1f + response);
+
             Vector3 center = view.position;
             if (seeded)
             {
                 Vector3 centerDelta = center - lastCenter;
-                if (centerDelta.sqrMagnitude > fieldRadius * fieldRadius)
+                if (centerDelta.sqrMagnitude > radius * radius)
                 {
                     for (int i = 0; i < MaxStreaks; i++)
                     {
@@ -106,7 +123,9 @@ namespace Farion.Gameplay.Presentation.Flight
             EnsureSeeded(center);
             Vector3 direction = velocity / Mathf.Max(speed, 0.0001f);
             float length = Mathf.Clamp(
-                speed * streakLengthPerSpeed,
+                Mathf.Max(
+                    speed * streakLengthPerSpeed,
+                    Mathf.Lerp(minimumStreakLength, maximumStreakLength, response)),
                 minimumStreakLength,
                 maximumStreakLength);
             Quaternion orientation = Quaternion.LookRotation(
@@ -115,15 +134,18 @@ namespace Farion.Gameplay.Presentation.Flight
                     : view.up,
                 direction);
 
-            int count = Mathf.Clamp(streakCount, 16, MaxStreaks);
+            int count = Mathf.Clamp(
+                Mathf.RoundToInt(streakCount * Mathf.Lerp(0.5f, 1f, response)),
+                16,
+                MaxStreaks);
             Vector3 step = velocity * Time.deltaTime;
             for (int i = 0; i < count; i++)
             {
                 Vector3 point = points[i] - step;
                 Vector3 offset = point - center;
-                if (offset.sqrMagnitude > fieldRadius * fieldRadius)
+                if (offset.sqrMagnitude > radius * radius)
                 {
-                    point = center - offset.normalized * fieldRadius + RandomJitter(fieldRadius * 0.35f);
+                    point = center - offset.normalized * radius + RandomJitter(radius * 0.35f);
                     offset = point - center;
                 }
 
@@ -143,7 +165,7 @@ namespace Farion.Gameplay.Presentation.Flight
             EnsureRenderResources();
             propertyBlock.SetFloat(AlphaId, opacity);
             renderParams.matProps = propertyBlock;
-            renderParams.worldBounds = new Bounds(center, Vector3.one * (fieldRadius * 2.5f));
+            renderParams.worldBounds = new Bounds(center, Vector3.one * (radius * 2.5f));
             Graphics.RenderMeshInstanced(renderParams, quadMesh, 0, matrices, count);
         }
 
@@ -154,8 +176,37 @@ namespace Farion.Gameplay.Presentation.Flight
                 return viewReference;
             }
 
-            Camera camera = Camera.main;
-            return camera != null ? camera.transform : null;
+            if (cachedCamera == null || !cachedCamera.isActiveAndEnabled)
+            {
+                cachedCamera = Camera.main;
+            }
+
+            return cachedCamera != null ? cachedCamera.transform : null;
+        }
+
+        float ResolveMaximumResponseSpeed()
+        {
+            if (maximumResponseSpeed > 0f)
+            {
+                return Mathf.Max(maximumResponseSpeed, fullOpacitySpeed);
+            }
+
+            SpacecraftFlightProfile profile = motor != null ? motor.FlightProfile : null;
+            return profile != null
+                ? Mathf.Max(profile.MaxBoostForwardSpeed, fullOpacitySpeed)
+                : fullOpacitySpeed * 4f;
+        }
+
+        static float LogResponse(float speed, float low, float high)
+        {
+            low = Mathf.Max(low, 1f);
+            high = Mathf.Max(high, low * 1.001f);
+            if (speed <= low)
+            {
+                return 0f;
+            }
+
+            return Mathf.Clamp01(Mathf.Log(speed / low) / Mathf.Log(high / low));
         }
 
         void EnsureSeeded(Vector3 center)

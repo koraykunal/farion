@@ -76,6 +76,7 @@ namespace Farion.Gameplay.Flight
         [SerializeField] float boostSurgeFovKick = 6f;
 
         bool snapNextFrame = true;
+        const float SpeedFovCurvePower = 0.7f;
         float baseFieldOfView = 60f;
         Vector3 smoothedFlightOffset;
         readonly RaycastHit[] collisionHits = new RaycastHit[32];
@@ -489,10 +490,13 @@ namespace Farion.Gameplay.Flight
             if (motor != null)
             {
                 SpacecraftMovementTelemetry telemetry = motor.Telemetry;
-                float speed01 = speedFovReferenceSpeed > 0f
-                    ? Mathf.Clamp01(telemetry.RelativeSpeed / speedFovReferenceSpeed)
+                float referenceSpeed = motor.FlightProfile != null
+                    ? Mathf.Max(speedFovReferenceSpeed, motor.FlightProfile.MaxBoostForwardSpeed)
+                    : speedFovReferenceSpeed;
+                float speed01 = referenceSpeed > 0f
+                    ? Mathf.Clamp01(telemetry.RelativeSpeed / referenceSpeed)
                     : 0f;
-                targetFov += speed01 * speed01 * speedFovIncrease;
+                targetFov += Mathf.Pow(speed01, SpeedFovCurvePower) * speedFovIncrease;
                 targetFov += telemetry.BoostBlend * boostFovIncrease;
                 targetFov += telemetry.BoostSurge * boostSurgeFovKick;
             }

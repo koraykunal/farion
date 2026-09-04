@@ -14,7 +14,8 @@ here so a texture set can be traced back to its imported source package.
 | `Lava/Mixed` | `Lava005` | Balanced molten and dark crust | Ready; active volcanic overlay |
 | `Sand/Coarse` | `Ground080` | Coarser disturbed sand | Ready |
 | `Sand/Fine` | `Ground093A` | Fine smooth sand | Ready |
-| `Temperate/Soil` | `Ground068` | Temperate basin soil | Ready |
+| `Rock/Mossy` | `TCom_Rock_Mossy_2K` (TextureCan) | Temperate basin ground: mossy rock, replaces the retired `Ground068` soil set | Ready |
+| `Rock/CliffSnow` | `TCom_Rock_CliffSnow_2K` (TextureCan) | Snow-capped cliff rock for cold steep slopes (`SO_SnowRockSurfaceMaterial`) | Ready |
 | `Temperate/Grass` | `Grass005` | Grass-covered ground | Ready as an alternate surface material |
 | `Temperate/RockGreen` | `Rock063` | Green-toned temperate rock | Blocked: source maps are 2048x1024 |
 | `Temperate/RockNeutral` | `Rock059` | Neutral temperate rock | Ready |

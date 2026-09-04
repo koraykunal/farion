@@ -3,6 +3,7 @@ using Farion.UI.Gameplay;
 using Farion.UI.Localization;
 using FishNet.Managing;
 using FishNet.Managing.Predicting;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Farion.Multiplayer.Session
@@ -33,6 +34,10 @@ namespace Farion.Multiplayer.Session
         float reconcileWindowEnd;
         int originShifts;
         uint lastOriginSequence;
+        ProfilerRecorder mainThreadRecorder;
+        ProfilerRecorder presentWaitRecorder;
+        ProfilerRecorder drawCallRecorder;
+        ProfilerRecorder setPassRecorder;
 
         void Awake()
         {
@@ -49,6 +54,14 @@ namespace Farion.Multiplayer.Session
             {
                 predictionManager.OnPostReconcile += OnPostReconcile;
             }
+
+            if (showDiagnostics)
+            {
+                mainThreadRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
+                presentWaitRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Gfx.WaitForPresentOnGfxThread", 15);
+                drawCallRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
+                setPassRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "SetPass Calls Count");
+            }
         }
 
         void OnDisable()
@@ -57,6 +70,11 @@ namespace Farion.Multiplayer.Session
             {
                 predictionManager.OnPostReconcile -= OnPostReconcile;
             }
+
+            mainThreadRecorder.Dispose();
+            presentWaitRecorder.Dispose();
+            drawCallRecorder.Dispose();
+            setPassRecorder.Dispose();
         }
 
         public void BindPresentation(UiGameplayController controller)
@@ -205,7 +223,26 @@ namespace Farion.Multiplayer.Session
                 $"SHIFT {originShifts}  RECON/S {reconcilesPerSecond}\n" +
                 $"FIX {PredictionDiagnostics.LastPositionError:0.000} M  " +
                 $"MAXFIX {PredictionDiagnostics.WorstPositionError:0.00} M  " +
-                $"MAXROT {PredictionDiagnostics.WorstRotationError:0.0} DEG";
+                $"MAXROT {PredictionDiagnostics.WorstRotationError:0.0} DEG\n" +
+                $"CPU {AverageMilliseconds(mainThreadRecorder):0.0} MS  " +
+                $"GPUWAIT {AverageMilliseconds(presentWaitRecorder):0.0} MS  " +
+                $"DRAW {drawCallRecorder.LastValue}  SETPASS {setPassRecorder.LastValue}";
+        }
+
+        static float AverageMilliseconds(ProfilerRecorder recorder)
+        {
+            if (!recorder.Valid || recorder.Count == 0)
+            {
+                return 0f;
+            }
+
+            double total = 0d;
+            for (int i = 0; i < recorder.Count; i++)
+            {
+                total += recorder.GetSample(i).Value;
+            }
+
+            return (float)(total / recorder.Count * 1e-6);
         }
     }
 }
