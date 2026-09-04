@@ -55,16 +55,16 @@ namespace Farion.Editor.Authoring
 
         static bool BakePlanet(TerrestrialPlanetVisual planetVisual)
         {
-            if (planetVisual.Profile == null
-                || planetVisual.Profile.SurfaceProfile == null
-                || planetVisual.Profile.SurfaceProfile.SurfaceVisualProfile == null
+            planetVisual.ApplyProfile();
+            if (planetVisual.Derived == null
+                || planetVisual.Derived.SurfaceVisualProfile == null
                 || !planetVisual.TryGetComponent(out PlanetSurfaceModel surfaceModel)
                 || !planetVisual.TryGetComponent(out CelestialBodyVisual bodyVisual))
             {
                 return false;
             }
 
-            SurfaceVisualProfile visualProfile = planetVisual.Profile.SurfaceProfile.SurfaceVisualProfile;
+            SurfaceVisualProfile visualProfile = planetVisual.Derived.SurfaceVisualProfile;
             if (!PlanetSurfaceWeightMap.CanBake(surfaceModel, visualProfile))
             {
                 return false;

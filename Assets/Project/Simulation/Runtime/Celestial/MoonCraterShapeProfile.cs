@@ -89,6 +89,16 @@ namespace Farion.Simulation.Celestial
 
         CraterField craterField;
 
+        public override CelestialShapeProfile CreateVariant(int variantSeed, float elevationScale)
+        {
+            MoonCraterShapeProfile variant = ProfileVariants.Clone(this);
+            variant.seed = variantSeed;
+            variant.craterSeed = SeedUtility.Derive(variantSeed, "moon.craters");
+            variant.ejectaRaySeed = SeedUtility.Derive(variantSeed, "moon.ejecta");
+            variant.reliefScaleMeters = reliefScaleMeters * Mathf.Max(0f, elevationScale);
+            return variant;
+        }
+
         public override void PrepareSampling()
         {
             ResolveCraterField();

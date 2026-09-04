@@ -58,6 +58,44 @@ namespace Farion.Rendering.Celestial
             textureArraySignature = null;
         }
 
+        public SurfaceVisualProfile CreateVariant(
+            IReadOnlyList<SurfaceMaterialDefinition> materials,
+            int seed,
+            float hueShiftDegrees,
+            float valueJitter)
+        {
+            SurfaceVisualProfile variant = ProfileVariants.Clone(this);
+            variant.rules = new List<SurfaceVisualRule>(MaxSurfaceSlots);
+            List<SurfaceVisualRule> candidates = new();
+            float hueShift = (SeedUtility.Unit01(seed, "visual.surface.hue") * 2f - 1f) * hueShiftDegrees;
+            for (int i = 0; i < materials.Count && variant.rules.Count < MaxSurfaceSlots; i++)
+            {
+                SurfaceMaterialDefinition material = materials[i];
+                candidates.Clear();
+                for (int r = 0; r < rules.Count; r++)
+                {
+                    if (rules[r] != null && rules[r].IsValid && rules[r].Material == material)
+                    {
+                        candidates.Add(rules[r]);
+                    }
+                }
+
+                if (candidates.Count == 0)
+                {
+                    continue;
+                }
+
+                string stream = "visual.surface." + material.MaterialId;
+                SurfaceVisualRule picked = candidates[Mathf.Min(
+                    candidates.Count - 1,
+                    Mathf.FloorToInt(SeedUtility.Unit01(seed, stream) * candidates.Count))];
+                float valueScale = 1f + (SeedUtility.Unit01(seed, stream + ".value") * 2f - 1f) * valueJitter;
+                variant.rules.Add(picked.CreateTinted(hueShift, valueScale));
+            }
+
+            return variant;
+        }
+
         public int ResolveMaterialIndex(SurfaceMaterialDefinition material)
         {
             if (material == null || rules == null)

@@ -13,8 +13,6 @@ namespace Farion.Editor.Authoring
         const string ScenePath = "Assets/Project/Scenes/SC_WorldZone.unity";
         const string MoonDefinitionPath =
             "Assets/Project/Design/Simulation/Physics/SO_StartingMoon.asset";
-        const string MoonShapeProfilePath =
-            "Assets/Project/Design/Simulation/Celestial/SO_MoonCraterShapeProfile.asset";
 
         const float MoonOrbitRadius = 13000f;
         const int PlanetLod0Resolution = 96;
@@ -109,11 +107,11 @@ namespace Farion.Editor.Authoring
 
         static void EnsureMoonSurfaceModel(CelestialBody star, CelestialBody moon)
         {
-            CelestialShapeProfile shapeProfile = AssetDatabase
-                .LoadAssetAtPath<CelestialShapeProfile>(MoonShapeProfilePath);
-            if (shapeProfile == null)
+            PlanetArchetype archetype = AssetDatabase
+                .LoadAssetAtPath<PlanetArchetype>(FarionAssetPaths.CrateredArchetype);
+            if (archetype == null)
             {
-                Debug.LogError($"Missing moon shape profile at {MoonShapeProfilePath}.");
+                Debug.LogError($"Missing moon archetype at {FarionAssetPaths.CrateredArchetype}.");
                 return;
             }
 
@@ -125,7 +123,7 @@ namespace Farion.Editor.Authoring
 
             SerializedObject serialized = new(surfaceModel);
             serialized.FindProperty("body").objectReferenceValue = moon;
-            serialized.FindProperty("shapeProfile").objectReferenceValue = shapeProfile;
+            serialized.FindProperty("archetype").objectReferenceValue = archetype;
             serialized.FindProperty("primaryRadiationSource").objectReferenceValue =
                 star.GetComponent<CelestialRadiationSource>();
             serialized.FindProperty("surfaceSampleFootprint").floatValue =

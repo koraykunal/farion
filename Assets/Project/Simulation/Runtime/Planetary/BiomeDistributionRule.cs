@@ -19,6 +19,24 @@ namespace Farion.Simulation.Planetary
 
         public BiomeDefinition Biome => biome;
         public float SelectionPriority => Mathf.Max(0f, selectionPriority);
+        public Vector2 TemperatureRange => temperatureRange;
+        public Vector2 AridityRange => aridityRange;
+
+        internal BiomeDistributionRule CreateShifted(float temperatureShiftCelsius, float aridityShift)
+        {
+            return new BiomeDistributionRule
+            {
+                biome = biome,
+                selectionPriority = selectionPriority,
+                altitudeRange = altitudeRange,
+                slopeRange = slopeRange,
+                temperatureRange = temperatureRange + Vector2.one * temperatureShiftCelsius,
+                aridityRange = new Vector2(
+                    Mathf.Clamp01(aridityRange.x + aridityShift),
+                    Mathf.Clamp01(aridityRange.y + aridityShift)),
+                radiationRange = radiationRange
+            };
+        }
 
         public float EvaluateSuitability(
             float altitude,

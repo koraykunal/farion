@@ -14,8 +14,9 @@ namespace Farion.Simulation.Planetary
     {
         [Header("Source")]
         [SerializeField] CelestialBody body;
-        [SerializeField] PlanetaryGenerationProfile generationProfile;
-        [SerializeField] CelestialShapeProfile shapeProfile;
+        [Tooltip("Planet class. Every layer of this body is derived from the archetype templates and the seed; nothing else is authored per planet.")]
+        [SerializeField] PlanetArchetype archetype;
+        [SerializeField] int seed = 1;
 
         [Header("Stellar Heating")]
         [SerializeField] CelestialRadiationSource primaryRadiationSource;
@@ -25,7 +26,9 @@ namespace Farion.Simulation.Planetary
         [SerializeField, Range(0f, 0.05f)] float surfaceSampleFootprint = 0.001534f;
 
         public CelestialBody Body => ResolveBody();
-        public PlanetaryGenerationProfile GenerationProfile => generationProfile;
+        public PlanetArchetype Archetype => archetype;
+        public int Seed => seed;
+        public PlanetaryGenerationProfile GenerationProfile => ResolveGenerationProfile();
         public CelestialShapeProfile ShapeProfile => ResolveShapeProfile();
         public event System.Action Changed;
 
@@ -34,12 +37,20 @@ namespace Farion.Simulation.Planetary
 
         Vector2 terrainRadiusMinMax;
         float terrainRangeBaseRadius = -1f;
+        PlanetaryGenerationProfile generationProfile;
+        PlanetArchetype derivedArchetype;
+        int derivedSeed;
+        float derivedRadius;
+        float derivedGravity;
+        PlanetArchetype subscribedArchetype;
+        CelestialShapeProfile subscribedShapeTemplate;
 
         public Vector2 TerrainRadiusMinMax => ResolveTerrainRadiusRange();
 
         public bool TryGetEnvironment(CelestialBody body, out CelestialEnvironmentSample sample)
         {
             sample = default;
+            PlanetaryGenerationProfile generationProfile = ResolveGenerationProfile();
             if (body == null || body != ResolveBody() || generationProfile == null)
             {
                 return false;
@@ -140,6 +151,17 @@ namespace Farion.Simulation.Planetary
             ResolveBody();
         }
 
+        void OnEnable()
+        {
+            SyncSubscriptions();
+        }
+
+        void OnDisable()
+        {
+            UnsubscribeAll();
+            ReleaseDerived();
+        }
+
         void OnValidate()
         {
             ResolveBody();
@@ -148,14 +170,103 @@ namespace Farion.Simulation.Planetary
             Changed?.Invoke();
         }
 
-        public void Configure(PlanetaryGenerationProfile profile, CelestialShapeProfile shape)
+        public void Configure(PlanetArchetype newArchetype, int newSeed)
         {
-            if (profile != null)
+            archetype = newArchetype;
+            seed = newSeed;
+            Changed?.Invoke();
+        }
+
+        PlanetaryGenerationProfile ResolveGenerationProfile()
+        {
+            CelestialBody source = ResolveBody();
+            float radius = source != null ? source.Radius : 0f;
+            float gravity = source != null ? source.SurfaceGravity : 0f;
+            if (generationProfile != null &&
+                derivedArchetype == archetype &&
+                derivedSeed == seed &&
+                Mathf.Approximately(derivedRadius, radius) &&
+                Mathf.Approximately(derivedGravity, gravity))
             {
-                generationProfile = profile;
+                return generationProfile;
             }
 
-            shapeProfile = shape;
+            ReleaseDerived();
+            if (archetype == null)
+            {
+                return null;
+            }
+
+            generationProfile = archetype.Derive(seed, radius, gravity);
+            derivedArchetype = archetype;
+            derivedSeed = seed;
+            derivedRadius = radius;
+            derivedGravity = gravity;
+            SyncSubscriptions();
+            return generationProfile;
+        }
+
+        void ReleaseDerived()
+        {
+            generationProfile?.Release();
+            generationProfile = null;
+            derivedArchetype = null;
+            terrainRangeBaseRadius = -1f;
+        }
+
+        void SyncSubscriptions()
+        {
+            if (subscribedArchetype != archetype)
+            {
+                if (subscribedArchetype != null)
+                {
+                    subscribedArchetype.Changed -= HandleTemplateChanged;
+                }
+
+                subscribedArchetype = archetype;
+                if (subscribedArchetype != null)
+                {
+                    subscribedArchetype.Changed += HandleTemplateChanged;
+                }
+            }
+
+            CelestialShapeProfile shapeTemplate = archetype != null ? archetype.ShapeTemplate : null;
+            if (subscribedShapeTemplate == shapeTemplate)
+            {
+                return;
+            }
+
+            if (subscribedShapeTemplate != null)
+            {
+                subscribedShapeTemplate.Changed -= HandleTemplateChanged;
+            }
+
+            subscribedShapeTemplate = shapeTemplate;
+            if (subscribedShapeTemplate != null)
+            {
+                subscribedShapeTemplate.Changed += HandleTemplateChanged;
+            }
+        }
+
+        void UnsubscribeAll()
+        {
+            if (subscribedArchetype != null)
+            {
+                subscribedArchetype.Changed -= HandleTemplateChanged;
+                subscribedArchetype = null;
+            }
+
+            if (subscribedShapeTemplate != null)
+            {
+                subscribedShapeTemplate.Changed -= HandleTemplateChanged;
+                subscribedShapeTemplate = null;
+            }
+        }
+
+        void HandleTemplateChanged()
+        {
+            ReleaseDerived();
+            SyncSubscriptions();
             Changed?.Invoke();
         }
 
@@ -314,6 +425,7 @@ namespace Farion.Simulation.Planetary
             out PlanetSurfaceSample sample)
         {
             sample = default;
+            PlanetaryGenerationProfile generationProfile = ResolveGenerationProfile();
             PlanetGenerationContext context = CreateContext(source);
             CelestialSurfaceSample surface = BuildSurfaceGeometry(
                 source,
@@ -325,6 +437,7 @@ namespace Farion.Simulation.Planetary
 
             PlanetClimateSample climate = SampleClimate(
                 source,
+                generationProfile,
                 context,
                 localDirection,
                 terrainAltitude,
@@ -376,6 +489,7 @@ namespace Farion.Simulation.Planetary
         public PlanetGenerationContext CreateContext(CelestialBody sourceBody = null)
         {
             CelestialBody source = sourceBody != null ? sourceBody : ResolveBody();
+            PlanetaryGenerationProfile generationProfile = ResolveGenerationProfile();
             if (generationProfile == null)
             {
                 return PlanetGenerationContext.CreateDefault(0);
@@ -391,9 +505,10 @@ namespace Farion.Simulation.Planetary
         public void LogValidationReport()
         {
             CelestialBody source = ResolveBody();
+            PlanetaryGenerationProfile generationProfile = ResolveGenerationProfile();
             if (source == null || generationProfile == null)
             {
-                Debug.LogWarning($"{name}: planet surface validation skipped because body or generation profile is missing.", this);
+                Debug.LogWarning($"{name}: planet surface validation skipped because body or archetype is missing.", this);
                 return;
             }
 
@@ -422,6 +537,7 @@ namespace Farion.Simulation.Planetary
 
         PlanetClimateSample SampleClimate(
             CelestialBody sourceBody,
+            PlanetaryGenerationProfile generationProfile,
             PlanetGenerationContext context,
             Vector3 localDirection,
             float altitude,
@@ -515,9 +631,7 @@ namespace Farion.Simulation.Planetary
 
         CelestialShapeProfile ResolveShapeProfile()
         {
-            return generationProfile != null && generationProfile.ShapeProfile != null
-                ? generationProfile.ShapeProfile
-                : shapeProfile;
+            return ResolveGenerationProfile()?.ShapeProfile;
         }
 
         CelestialBody ResolveBody()

@@ -1,3 +1,4 @@
+using Farion.Simulation.Planetary;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -169,6 +170,14 @@ namespace Farion.Rendering.Celestial
             {
                 propertyBlock.SetTexture("_RockNormal", rockNormal);
             }
+        }
+
+        public TerrestrialSurfaceProfile CreateVariant(SurfaceVisualProfile visualProfile)
+        {
+            TerrestrialSurfaceProfile variant = ProfileVariants.Clone(this);
+            variant.surfaceVisualProfile = visualProfile;
+            variant.SyncSurfaceVisualProfileSubscription();
+            return variant;
         }
 
         void OnValidate()

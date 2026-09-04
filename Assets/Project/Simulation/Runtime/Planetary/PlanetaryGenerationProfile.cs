@@ -4,61 +4,84 @@ using UnityEngine;
 
 namespace Farion.Simulation.Planetary
 {
-    [CreateAssetMenu(menuName = "Farion/Simulation/Planetary/Generation Profile", fileName = "SO_PlanetaryGeneration")]
-    public sealed class PlanetaryGenerationProfile : ScriptableObject
+    public sealed class PlanetaryGenerationProfile
     {
-        [SerializeField] int planetSeed = 1001;
-        [SerializeField] PlanetType planetType = PlanetType.Rocky;
+        readonly string sourceName;
+        readonly List<ScriptableObject> ownedVariants;
 
-        [Header("Environment")]
-        [Min(0f)]
-        [SerializeField] float atmosphereDensity = 1f;
-        [Range(0f, 1f)]
-        [SerializeField] float backgroundRadiation = 0.05f;
+        public PlanetaryGenerationProfile(
+            string sourceName,
+            int planetSeed,
+            PlanetType planetType,
+            float atmosphereDensity,
+            float backgroundRadiation,
+            float atmosphereScale,
+            float atmosphereRadiusOffset,
+            CelestialShapeProfile shapeProfile,
+            PlanetClimateProfile climateProfile,
+            PlanetHydrosphereProfile hydrosphereProfile,
+            BiomeDistributionProfile biomeDistribution,
+            SurfaceMaterialDistributionProfile surfaceMaterialDistribution,
+            PlanetSurfaceStateProfile surfaceStateProfile,
+            TerrainFeatureDistributionProfile terrainFeatureDistribution,
+            List<ScriptableObject> ownedVariants = null)
+        {
+            this.sourceName = sourceName;
+            PlanetSeed = planetSeed;
+            PlanetType = planetType;
+            AtmosphereDensity = Mathf.Max(0f, atmosphereDensity);
+            BackgroundRadiation = Mathf.Clamp01(backgroundRadiation);
+            AtmosphereScale = Mathf.Max(0f, atmosphereScale);
+            AtmosphereRadiusOffset = Mathf.Max(0f, atmosphereRadiusOffset);
+            ShapeProfile = shapeProfile;
+            ClimateProfile = climateProfile;
+            HydrosphereProfile = hydrosphereProfile;
+            BiomeDistribution = biomeDistribution;
+            SurfaceMaterialDistribution = surfaceMaterialDistribution;
+            SurfaceStateProfile = surfaceStateProfile;
+            TerrainFeatureDistribution = terrainFeatureDistribution;
+            this.ownedVariants = ownedVariants ?? new List<ScriptableObject>();
+        }
 
-        [Header("Layers")]
-        [SerializeField] CelestialShapeProfile shapeProfile;
-        [SerializeField] PlanetClimateProfile climateProfile;
-        [SerializeField] PlanetHydrosphereProfile hydrosphereProfile;
-        [Tooltip("Atmosphere shell thickness as a fraction of the atmosphere base radius.")]
-        [Min(0f)]
-        [SerializeField] float atmosphereScale = 0.322f;
-        [Min(0f)]
-        [SerializeField] float atmosphereRadiusOffset;
-        [SerializeField] BiomeDistributionProfile biomeDistribution;
-        [SerializeField] SurfaceMaterialDistributionProfile surfaceMaterialDistribution;
-        [SerializeField] PlanetSurfaceStateProfile surfaceStateProfile;
-        [SerializeField] TerrainFeatureDistributionProfile terrainFeatureDistribution;
-
-        public int PlanetSeed => planetSeed;
-        public PlanetType PlanetType => planetType;
-        public float AtmosphereDensity => atmosphereDensity;
-        public bool HasAtmosphere => atmosphereDensity > 0f;
-        public float AtmosphereScale => Mathf.Max(0f, atmosphereScale);
-        public float AtmosphereRadiusOffset => Mathf.Max(0f, atmosphereRadiusOffset);
+        public int PlanetSeed { get; }
+        public PlanetType PlanetType { get; }
+        public float AtmosphereDensity { get; }
+        public bool HasAtmosphere => AtmosphereDensity > 0f;
+        public float AtmosphereScale { get; }
+        public float AtmosphereRadiusOffset { get; }
+        public float BackgroundRadiation { get; }
+        public CelestialShapeProfile ShapeProfile { get; }
+        public PlanetClimateProfile ClimateProfile { get; }
+        public PlanetHydrosphereProfile HydrosphereProfile { get; }
+        public BiomeDistributionProfile BiomeDistribution { get; }
+        public SurfaceMaterialDistributionProfile SurfaceMaterialDistribution { get; }
+        public PlanetSurfaceStateProfile SurfaceStateProfile { get; }
+        public TerrainFeatureDistributionProfile TerrainFeatureDistribution { get; }
         public bool SupportsSurfaceWaterClouds =>
             HasAtmosphere &&
-            hydrosphereProfile != null &&
-            hydrosphereProfile.HasSurfaceOcean &&
-            hydrosphereProfile.WaterAvailability > 0f;
-        public float BackgroundRadiation => backgroundRadiation;
-        public CelestialShapeProfile ShapeProfile => shapeProfile;
-        public PlanetClimateProfile ClimateProfile => climateProfile;
-        public PlanetHydrosphereProfile HydrosphereProfile => hydrosphereProfile;
-        public BiomeDistributionProfile BiomeDistribution => biomeDistribution;
-        public SurfaceMaterialDistributionProfile SurfaceMaterialDistribution => surfaceMaterialDistribution;
-        public PlanetSurfaceStateProfile SurfaceStateProfile => surfaceStateProfile;
-        public TerrainFeatureDistributionProfile TerrainFeatureDistribution => terrainFeatureDistribution;
+            HydrosphereProfile != null &&
+            HydrosphereProfile.HasSurfaceOcean &&
+            HydrosphereProfile.WaterAvailability > 0f;
 
         public PlanetGenerationContext CreateContext(float radius, float surfaceGravity)
         {
             return new PlanetGenerationContext(
-                planetSeed,
+                PlanetSeed,
                 radius,
                 surfaceGravity,
-                planetType,
-                atmosphereDensity,
-                backgroundRadiation);
+                PlanetType,
+                AtmosphereDensity,
+                BackgroundRadiation);
+        }
+
+        public void Release()
+        {
+            for (int i = 0; i < ownedVariants.Count; i++)
+            {
+                ProfileVariants.Destroy(ownedVariants[i]);
+            }
+
+            ownedVariants.Clear();
         }
 
         public void CollectValidationIssues(float radius, float surfaceGravity, List<PlanetGenerationValidationIssue> issues)
@@ -71,25 +94,30 @@ namespace Farion.Simulation.Planetary
             PlanetGenerationContext context = CreateContext(radius, surfaceGravity);
             CollectEnvironmentIssues(context, issues);
 
-            if (climateProfile == null)
+            if (ShapeProfile == null)
             {
-                issues.Add(PlanetGenerationValidationIssue.Error(name, "Climate profile is missing."));
+                issues.Add(PlanetGenerationValidationIssue.Error(sourceName, "Shape profile is missing."));
             }
 
-            if (biomeDistribution == null)
+            if (ClimateProfile == null)
             {
-                issues.Add(PlanetGenerationValidationIssue.Error(name, "Biome distribution profile is missing."));
+                issues.Add(PlanetGenerationValidationIssue.Error(sourceName, "Climate profile is missing."));
+            }
+
+            if (BiomeDistribution == null)
+            {
+                issues.Add(PlanetGenerationValidationIssue.Error(sourceName, "Biome distribution profile is missing."));
             }
             else
             {
                 List<BiomeDefinition> validatedBiomes = new();
                 CollectBiomeIssues(
-                    biomeDistribution.FallbackBiome,
+                    BiomeDistribution.FallbackBiome,
                     context,
                     issues,
                     validatedBiomes,
                     "Fallback biome");
-                foreach (BiomeDistributionRule rule in biomeDistribution.Rules)
+                foreach (BiomeDistributionRule rule in BiomeDistribution.Rules)
                 {
                     if (rule == null)
                     {
@@ -100,55 +128,49 @@ namespace Farion.Simulation.Planetary
                 }
             }
 
-            if (surfaceMaterialDistribution == null)
+            if (SurfaceMaterialDistribution == null)
             {
-                issues.Add(PlanetGenerationValidationIssue.Error(name, "Surface material distribution profile is missing."));
+                issues.Add(PlanetGenerationValidationIssue.Error(sourceName, "Surface material distribution profile is missing."));
             }
             else
             {
-                if (surfaceMaterialDistribution.FallbackMaterial == null)
+                if (SurfaceMaterialDistribution.FallbackMaterial == null)
                 {
                     issues.Add(PlanetGenerationValidationIssue.Error(
-                        surfaceMaterialDistribution.name,
+                        SurfaceMaterialDistribution.name,
                         "Surface material fallback is missing."));
                 }
 
-                foreach (SurfaceMaterialDistributionRule rule in surfaceMaterialDistribution.Rules)
+                foreach (SurfaceMaterialDistributionRule rule in SurfaceMaterialDistribution.Rules)
                 {
                     if (rule != null && rule.HasMissingMaterial())
                     {
                         issues.Add(PlanetGenerationValidationIssue.Error(
-                            surfaceMaterialDistribution.name,
+                            SurfaceMaterialDistribution.name,
                             "Surface material distribution contains an enabled rule without a material reference."));
                     }
                 }
             }
 
-            if (terrainFeatureDistribution == null)
+            if (TerrainFeatureDistribution == null)
             {
                 return;
             }
 
-            foreach (TerrainFeatureDistributionRule rule in terrainFeatureDistribution.Rules)
+            foreach (TerrainFeatureDistributionRule rule in TerrainFeatureDistribution.Rules)
             {
                 if (rule != null && rule.HasMissingFeature())
                 {
                     issues.Add(PlanetGenerationValidationIssue.Error(
-                        terrainFeatureDistribution.name,
+                        TerrainFeatureDistribution.name,
                         "Terrain feature distribution contains an enabled rule without a feature reference."));
                 }
             }
         }
 
-        void OnValidate()
-        {
-            atmosphereDensity = Mathf.Max(0f, atmosphereDensity);
-            backgroundRadiation = Mathf.Clamp01(backgroundRadiation);
-        }
-
         void CollectEnvironmentIssues(PlanetGenerationContext context, List<PlanetGenerationValidationIssue> issues)
         {
-            if (hydrosphereProfile == null || !hydrosphereProfile.HasSurfaceOcean)
+            if (HydrosphereProfile == null || !HydrosphereProfile.HasSurfaceOcean)
             {
                 return;
             }
@@ -156,14 +178,14 @@ namespace Farion.Simulation.Planetary
             if (!context.HasAtmosphere || context.AtmosphereDensity <= 0f)
             {
                 issues.Add(PlanetGenerationValidationIssue.Error(
-                    name,
+                    sourceName,
                     "Stable surface liquid is enabled but the generation environment has no atmosphere."));
             }
-            else if (context.SurfaceGravity < 0.2f && hydrosphereProfile.WaterAvailability > 0.1f)
+            else if (context.SurfaceGravity < 0.2f && HydrosphereProfile.WaterAvailability > 0.1f)
             {
                 issues.Add(PlanetGenerationValidationIssue.Warning(
-                    name,
-                    $"Surface gravity {context.SurfaceGravity:0.###} is very low for water availability {hydrosphereProfile.WaterAvailability:0.##}."));
+                    sourceName,
+                    $"Surface gravity {context.SurfaceGravity:0.###} is very low for water availability {HydrosphereProfile.WaterAvailability:0.##}."));
             }
         }
 

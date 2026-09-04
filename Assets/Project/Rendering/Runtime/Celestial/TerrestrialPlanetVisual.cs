@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Farion.Rendering.PostProcessing;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
@@ -27,7 +28,11 @@ namespace Farion.Rendering.Celestial
         [SerializeField] bool applyInEditMode = true;
         [SerializeField] bool applyOnEnable = true;
 
+        readonly List<SurfaceMaterialDefinition> materialScratch = new(SurfaceVisualProfile.MaxSurfaceSlots);
         TerrestrialPlanetVisualProfile subscribedProfile;
+        PlanetSurfaceModel subscribedSurfaceModel;
+        DerivedPlanetVisual derived;
+        int derivedSeed;
         CelestialFrameProvider frameProvider;
         CelestialOceanEffectData oceanEffect;
         int oceanEffectFrame = -1;
@@ -37,11 +42,12 @@ namespace Farion.Rendering.Celestial
 #endif
 
         public TerrestrialPlanetVisualProfile Profile => profile;
+        public DerivedPlanetVisual Derived => derived;
 
         void OnEnable()
         {
             ResolveComponents();
-            SyncProfileSubscription();
+            SyncSubscriptions();
             CelestialEffectRegistry.Register(this);
 
             if (applyOnEnable)
@@ -53,7 +59,7 @@ namespace Farion.Rendering.Celestial
         void OnValidate()
         {
             ResolveComponents();
-            SyncProfileSubscription();
+            SyncSubscriptions();
 
             if (!Application.isPlaying && applyInEditMode)
             {
@@ -64,13 +70,14 @@ namespace Farion.Rendering.Celestial
         void OnDisable()
         {
             CelestialEffectRegistry.Unregister(this);
-            UnsubscribeFromProfile();
+            Unsubscribe();
+            ReleaseDerived();
         }
 
         public bool TryGetOceanLevel(out float oceanLevel)
         {
             PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
-            if (profile == null || profile.OceanProfile == null || hydrosphere == null || !hydrosphere.HasSurfaceOcean)
+            if (derived == null || derived.OceanProfile == null || hydrosphere == null || !hydrosphere.HasSurfaceOcean)
             {
                 oceanLevel = 0f;
                 return false;
@@ -121,8 +128,8 @@ namespace Farion.Rendering.Celestial
             data = default;
 
             PlanetHydrosphereProfile hydrosphere = ResolveHydrosphere();
-            if (profile == null
-                || profile.OceanProfile == null
+            if (derived == null
+                || derived.OceanProfile == null
                 || hydrosphere == null
                 || !hydrosphere.HasSurfaceOcean)
             {
@@ -146,7 +153,7 @@ namespace Farion.Rendering.Celestial
         {
             data = default;
 
-            if (profile == null || profile.AtmosphereProfile == null || !HasSimulatedAtmosphere())
+            if (derived == null || derived.AtmosphereProfile == null || !HasSimulatedAtmosphere())
             {
                 return false;
             }
@@ -169,7 +176,7 @@ namespace Farion.Rendering.Celestial
                 bodyRadius * renderScale,
                 environment.AtmosphereBaseRadius * renderScale,
                 environment.AtmosphereRadius * renderScale,
-                profile.AtmosphereProfile,
+                derived.AtmosphereProfile,
                 oceanSurface);
             return true;
         }
@@ -181,8 +188,6 @@ namespace Farion.Rendering.Celestial
             float renderScale)
         {
             float bodyRadius = Mathf.Max(0.01f, sourceBody.Radius);
-            // Wave geometry is authored in simulation units, so it follows the same
-            // projection as the sphere for rendering, buoyancy, and atmosphere clipping.
             return new CelestialOceanEffectData(
                 renderCenter,
                 bodyRadius * renderScale,
@@ -191,9 +196,9 @@ namespace Farion.Rendering.Celestial
                 environment.WaveLength * renderScale,
                 environment.WavePhases,
                 Matrix4x4.Rotate(environment.WorldToBodyRotation),
-                profile.OceanProfile,
+                derived.OceanProfile,
                 environment.HasAtmosphere ? environment.AtmosphereRadius * renderScale : 0f,
-                environment.HasAtmosphere ? profile.AtmosphereProfile : null);
+                environment.HasAtmosphere ? derived.AtmosphereProfile : null);
         }
 
         public bool TryGetCloudEffectData(out CelestialCloudEffectData data)
@@ -204,11 +209,11 @@ namespace Farion.Rendering.Celestial
             PlanetaryGenerationProfile generation = surfaceModel != null
                 ? surfaceModel.GenerationProfile
                 : null;
-            if (profile == null
-                || profile.CloudProfile == null
-                || profile.CloudProfile.ShapeNoise == null
-                || profile.CloudProfile.DetailNoise == null
-                || profile.AtmosphereProfile == null
+            if (derived == null
+                || derived.CloudProfile == null
+                || derived.CloudProfile.ShapeNoise == null
+                || derived.CloudProfile.DetailNoise == null
+                || derived.AtmosphereProfile == null
                 || generation == null
                 || !generation.SupportsSurfaceWaterClouds)
             {
@@ -225,7 +230,7 @@ namespace Farion.Rendering.Celestial
 
             float surfaceRadius = environment.AtmosphereBaseRadius;
             float atmosphereRadius = environment.AtmosphereRadius;
-            profile.CloudProfile.GetLayerRadii(
+            derived.CloudProfile.GetLayerRadii(
                 surfaceRadius,
                 atmosphereRadius,
                 environment.TerrainRadiusMinMax.y,
@@ -241,8 +246,8 @@ namespace Farion.Rendering.Celestial
                 atmosphereRadius * renderScale,
                 Matrix4x4.Rotate(Quaternion.Inverse(sourceBody.transform.rotation)),
                 generation.PlanetSeed,
-                profile.CloudProfile,
-                profile.AtmosphereProfile);
+                derived.CloudProfile,
+                derived.AtmosphereProfile);
             return true;
         }
 
@@ -282,17 +287,47 @@ namespace Farion.Rendering.Celestial
         [ContextMenu("Apply Planet Visual Profile")]
         public void ApplyProfile()
         {
-            if (profile == null)
+            ResolveComponents();
+            PlanetaryGenerationProfile generation = surfaceModel != null
+                ? surfaceModel.GenerationProfile
+                : null;
+            if (profile == null || generation == null)
+            {
+                ReleaseDerived();
+                return;
+            }
+
+            if (derived != null && derivedSeed == generation.PlanetSeed)
             {
                 return;
             }
 
-            ResolveComponents();
+            ReleaseDerived();
+            materialScratch.Clear();
+            generation.SurfaceMaterialDistribution?.CollectMaterials(materialScratch);
+            derived = profile.Derive(generation.PlanetSeed, materialScratch);
+            derivedSeed = generation.PlanetSeed;
 
             if (terrainVisual != null)
             {
-                terrainVisual.Configure(profile.ShapeProfile, profile.SurfaceProfile);
+                terrainVisual.Configure(derived.SurfaceProfile);
             }
+        }
+
+        void ReleaseDerived()
+        {
+            if (derived == null)
+            {
+                return;
+            }
+
+            if (terrainVisual != null && terrainVisual.SurfaceProfile == derived.SurfaceProfile)
+            {
+                terrainVisual.Configure(null);
+            }
+
+            derived.Release();
+            derived = null;
         }
 
         void ResolveComponents()
@@ -329,40 +364,62 @@ namespace Farion.Rendering.Celestial
             return frameProvider;
         }
 
-        void SyncProfileSubscription()
+        void SyncSubscriptions()
         {
-            if (subscribedProfile == profile)
+            if (subscribedProfile != profile)
+            {
+                if (subscribedProfile != null)
+                {
+                    subscribedProfile.Changed -= HandleSourceChanged;
+                }
+
+                subscribedProfile = profile;
+                if (subscribedProfile != null)
+                {
+                    subscribedProfile.Changed += HandleSourceChanged;
+                }
+            }
+
+            if (subscribedSurfaceModel == surfaceModel)
             {
                 return;
             }
 
-            UnsubscribeFromProfile();
+            if (subscribedSurfaceModel != null)
+            {
+                subscribedSurfaceModel.Changed -= HandleSourceChanged;
+            }
 
-            subscribedProfile = profile;
+            subscribedSurfaceModel = surfaceModel;
+            if (subscribedSurfaceModel != null)
+            {
+                subscribedSurfaceModel.Changed += HandleSourceChanged;
+            }
+        }
+
+        void Unsubscribe()
+        {
             if (subscribedProfile != null)
             {
-                subscribedProfile.Changed += HandleProfileChanged;
+                subscribedProfile.Changed -= HandleSourceChanged;
+                subscribedProfile = null;
             }
-        }
 
-        void UnsubscribeFromProfile()
-        {
-            if (subscribedProfile == null)
+            if (subscribedSurfaceModel != null)
             {
-                return;
+                subscribedSurfaceModel.Changed -= HandleSourceChanged;
+                subscribedSurfaceModel = null;
             }
-
-            subscribedProfile.Changed -= HandleProfileChanged;
-            subscribedProfile = null;
         }
 
-        void HandleProfileChanged()
+        void HandleSourceChanged()
         {
             if (!isActiveAndEnabled)
             {
                 return;
             }
 
+            derivedSeed = int.MinValue;
             if (Application.isPlaying)
             {
                 ApplyProfile();

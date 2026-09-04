@@ -39,6 +39,15 @@ namespace Farion.Simulation.Planetary
         [Range(0f, 1f)]
         [SerializeField] float minimumSnowMoisture = 0.18f;
 
+        public float GlobalVolcanicActivity => globalVolcanicActivity;
+
+        internal PlanetSurfaceStateProfile CreateVariant(float volcanicActivity)
+        {
+            PlanetSurfaceStateProfile variant = ProfileVariants.Clone(this);
+            variant.globalVolcanicActivity = Mathf.Clamp01(volcanicActivity);
+            return variant;
+        }
+
         public PlanetSurfaceStateSample Evaluate(
             PlanetGenerationContext context,
             PlanetClimateSample climate,

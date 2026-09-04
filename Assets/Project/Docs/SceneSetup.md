@@ -350,13 +350,14 @@ not authored as visible child meshes by default.
 
 Assets created for this pass:
 
-- `Assets/Project/Design/Rendering/Celestial/SO_TerrestrialPlanetVisualProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_TemperatePlanetVisual.asset`
+- `Assets/Project/Design/Simulation/Planetary/SO_TemperateArchetype.asset`
 - `Assets/Project/Design/Simulation/Celestial/SO_ContinentRidgeShapeProfile.asset`
 - `Assets/Project/Design/Simulation/Celestial/SO_VolcanicRidgeShapeProfile.asset`
 - `Assets/Project/Design/Simulation/Celestial/SO_FrozenPlainsShapeProfile.asset`
 - `Assets/Project/Design/Rendering/Celestial/SO_TerrestrialSurfaceProfile.asset`
 - `Assets/Project/Design/Rendering/Celestial/SO_DefaultOceanProfile.asset`
-- `Assets/Project/Design/Rendering/Celestial/SO_DefaultAtmosphereProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_TemperateAtmosphereProfile.asset`
 - `Assets/Project/Art/Materials/Celestial/MAT_Celestial_Terrestrial.mat`
 - `Assets/Project/Art/Shaders/Celestial/FarionTerrestrialTriplanar.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionOceanPostProcess.shader`
@@ -365,8 +366,9 @@ Assets created for this pass:
 
 On `Test Planet`:
 
-1. Add `TerrestrialPlanetVisual`.
-2. Assign `SO_TerrestrialPlanetVisualProfile` to `Profile`.
+1. Add `PlanetSurfaceModel`, assign an archetype and pick a seed.
+2. Add `TerrestrialPlanetVisual` and assign the matching planet visual profile
+   (`SO_TemperatePlanetVisual` for the temperate archetype) to `Profile`.
 3. Assign the same body's `CelestialBodyVisual` to `Terrain Visual`.
 4. Do not add ocean or atmosphere mesh children. Those are rendered by the URP
    full screen pass from the profile data.
@@ -386,12 +388,23 @@ Texture inputs used by `SO_TerrestrialSurfaceProfile`:
   `Assets/Project/Art/Textures/Celestial/SurfaceMaterials`, not from a material-owned
   legacy snow normal.
 
-Each planet owns its own shape profile so terrain does not repeat across the
-system: `Starting Planet` uses `SO_ContinentRidgeShapeProfile`, `Ember` uses
-`SO_VolcanicRidgeShapeProfile`, and `Rime` uses `SO_FrozenPlainsShapeProfile`.
-`PlanetaryGenerationProfile > Shape Profile` is the authority; the
-`PlanetSurfaceModel` and `CelestialBodyVisual` fields are fallbacks that the
-generation profile overrides at rebuild.
+Nothing is authored per planet except `PlanetSurfaceModel > Archetype` and
+`Seed`. A `PlanetArchetype` (`Design/Simulation/Planetary/SO_*Archetype`) holds
+the class templates (shape, climate, hydrosphere, surface state) plus the
+biome and surface-material libraries and the seed ranges; `Derive(seed)` clones
+the templates, perturbs them, picks a biome subset with shifted climate bands
+and drops material rules gated to biomes the planet does not host. The same
+seed always yields the same planet, so only the seed travels over the network
+or into a save. `TerrestrialPlanetVisual > Profile` is the rendering half of
+the archetype (`SO_TemperatePlanetVisual`, `SO_VolcanicPlanetVisual`,
+`SO_FrozenPlanetVisual`): it clones the surface, ocean, atmosphere and cloud
+templates per planet, picks one texture variant per material from
+`SO_TerrestrialSurfaceVisualProfile` and applies seeded tints. Templates are
+never mutated; edit the `SO_*` assets and every planet of that class follows.
+`CelestialBodyVisual` reads the shape from the surface model and the surface
+profile from the planet visual, so it holds neither for terrestrial planets.
+Changing a seed invalidates the planet's baked surface maps: rerun
+`Farion > Authoring > Bake Planet Surface Maps`.
 
 The continent-ridge shape profile follows the Solar-System reference structure:
 
@@ -404,9 +417,9 @@ The continent-ridge shape profile follows the Solar-System reference structure:
   cubemaps and are independent from mesh LOD.
 
 The land shader still colors terrain below sea level for continuity under the
-screen-space ocean pass. Sea level is authored once on
-`SO_StartingOceanHydrosphere`; `SO_TerrestrialPlanetVisualProfile` owns only the
-ocean and atmosphere rendering styles.
+screen-space ocean pass. Sea level comes from the archetype's hydrosphere
+template (`SO_OceanHydrosphere`) and its `Ocean Level Range`; the planet visual
+profile owns only the ocean and atmosphere rendering styles.
 
 ### Ocean And Atmosphere Post-Process Setup
 
@@ -417,7 +430,7 @@ and ray-sphere intersection decide where water and air are visible.
 Assets created for the first pass:
 
 - `Assets/Project/Design/Rendering/Celestial/SO_DefaultOceanProfile.asset`
-- `Assets/Project/Design/Rendering/Celestial/SO_DefaultAtmosphereProfile.asset`
+- `Assets/Project/Design/Rendering/Celestial/SO_TemperateAtmosphereProfile.asset`
 - `Assets/Project/Art/Shaders/Celestial/FarionOceanPostProcess.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionAtmospherePostProcess.shader`
 - `Assets/Project/Art/Shaders/Celestial/FarionAtmosphereOpticalDepth.compute`
@@ -431,8 +444,8 @@ Renderer setup:
 5. Keep atmosphere immediately after ocean.
 6. Keep `Max Rendered Bodies` at `8` for now. Lower it only for profiling, not
    for visual tuning.
-7. Confirm `SO_TerrestrialPlanetVisualProfile` has `SO_DefaultOceanProfile`
-   and `SO_DefaultAtmosphereProfile` assigned.
+7. Confirm `SO_TemperatePlanetVisual` has `SO_DefaultOceanProfile`
+   and `SO_TemperateAtmosphereProfile` assigned.
 
 Texture inputs used by `SO_DefaultOceanProfile` and sampled by the screen-space
 ocean shader:
@@ -448,7 +461,7 @@ mipmapped, trilinear, and imported as normal maps.
 
 Useful first tuning values:
 
-- `Ocean Level`: tune this on `SO_TerrestrialPlanetVisualProfile`.
+- `Ocean Level`: tune the archetype's `Ocean Level Range`.
 - `Wave Strength`: `0.25` to `0.45`
 - `Smoothness`: `0.85` to `0.95`
 - `Specular Strength`: `1` to `2`
@@ -460,7 +473,7 @@ baked optical-depth lookup:
   density into a reusable floating-point lookup.
 - `FarionAtmospherePostProcess.shader` ray-marches visible atmosphere segments
   and uses the lookup for both view and star-ray extinction.
-- `SO_DefaultAtmosphereProfile` owns thickness, density falloff, wavelengths,
+- `SO_TemperateAtmosphereProfile` owns thickness, density falloff, wavelengths,
   scattering strength, sample counts, and dither controls.
 - Ray-march jitter uses URP's package-owned
   `Textures/BlueNoise256/LDR_LLL1_0`. Do not replace it with a color texture,
@@ -1028,10 +1041,11 @@ On the target planet:
 
 1. Add `PlanetSurfaceModel`.
 2. Assign the planet `CelestialBody` to `Body`.
-3. Assign `Assets/Project/Design/Simulation/Planetary/SO_StartingTemperateGeneration.asset`
-   to `Generation Profile`.
-4. Assign the same terrain shape profile used by the planet visual, or assign
-   it through `PlanetaryGenerationProfile > Shape Profile`.
+3. Assign a `PlanetArchetype` (for example
+   `Assets/Project/Design/Simulation/Planetary/SO_TemperateArchetype.asset`)
+   to `Archetype` and pick a `Seed`.
+4. The terrain shape comes from the archetype's shape template; nothing else
+   references a shape profile.
 5. Use `Log Generation Validation Report` after changing radius, gravity,
    atmosphere, climate, biome compatibility, or terrain-feature constraints.
 6. Use `CelestialBodyVisual > Log Biome Visual Coverage Report` to confirm

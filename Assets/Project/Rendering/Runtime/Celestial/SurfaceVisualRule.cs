@@ -32,5 +32,19 @@ namespace Farion.Rendering.Celestial
         public float Smoothness => Mathf.Clamp01(smoothness);
         public SurfaceTextureSet Textures => textures;
         public bool IsValid => material != null;
+
+        internal SurfaceVisualRule CreateTinted(float hueShiftDegrees, float valueScale)
+        {
+            return new SurfaceVisualRule
+            {
+                material = material,
+                flatLow = PaletteVariation.Shift(flatLow, hueShiftDegrees, valueScale),
+                flatHigh = PaletteVariation.Shift(flatHigh, hueShiftDegrees, valueScale),
+                steepLow = PaletteVariation.Shift(steepLow, hueShiftDegrees, valueScale),
+                steepHigh = PaletteVariation.Shift(steepHigh, hueShiftDegrees, valueScale),
+                smoothness = smoothness,
+                textures = textures
+            };
+        }
     }
 }

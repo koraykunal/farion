@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3330a7428b5577643992aae6259c2801, type: 3}
+  m_Name: SO_TemperateArchetype
+  m_EditorClassIdentifier: Farion.Simulation.Runtime::Farion.Simulation.Planetary.PlanetArchetype
+  planetType: 0
+  shapeProfile: {fileID: 11400000, guid: 431d0cd9e55f484daec4e8ddcba1df7e, type: 2}
+  climateProfile: {fileID: 11400000, guid: 7c1e33701c6d4faca01a7ac757bf15d2, type: 2}
+  hydrosphereProfile: {fileID: 11400000, guid: fa1df639bd7d49e9a30a3899792992b9, type: 2}
+  surfaceStateProfile: {fileID: 11400000, guid: 8adab63ade6e43f3abd7e77d8a39b236, type: 2}
+  terrainFeatureDistribution: {fileID: 11400000, guid: d3b790e53dc1477bade83a720ca33497, type: 2}
+  biomeLibrary: {fileID: 11400000, guid: 83c0574c55824b2a89de93b4961be369, type: 2}
+  surfaceMaterialLibrary: {fileID: 11400000, guid: 839d5db2f61a4370b7fa451e26656a6b, type: 2}
+  atmosphereDensityRange: {x: 0.85, y: 1.15}
+  backgroundRadiationRange: {x: 0.05, y: 0.15}
+  atmosphereScale: 0.21872583
+  atmosphereRadiusOffset: 0
+  temperatureBiasRange: {x: -6, y: 6}
+  precipitationBiasRange: {x: -0.08, y: 0.08}
+  oceanLevelRange: {x: 0.44, y: 0.56}
+  waterAvailabilityRange: {x: 0.3, y: 0.55}
+  volcanicActivityRange: {x: 0.04, y: 0.2}
+  elevationScaleRange: {x: 0.8, y: 1.25}
+  biomeCountRange: {x: 3, y: 4}
+  biomeTemperatureShiftCelsius: 6
+  biomeAridityShift: 0.1

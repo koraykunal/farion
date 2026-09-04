@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3f68ace99ea42da941acce1ff8cadda, type: 3}
   m_Name: SO_TerrestrialSurfaceVisualProfile
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   blendStrength: 0.92
   surfaceMapResolution: 64
   rules:
@@ -76,14 +76,14 @@ MonoBehaviour:
     steepHigh: {r: 0.08, g: 0.09, b: 0.07, a: 1}
     smoothness: 0.24
     textures:
-      baseColor: {fileID: 2800000, guid: 97a0ec9637cac25418cf272efd740d13, type: 3}
-      normal: {fileID: 2800000, guid: 6a413622dc6094c478dacd1430cc751f, type: 3}
-      roughness: {fileID: 2800000, guid: bdfad132180197a43a754c8fd0668d59, type: 3}
-      ambientOcclusion: {fileID: 2800000, guid: aa50d8cb6e326b041b72047743157f4b, type: 3}
-      height: {fileID: 2800000, guid: 1729fad6090d09a4bbb22048b6d5d4a5, type: 3}
+      baseColor: {fileID: 2800000, guid: 0abaa09f50a27fc419e3dce7f3ef6bb0, type: 3}
+      normal: {fileID: 2800000, guid: 9e53c750bd5123645b11c3e83da6db04, type: 3}
+      roughness: {fileID: 2800000, guid: b576f1f71487b1b4697763e3c8b1a957, type: 3}
+      ambientOcclusion: {fileID: 2800000, guid: 6f88cd1c0b397a541995a6c68eb29512, type: 3}
+      height: {fileID: 2800000, guid: 9b07fb68833c8624ea69ad1e978868a6, type: 3}
       emission: {fileID: 0}
-      worldTileSize: 5
-      normalStrength: 0.95
+      worldTileSize: 6
+      normalStrength: 1
       heightStrength: 0.1
       emissionTint: {r: 1, g: 1, b: 1, a: 1}
       emissionStrength: 0
@@ -103,5 +103,23 @@ MonoBehaviour:
       worldTileSize: 6.5
       normalStrength: 0.85
       heightStrength: 0.09
+      emissionTint: {r: 1, g: 1, b: 1, a: 1}
+      emissionStrength: 0
+  - material: {fileID: 11400000, guid: c072ae3d5a645b1408d4ff204077abd8, type: 2}
+    flatLow: {r: 0.52, g: 0.56, b: 0.6, a: 1}
+    flatHigh: {r: 0.86, g: 0.9, b: 0.94, a: 1}
+    steepLow: {r: 0.3, g: 0.32, b: 0.35, a: 1}
+    steepHigh: {r: 0.14, g: 0.15, b: 0.17, a: 1}
+    smoothness: 0.2
+    textures:
+      baseColor: {fileID: 2800000, guid: 83d60c93d63602e49bc7959e7d355a69, type: 3}
+      normal: {fileID: 2800000, guid: 3d6acf74515e4174a9cc999390507655, type: 3}
+      roughness: {fileID: 2800000, guid: fe03c254dc86bf94ba10c87d4ac8c3b8, type: 3}
+      ambientOcclusion: {fileID: 2800000, guid: 2628baa1aee025a42b7f763daddb0f2b, type: 3}
+      height: {fileID: 2800000, guid: 7c339be6d472bf3449c8ccf36814f7e4, type: 3}
+      emission: {fileID: 0}
+      worldTileSize: 8
+      normalStrength: 1
+      heightStrength: 0.1
       emissionTint: {r: 1, g: 1, b: 1, a: 1}
       emissionStrength: 0

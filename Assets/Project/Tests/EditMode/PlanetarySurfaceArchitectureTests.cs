@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Farion.Rendering.Celestial;
+using Farion.Simulation.Celestial;
 using Farion.Simulation.Planetary;
 using Farion.Tests.Support;
 using NUnit.Framework;
@@ -190,9 +191,8 @@ namespace Farion.Tests.EditMode
         [Test]
         public void SurfaceWaterClouds_RequireAtmosphereOceanAndAvailableWater()
         {
-            PlanetaryGenerationProfile generation = Create<PlanetaryGenerationProfile>();
             PlanetHydrosphereProfile hydrosphere = Create<PlanetHydrosphereProfile>();
-            TestFieldAccess.SetField(generation, "hydrosphereProfile", hydrosphere);
+            PlanetaryGenerationProfile generation = CreateGeneration(1f, hydrosphere);
 
             Assert.That(generation.SupportsSurfaceWaterClouds, Is.True);
 
@@ -204,8 +204,170 @@ namespace Farion.Tests.EditMode
             Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
 
             TestFieldAccess.SetField(hydrosphere, "waterAvailability", 0.4f);
-            TestFieldAccess.SetField(generation, "atmosphereDensity", 0f);
-            Assert.That(generation.SupportsSurfaceWaterClouds, Is.False);
+            Assert.That(CreateGeneration(0f, hydrosphere).SupportsSurfaceWaterClouds, Is.False);
+        }
+
+        [Test]
+        public void PlanetArchetype_DerivesTheSamePlanetForTheSameSeedAndDifferentPlanetsAcrossSeeds()
+        {
+            PlanetArchetype archetype = CreateArchetype(out BiomeDefinition gatedBiome);
+
+            PlanetaryGenerationProfile first = archetype.Derive(11, 64f, 9.81f);
+            PlanetaryGenerationProfile repeat = archetype.Derive(11, 64f, 9.81f);
+
+            Assert.That(first.BiomeDistribution.Rules.Count, Is.InRange(2, 3));
+            Assert.That(BiomeNames(first), Is.EqualTo(BiomeNames(repeat)));
+            Assert.That(first.HydrosphereProfile.OceanLevel, Is.EqualTo(repeat.HydrosphereProfile.OceanLevel));
+            Assert.That(
+                first.ClimateProfile.ThermalProfile.DesignTemperatureBiasCelsius,
+                Is.EqualTo(repeat.ClimateProfile.ThermalProfile.DesignTemperatureBiasCelsius));
+            Assert.That(first.ShapeProfile, Is.Not.SameAs(archetype.ShapeTemplate));
+            Assert.That(first.HydrosphereProfile.OceanLevel, Is.InRange(0.3f, 0.7f));
+
+            bool hostsGatedBiome = false;
+            foreach (BiomeDistributionRule rule in first.BiomeDistribution.Rules)
+            {
+                hostsGatedBiome |= rule.Biome == gatedBiome;
+            }
+
+            bool hasGatedMaterialRule = false;
+            foreach (SurfaceMaterialDistributionRule rule in first.SurfaceMaterialDistribution.Rules)
+            {
+                hasGatedMaterialRule |= rule.Material.name == "gated";
+            }
+
+            Assert.That(hasGatedMaterialRule, Is.EqualTo(hostsGatedBiome));
+
+            HashSet<string> biomeSets = new();
+            HashSet<float> oceanLevels = new();
+            for (int seed = 1; seed <= 24; seed++)
+            {
+                PlanetaryGenerationProfile derived = archetype.Derive(seed, 64f, 9.81f);
+                biomeSets.Add(BiomeNames(derived));
+                oceanLevels.Add(derived.HydrosphereProfile.OceanLevel);
+                derived.Release();
+            }
+
+            Assert.That(biomeSets.Count, Is.GreaterThan(3));
+            Assert.That(oceanLevels.Count, Is.GreaterThan(10));
+
+            first.Release();
+            repeat.Release();
+        }
+
+        [Test]
+        public void SurfaceVisualProfile_VariantFollowsMaterialOrderAndPicksOneRulePerMaterial()
+        {
+            SurfaceMaterialDefinition rock = Create<SurfaceMaterialDefinition>();
+            SurfaceMaterialDefinition sand = Create<SurfaceMaterialDefinition>();
+            TestFieldAccess.SetField(rock, "materialId", "rock");
+            TestFieldAccess.SetField(sand, "materialId", "sand");
+            SurfaceVisualProfile library = Create<SurfaceVisualProfile>();
+            TestFieldAccess.SetField(library, "rules", new List<SurfaceVisualRule>
+            {
+                CreateVisualRule(rock, Color.red),
+                CreateVisualRule(rock, Color.green),
+                CreateVisualRule(sand, Color.yellow)
+            });
+
+            SurfaceVisualProfile variant = library.CreateVariant(new[] { sand, rock }, 5, 0f, 0f);
+            createdObjects.Add(variant);
+            HashSet<Color> rockPicks = new();
+            for (int seed = 1; seed <= 16; seed++)
+            {
+                SurfaceVisualProfile other = library.CreateVariant(new[] { rock }, seed, 0f, 0f);
+                rockPicks.Add(other.Rules[0].FlatLow);
+                Object.DestroyImmediate(other);
+            }
+
+            Assert.That(variant.Rules.Count, Is.EqualTo(2));
+            Assert.That(variant.ResolveMaterialIndex(sand), Is.EqualTo(0));
+            Assert.That(variant.ResolveMaterialIndex(rock), Is.EqualTo(1));
+            Assert.That(rockPicks.Count, Is.EqualTo(2));
+        }
+
+        static string BiomeNames(PlanetaryGenerationProfile generation)
+        {
+            List<string> names = new();
+            foreach (BiomeDistributionRule rule in generation.BiomeDistribution.Rules)
+            {
+                names.Add(rule.Biome.name);
+            }
+
+            return string.Join(",", names);
+        }
+
+        static SurfaceVisualRule CreateVisualRule(SurfaceMaterialDefinition material, Color color)
+        {
+            SurfaceVisualRule rule = new();
+            TestFieldAccess.SetField(rule, "material", material);
+            TestFieldAccess.SetField(rule, "flatLow", color);
+            return rule;
+        }
+
+        PlanetArchetype CreateArchetype(out BiomeDefinition gatedBiome)
+        {
+            BiomeDistributionProfile biomes = Create<BiomeDistributionProfile>();
+            TestFieldAccess.SetField(biomes, "fallbackBiome", Create<BiomeDefinition>());
+            List<BiomeDistributionRule> biomeRules = new();
+            BiomeDefinition[] definitions = new BiomeDefinition[5];
+            for (int i = 0; i < definitions.Length; i++)
+            {
+                definitions[i] = Create<BiomeDefinition>();
+                definitions[i].name = "biome" + i;
+                BiomeDistributionRule rule = new();
+                TestFieldAccess.SetField(rule, "biome", definitions[i]);
+                biomeRules.Add(rule);
+            }
+
+            TestFieldAccess.SetField(biomes, "rules", biomeRules);
+            gatedBiome = definitions[4];
+
+            SurfaceMaterialDefinition fallback = Create<SurfaceMaterialDefinition>();
+            SurfaceMaterialDefinition gated = Create<SurfaceMaterialDefinition>();
+            gated.name = "gated";
+            SurfaceMaterialDistributionProfile materials = Create<SurfaceMaterialDistributionProfile>();
+            TestFieldAccess.SetField(materials, "fallbackMaterial", fallback);
+            SurfaceMaterialDistributionRule open = new();
+            TestFieldAccess.SetField(open, "material", fallback);
+            SurfaceMaterialDistributionRule gatedRule = new();
+            TestFieldAccess.SetField(gatedRule, "material", gated);
+            TestFieldAccess.SetField(gatedRule, "allowedBiomes", new List<BiomeDefinition> { gatedBiome });
+            TestFieldAccess.SetField(materials, "rules", new List<SurfaceMaterialDistributionRule> { open, gatedRule });
+
+            PlanetClimateProfile climate = Create<PlanetClimateProfile>();
+            TestFieldAccess.SetField(climate, "thermalProfile", Create<PlanetThermalProfile>());
+
+            PlanetArchetype archetype = Create<PlanetArchetype>();
+            TestFieldAccess.SetField(archetype, "shapeProfile", Create<ContinentRidgeShapeProfile>());
+            TestFieldAccess.SetField(archetype, "climateProfile", climate);
+            TestFieldAccess.SetField(archetype, "hydrosphereProfile", Create<PlanetHydrosphereProfile>());
+            TestFieldAccess.SetField(archetype, "surfaceStateProfile", Create<PlanetSurfaceStateProfile>());
+            TestFieldAccess.SetField(archetype, "biomeLibrary", biomes);
+            TestFieldAccess.SetField(archetype, "surfaceMaterialLibrary", materials);
+            TestFieldAccess.SetField(archetype, "oceanLevelRange", new Vector2(0.3f, 0.7f));
+            TestFieldAccess.SetField(archetype, "temperatureBiasRange", new Vector2(-10f, 10f));
+            TestFieldAccess.SetField(archetype, "biomeCountRange", new Vector2Int(2, 3));
+            return archetype;
+        }
+
+        static PlanetaryGenerationProfile CreateGeneration(float atmosphereDensity, PlanetHydrosphereProfile hydrosphere)
+        {
+            return new PlanetaryGenerationProfile(
+                "test",
+                1,
+                PlanetType.Rocky,
+                atmosphereDensity,
+                0.05f,
+                0.3f,
+                0f,
+                null,
+                null,
+                hydrosphere,
+                null,
+                null,
+                null,
+                null);
         }
 
         static PlanetClimateSample CreateClimate(PlanetGenerationContext context)

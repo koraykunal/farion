@@ -25,6 +25,14 @@ namespace Farion.Simulation.Planetary
         [SerializeField] Vector2 temperatureRangeCelsius = new(-220f, 180f);
 
         public float BondAlbedo => Mathf.Clamp01(bondAlbedo);
+        public float DesignTemperatureBiasCelsius => designTemperatureBiasCelsius;
+
+        internal PlanetThermalProfile CreateVariant(float temperatureBiasCelsius)
+        {
+            PlanetThermalProfile variant = ProfileVariants.Clone(this);
+            variant.designTemperatureBiasCelsius += temperatureBiasCelsius;
+            return variant;
+        }
 
         void OnValidate()
         {

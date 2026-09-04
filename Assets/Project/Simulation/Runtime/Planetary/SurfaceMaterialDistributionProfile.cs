@@ -50,6 +50,24 @@ namespace Farion.Simulation.Planetary
             return material == null && selectionPriority > 0f;
         }
 
+        internal bool AllowsAnyOf(IReadOnlyList<BiomeDefinition> biomes)
+        {
+            if (allowedBiomes == null || allowedBiomes.Count == 0)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < biomes.Count; i++)
+            {
+                if (allowedBiomes.Contains(biomes[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         bool AllowsBiome(BiomeDefinition biome)
         {
             return allowedBiomes == null
@@ -86,6 +104,31 @@ namespace Farion.Simulation.Planetary
         public float RadiationBlend => Mathf.Clamp(radiationBlend, 0f, 0.5f);
         public float NoiseBlend => Mathf.Clamp(noiseBlend, 0f, 0.5f);
         public IReadOnlyList<SurfaceMaterialDistributionRule> Rules => rules;
+
+        internal SurfaceMaterialDistributionProfile CreateVariant(List<SurfaceMaterialDistributionRule> selectedRules)
+        {
+            SurfaceMaterialDistributionProfile variant = ProfileVariants.Clone(this);
+            variant.rules = selectedRules;
+            return variant;
+        }
+
+        public void CollectMaterials(List<SurfaceMaterialDefinition> results)
+        {
+            results.Clear();
+            if (fallbackMaterial != null)
+            {
+                results.Add(fallbackMaterial);
+            }
+
+            for (int i = 0; i < rules.Count; i++)
+            {
+                SurfaceMaterialDefinition material = rules[i]?.Material;
+                if (material != null && !results.Contains(material))
+                {
+                    results.Add(material);
+                }
+            }
+        }
 
         public SurfaceMaterialSample SampleDominant(
             PlanetGenerationContext context,

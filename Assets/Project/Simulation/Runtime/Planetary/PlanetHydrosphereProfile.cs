@@ -37,6 +37,18 @@ namespace Farion.Simulation.Planetary
         public float WaveLength => Mathf.Max(0.1f, waveLength);
         public float WaveSpeed => Mathf.Max(0f, waveSpeed);
 
+        internal PlanetHydrosphereProfile CreateVariant(float newOceanLevel, float newWaterAvailability)
+        {
+            PlanetHydrosphereProfile variant = ProfileVariants.Clone(this);
+            if (hasSurfaceOcean)
+            {
+                variant.oceanLevel = Mathf.Clamp01(newOceanLevel);
+                variant.waterAvailability = Mathf.Clamp01(newWaterAvailability);
+            }
+
+            return variant;
+        }
+
         void OnValidate()
         {
             oceanLevel = Mathf.Clamp01(oceanLevel);

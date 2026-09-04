@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Farion.Simulation.Planetary;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
@@ -92,6 +93,17 @@ namespace Farion.Rendering.Celestial
         public Texture2D BlueNoise => blueNoise;
 
         static readonly Vector3 OzoneAbsorptionShape = new(0.346f, 1f, 0.045f);
+
+        public CelestialAtmosphereProfile CreateVariant(Vector3 wavelengthShift, float scatteringScale)
+        {
+            CelestialAtmosphereProfile variant = ProfileVariants.Clone(this);
+            variant.wavelengths = new Vector3(
+                Mathf.Max(1f, wavelengths.x + wavelengthShift.x),
+                Mathf.Max(1f, wavelengths.y + wavelengthShift.y),
+                Mathf.Max(1f, wavelengths.z + wavelengthShift.z));
+            variant.scatteringStrength = Mathf.Max(0f, scatteringStrength * scatteringScale);
+            return variant;
+        }
 
         public Vector3 GetScatteringCoefficients()
         {

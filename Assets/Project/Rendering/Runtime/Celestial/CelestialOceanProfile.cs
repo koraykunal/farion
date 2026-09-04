@@ -1,3 +1,4 @@
+using Farion.Simulation.Planetary;
 using UnityEngine;
 
 namespace Farion.Rendering.Celestial
@@ -62,6 +63,16 @@ namespace Farion.Rendering.Celestial
         [SerializeField] float scatterStrength = 0.55f;
 
         public event System.Action Changed;
+
+        public CelestialOceanProfile CreateVariant(float hueShiftDegrees)
+        {
+            CelestialOceanProfile variant = ProfileVariants.Clone(this);
+            variant.deepColor = PaletteVariation.Shift(deepColor, hueShiftDegrees, 1f);
+            variant.shallowColor = PaletteVariation.Shift(shallowColor, hueShiftDegrees, 1f);
+            variant.underwaterColor = PaletteVariation.Shift(underwaterColor, hueShiftDegrees, 1f);
+            variant.fresnelColor = PaletteVariation.Shift(fresnelColor, hueShiftDegrees, 1f);
+            return variant;
+        }
 
         public Color DeepColor => deepColor;
         public Color ShallowColor => shallowColor;

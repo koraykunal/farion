@@ -21,7 +21,7 @@ namespace Farion.Rendering.Celestial
         [Header("Source")]
         [SerializeField] CelestialBody body;
         [SerializeField] PlanetSurfaceModel surfaceModel;
-        [SerializeField] CelestialShapeProfile shapeProfile;
+        [Tooltip("Simple bodies keep their surface profile here. Terrestrial planets get a seed-derived one from TerrestrialPlanetVisual instead.")]
         [SerializeField] CelestialSurfaceProfileBase surfaceProfile;
         [Tooltip("Editor-baked surface weight maps. When set, the multi-second runtime bake at scene load is skipped entirely.")]
         [SerializeField] PlanetSurfaceMapSet bakedSurfaceMaps;
@@ -51,6 +51,7 @@ namespace Farion.Rendering.Celestial
         Mesh[] renderMeshes;
         PlanetSurfaceWeightMap surfaceWeightMap;
         MaterialPropertyBlock propertyBlock;
+        CelestialShapeProfile shapeProfile;
         PlanetSurfaceModel subscribedSurfaceModel;
         CelestialShapeProfile subscribedShapeProfile;
         CelestialSurfaceProfileBase subscribedSurfaceProfile;
@@ -83,29 +84,38 @@ namespace Farion.Rendering.Celestial
         public event System.Action Rebuilt;
         public event System.Action MaterialPropertiesChanged;
 
-        public void Configure(
-            CelestialShapeProfile newShapeProfile,
-            CelestialSurfaceProfileBase newSurfaceProfile,
-            bool rebuild = true)
+        public void Configure(CelestialSurfaceProfileBase newSurfaceProfile)
         {
-            bool profilesChanged = shapeProfile != newShapeProfile || surfaceProfile != newSurfaceProfile;
-            shapeProfile = newShapeProfile;
-            surfaceProfile = newSurfaceProfile;
-            if (profilesChanged)
+            if (surfaceProfile == newSurfaceProfile)
             {
-                material = null;
+                if (terrainMeshRenderer != null)
+                {
+                    RefreshMaterialProperties();
+                }
+
+                return;
             }
 
+            bool geometryChanged = SurfaceProfileCanAffectGeometry();
+            surfaceProfile = newSurfaceProfile;
+            material = null;
+            geometryChanged |= SurfaceProfileCanAffectGeometry();
             SyncProfileSubscriptions();
 
-            if (rebuild && profilesChanged)
+            if (geometryChanged || renderMeshes == null)
             {
                 Rebuild();
+                return;
             }
-            else if (terrainMeshRenderer != null)
+
+            RebuildSurfaceWeightMap();
+            Material resolvedMaterial = ResolveMaterial();
+            if (terrainMeshRenderer != null && resolvedMaterial != null)
             {
-                RefreshMaterialProperties();
+                terrainMeshRenderer.sharedMaterial = resolvedMaterial;
             }
+
+            RefreshMaterialProperties();
         }
 
         void OnEnable()
@@ -204,11 +214,8 @@ namespace Farion.Rendering.Celestial
             }
 #endif
             ResolveSurfaceModel();
+            shapeProfile = surfaceModel != null ? surfaceModel.ShapeProfile : null;
             SyncProfileSubscriptions();
-            if (surfaceModel != null && surfaceModel.ShapeProfile != null)
-            {
-                shapeProfile = surfaceModel.ShapeProfile;
-            }
 
             ApplyAuthoringCleanup(sourceBody);
 

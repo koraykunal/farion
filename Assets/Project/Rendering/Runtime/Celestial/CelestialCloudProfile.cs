@@ -1,3 +1,4 @@
+using Farion.Simulation.Planetary;
 using UnityEngine;
 
 namespace Farion.Rendering.Celestial
@@ -68,6 +69,13 @@ namespace Farion.Rendering.Celestial
         public Vector4 ShapeWeights => shapeWeights;
         public Vector3 DetailWeights => detailWeights;
         public float Coverage => coverage;
+
+        public CelestialCloudProfile CreateVariant(float coverageScale)
+        {
+            CelestialCloudProfile variant = ProfileVariants.Clone(this);
+            variant.coverage = Mathf.Clamp01(coverage * coverageScale);
+            return variant;
+        }
         public float DensityMultiplier => densityMultiplier;
         public float DetailErosion => detailErosion;
         public float LightAbsorptionThroughCloud => lightAbsorptionThroughCloud;

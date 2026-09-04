@@ -46,14 +46,12 @@
             "Assets/Project/Design/Rendering/Celestial/SO_CelestialSurfacePatchProfile.asset";
         public const string MoonSurfaceProfile =
             "Assets/Project/Design/Rendering/Celestial/SO_MoonSurfaceProfile.asset";
-        public const string TerrestrialPlanetVisualProfile =
-            "Assets/Project/Design/Rendering/Celestial/SO_TerrestrialPlanetVisualProfile.asset";
         public const string TerrestrialSurfaceProfile =
             "Assets/Project/Design/Rendering/Celestial/SO_TerrestrialSurfaceProfile.asset";
         public const string StarVisualProfile =
             "Assets/Project/Design/Rendering/Celestial/SO_StartingStarVisualProfile.asset";
-        public const string PlanetaryGenerationProfile =
-            "Assets/Project/Design/Simulation/Planetary/SO_StartingTemperateGeneration.asset";
+        public const string CrateredArchetype =
+            "Assets/Project/Design/Simulation/Planetary/SO_CrateredArchetype.asset";
 
         public const string ItemIconFolder = "Assets/Project/Art/Icons/Items/";
         public const string CelestialMoonTextureFolder = "Assets/Project/Art/Textures/Celestial/Moon/";

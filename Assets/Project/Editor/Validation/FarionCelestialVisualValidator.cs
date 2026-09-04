@@ -19,14 +19,10 @@ namespace Farion.Editor.Validation
             FarionAssetPaths.TerrestrialSurfaceProfile;
         const string MoonSurfaceProfilePath =
             FarionAssetPaths.MoonSurfaceProfile;
-        const string PlanetVisualProfilePath =
-            FarionAssetPaths.TerrestrialPlanetVisualProfile;
         const string SurfacePatchProfilePath =
             FarionAssetPaths.SurfacePatchProfile;
         const string StarVisualProfilePath =
             FarionAssetPaths.StarVisualProfile;
-        const string PlanetaryGenerationProfilePath =
-            FarionAssetPaths.PlanetaryGenerationProfile;
 
         const string TerrestrialShaderName = "Farion/Celestial/Terrestrial Triplanar";
         const string MoonShaderName = "Farion/Celestial/Moon Triplanar";
@@ -42,8 +38,8 @@ namespace Farion.Editor.Validation
         {
             ValidateRendererData(report);
             ValidateSurfaceProfiles(report);
-            ValidatePlanetaryGenerationProfile(report);
-            ValidatePlanetVisualProfile(report);
+            ValidatePlanetArchetypes(report);
+            ValidatePlanetVisualProfiles(report);
             LoadRequired<CelestialSurfacePatchProfile>(SurfacePatchProfilePath, report);
             ValidateStarVisualProfile(report);
         }
@@ -62,6 +58,13 @@ namespace Farion.Editor.Validation
             if (gameObject.TryGetComponent(out TerrestrialPlanetVisual planetVisual))
             {
                 ValidatePlanetVisual(planetVisual, scenePath, report);
+            }
+
+            if (gameObject.TryGetComponent(out PlanetSurfaceModel surfaceModel) &&
+                surfaceModel.Archetype == null)
+            {
+                report.AddError(
+                    $"{scenePath}: {GetHierarchyPath(surfaceModel.transform)} has no planet archetype.");
             }
 
             if (gameObject.TryGetComponent(out CelestialSurfacePatchSystem patchSystem))
@@ -285,25 +288,32 @@ namespace Farion.Editor.Validation
             }
         }
 
-        static void ValidatePlanetVisualProfile(FarionValidationReport report)
+        static void ValidatePlanetVisualProfiles(FarionValidationReport report)
         {
-            TerrestrialPlanetVisualProfile profile =
-                LoadRequired<TerrestrialPlanetVisualProfile>(
-                    PlanetVisualProfilePath,
+            string[] guids = AssetDatabase.FindAssets("t:TerrestrialPlanetVisualProfile");
+            if (guids.Length == 0)
+            {
+                report.AddError("No terrestrial planet visual profile asset exists.");
+            }
+
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                ValidatePlanetVisualProfile(
+                    path,
+                    AssetDatabase.LoadAssetAtPath<TerrestrialPlanetVisualProfile>(path),
                     report);
-            if (profile == null)
-            {
-                return;
             }
+        }
 
-            if (profile.ShapeProfile == null)
-            {
-                report.AddError($"{PlanetVisualProfilePath}: shape profile is missing.");
-            }
-
+        static void ValidatePlanetVisualProfile(
+            string path,
+            TerrestrialPlanetVisualProfile profile,
+            FarionValidationReport report)
+        {
             if (profile.SurfaceProfile == null)
             {
-                report.AddError($"{PlanetVisualProfilePath}: surface profile is missing.");
+                report.AddError($"{path}: surface profile is missing.");
             }
 
             if (profile.OceanProfile != null)
@@ -314,14 +324,14 @@ namespace Farion.Editor.Validation
                     TextureImporterType.NormalMap,
                     expectedSrgb: false,
                     requireSquare: true,
-                    $"{PlanetVisualProfilePath}: wave normal A",
+                    $"{path}: wave normal A",
                     report);
                 ValidateTexture(
                     ocean.WaveNormalB,
                     TextureImporterType.NormalMap,
                     expectedSrgb: false,
                     requireSquare: true,
-                    $"{PlanetVisualProfilePath}: wave normal B",
+                    $"{path}: wave normal B",
                     report);
             }
 
@@ -329,20 +339,20 @@ namespace Farion.Editor.Validation
             if (atmosphere == null)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: atmosphere profile is missing.");
+                    $"{path}: atmosphere profile is missing.");
                 return;
             }
 
             if (atmosphere.OpticalDepthCompute == null)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: atmosphere optical-depth compute shader is missing.");
+                    $"{path}: atmosphere optical-depth compute shader is missing.");
             }
 
             if (atmosphere.BlueNoise == null)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: atmosphere blue-noise texture is missing.");
+                    $"{path}: atmosphere blue-noise texture is missing.");
                 return;
             }
 
@@ -350,7 +360,7 @@ namespace Farion.Editor.Validation
             if (!blueNoisePath.StartsWith(UrpBlueNoiseRoot, StringComparison.Ordinal))
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: atmosphere blue noise must use URP's " +
+                    $"{path}: atmosphere blue noise must use URP's " +
                     $"BlueNoise256 set, found '{blueNoisePath}'.");
             }
 
@@ -358,12 +368,12 @@ namespace Farion.Editor.Validation
             if (clouds == null)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: cloud profile is missing.");
+                    $"{path}: cloud profile is missing.");
                 return;
             }
 
-            ValidateCloudVolume(clouds.ShapeNoise, "shape noise", report);
-            ValidateCloudVolume(clouds.DetailNoise, "detail noise", report);
+            ValidateCloudVolume(path, clouds.ShapeNoise, "shape noise", report);
+            ValidateCloudVolume(path, clouds.DetailNoise, "detail noise", report);
             Vector4 shapeWeights = clouds.ShapeWeights;
             if (shapeWeights.x < 0f
                 || shapeWeights.y < 0f
@@ -372,7 +382,7 @@ namespace Farion.Editor.Validation
                 || shapeWeights.sqrMagnitude <= 0.0001f)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: cloud shape weights must be non-negative and non-zero.");
+                    $"{path}: cloud shape weights must be non-negative and non-zero.");
             }
 
             Vector3 detailWeights = clouds.DetailWeights;
@@ -382,98 +392,105 @@ namespace Farion.Editor.Validation
                 || detailWeights.sqrMagnitude <= 0.0001f)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: cloud detail weights must be non-negative and non-zero.");
+                    $"{path}: cloud detail weights must be non-negative and non-zero.");
             }
 
             if (clouds.LayerTop <= clouds.LayerBottom)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: cloud layer top must exceed its bottom.");
+                    $"{path}: cloud layer top must exceed its bottom.");
             }
 
             if (clouds.BlueNoise == null)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: cloud blue-noise texture is missing.");
+                    $"{path}: cloud blue-noise texture is missing.");
             }
             else if (!AssetDatabase.GetAssetPath(clouds.BlueNoise).StartsWith(
                 UrpBlueNoiseRoot,
                 StringComparison.Ordinal))
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: clouds must reuse URP's BlueNoise256 set.");
+                    $"{path}: clouds must reuse URP's BlueNoise256 set.");
             }
         }
 
         static void ValidateCloudVolume(
+            string path,
             Texture3D texture,
             string label,
             FarionValidationReport report)
         {
             if (texture == null)
             {
-                report.AddError($"{PlanetVisualProfilePath}: cloud {label} is missing.");
+                report.AddError($"{path}: cloud {label} is missing.");
             }
             else if (texture.isReadable)
             {
                 report.AddError(
-                    $"{PlanetVisualProfilePath}: cloud {label} must be CPU non-readable.");
+                    $"{path}: cloud {label} must be CPU non-readable.");
             }
         }
 
-        static void ValidatePlanetaryGenerationProfile(FarionValidationReport report)
+        static void ValidatePlanetArchetypes(FarionValidationReport report)
         {
-            PlanetaryGenerationProfile generation =
-                LoadRequired<PlanetaryGenerationProfile>(
-                    PlanetaryGenerationProfilePath,
-                    report);
-            if (generation == null)
-            {
-                return;
-            }
-
-            List<PlanetGenerationValidationIssue> issues = new();
-            generation.CollectValidationIssues(64f, 9.81f, issues);
-            for (int i = 0; i < issues.Count; i++)
-            {
-                PlanetGenerationValidationIssue issue = issues[i];
-                string message = $"{PlanetaryGenerationProfilePath}: {issue}";
-                if (issue.Severity == PlanetGenerationValidationSeverity.Error)
-                {
-                    report.AddError(message);
-                }
-                else
-                {
-                    report.AddWarning(message);
-                }
-            }
-
             TerrestrialSurfaceProfile surface =
                 AssetDatabase.LoadAssetAtPath<TerrestrialSurfaceProfile>(
                     TerrestrialSurfaceProfilePath);
             SurfaceVisualProfile visual = surface != null
                 ? surface.SurfaceVisualProfile
                 : null;
-            SurfaceMaterialDistributionProfile materials =
-                generation.SurfaceMaterialDistribution;
-            if (visual == null || materials == null)
+            string[] guids = AssetDatabase.FindAssets("t:PlanetArchetype");
+            if (guids.Length == 0)
             {
-                return;
+                report.AddError("No planet archetype asset exists.");
             }
 
-            ValidateMaterialHasVisual(materials.FallbackMaterial, visual, "fallback", report);
-            IReadOnlyList<SurfaceMaterialDistributionRule> rules = materials.Rules;
-            for (int i = 0; i < rules.Count; i++)
+            List<PlanetGenerationValidationIssue> issues = new();
+            foreach (string guid in guids)
             {
-                SurfaceMaterialDistributionRule rule = rules[i];
-                if (rule != null)
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                PlanetArchetype archetype = AssetDatabase.LoadAssetAtPath<PlanetArchetype>(path);
+                foreach (int seed in new[] { 1, 1001, 20260905 })
                 {
-                    ValidateMaterialHasVisual(rule.Material, visual, $"rule {i}", report);
+                    PlanetaryGenerationProfile generation = archetype.Derive(seed, 64f, 9.81f);
+                    issues.Clear();
+                    generation.CollectValidationIssues(64f, 9.81f, issues);
+                    generation.Release();
+                    for (int i = 0; i < issues.Count; i++)
+                    {
+                        string message = $"{path} (seed {seed}): {issues[i]}";
+                        if (issues[i].Severity == PlanetGenerationValidationSeverity.Error)
+                        {
+                            report.AddError(message);
+                        }
+                        else
+                        {
+                            report.AddWarning(message);
+                        }
+                    }
+                }
+
+                SurfaceMaterialDistributionProfile materials = archetype.SurfaceMaterialLibrary;
+                if (visual == null || materials == null)
+                {
+                    continue;
+                }
+
+                ValidateMaterialHasVisual(path, materials.FallbackMaterial, visual, "fallback", report);
+                IReadOnlyList<SurfaceMaterialDistributionRule> rules = materials.Rules;
+                for (int i = 0; i < rules.Count; i++)
+                {
+                    if (rules[i] != null)
+                    {
+                        ValidateMaterialHasVisual(path, rules[i].Material, visual, $"rule {i}", report);
+                    }
                 }
             }
         }
 
         static void ValidateMaterialHasVisual(
+            string path,
             SurfaceMaterialDefinition material,
             SurfaceVisualProfile visual,
             string source,
@@ -482,7 +499,7 @@ namespace Farion.Editor.Validation
             if (material != null && visual.ResolveMaterialIndex(material) < 0)
             {
                 report.AddError(
-                    $"{PlanetaryGenerationProfilePath}: surface material {source} " +
+                    $"{path}: surface material {source} " +
                     $"'{material.name}' has no visual rule.");
             }
         }
@@ -605,8 +622,6 @@ namespace Farion.Editor.Validation
         {
             SerializedObject serialized = new(visual);
             string scope = $"{scenePath}: {GetHierarchyPath(visual.transform)}";
-            ValidateObjectReference(serialized, "surfaceProfile", scope, report);
-            ValidateObjectReference(serialized, "shapeProfile", scope, report);
             ValidateObjectReference(serialized, "lodProfile", scope, report);
         }
 

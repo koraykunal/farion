@@ -175,6 +175,14 @@ namespace Farion.Simulation.Celestial
             Elevation = 0.52f
         };
 
+        public override CelestialShapeProfile CreateVariant(int variantSeed, float elevationScale)
+        {
+            ContinentRidgeShapeProfile variant = ProfileVariants.Clone(this);
+            variant.seed = variantSeed;
+            variant.elevationScaleMeters = elevationScaleMeters * Mathf.Max(0f, elevationScale);
+            return variant;
+        }
+
         public override float EvaluateDisplacement(float baseRadius, Vector3 unitDirection)
         {
             return EvaluateElevationMeters(

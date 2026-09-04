@@ -47,6 +47,15 @@ namespace Farion.Simulation.Planetary
 
         public PlanetThermalProfile ThermalProfile => thermalProfile;
         public PlanetClimateMode ClimateMode => climateMode;
+        public float BaselinePrecipitation => baselinePrecipitation;
+
+        internal PlanetClimateProfile CreateVariant(PlanetThermalProfile thermal, float precipitationBias)
+        {
+            PlanetClimateProfile variant = ProfileVariants.Clone(this);
+            variant.thermalProfile = thermal;
+            variant.baselinePrecipitation = Mathf.Clamp01(baselinePrecipitation + precipitationBias);
+            return variant;
+        }
 
         public PlanetClimateSample Evaluate(
             PlanetGenerationContext context,

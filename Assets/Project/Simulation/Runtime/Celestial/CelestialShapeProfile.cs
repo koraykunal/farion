@@ -10,6 +10,11 @@ namespace Farion.Simulation.Celestial
         {
         }
 
+        public virtual CelestialShapeProfile CreateVariant(int variantSeed, float elevationScale)
+        {
+            return this;
+        }
+
         public virtual float EvaluateRadius(float baseRadius, Vector3 unitDirection)
         {
             return EvaluateSample(baseRadius, unitDirection).Radius;

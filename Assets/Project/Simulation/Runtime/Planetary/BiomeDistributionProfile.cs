@@ -37,6 +37,14 @@ namespace Farion.Simulation.Planetary
         public int BoundaryWarpSeed => boundaryWarpSeed;
         public IReadOnlyList<BiomeDistributionRule> Rules => rules;
 
+        internal BiomeDistributionProfile CreateVariant(List<BiomeDistributionRule> selectedRules, int warpSeed)
+        {
+            BiomeDistributionProfile variant = ProfileVariants.Clone(this);
+            variant.rules = selectedRules;
+            variant.boundaryWarpSeed = warpSeed;
+            return variant;
+        }
+
         void OnValidate()
         {
             altitudeBlend = Mathf.Max(0f, altitudeBlend);
