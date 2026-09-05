@@ -13,6 +13,7 @@ namespace Farion.Rendering.Celestial
 
         [SerializeField, Range(0f, 1f)] float blendStrength = 1f;
         [SerializeField, Range(16, 256)] int surfaceMapResolution = 64;
+        [Tooltip("Library of every texture set a planet may use. The GPU texture arrays are built once from this list; a derived per-planet profile only carries slot-to-slice indices.")]
         [SerializeField] List<SurfaceVisualRule> rules = new();
 
         readonly Vector4[] flatLowColors = new Vector4[MaxSurfaceSlots];
@@ -23,12 +24,13 @@ namespace Farion.Rendering.Celestial
         readonly Vector4[] surfaceTextureParams = new Vector4[MaxSurfaceSlots];
         readonly Vector4[] surfaceAuxTextureParams = new Vector4[MaxSurfaceSlots];
         readonly Vector4[] surfaceEmissionTints = new Vector4[MaxSurfaceSlots];
-        readonly List<SurfaceVisualRule> surfaceRules = new(MaxSurfaceSlots);
-        readonly List<SurfaceVisualRule> ambientOcclusionRules = new(MaxSurfaceSlots);
-        readonly List<SurfaceVisualRule> heightRules = new(MaxSurfaceSlots);
-        readonly List<SurfaceVisualRule> emissionRules = new(MaxSurfaceSlots);
+        readonly List<SurfaceTextureSet> surfaceSlices = new();
+        readonly List<Texture2D> ambientOcclusionSlices = new();
+        readonly List<Texture2D> heightSlices = new();
+        readonly List<Texture2D> emissionSlices = new();
         readonly StringBuilder textureSignatureBuilder = new(768);
 
+        [NonSerialized] SurfaceVisualProfile textureSource;
         [NonSerialized] string textureArraySignature;
         [NonSerialized] Texture2DArray baseColorArray;
         [NonSerialized] Texture2DArray normalArray;
@@ -42,6 +44,7 @@ namespace Farion.Rendering.Celestial
         public float BlendStrength => Mathf.Clamp01(blendStrength);
         public int SurfaceMapResolution => Mathf.Clamp(surfaceMapResolution, 16, 256);
         public IReadOnlyList<SurfaceVisualRule> Rules => rules;
+        public SurfaceVisualProfile TextureSource => textureSource != null ? textureSource : this;
 
         void OnValidate()
         {
@@ -54,8 +57,18 @@ namespace Farion.Rendering.Celestial
 
         void OnDisable()
         {
+            if (textureSource != null)
+            {
+                textureSource.Changed -= ForwardSourceChanged;
+            }
+
             ReleaseTextureArrays();
             textureArraySignature = null;
+        }
+
+        void ForwardSourceChanged()
+        {
+            Changed?.Invoke();
         }
 
         public SurfaceVisualProfile CreateVariant(
@@ -65,6 +78,8 @@ namespace Farion.Rendering.Celestial
             float valueJitter)
         {
             SurfaceVisualProfile variant = ProfileVariants.Clone(this);
+            variant.textureSource = TextureSource;
+            variant.textureSource.Changed += variant.ForwardSourceChanged;
             variant.rules = new List<SurfaceVisualRule>(MaxSurfaceSlots);
             List<SurfaceVisualRule> candidates = new();
             float hueShift = (SeedUtility.Unit01(seed, "visual.surface.hue") * 2f - 1f) * hueShiftDegrees;
@@ -130,7 +145,9 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            int count = FillShaderArrays();
+            SurfaceVisualProfile source = TextureSource;
+            source.EnsureTextureArrays();
+            int count = FillShaderArrays(source);
             propertyBlock.SetFloat("_SurfaceVisualCount", count);
             propertyBlock.SetFloat("_SurfaceVisualBlendStrength", BlendStrength);
             propertyBlock.SetVectorArray("_SurfaceFlatLow", flatLowColors);
@@ -141,8 +158,7 @@ namespace Farion.Rendering.Celestial
             propertyBlock.SetVectorArray("_SurfaceTextureParams", surfaceTextureParams);
             propertyBlock.SetVectorArray("_SurfaceAuxTextureParams", surfaceAuxTextureParams);
             propertyBlock.SetVectorArray("_SurfaceEmissionTints", surfaceEmissionTints);
-
-            ApplyTextureArrays(propertyBlock);
+            source.ApplyTextureArrays(propertyBlock, BlendStrength);
         }
 
         public static void ClearMaterialProperties(MaterialPropertyBlock propertyBlock)
@@ -161,14 +177,8 @@ namespace Farion.Rendering.Celestial
             propertyBlock.SetFloat("_SurfaceEmissionTextureCount", 0f);
         }
 
-        int FillShaderArrays()
+        int FillShaderArrays(SurfaceVisualProfile source)
         {
-            surfaceRules.Clear();
-            ambientOcclusionRules.Clear();
-            heightRules.Clear();
-            emissionRules.Clear();
-
-            int slot = 0;
             for (int i = 0; i < MaxSurfaceSlots; i++)
             {
                 flatLowColors[i] = Vector4.zero;
@@ -186,6 +196,7 @@ namespace Farion.Rendering.Celestial
                 return 0;
             }
 
+            int slot = 0;
             for (int i = 0; i < rules.Count && slot < MaxSurfaceSlots; i++)
             {
                 SurfaceVisualRule rule = rules[i];
@@ -198,21 +209,10 @@ namespace Farion.Rendering.Celestial
                 flatHighColors[slot] = rule.FlatHigh;
                 steepLowColors[slot] = rule.SteepLow;
                 steepHighColors[slot] = rule.SteepHigh;
-                surfaceParams[slot] = new Vector4(
-                    rule.NormalStrength,
-                    rule.Smoothness,
-                    0f,
-                    0f);
+                surfaceParams[slot] = new Vector4(rule.NormalStrength, rule.Smoothness, 0f, 0f);
 
                 SurfaceTextureSet textures = rule.Textures;
-                int surfaceSlice = AddRuleIf(textures != null && textures.HasSurfaceTextures, surfaceRules, rule);
-                int ambientOcclusionSlice = AddRuleIf(
-                    textures != null && textures.HasAmbientOcclusion,
-                    ambientOcclusionRules,
-                    rule);
-                int heightSlice = AddRuleIf(textures != null && textures.HasHeight, heightRules, rule);
-                int emissionSlice = AddRuleIf(textures != null && textures.HasEmission, emissionRules, rule);
-
+                int surfaceSlice = source.ResolveSurfaceSlice(textures);
                 surfaceTextureParams[slot] = textures != null
                     ? new Vector4(
                         textures.WorldTileSize,
@@ -221,9 +221,13 @@ namespace Farion.Rendering.Celestial
                         surfaceSlice >= 0 ? 1f : 0f)
                     : Vector4.zero;
                 surfaceAuxTextureParams[slot] = new Vector4(
-                    ambientOcclusionSlice,
-                    heightSlice,
-                    emissionSlice,
+                    source.ambientOcclusionArray != null ? source.ambientOcclusionSlices.IndexOf(textures?.AmbientOcclusion) : -1,
+                    source.heightArray != null && textures != null && textures.HasHeight
+                        ? source.heightSlices.IndexOf(textures.Height)
+                        : -1,
+                    source.emissionArray != null && textures != null && textures.HasEmission
+                        ? source.emissionSlices.IndexOf(textures.Emission)
+                        : -1,
                     textures?.EmissionStrength ?? 0f);
                 surfaceEmissionTints[slot] = textures?.EmissionTint ?? Color.black;
                 slot++;
@@ -232,36 +236,35 @@ namespace Farion.Rendering.Celestial
             return slot;
         }
 
-        static int AddRuleIf(bool condition, List<SurfaceVisualRule> target, SurfaceVisualRule rule)
+        int ResolveSurfaceSlice(SurfaceTextureSet textures)
         {
-            if (!condition)
+            if (baseColorArray == null || textures == null || !textures.HasSurfaceTextures)
             {
                 return -1;
             }
 
-            int slice = target.Count;
-            target.Add(rule);
-            return slice;
-        }
-
-        void ApplyTextureArrays(MaterialPropertyBlock propertyBlock)
-        {
-            string signature = BuildTextureArraySignature();
-            if (textureArraySignature != signature)
+            for (int i = 0; i < surfaceSlices.Count; i++)
             {
-                RebuildTextureArrays();
-                textureArraySignature = signature;
+                if (SameSurfaceTextures(surfaceSlices[i], textures))
+                {
+                    return i;
+                }
             }
 
-            int surfaceCount =
-                baseColorArray != null
-                && normalArray != null
-                && roughnessArray != null
-                    ? surfaceRules.Count
-                    : 0;
-            int ambientOcclusionCount = ambientOcclusionArray != null ? ambientOcclusionRules.Count : 0;
-            int heightCount = heightArray != null ? heightRules.Count : 0;
-            int emissionCount = emissionArray != null ? emissionRules.Count : 0;
+            return -1;
+        }
+
+        static bool SameSurfaceTextures(SurfaceTextureSet a, SurfaceTextureSet b)
+        {
+            return a.BaseColor == b.BaseColor && a.Normal == b.Normal && a.Roughness == b.Roughness;
+        }
+
+        void ApplyTextureArrays(MaterialPropertyBlock propertyBlock, float blend)
+        {
+            int surfaceCount = baseColorArray != null ? surfaceSlices.Count : 0;
+            int ambientOcclusionCount = ambientOcclusionArray != null ? ambientOcclusionSlices.Count : 0;
+            int heightCount = heightArray != null ? heightSlices.Count : 0;
+            int emissionCount = emissionArray != null ? emissionSlices.Count : 0;
 
             if (surfaceCount > 0)
             {
@@ -286,31 +289,83 @@ namespace Farion.Rendering.Celestial
             }
 
             propertyBlock.SetFloat("_SurfaceTextureCount", surfaceCount);
-            propertyBlock.SetFloat("_SurfaceTextureBlendStrength", surfaceCount > 0 ? BlendStrength : 0f);
+            propertyBlock.SetFloat("_SurfaceTextureBlendStrength", surfaceCount > 0 ? blend : 0f);
             propertyBlock.SetFloat("_SurfaceAmbientOcclusionTextureCount", ambientOcclusionCount);
             propertyBlock.SetFloat("_SurfaceHeightTextureCount", heightCount);
             propertyBlock.SetFloat("_SurfaceEmissionTextureCount", emissionCount);
+        }
+
+        void EnsureTextureArrays()
+        {
+            CollectSlices();
+            string signature = BuildTextureArraySignature();
+            if (textureArraySignature == signature)
+            {
+                return;
+            }
+
+            RebuildTextureArrays();
+            textureArraySignature = signature;
+        }
+
+        void CollectSlices()
+        {
+            surfaceSlices.Clear();
+            ambientOcclusionSlices.Clear();
+            heightSlices.Clear();
+            emissionSlices.Clear();
+            if (rules == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < rules.Count; i++)
+            {
+                SurfaceTextureSet textures = rules[i]?.Textures;
+                if (rules[i] == null || !rules[i].IsValid || textures == null)
+                {
+                    continue;
+                }
+
+                if (textures.HasSurfaceTextures && ResolveSliceIndex(textures) < 0)
+                {
+                    surfaceSlices.Add(textures);
+                }
+
+                AddSlice(ambientOcclusionSlices, textures.HasAmbientOcclusion ? textures.AmbientOcclusion : null);
+                AddSlice(heightSlices, textures.HasHeight ? textures.Height : null);
+                AddSlice(emissionSlices, textures.HasEmission ? textures.Emission : null);
+            }
+        }
+
+        int ResolveSliceIndex(SurfaceTextureSet textures)
+        {
+            for (int i = 0; i < surfaceSlices.Count; i++)
+            {
+                if (SameSurfaceTextures(surfaceSlices[i], textures))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        static void AddSlice(List<Texture2D> slices, Texture2D texture)
+        {
+            if (texture != null && !slices.Contains(texture))
+            {
+                slices.Add(texture);
+            }
         }
 
         void RebuildTextureArrays()
         {
             ReleaseTextureArrays();
 
-            baseColorArray = TryBuildTextureArray(
-                "base color",
-                surfaceRules,
-                rule => rule.Textures.BaseColor,
-                false);
-            normalArray = TryBuildTextureArray(
-                "normal",
-                surfaceRules,
-                rule => rule.Textures.Normal,
-                true);
-            roughnessArray = TryBuildTextureArray(
-                "roughness",
-                surfaceRules,
-                rule => rule.Textures.Roughness,
-                true);
+            baseColorArray = TryBuildTextureArray("base color", surfaceSlices.Count, i => surfaceSlices[i].BaseColor, false);
+            normalArray = TryBuildTextureArray("normal", surfaceSlices.Count, i => surfaceSlices[i].Normal, true);
+            roughnessArray = TryBuildTextureArray("roughness", surfaceSlices.Count, i => surfaceSlices[i].Roughness, true);
 
             if (baseColorArray == null || normalArray == null || roughnessArray == null)
             {
@@ -324,35 +379,27 @@ namespace Farion.Rendering.Celestial
 
             ambientOcclusionArray = TryBuildTextureArray(
                 "ambient occlusion",
-                ambientOcclusionRules,
-                rule => rule.Textures.AmbientOcclusion,
+                ambientOcclusionSlices.Count,
+                i => ambientOcclusionSlices[i],
                 true);
-            heightArray = TryBuildTextureArray(
-                "height",
-                heightRules,
-                rule => rule.Textures.Height,
-                true);
-            emissionArray = TryBuildTextureArray(
-                "emission",
-                emissionRules,
-                rule => rule.Textures.Emission,
-                false);
+            heightArray = TryBuildTextureArray("height", heightSlices.Count, i => heightSlices[i], true);
+            emissionArray = TryBuildTextureArray("emission", emissionSlices.Count, i => emissionSlices[i], false);
         }
 
         Texture2DArray TryBuildTextureArray(
             string label,
-            IReadOnlyList<SurfaceVisualRule> sourceRules,
-            Func<SurfaceVisualRule, Texture2D> selectTexture,
+            int count,
+            Func<int, Texture2D> selectTexture,
             bool linear)
         {
-            if (sourceRules.Count <= 0)
+            if (count <= 0)
             {
                 return null;
             }
 
             try
             {
-                return BuildTextureArray(label, sourceRules, selectTexture, linear);
+                return BuildTextureArray(label, count, selectTexture, linear);
             }
             catch (Exception exception)
             {
@@ -370,28 +417,22 @@ namespace Farion.Rendering.Celestial
         string BuildTextureArraySignature()
         {
             textureSignatureBuilder.Clear();
-            AppendRuleSignature("surface", surfaceRules, rule => rule.Textures.BaseColor);
-            AppendRuleSignature("surface-normal", surfaceRules, rule => rule.Textures.Normal);
-            AppendRuleSignature("surface-roughness", surfaceRules, rule => rule.Textures.Roughness);
-            AppendRuleSignature(
-                "ambient-occlusion",
-                ambientOcclusionRules,
-                rule => rule.Textures.AmbientOcclusion);
-            AppendRuleSignature("height", heightRules, rule => rule.Textures.Height);
-            AppendRuleSignature("emission", emissionRules, rule => rule.Textures.Emission);
+            AppendSignature("surface", surfaceSlices.Count, i => surfaceSlices[i].BaseColor);
+            AppendSignature("surface-normal", surfaceSlices.Count, i => surfaceSlices[i].Normal);
+            AppendSignature("surface-roughness", surfaceSlices.Count, i => surfaceSlices[i].Roughness);
+            AppendSignature("ambient-occlusion", ambientOcclusionSlices.Count, i => ambientOcclusionSlices[i]);
+            AppendSignature("height", heightSlices.Count, i => heightSlices[i]);
+            AppendSignature("emission", emissionSlices.Count, i => emissionSlices[i]);
             return textureSignatureBuilder.ToString();
         }
 
-        void AppendRuleSignature(
-            string label,
-            IReadOnlyList<SurfaceVisualRule> sourceRules,
-            Func<SurfaceVisualRule, Texture2D> selectTexture)
+        void AppendSignature(string label, int count, Func<int, Texture2D> selectTexture)
         {
             textureSignatureBuilder.Append(label);
             textureSignatureBuilder.Append('[');
-            for (int i = 0; i < sourceRules.Count; i++)
+            for (int i = 0; i < count; i++)
             {
-                AppendTextureSignature(selectTexture(sourceRules[i]));
+                AppendTextureSignature(selectTexture(i));
             }
 
             textureSignatureBuilder.Append(']');
@@ -419,19 +460,19 @@ namespace Farion.Rendering.Celestial
 
         Texture2DArray BuildTextureArray(
             string label,
-            IReadOnlyList<SurfaceVisualRule> sourceRules,
-            Func<SurfaceVisualRule, Texture2D> selectTexture,
+            int count,
+            Func<int, Texture2D> selectTexture,
             bool linear)
         {
-            Texture2D firstTexture = selectTexture(sourceRules[0]);
+            Texture2D firstTexture = selectTexture(0);
             int width = firstTexture.width;
             int height = firstTexture.height;
             int mipCount = firstTexture.mipmapCount;
             TextureFormat format = firstTexture.format;
 
-            for (int i = 1; i < sourceRules.Count; i++)
+            for (int i = 1; i < count; i++)
             {
-                Texture2D texture = selectTexture(sourceRules[i]);
+                Texture2D texture = selectTexture(i);
                 if (texture.width != width
                     || texture.height != height
                     || texture.format != format
@@ -449,7 +490,7 @@ namespace Farion.Rendering.Celestial
             Texture2DArray textureArray = new(
                 width,
                 height,
-                sourceRules.Count,
+                count,
                 format,
                 mipCount > 1,
                 linear)
@@ -462,9 +503,9 @@ namespace Farion.Rendering.Celestial
 
             try
             {
-                for (int layer = 0; layer < sourceRules.Count; layer++)
+                for (int layer = 0; layer < count; layer++)
                 {
-                    Texture2D texture = selectTexture(sourceRules[layer]);
+                    Texture2D texture = selectTexture(layer);
                     for (int mip = 0; mip < mipCount; mip++)
                     {
                         Graphics.CopyTexture(texture, 0, mip, textureArray, layer, mip);
