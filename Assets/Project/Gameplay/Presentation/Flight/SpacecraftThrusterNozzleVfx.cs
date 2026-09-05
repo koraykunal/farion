@@ -108,6 +108,11 @@ namespace Farion.Gameplay.Presentation.Flight
         [Min(0f)]
         [SerializeField] float heatGlowResponse = 1.6f;
 
+        [Header("Origin Shift")]
+        [Tooltip("World-space ribbons cannot survive an origin rebase or a teleport: the old points stay behind and the strip stretches to them. A jump larger than this in one frame reinitialises the graphs.")]
+        [Min(1f)]
+        [SerializeField] float teleportDistance = 500f;
+
         Quaternion initialSteeringRotation = Quaternion.identity;
         Quaternion laggedWorldRotation = Quaternion.identity;
         Vector3 currentSteeringEuler;
@@ -119,6 +124,8 @@ namespace Farion.Gameplay.Presentation.Flight
         MaterialPropertyBlock heatGlowProperties;
         bool initialized;
         bool plumeBendTracked;
+        Vector3 lastWorldPosition;
+        bool worldPositionTracked;
 
         public float NozzleLoad => currentNozzleLoad;
         public float SideLoad => currentSideLoad;
@@ -168,6 +175,7 @@ namespace Farion.Gameplay.Presentation.Flight
             currentHeatGlow = 0f;
             currentPlumeBend = Vector3.zero;
             plumeBendTracked = false;
+            worldPositionTracked = false;
             ClearHeatGlow();
         }
 
@@ -408,8 +416,24 @@ namespace Farion.Gameplay.Presentation.Flight
             distortion?.ApplyFrame(frame, currentNozzleLoad, currentIgnitionFlare, currentPlumeBend, deltaTime);
         }
 
+        bool DetectTeleport()
+        {
+            Vector3 position = transform.position;
+            bool teleported = worldPositionTracked &&
+                (position - lastWorldPosition).sqrMagnitude > teleportDistance * teleportDistance;
+            lastWorldPosition = position;
+            worldPositionTracked = true;
+            return teleported;
+        }
+
         void ApplyGraphs(SpacecraftThrusterVfxFrame frame, float deltaTime)
         {
+            if (DetectTeleport())
+            {
+                sparksGraphTuning?.Reinit(sparksGraph);
+                smokeGraphTuning?.Reinit(smokeGraph);
+            }
+
             float boostSparks = Mathf.InverseLerp(sparksBoostThreshold, 1f, frame.Boost);
             float sparksLoad = Mathf.Clamp01(boostSparks);
             ApplyGraph(
@@ -622,6 +646,20 @@ namespace Farion.Gameplay.Presentation.Flight
                 SetFloat(graph, VfxIds.Rate, rate);
                 SetFloat(graph, VfxIds.Speed, speedValue);
                 graph.playRate = Mathf.Lerp(0.75f, 1.35f, Mathf.Clamp01(boost + heat * 0.35f));
+            }
+
+            public void Reinit(VisualEffect graph)
+            {
+                if (graph == null || !graph.enabled)
+                {
+                    return;
+                }
+
+                graph.Reinit();
+                if (!playing)
+                {
+                    graph.Stop();
+                }
             }
 
             public void UpdatePlayback(VisualEffect graph, bool shouldPlay, float deltaTime)
