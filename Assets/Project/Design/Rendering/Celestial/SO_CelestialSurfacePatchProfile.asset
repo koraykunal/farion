@@ -21,7 +21,7 @@ MonoBehaviour:
   splitHysteresisRatio: 0.15
   maxActivePatches: 1536
   collisionTriangleEdgeMeters: 25
-  collisionRadiusMeters: 400
+  collisionRadiusMeters: 700
   bakeCollisionMeshes: 1
   collisionPredictionSeconds: 0.75
   collisionSafetyMarginMeters: 24

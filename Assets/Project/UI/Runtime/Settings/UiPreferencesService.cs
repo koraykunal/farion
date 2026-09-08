@@ -84,6 +84,7 @@ namespace Farion.UI.Settings
         public float MouseSensitivity => FarionInputActions.MouseSensitivityScale;
         public bool InvertLookY => FarionInputActions.InvertLookY;
         public float FieldOfView => PlayerViewPreferences.FieldOfView;
+        public bool FlightHudVisible => PlayerViewPreferences.FlightHudVisible;
         public bool HasSelectableResolutions => supportedResolutions.Count > 1;
         public bool SupportsRefreshRateSelection =>
             displayMode == FullScreenMode.ExclusiveFullScreen &&
@@ -320,6 +321,17 @@ namespace Farion.UI.Settings
             }
 
             PlayerViewPreferences.FieldOfView = clamped;
+            Changed?.Invoke();
+        }
+
+        public void SetFlightHudVisible(bool value)
+        {
+            if (PlayerViewPreferences.FlightHudVisible == value)
+            {
+                return;
+            }
+
+            PlayerViewPreferences.FlightHudVisible = value;
             Changed?.Invoke();
         }
 

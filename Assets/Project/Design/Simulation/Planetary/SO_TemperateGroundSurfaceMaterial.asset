@@ -15,4 +15,5 @@ MonoBehaviour:
   materialId: surface.temperate_ground
   displayName: Temperate Ground
   category: 2
+  footstepSurface: 6
   previewColor: {r: 0.28, g: 0.36, b: 0.22, a: 1}

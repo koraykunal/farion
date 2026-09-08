@@ -38,6 +38,8 @@ namespace Farion.Rendering.Celestial
         [NonSerialized] Texture2DArray ambientOcclusionArray;
         [NonSerialized] Texture2DArray heightArray;
         [NonSerialized] Texture2DArray emissionArray;
+        [NonSerialized] Texture2D paletteTexture;
+        readonly Color[] palettePixels = new Color[MaxSurfaceSlots * 8];
 
         public event Action Changed;
 
@@ -138,9 +140,9 @@ namespace Farion.Rendering.Celestial
             return -1;
         }
 
-        public void ApplyMaterialProperties(MaterialPropertyBlock propertyBlock)
+        public void ApplyMaterialProperties(Material target)
         {
-            if (propertyBlock == null)
+            if (target == null)
             {
                 return;
             }
@@ -148,33 +150,58 @@ namespace Farion.Rendering.Celestial
             SurfaceVisualProfile source = TextureSource;
             source.EnsureTextureArrays();
             int count = FillShaderArrays(source);
-            propertyBlock.SetFloat("_SurfaceVisualCount", count);
-            propertyBlock.SetFloat("_SurfaceVisualBlendStrength", BlendStrength);
-            propertyBlock.SetVectorArray("_SurfaceFlatLow", flatLowColors);
-            propertyBlock.SetVectorArray("_SurfaceFlatHigh", flatHighColors);
-            propertyBlock.SetVectorArray("_SurfaceSteepLow", steepLowColors);
-            propertyBlock.SetVectorArray("_SurfaceSteepHigh", steepHighColors);
-            propertyBlock.SetVectorArray("_SurfaceParams", surfaceParams);
-            propertyBlock.SetVectorArray("_SurfaceTextureParams", surfaceTextureParams);
-            propertyBlock.SetVectorArray("_SurfaceAuxTextureParams", surfaceAuxTextureParams);
-            propertyBlock.SetVectorArray("_SurfaceEmissionTints", surfaceEmissionTints);
-            source.ApplyTextureArrays(propertyBlock, BlendStrength);
+            target.SetFloat("_SurfaceVisualCount", count);
+            target.SetFloat("_SurfaceVisualBlendStrength", BlendStrength);
+            target.SetTexture("_SurfacePalette", BuildPaletteTexture());
+            source.ApplyTextureArrays(target, BlendStrength);
         }
 
-        public static void ClearMaterialProperties(MaterialPropertyBlock propertyBlock)
+        public static void ClearMaterialProperties(Material target)
         {
-            if (propertyBlock == null)
+            if (target == null)
             {
                 return;
             }
 
-            propertyBlock.SetFloat("_SurfaceVisualCount", 0f);
-            propertyBlock.SetFloat("_SurfaceVisualBlendStrength", 0f);
-            propertyBlock.SetFloat("_SurfaceTextureCount", 0f);
-            propertyBlock.SetFloat("_SurfaceTextureBlendStrength", 0f);
-            propertyBlock.SetFloat("_SurfaceAmbientOcclusionTextureCount", 0f);
-            propertyBlock.SetFloat("_SurfaceHeightTextureCount", 0f);
-            propertyBlock.SetFloat("_SurfaceEmissionTextureCount", 0f);
+            target.SetFloat("_SurfaceVisualCount", 0f);
+            target.SetFloat("_SurfaceVisualBlendStrength", 0f);
+            target.SetFloat("_SurfaceTextureCount", 0f);
+            target.SetFloat("_SurfaceTextureBlendStrength", 0f);
+            target.SetFloat("_SurfaceAmbientOcclusionTextureCount", 0f);
+            target.SetFloat("_SurfaceHeightTextureCount", 0f);
+            target.SetFloat("_SurfaceEmissionTextureCount", 0f);
+        }
+
+        [Tooltip("SRP Batcher cannot carry vector arrays per material, so the per-slot palette rides in an 8x8 float texture: one row per array, one column per surface slot.")]
+        Texture2D BuildPaletteTexture()
+        {
+            if (paletteTexture == null)
+            {
+                paletteTexture = new Texture2D(MaxSurfaceSlots, 8, TextureFormat.RGBAFloat, false, true)
+                {
+                    name = $"{name} Surface Palette",
+                    filterMode = FilterMode.Point,
+                    wrapMode = TextureWrapMode.Clamp,
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            }
+
+            Vector4[][] rows =
+            {
+                flatLowColors, flatHighColors, steepLowColors, steepHighColors,
+                surfaceParams, surfaceTextureParams, surfaceAuxTextureParams, surfaceEmissionTints
+            };
+            for (int row = 0; row < rows.Length; row++)
+            {
+                for (int slot = 0; slot < MaxSurfaceSlots; slot++)
+                {
+                    palettePixels[row * MaxSurfaceSlots + slot] = rows[row][slot];
+                }
+            }
+
+            paletteTexture.SetPixels(palettePixels);
+            paletteTexture.Apply(false, false);
+            return paletteTexture;
         }
 
         int FillShaderArrays(SurfaceVisualProfile source)
@@ -259,7 +286,7 @@ namespace Farion.Rendering.Celestial
             return a.BaseColor == b.BaseColor && a.Normal == b.Normal && a.Roughness == b.Roughness;
         }
 
-        void ApplyTextureArrays(MaterialPropertyBlock propertyBlock, float blend)
+        void ApplyTextureArrays(Material target, float blend)
         {
             int surfaceCount = baseColorArray != null ? surfaceSlices.Count : 0;
             int ambientOcclusionCount = ambientOcclusionArray != null ? ambientOcclusionSlices.Count : 0;
@@ -268,31 +295,31 @@ namespace Farion.Rendering.Celestial
 
             if (surfaceCount > 0)
             {
-                propertyBlock.SetTexture("_SurfaceBaseColorArray", baseColorArray);
-                propertyBlock.SetTexture("_SurfaceNormalArray", normalArray);
-                propertyBlock.SetTexture("_SurfaceRoughnessArray", roughnessArray);
+                target.SetTexture("_SurfaceBaseColorArray", baseColorArray);
+                target.SetTexture("_SurfaceNormalArray", normalArray);
+                target.SetTexture("_SurfaceRoughnessArray", roughnessArray);
             }
 
             if (ambientOcclusionCount > 0)
             {
-                propertyBlock.SetTexture("_SurfaceAmbientOcclusionArray", ambientOcclusionArray);
+                target.SetTexture("_SurfaceAmbientOcclusionArray", ambientOcclusionArray);
             }
 
             if (heightCount > 0)
             {
-                propertyBlock.SetTexture("_SurfaceHeightArray", heightArray);
+                target.SetTexture("_SurfaceHeightArray", heightArray);
             }
 
             if (emissionCount > 0)
             {
-                propertyBlock.SetTexture("_SurfaceEmissionArray", emissionArray);
+                target.SetTexture("_SurfaceEmissionArray", emissionArray);
             }
 
-            propertyBlock.SetFloat("_SurfaceTextureCount", surfaceCount);
-            propertyBlock.SetFloat("_SurfaceTextureBlendStrength", surfaceCount > 0 ? blend : 0f);
-            propertyBlock.SetFloat("_SurfaceAmbientOcclusionTextureCount", ambientOcclusionCount);
-            propertyBlock.SetFloat("_SurfaceHeightTextureCount", heightCount);
-            propertyBlock.SetFloat("_SurfaceEmissionTextureCount", emissionCount);
+            target.SetFloat("_SurfaceTextureCount", surfaceCount);
+            target.SetFloat("_SurfaceTextureBlendStrength", surfaceCount > 0 ? blend : 0f);
+            target.SetFloat("_SurfaceAmbientOcclusionTextureCount", ambientOcclusionCount);
+            target.SetFloat("_SurfaceHeightTextureCount", heightCount);
+            target.SetFloat("_SurfaceEmissionTextureCount", emissionCount);
         }
 
         void EnsureTextureArrays()
@@ -529,6 +556,8 @@ namespace Farion.Rendering.Celestial
             ReleaseTextureArray(ambientOcclusionArray);
             ReleaseTextureArray(heightArray);
             ReleaseTextureArray(emissionArray);
+            ReleaseTextureArray(paletteTexture);
+            paletteTexture = null;
             baseColorArray = null;
             normalArray = null;
             roughnessArray = null;
@@ -537,7 +566,7 @@ namespace Farion.Rendering.Celestial
             emissionArray = null;
         }
 
-        static void ReleaseTextureArray(Texture2DArray textureArray)
+        static void ReleaseTextureArray(Texture textureArray)
         {
             if (textureArray == null)
             {

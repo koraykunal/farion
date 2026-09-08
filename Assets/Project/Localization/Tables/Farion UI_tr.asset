@@ -1006,6 +1006,22 @@ MonoBehaviour:
     m_Localized: "Kamera g\xF6r\xFCn\xFCm\xFC"
     m_Metadata:
       m_Items: []
+  - m_Id: 8380430224457748
+    m_Localized: "Projekt\xF6rler"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457749
+    m_Localized: "U\xE7u\u015F HUD'u"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457750
+    m_Localized: "U\xE7u\u015F HUD'u"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457751
+    m_Localized: "Pilotluk s\u0131ras\u0131nda u\xE7u\u015F g\xF6stergesini g\xF6sterin. U\xE7u\u015Fta U\xE7u\u015F HUD'u tu\u015Fuyla a\xE7\u0131p kapatabilirsiniz."
+    m_Metadata:
+      m_Items: []
   - m_Id: 8447561943220224
     m_Localized: "G\xD6VDE"
     m_Metadata:

@@ -29,9 +29,47 @@ namespace Farion.Gameplay.Flight
         public Transform ChaseCameraTarget => chaseCameraTarget;
         public Transform CockpitCameraTarget => cockpitCameraTarget;
 
+        Vector3 visualLocalPosition;
+        Quaternion visualLocalRotation = Quaternion.identity;
+
         void Awake()
         {
             ClassifyColliderLayers();
+            if (visualRoot != null)
+            {
+                visualLocalPosition = visualRoot.localPosition;
+                visualLocalRotation = visualRoot.localRotation;
+            }
+        }
+
+        public bool TryGetGraphicalPose(
+            Transform anchor,
+            out Vector3 position,
+            out Quaternion rotation)
+        {
+            if (anchor == null)
+            {
+                position = default;
+                rotation = Quaternion.identity;
+                return false;
+            }
+
+            if (visualRoot == null)
+            {
+                position = anchor.position;
+                rotation = anchor.rotation;
+                return true;
+            }
+
+            Quaternion graphicalRootRotation =
+                visualRoot.rotation * Quaternion.Inverse(visualLocalRotation);
+            Vector3 graphicalRootPosition =
+                visualRoot.position - graphicalRootRotation * visualLocalPosition;
+            Vector3 localPosition = transform.InverseTransformPoint(anchor.position);
+            Quaternion localRotation = Quaternion.Inverse(transform.rotation) * anchor.rotation;
+            position = graphicalRootPosition + graphicalRootRotation * localPosition;
+            rotation = graphicalRootRotation * localRotation;
+            return true;
         }
 
         void OnValidate()

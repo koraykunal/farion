@@ -54,6 +54,7 @@ namespace Farion.Editor.Validation
             "hullValueText",
             "hullBarFillImage",
             "hullBarFrameImage",
+            "assistIndicatorImage",
             "shakeTarget"
         };
 

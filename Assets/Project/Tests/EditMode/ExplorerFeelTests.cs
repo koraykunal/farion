@@ -1,7 +1,11 @@
+using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Xml.Linq;
 using Farion.Core.Numerics;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Input;
+using Farion.Simulation.Planetary;
 using Farion.UI.Settings;
 using NUnit.Framework;
 using UnityEngine;
@@ -190,6 +194,39 @@ namespace Farion.Tests.EditMode
                 fieldName,
                 BindingFlags.NonPublic | BindingFlags.Static);
             return field?.GetRawConstantValue() as string;
+        }
+
+        [Test]
+        public void FootstepSurfaceEnumMatchesFmodSurfaceLabels()
+        {
+            string presetFolder = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "..",
+                "FMODProject/FarionAudio/Metadata/ParameterPreset"));
+            string[] labels = null;
+            foreach (string file in Directory.GetFiles(presetFolder, "*.xml"))
+            {
+                XDocument document = XDocument.Load(file);
+                bool isSurface = document.Descendants("object")
+                    .Where(o => (string)o.Attribute("class") == "ParameterPreset")
+                    .SelectMany(o => o.Elements("property"))
+                    .Any(p => (string)p.Attribute("name") == "name" &&
+                        (string)p.Element("value") == "Surface");
+                if (!isSurface)
+                {
+                    continue;
+                }
+
+                labels = document.Descendants("property")
+                    .Where(p => (string)p.Attribute("name") == "enumerationLabels")
+                    .SelectMany(p => p.Elements("value"))
+                    .Select(v => v.Value)
+                    .ToArray();
+                break;
+            }
+
+            Assert.That(labels, Is.Not.Null, "FMOD Surface parameter preset not found.");
+            Assert.That(labels, Is.EqualTo(System.Enum.GetNames(typeof(FootstepSurface))));
         }
     }
 }

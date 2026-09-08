@@ -53,6 +53,43 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
         _RadiusMinMax("Radius Min Max", Vector) = (1, 1, 0, 0)
         _FarNormalFadeStart("Far Normal Fade Start", Float) = 10000000
         _FarNormalFadeEnd("Far Normal Fade End", Float) = 20000000
+
+        [HideInInspector][NoScaleOffset] _SurfacePalette("Surface Palette", 2D) = "black" {}
+        [HideInInspector][NoScaleOffset] _SurfaceBaseColorArray("Surface Base Color Array", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceNormalArray("Surface Normal Array", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceRoughnessArray("Surface Roughness Array", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceAmbientOcclusionArray("Surface AO Array", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceHeightArray("Surface Height Array", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceEmissionArray("Surface Emission Array", 2DArray) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceNormalMap("Surface Normal Map", Cube) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceWeightsA("Surface Weights A", Cube) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceWeightsB("Surface Weights B", Cube) = "" {}
+        [HideInInspector][NoScaleOffset] _SurfaceStateMap("Surface State Map", Cube) = "" {}
+        [HideInInspector][NoScaleOffset] _LavaBaseColor("Lava Base Color", 2D) = "black" {}
+        [HideInInspector][NoScaleOffset] _LavaNormal("Lava Normal", 2D) = "bump" {}
+        [HideInInspector][NoScaleOffset] _LavaRoughness("Lava Roughness", 2D) = "white" {}
+        [HideInInspector][NoScaleOffset] _LavaEmission("Lava Emission", 2D) = "black" {}
+        [HideInInspector][NoScaleOffset] _SnowBaseColor("Snow Base Color", 2D) = "white" {}
+        [HideInInspector][NoScaleOffset] _SnowNormal("Snow Normal", 2D) = "bump" {}
+        [HideInInspector][NoScaleOffset] _SnowRoughness("Snow Roughness", 2D) = "white" {}
+        [HideInInspector] _SurfaceVisualCount("Surface Visual Count", Float) = 0
+        [HideInInspector] _SurfaceVisualBlendStrength("Surface Visual Blend Strength", Float) = 0
+        [HideInInspector] _SurfaceTextureCount("Surface Texture Count", Float) = 0
+        [HideInInspector] _SurfaceTextureBlendStrength("Surface Texture Blend Strength", Float) = 0
+        [HideInInspector] _SurfaceAmbientOcclusionTextureCount("Surface AO Texture Count", Float) = 0
+        [HideInInspector] _SurfaceHeightTextureCount("Surface Height Texture Count", Float) = 0
+        [HideInInspector] _SurfaceEmissionTextureCount("Surface Emission Texture Count", Float) = 0
+        [HideInInspector] _SurfaceWeightMapEnabled("Surface Weight Map Enabled", Float) = 0
+        [HideInInspector] _SurfaceNormalMapEnabled("Surface Normal Map Enabled", Float) = 0
+        [HideInInspector] _LavaOverlayEnabled("Lava Overlay Enabled", Float) = 0
+        [HideInInspector] _LavaWorldTileSize("Lava World Tile Size", Float) = 1
+        [HideInInspector] _LavaNormalStrength("Lava Normal Strength", Float) = 1
+        [HideInInspector] _LavaEmissionTint("Lava Emission Tint", Color) = (0, 0, 0, 0)
+        [HideInInspector] _LavaEmissionStrength("Lava Emission Strength", Float) = 0
+        [HideInInspector] _SnowOverlayEnabled("Snow Overlay Enabled", Float) = 0
+        [HideInInspector] _SnowWorldTileSize("Snow World Tile Size", Float) = 1
+        [HideInInspector] _SnowNormalStrength("Snow Normal Strength", Float) = 1
+        [HideInInspector] _FarionMorphRange("Morph Range", Vector) = (0, 0, 0, 0)
     }
 
     SubShader
@@ -88,6 +125,8 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile _ _LIGHT_LAYERS
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -107,6 +146,8 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             TEXTURE2D_ARRAY(_SurfaceAmbientOcclusionArray);
             TEXTURE2D_ARRAY(_SurfaceHeightArray);
             TEXTURE2D_ARRAY(_SurfaceEmissionArray);
+            TEXTURE2D(_SurfacePalette);
+            #define FARION_PALETTE(row, slot) ((half4)LOAD_TEXTURE2D(_SurfacePalette, int2((slot), (row))))
             TEXTURECUBE(_SurfaceNormalMap);
             TEXTURECUBE(_SurfaceWeightsA);
             TEXTURECUBE(_SurfaceWeightsB);
@@ -119,73 +160,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             TEXTURE2D(_SnowNormal);
             TEXTURE2D(_SnowRoughness);
 
-            CBUFFER_START(UnityPerMaterial)
-                half4 _OceanLow;
-                half4 _OceanHigh;
-                half4 _ShoreLow;
-                half4 _ShoreHigh;
-                half4 _FlatLowA;
-                half4 _FlatHighA;
-                half4 _FlatLowB;
-                half4 _FlatHighB;
-                half4 _SteepLow;
-                half4 _SteepHigh;
-                float _NoiseScale;
-                float _NoiseScale2;
-                float _RockNormalTileSize;
-                half _NormalStrength;
-                half _OceanLevel;
-                half _HasOcean;
-                half _FlatColorBlend;
-                half _FlatColorBlendNoise;
-                half _ShoreHeight;
-                half _ShoreBlend;
-                half _OceanEdgeBlend;
-                half _ShoreWetness;
-                half _MaxFlatHeight;
-                half _SteepBands;
-                half _SteepBandStrength;
-                half _SteepnessThreshold;
-                half _FlatToSteepBlend;
-                half _FlatToSteepNoise;
-                half _StochasticTiling;
-                half _MacroVariation;
-                half _SurfaceTextureLevelMatch;
-                half _SurfaceWeightWarp;
-                half _SpecularAntialiasing;
-                half _AmbientHemisphere;
-                half _Metallic;
-                half _LandSmoothness;
-                half _SurfaceVisualCount;
-                half _SurfaceVisualBlendStrength;
-                half _SurfaceTextureCount;
-                half _SurfaceTextureBlendStrength;
-                half _SurfaceAmbientOcclusionTextureCount;
-                half _SurfaceHeightTextureCount;
-                half _SurfaceEmissionTextureCount;
-                half4 _SurfaceFlatLow[8];
-                half4 _SurfaceFlatHigh[8];
-                half4 _SurfaceSteepLow[8];
-                half4 _SurfaceSteepHigh[8];
-                half4 _SurfaceParams[8];
-                half4 _SurfaceTextureParams[8];
-                half4 _SurfaceAuxTextureParams[8];
-                half4 _SurfaceEmissionTints[8];
-                half _SurfaceWeightMapEnabled;
-                half _SurfaceNormalMapEnabled;
-                float _FarNormalFadeStart;
-                float _FarNormalFadeEnd;
-                half _LavaOverlayEnabled;
-                float _LavaWorldTileSize;
-                half _LavaNormalStrength;
-                half4 _LavaEmissionTint;
-                half _LavaEmissionStrength;
-                half _SnowOverlayEnabled;
-                float _SnowWorldTileSize;
-                half _SnowNormalStrength;
-                float _BodyRadius;
-                float4 _RadiusMinMax;
-            CBUFFER_END
+            #include "FarionTerrestrialInput.hlsl"
 
             half4 _FarionAmbientColor;
 
@@ -198,6 +173,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                 float4 texcoord : TEXCOORD0;
                 float4 morphOffsetOS : TEXCOORD1;
                 float4 morphNormalOS : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
@@ -211,11 +187,16 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
 #if defined(_ADDITIONAL_LIGHTS_VERTEX)
                 half3 vertexLighting : TEXCOORD5;
 #endif
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             Varyings Vertex(Attributes input)
             {
-                Varyings output;
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 float morphWeight = FarionResolveMorphWeight(input.positionOS.xyz);
                 float3 positionOS = input.positionOS.xyz +
                     input.morphOffsetOS.xyz * morphWeight;
@@ -394,7 +375,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
 
             bool FarionTryGetSurfaceTextureLayer(int surfaceSlot, out int textureLayer)
             {
-                half4 textureParams = _SurfaceTextureParams[surfaceSlot];
+                half4 textureParams = FARION_PALETTE(5, surfaceSlot);
                 textureLayer = (int)round(textureParams.z);
                 return textureParams.w > 0.5h
                     && textureLayer >= 0
@@ -521,6 +502,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
 
             half4 Fragment(Varyings input) : SV_Target
             {
+                UNITY_SETUP_INSTANCE_ID(input);
                 float3 normalOS = normalize(input.normalOS);
                 if (_SurfaceNormalMapEnabled > 0.5h)
                 {
@@ -651,16 +633,16 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
 
                     if (surfaceSlot < _SurfaceVisualCount)
                     {
-                        half3 slotFlatTerrain = lerp(_SurfaceFlatLow[surfaceSlot].rgb, _SurfaceFlatHigh[surfaceSlot].rgb, flatBlendWeight);
-                        slotFlatTerrain = lerp(slotFlatTerrain, (_SurfaceFlatLow[surfaceSlot].rgb + _SurfaceFlatHigh[surfaceSlot].rgb) * 0.5h, texNoise.a);
-                        half3 slotSteepTerrain = lerp(_SurfaceSteepLow[surfaceSlot].rgb, _SurfaceSteepHigh[surfaceSlot].rgb, saturate(aboveOcean01 + banding));
+                        half3 slotFlatTerrain = lerp(FARION_PALETTE(0, surfaceSlot).rgb, FARION_PALETTE(1, surfaceSlot).rgb, flatBlendWeight);
+                        slotFlatTerrain = lerp(slotFlatTerrain, (FARION_PALETTE(0, surfaceSlot).rgb + FARION_PALETTE(1, surfaceSlot).rgb) * 0.5h, texNoise.a);
+                        half3 slotSteepTerrain = lerp(FARION_PALETTE(2, surfaceSlot).rgb, FARION_PALETTE(3, surfaceSlot).rgb, saturate(aboveOcean01 + banding));
                         surfaceFlatTerrain += slotFlatTerrain * weight;
                         surfaceSteepTerrain += slotSteepTerrain * weight;
-                        surfaceSmoothness += _SurfaceParams[surfaceSlot].y * weight;
+                        surfaceSmoothness += FARION_PALETTE(4, surfaceSlot).y * weight;
                         surfaceVisualWeight += weight;
                     }
 
-                    float slotTileSize = _SurfaceTextureParams[surfaceSlot].x;
+                    float slotTileSize = FARION_PALETTE(5, surfaceSlot).x;
                     int textureLayer;
                     bool hasSurfaceTexture = FarionTryGetSurfaceTextureLayer(surfaceSlot, textureLayer);
                     if (sampleSurfaceTextures && hasSurfaceTexture)
@@ -674,7 +656,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                             frame,
                             slotTileSize,
                             textureLayer,
-                            _SurfaceParams[surfaceSlot].x) * weight;
+                            FARION_PALETTE(4, surfaceSlot).x) * weight;
                         surfaceTextureSmoothness += (1.0h - FarionSampleSurfaceArray(
                             FARION_SURFACE_ARRAY(_SurfaceRoughnessArray),
                             frame,
@@ -685,7 +667,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
 
                     int auxLayer;
                     if (FarionTryGetSurfaceAuxTextureLayer(
-                        _SurfaceAuxTextureParams[surfaceSlot].y,
+                        FARION_PALETTE(6, surfaceSlot).y,
                         _SurfaceHeightTextureCount,
                         auxLayer))
                     {
@@ -694,12 +676,12 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                             frame,
                             slotTileSize,
                             auxLayer).r * weight;
-                        surfaceHeightStrength += _SurfaceTextureParams[surfaceSlot].y * weight;
+                        surfaceHeightStrength += FARION_PALETTE(5, surfaceSlot).y * weight;
                         surfaceHeightWeight += weight;
                     }
 
                     if (FarionTryGetSurfaceAuxTextureLayer(
-                        _SurfaceAuxTextureParams[surfaceSlot].x,
+                        FARION_PALETTE(6, surfaceSlot).x,
                         _SurfaceAmbientOcclusionTextureCount,
                         auxLayer))
                     {
@@ -712,7 +694,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                     }
 
                     if (FarionTryGetSurfaceAuxTextureLayer(
-                        _SurfaceAuxTextureParams[surfaceSlot].z,
+                        FARION_PALETTE(6, surfaceSlot).z,
                         _SurfaceEmissionTextureCount,
                         auxLayer))
                     {
@@ -721,8 +703,8 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
                             frame,
                             slotTileSize,
                             auxLayer).rgb
-                            * _SurfaceEmissionTints[surfaceSlot].rgb
-                            * _SurfaceAuxTextureParams[surfaceSlot].w
+                            * FARION_PALETTE(7, surfaceSlot).rgb
+                            * FARION_PALETTE(6, surfaceSlot).w
                             * weight;
                         surfaceEmissionWeight += weight;
                     }
@@ -946,6 +928,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
+            #include "FarionTerrestrialInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
@@ -967,6 +950,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
+            #include "FarionTerrestrialInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
@@ -985,6 +969,7 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #include "FarionTerrestrialInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
@@ -1005,7 +990,9 @@ Shader "Farion/Celestial/Terrestrial Triplanar"
             #pragma fragment FarionGeomorphShadowFragment
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
+            #include "FarionTerrestrialInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }

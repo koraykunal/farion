@@ -104,6 +104,7 @@ namespace Farion.Gameplay.Input
 
         public static InputAction VehicleExit => Find("Vehicle", "Exit");
         public static InputAction VehicleToggleCamera => Find("Vehicle", "ToggleCamera");
+        public static InputAction VehicleToggleHud => Find("Vehicle", "ToggleHud");
 
         public static InputAction UiPause => Find("UI", "Pause");
         public static InputAction UiInventory => Find("UI", "Inventory");
@@ -293,6 +294,7 @@ namespace Farion.Gameplay.Input
             InputActionMap map = inputAsset.AddActionMap("Vehicle");
             AddButton(map, "Exit", "<Keyboard>/v", "<Gamepad>/buttonNorth");
             AddButton(map, "ToggleCamera", "<Keyboard>/c", "<Gamepad>/rightStickPress");
+            AddButton(map, "ToggleHud", "<Keyboard>/h", "<Gamepad>/dpad/left");
         }
 
         static void BuildUiMap(InputActionAsset inputAsset)

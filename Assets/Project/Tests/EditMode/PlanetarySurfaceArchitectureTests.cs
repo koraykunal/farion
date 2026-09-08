@@ -385,6 +385,77 @@ namespace Farion.Tests.EditMode
                 0.1f);
         }
 
+        [Test]
+        public void TerrainSculpt_CratersCarveOnlyInsideTheFeatureNoiseWindow()
+        {
+            ContinentRidgeShapeProfile template = Create<ContinentRidgeShapeProfile>();
+            CelestialShapeProfile plain = template.CreateVariant(41, 1f);
+            CelestialShapeProfile carved = template.CreateVariant(41, 1f);
+            CelestialShapeProfile windowed = template.CreateVariant(41, 1f);
+            createdObjects.Add(plain);
+            createdObjects.Add(carved);
+            createdObjects.Add(windowed);
+
+            TerrainSculptLayer everywhere = new(
+                TerrainSculptStyle.Craters, 20f, 120f, new Vector2(0f, 1f), 0f, 7);
+            TerrainSculptLayer nowhere = new(
+                TerrainSculptStyle.Craters, 20f, 120f, new Vector2(2f, 3f), 0f, 7);
+            carved.ApplyTerrainSculpts(new TerrainSculptSet(9, 2.5f, new[] { everywhere }));
+            windowed.ApplyTerrainSculpts(new TerrainSculptSet(9, 2.5f, new[] { nowhere }));
+
+            float largestDifference = 0f;
+            float deepest = 0f;
+            for (int i = 0; i < 4000; i++)
+            {
+                Vector3 direction = Quaternion.Euler(i * 7.1f, i * 13.7f, 0f) * Vector3.forward;
+                float baseline = plain.EvaluateRadius(1600f, direction);
+                float sculpted = carved.EvaluateRadius(1600f, direction);
+                Assert.That(windowed.EvaluateRadius(1600f, direction), Is.EqualTo(baseline).Within(0.0001f));
+                largestDifference = Mathf.Max(largestDifference, Mathf.Abs(sculpted - baseline));
+                deepest = Mathf.Min(deepest, sculpted - baseline);
+            }
+
+            Assert.That(largestDifference, Is.GreaterThan(1f));
+            Assert.That(deepest, Is.LessThan(-4f));
+            Assert.That(largestDifference, Is.LessThanOrEqualTo(everywhere.AmplitudeMeters * 2.5f));
+            Assert.That(carved.EstimatePeakElevationMeters(), Is.EqualTo(plain.EstimatePeakElevationMeters() + 20f).Within(0.001f));
+
+            float farLod = carved.EvaluateRadius(1600f, Vector3.right, 1f);
+            Assert.That(farLod, Is.EqualTo(plain.EvaluateRadius(1600f, Vector3.right, 1f)).Within(0.0001f));
+        }
+
+        [Test]
+        public void TerrainSculpt_DistributionBuildsLayersOnlyForSculptedFeaturesHostedByThePlanet()
+        {
+            BiomeDefinition hosted = Create<BiomeDefinition>();
+            BiomeDefinition foreign = Create<BiomeDefinition>();
+            TerrainFeatureDefinition craters = Create<TerrainFeatureDefinition>();
+            TestFieldAccess.SetField(craters, "sculptStyle", TerrainSculptStyle.Craters);
+            TestFieldAccess.SetField(craters, "sculptAmplitudeMeters", 14f);
+            TerrainFeatureDefinition label = Create<TerrainFeatureDefinition>();
+
+            TerrainFeatureDistributionRule craterRule = new();
+            TestFieldAccess.SetField(craterRule, "feature", craters);
+            TestFieldAccess.SetField(craterRule, "allowedBiomes", new List<BiomeDefinition> { hosted });
+            TestFieldAccess.SetField(craterRule, "minFeatureNoise", 0.6f);
+            TerrainFeatureDistributionRule labelRule = new();
+            TestFieldAccess.SetField(labelRule, "feature", label);
+
+            TerrainFeatureDistributionProfile profile = Create<TerrainFeatureDistributionProfile>();
+            TestFieldAccess.SetField(profile, "rules", new List<TerrainFeatureDistributionRule> { craterRule, labelRule });
+
+            TerrainSculptSet forForeign = profile.BuildSculpts(5, new[] { foreign });
+            Assert.That(forForeign.IsEmpty, Is.True);
+
+            TerrainSculptSet forHosted = profile.BuildSculpts(5, new[] { hosted });
+            Assert.That(forHosted.Layers.Count, Is.EqualTo(1));
+            Assert.That(forHosted.Layers[0].Style, Is.EqualTo(TerrainSculptStyle.Craters));
+            Assert.That(forHosted.Layers[0].AmplitudeMeters, Is.EqualTo(14f));
+            Assert.That(forHosted.Layers[0].NoiseRange.x, Is.EqualTo(0.6f));
+            Assert.That(forHosted.Seed, Is.EqualTo(SeedUtility.Derive(5, profile.SeedSalt, "terrain.feature")));
+            Assert.That(profile.BuildSculpts(5, new[] { hosted }).Layers[0].Seed, Is.EqualTo(forHosted.Layers[0].Seed));
+        }
+
         T Create<T>() where T : ScriptableObject
         {
             T instance = ScriptableObject.CreateInstance<T>();

@@ -164,34 +164,34 @@ namespace Farion.Rendering.Celestial
             normalMap.Apply(true, false);
         }
 
-        public void Apply(MaterialPropertyBlock propertyBlock)
+        public void Apply(Material target)
         {
-            if (propertyBlock == null)
+            if (target == null)
             {
                 return;
             }
 
-            propertyBlock.SetFloat("_SurfaceWeightMapEnabled", 1f);
-            propertyBlock.SetTexture("_SurfaceWeightsA", weightsA);
-            propertyBlock.SetTexture("_SurfaceWeightsB", weightsB);
-            propertyBlock.SetTexture("_SurfaceStateMap", surfaceState);
+            target.SetFloat("_SurfaceWeightMapEnabled", 1f);
+            target.SetTexture("_SurfaceWeightsA", weightsA);
+            target.SetTexture("_SurfaceWeightsB", weightsB);
+            target.SetTexture("_SurfaceStateMap", surfaceState);
             if (surfaceNormal != null)
             {
-                propertyBlock.SetFloat("_SurfaceNormalMapEnabled", 1f);
-                propertyBlock.SetTexture("_SurfaceNormalMap", surfaceNormal);
+                target.SetFloat("_SurfaceNormalMapEnabled", 1f);
+                target.SetTexture("_SurfaceNormalMap", surfaceNormal);
             }
             else
             {
-                propertyBlock.SetFloat("_SurfaceNormalMapEnabled", 0f);
+                target.SetFloat("_SurfaceNormalMapEnabled", 0f);
             }
         }
 
-        public static void Clear(MaterialPropertyBlock propertyBlock)
+        public static void Clear(Material target)
         {
-            if (propertyBlock != null)
+            if (target != null)
             {
-                propertyBlock.SetFloat("_SurfaceWeightMapEnabled", 0f);
-                propertyBlock.SetFloat("_SurfaceNormalMapEnabled", 0f);
+                target.SetFloat("_SurfaceWeightMapEnabled", 0f);
+                target.SetFloat("_SurfaceNormalMapEnabled", 0f);
             }
         }
 

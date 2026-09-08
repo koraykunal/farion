@@ -89,86 +89,86 @@ namespace Farion.Rendering.Celestial
         }
 
         public override void ApplyMaterialProperties(
-            MaterialPropertyBlock propertyBlock,
+            Material target,
             float bodyRadius,
             Vector2 radiusMinMax)
         {
-            ApplyMaterialProperties(propertyBlock, bodyRadius, radiusMinMax, 0f, false);
+            ApplyMaterialProperties(target, bodyRadius, radiusMinMax, 0f, false);
         }
 
         public void ApplyMaterialProperties(
-            MaterialPropertyBlock propertyBlock,
+            Material target,
             float bodyRadius,
             Vector2 radiusMinMax,
             float oceanLevelOverride)
         {
-            ApplyMaterialProperties(propertyBlock, bodyRadius, radiusMinMax, oceanLevelOverride, true);
+            ApplyMaterialProperties(target, bodyRadius, radiusMinMax, oceanLevelOverride, true);
         }
 
         public void ApplyMaterialProperties(
-            MaterialPropertyBlock propertyBlock,
+            Material target,
             float bodyRadius,
             Vector2 radiusMinMax,
             float oceanLevelOverride,
             bool hasOcean)
         {
-            propertyBlock.SetFloat("_BodyRadius", bodyRadius);
-            propertyBlock.SetVector("_RadiusMinMax", radiusMinMax);
-            propertyBlock.SetFloat("_FarNormalFadeStart", bodyRadius * FarNormalFadeStartRadiusFraction);
-            propertyBlock.SetFloat("_FarNormalFadeEnd", bodyRadius * FarNormalFadeEndRadiusFraction);
-            propertyBlock.SetFloat("_HasOcean", hasOcean ? 1f : 0f);
-            propertyBlock.SetFloat("_OceanLevel", Mathf.Clamp01(oceanLevelOverride));
-            propertyBlock.SetFloat("_Metallic", metallic);
-            propertyBlock.SetFloat("_LandSmoothness", landSmoothness);
+            target.SetFloat("_BodyRadius", bodyRadius);
+            target.SetVector("_RadiusMinMax", radiusMinMax);
+            target.SetFloat("_FarNormalFadeStart", bodyRadius * FarNormalFadeStartRadiusFraction);
+            target.SetFloat("_FarNormalFadeEnd", bodyRadius * FarNormalFadeEndRadiusFraction);
+            target.SetFloat("_HasOcean", hasOcean ? 1f : 0f);
+            target.SetFloat("_OceanLevel", Mathf.Clamp01(oceanLevelOverride));
+            target.SetFloat("_Metallic", metallic);
+            target.SetFloat("_LandSmoothness", landSmoothness);
 
             if (surfaceVisualProfile != null)
             {
-                surfaceVisualProfile.ApplyMaterialProperties(propertyBlock);
+                surfaceVisualProfile.ApplyMaterialProperties(target);
             }
             else
             {
-                SurfaceVisualProfile.ClearMaterialProperties(propertyBlock);
+                SurfaceVisualProfile.ClearMaterialProperties(target);
             }
 
-            ApplyOverlayProperties(propertyBlock, "_Lava", lavaOverlay);
-            ApplyOverlayProperties(propertyBlock, "_Snow", snowOverlay);
+            ApplyOverlayProperties(target, "_Lava", lavaOverlay);
+            ApplyOverlayProperties(target, "_Snow", snowOverlay);
 
-            propertyBlock.SetColor("_OceanLow", oceanLow);
-            propertyBlock.SetColor("_OceanHigh", oceanHigh);
-            propertyBlock.SetColor("_ShoreLow", shoreLow);
-            propertyBlock.SetColor("_ShoreHigh", shoreHigh);
-            propertyBlock.SetColor("_FlatLowA", flatLowA);
-            propertyBlock.SetColor("_FlatHighA", flatHighA);
-            propertyBlock.SetColor("_FlatLowB", flatLowB);
-            propertyBlock.SetColor("_FlatHighB", flatHighB);
-            propertyBlock.SetColor("_SteepLow", steepLow);
-            propertyBlock.SetColor("_SteepHigh", steepHigh);
+            target.SetColor("_OceanLow", oceanLow);
+            target.SetColor("_OceanHigh", oceanHigh);
+            target.SetColor("_ShoreLow", shoreLow);
+            target.SetColor("_ShoreHigh", shoreHigh);
+            target.SetColor("_FlatLowA", flatLowA);
+            target.SetColor("_FlatHighA", flatHighA);
+            target.SetColor("_FlatLowB", flatLowB);
+            target.SetColor("_FlatHighB", flatHighB);
+            target.SetColor("_SteepLow", steepLow);
+            target.SetColor("_SteepHigh", steepHigh);
 
-            propertyBlock.SetFloat("_NoiseScale", noiseScale);
-            propertyBlock.SetFloat("_NoiseScale2", noiseScale2);
-            propertyBlock.SetFloat("_RockNormalTileSize", rockNormalTileSize);
-            propertyBlock.SetFloat("_NormalStrength", normalStrength);
-            propertyBlock.SetFloat("_FlatColorBlend", flatColorBlend);
-            propertyBlock.SetFloat("_FlatColorBlendNoise", flatColorBlendNoise);
-            propertyBlock.SetFloat("_ShoreHeight", shoreHeight);
-            propertyBlock.SetFloat("_ShoreBlend", shoreBlend);
-            propertyBlock.SetFloat("_OceanEdgeBlend", oceanEdgeBlend);
-            propertyBlock.SetFloat("_ShoreWetness", shoreWetness);
-            propertyBlock.SetFloat("_MaxFlatHeight", maxFlatHeight);
-            propertyBlock.SetFloat("_SteepBands", steepBands);
-            propertyBlock.SetFloat("_SteepBandStrength", steepBandStrength);
-            propertyBlock.SetFloat("_SteepnessThreshold", steepnessThreshold);
-            propertyBlock.SetFloat("_FlatToSteepBlend", flatToSteepBlend);
-            propertyBlock.SetFloat("_FlatToSteepNoise", flatToSteepNoise);
+            target.SetFloat("_NoiseScale", noiseScale);
+            target.SetFloat("_NoiseScale2", noiseScale2);
+            target.SetFloat("_RockNormalTileSize", rockNormalTileSize);
+            target.SetFloat("_NormalStrength", normalStrength);
+            target.SetFloat("_FlatColorBlend", flatColorBlend);
+            target.SetFloat("_FlatColorBlendNoise", flatColorBlendNoise);
+            target.SetFloat("_ShoreHeight", shoreHeight);
+            target.SetFloat("_ShoreBlend", shoreBlend);
+            target.SetFloat("_OceanEdgeBlend", oceanEdgeBlend);
+            target.SetFloat("_ShoreWetness", shoreWetness);
+            target.SetFloat("_MaxFlatHeight", maxFlatHeight);
+            target.SetFloat("_SteepBands", steepBands);
+            target.SetFloat("_SteepBandStrength", steepBandStrength);
+            target.SetFloat("_SteepnessThreshold", steepnessThreshold);
+            target.SetFloat("_FlatToSteepBlend", flatToSteepBlend);
+            target.SetFloat("_FlatToSteepNoise", flatToSteepNoise);
 
             if (noiseTexture != null)
             {
-                propertyBlock.SetTexture("_NoiseTex", noiseTexture);
+                target.SetTexture("_NoiseTex", noiseTexture);
             }
 
             if (rockNormal != null)
             {
-                propertyBlock.SetTexture("_RockNormal", rockNormal);
+                target.SetTexture("_RockNormal", rockNormal);
             }
         }
 
@@ -192,29 +192,29 @@ namespace Farion.Rendering.Celestial
         }
 
         static void ApplyOverlayProperties(
-            MaterialPropertyBlock propertyBlock,
+            Material target,
             string propertyPrefix,
             SurfaceTextureSet textures)
         {
             bool enabled = textures != null && textures.HasSurfaceTextures;
-            propertyBlock.SetFloat($"{propertyPrefix}OverlayEnabled", enabled ? 1f : 0f);
+            target.SetFloat($"{propertyPrefix}OverlayEnabled", enabled ? 1f : 0f);
             if (!enabled)
             {
                 return;
             }
 
-            propertyBlock.SetTexture($"{propertyPrefix}BaseColor", textures.BaseColor);
-            propertyBlock.SetTexture($"{propertyPrefix}Normal", textures.Normal);
-            propertyBlock.SetTexture($"{propertyPrefix}Roughness", textures.Roughness);
+            target.SetTexture($"{propertyPrefix}BaseColor", textures.BaseColor);
+            target.SetTexture($"{propertyPrefix}Normal", textures.Normal);
+            target.SetTexture($"{propertyPrefix}Roughness", textures.Roughness);
             if (textures.Emission != null)
             {
-                propertyBlock.SetTexture($"{propertyPrefix}Emission", textures.Emission);
+                target.SetTexture($"{propertyPrefix}Emission", textures.Emission);
             }
 
-            propertyBlock.SetFloat($"{propertyPrefix}WorldTileSize", textures.WorldTileSize);
-            propertyBlock.SetFloat($"{propertyPrefix}NormalStrength", textures.NormalStrength);
-            propertyBlock.SetColor($"{propertyPrefix}EmissionTint", textures.EmissionTint);
-            propertyBlock.SetFloat($"{propertyPrefix}EmissionStrength", textures.EmissionStrength);
+            target.SetFloat($"{propertyPrefix}WorldTileSize", textures.WorldTileSize);
+            target.SetFloat($"{propertyPrefix}NormalStrength", textures.NormalStrength);
+            target.SetColor($"{propertyPrefix}EmissionTint", textures.EmissionTint);
+            target.SetFloat($"{propertyPrefix}EmissionStrength", textures.EmissionStrength);
         }
 
         void SyncSurfaceVisualProfileSubscription()

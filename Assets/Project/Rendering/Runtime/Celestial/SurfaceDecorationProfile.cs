@@ -47,6 +47,12 @@ namespace Farion.Rendering.Celestial
         [SerializeField, Range(0f, 1f), Tooltip("0 follows local gravity; 1 follows the terrain normal.")]
         float normalAlignment = 1f;
         [SerializeField, Min(0f)] float surfaceOffset = 0.03f;
+        [SerializeField, Range(0f, 0.9f), Tooltip("Fraction of the mesh's vertical extent sunk below the surface so rocks read as seated instead of resting on a bounding-box corner.")]
+        float embedFraction;
+        [SerializeField, Tooltip("Variants whose longest bounds axis would stand upright are rolled onto their side, the way a loose slab actually comes to rest. Leave off for plants.")]
+        bool layTallVariantsFlat;
+        [SerializeField, Range(0f, 1f), Tooltip("Fraction of the mesh footprint sampled around the anchor. The terrain under the whole footprint sets the tilt and the seat sinks to its lowest point so no edge hangs in the air. 0 samples only the centre; keep 0 for grass.")]
+        float footprintSeating;
 
         [Header("Surface Blending")]
         [SerializeField, Range(0f, 1f)] float surfaceTintStrength;
@@ -65,6 +71,9 @@ namespace Farion.Rendering.Celestial
         public Vector2 UniformScaleRange => uniformScaleRange;
         public float NormalAlignment => Mathf.Clamp01(normalAlignment);
         public float SurfaceOffset => Mathf.Max(0f, surfaceOffset);
+        public float EmbedFraction => Mathf.Clamp(embedFraction, 0f, 0.9f);
+        public bool LayTallVariantsFlat => layTallVariantsFlat;
+        public float FootprintSeating => Mathf.Clamp01(footprintSeating);
         public float ShadowDistance =>
             Mathf.Clamp(shadowDistance, 0f, distribution.FarVisibilityDistance);
         public float FarLodStartDistance =>
@@ -143,6 +152,7 @@ namespace Farion.Rendering.Celestial
             mossResponse = Mathf.Clamp(mossResponse, 0f, 2f);
             normalAlignment = Mathf.Clamp01(normalAlignment);
             surfaceOffset = Mathf.Max(0f, surfaceOffset);
+            embedFraction = Mathf.Clamp(embedFraction, 0f, 0.9f);
             shadowDistance = Mathf.Clamp(shadowDistance, 0f, distribution.FarVisibilityDistance);
             farLodStartDistance =
                 Mathf.Clamp(farLodStartDistance, 0f, distribution.FarVisibilityDistance);

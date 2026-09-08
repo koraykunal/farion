@@ -26,7 +26,8 @@ namespace Farion.Gameplay.Interaction
 
             CurrentInput = new BoardingInputState(
                 FarionInputActions.VehicleExit.WasPressedThisFrame(),
-                FarionInputActions.VehicleToggleCamera.WasPressedThisFrame());
+                FarionInputActions.VehicleToggleCamera.WasPressedThisFrame(),
+                FarionInputActions.VehicleToggleHud.WasPressedThisFrame());
         }
 
         void OnDisable()

@@ -15,4 +15,5 @@ MonoBehaviour:
   materialId: surface.rock
   displayName: Exposed Rock
   category: 0
+  footstepSurface: 0
   previewColor: {r: 0.38, g: 0.35, b: 0.31, a: 1}

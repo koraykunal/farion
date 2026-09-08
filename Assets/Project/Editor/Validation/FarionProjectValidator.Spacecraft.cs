@@ -122,6 +122,7 @@ namespace Farion.Editor.Validation
 
             RequireSpacecraftComponent<SpacecraftSurfaceContactProbe>(scenePath, motor, report);
             RequireSpacecraftComponent<SpacecraftSurfaceContactStabilizer>(scenePath, motor, report);
+            RequireSpacecraftComponent<SpacecraftSurfaceGuard>(scenePath, motor, report);
             RequireSpacecraftComponent<SpacecraftLandingComputer>(scenePath, motor, report);
             RequireSpacecraftComponent<SpacecraftLandingGuidanceComputer>(scenePath, motor, report);
             SpacecraftOceanInteractor oceanInteractor =

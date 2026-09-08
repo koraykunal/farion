@@ -10,8 +10,10 @@ namespace Farion.Gameplay.Input
 
         const string FieldOfViewKey = "farion.view.fieldOfView";
         const string ReducedMotionKey = "farion.ui.reducedMotion";
+        const string FlightHudKey = "farion.view.flightHud";
 
         static float fieldOfView = float.NaN;
+        static int flightHudVisible = -1;
 
         public static float FieldOfView
         {
@@ -44,10 +46,35 @@ namespace Farion.Gameplay.Input
         public static bool ReducedMotion =>
             PlayerPrefs.GetInt(ReducedMotionKey, 0) != 0;
 
+        public static bool FlightHudVisible
+        {
+            get
+            {
+                if (flightHudVisible < 0)
+                {
+                    flightHudVisible = PlayerPrefs.GetInt(FlightHudKey, 1) != 0 ? 1 : 0;
+                }
+
+                return flightHudVisible == 1;
+            }
+            set
+            {
+                if (FlightHudVisible == value)
+                {
+                    return;
+                }
+
+                flightHudVisible = value ? 1 : 0;
+                PlayerPrefs.SetInt(FlightHudKey, flightHudVisible);
+                PlayerPrefs.Save();
+            }
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetCache()
         {
             fieldOfView = float.NaN;
+            flightHudVisible = -1;
         }
 
         public static float ResolveFieldOfView(float authoredFieldOfView)

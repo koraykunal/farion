@@ -27,6 +27,17 @@ namespace Farion.Rendering.Celestial
         [SerializeField] int drawBatchCount;
 
         const float SurfaceAnchorEpsilon = 0.005f;
+        const float TallVariantAspect = 1.35f;
+        const float FootprintRingRatio = 0.8f;
+        System.Func<Vector3, float> analyticRadiusSampler;
+
+        float SampleAnalyticRadius(Vector3 direction)
+        {
+            return surfaceModel != null && surfaceModel.TrySampleLocalRadius(direction, out float radius)
+                ? radius
+                : -1f;
+        }
+        const float UprightLongAxisCosine = 0.7f;
         const int SurfaceAnchorRefreshBudget = 48;
 
         readonly List<RuleRuntime> ruleRuntimes = new();
@@ -421,8 +432,10 @@ namespace Farion.Rendering.Celestial
             }
 
             float surfaceRadius = sample.SurfaceRadius;
-            if (patchSystem != null &&
-                patchSystem.TryResolveSurfaceAnchor(direction, out CelestialSurfaceAnchor placementAnchor))
+            CelestialSurfaceAnchor placementAnchor = default;
+            bool hasPlacementAnchor = patchSystem != null &&
+                patchSystem.TryResolveSurfaceAnchor(direction, out placementAnchor);
+            if (hasPlacementAnchor)
             {
                 surfaceRadius = placementAnchor.FineRadius;
             }
@@ -449,29 +462,52 @@ namespace Farion.Rendering.Celestial
             }
 
             SurfaceDecorationVariant variant = rule.Variants[variantIndex];
-            Vector3 normalLocal = transform.InverseTransformDirection(sample.Surface.Normal).normalized;
-            Vector3 placementUp = SurfaceScatterPlacement.ResolvePlacementUp(
-                direction,
-                normalLocal,
-                rule.NormalAlignment);
-            Quaternion alignment = Quaternion.FromToRotation(Vector3.up, placementUp);
-            float yaw = SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 4) * 360f;
-            Quaternion rotation = Quaternion.AngleAxis(yaw, placementUp) * alignment *
-                Quaternion.Euler(variant.RotationOffset);
             Vector2 scaleRange = rule.UniformScaleRange;
             float scale = Mathf.Lerp(
                 Mathf.Min(scaleRange.x, scaleRange.y),
                 Mathf.Max(scaleRange.x, scaleRange.y),
                 SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 5));
             scale *= variant.BaseScale;
+            Vector3 normalLocal = transform.InverseTransformDirection(sample.Surface.Normal).normalized;
+            Vector3 extents = variant.NearMesh.bounds.extents;
+            float footprintRadius = rule.FootprintSeating * scale * FootprintRingRatio *
+                Mathf.Max(extents.x, Mathf.Max(extents.y, extents.z));
+            float seatDrop = 0f;
+            if (!SurfaceScatterPlacement.TryResolveFootprintSeat(
+                    analyticRadiusSampler ??= SampleAnalyticRadius,
+                    direction,
+                    sample.SurfaceRadius,
+                    footprintRadius,
+                    rule.NormalAlignment,
+                    out _,
+                    out Vector3 placementUp,
+                    out seatDrop))
+            {
+                placementUp = SurfaceScatterPlacement.ResolvePlacementUp(
+                    direction,
+                    normalLocal,
+                    rule.NormalAlignment);
+                seatDrop = 0f;
+            }
+
+            Quaternion alignment = Quaternion.FromToRotation(Vector3.up, placementUp);
+            float yaw = SurfaceScatterPlacement.Hash01(context.PlanetSeed, rule.StableId, cell, 4) * 360f;
+            Quaternion rotation = Quaternion.AngleAxis(yaw, placementUp) * alignment *
+                Quaternion.Euler(variant.RotationOffset);
+            if (rule.LayTallVariantsFlat)
+            {
+                rotation = ResolveRestingRotation(variant.NearMesh.bounds, rotation, placementUp);
+            }
+
             Vector3 position = direction * surfaceRadius + normalLocal * rule.SurfaceOffset;
-            position += placementUp * ResolveMeshGroundingOffset(
+            position += placementUp * (seatDrop + ResolveMeshGroundingOffset(
                 variant.NearMesh.bounds,
                 rotation,
                 placementUp,
-                scale);
+                scale,
+                rule.EmbedFraction));
             Matrix4x4 localMatrix = Matrix4x4.TRS(position, rotation, Vector3.one * scale);
-            runtime.Instances[cell] = new DecorationInstance(
+            DecorationInstance created = new(
                 variantIndex,
                 direction,
                 surfaceRadius,
@@ -482,6 +518,14 @@ namespace Farion.Rendering.Celestial
                     context.PlanetSeed,
                     rule.StableId,
                     cell));
+            if (hasPlacementAnchor)
+            {
+                created.HasSurfaceAnchor = true;
+                created.SurfaceAnchor = placementAnchor;
+                created.AppliedTransition = patchSystem.CommittedTransitionCount;
+            }
+
+            runtime.Instances[cell] = created;
         }
 
         float ResolveFormationInfluence(Vector3 localPosition)
@@ -501,14 +545,22 @@ namespace Farion.Rendering.Celestial
             }
 
             int transition = patchSystem.CommittedTransitionCount;
-            if (instance.AppliedTransition != transition && surfaceAnchorRefreshBudget > 0)
+            if (instance.AppliedTransition != transition)
             {
-                surfaceAnchorRefreshBudget--;
-                instance.AppliedTransition = transition;
-                instance.HasSurfaceAnchor = patchSystem.TryResolveSurfaceAnchor(
-                    instance.Direction,
-                    out CelestialSurfaceAnchor resolved);
-                instance.SurfaceAnchor = resolved;
+                if (instance.HasSurfaceAnchor &&
+                    patchSystem.IsSurfaceAnchorCurrent(instance.Direction, instance.SurfaceAnchor))
+                {
+                    instance.AppliedTransition = transition;
+                }
+                else if (surfaceAnchorRefreshBudget > 0)
+                {
+                    surfaceAnchorRefreshBudget--;
+                    instance.AppliedTransition = transition;
+                    instance.HasSurfaceAnchor = patchSystem.TryResolveSurfaceAnchor(
+                        instance.Direction,
+                        out CelestialSurfaceAnchor resolved);
+                    instance.SurfaceAnchor = resolved;
+                }
             }
 
             if (!instance.HasSurfaceAnchor)
@@ -519,9 +571,7 @@ namespace Farion.Rendering.Celestial
             float observerDistance = Vector3.Distance(
                 cameraLocalPosition,
                 instance.Direction * instance.SurfaceAnchor.FineRadius);
-            float surfaceRadius = patchSystem.ResolveAnchorRadius(
-                instance.SurfaceAnchor,
-                observerDistance);
+            float surfaceRadius = instance.SurfaceAnchor.ResolveRadius(observerDistance);
             if (Mathf.Abs(surfaceRadius - instance.SurfaceRadius) < SurfaceAnchorEpsilon)
             {
                 return;
@@ -875,20 +925,54 @@ namespace Farion.Rendering.Celestial
                 : distance >= switchDistance * 1.1f;
         }
 
+        internal static Quaternion ResolveRestingRotation(
+            Bounds bounds,
+            Quaternion rotation,
+            Vector3 placementUp)
+        {
+            Vector3 extents = bounds.extents;
+            Vector3 longAxis = extents.x >= extents.y && extents.x >= extents.z
+                ? Vector3.right
+                : extents.y >= extents.z ? Vector3.up : Vector3.forward;
+            float longest = Vector3.Dot(extents, new Vector3(Mathf.Abs(longAxis.x), Mathf.Abs(longAxis.y), Mathf.Abs(longAxis.z)));
+            float shortest = Mathf.Min(extents.x, Mathf.Min(extents.y, extents.z));
+            if (longest < shortest * TallVariantAspect)
+            {
+                return rotation;
+            }
+
+            Vector3 up = placementUp.normalized;
+            Vector3 worldLongAxis = rotation * longAxis;
+            if (Mathf.Abs(Vector3.Dot(worldLongAxis, up)) < UprightLongAxisCosine)
+            {
+                return rotation;
+            }
+
+            Vector3 flat = Vector3.ProjectOnPlane(worldLongAxis, up);
+            if (flat.sqrMagnitude < 0.0001f)
+            {
+                flat = Vector3.ProjectOnPlane(rotation * Vector3.forward, up);
+            }
+
+            return Quaternion.FromToRotation(worldLongAxis, flat.normalized) * rotation;
+        }
+
         internal static float ResolveMeshGroundingOffset(
             Bounds bounds,
             Quaternion rotation,
             Vector3 placementUp,
-            float scale)
+            float scale,
+            float embedFraction = 0f)
         {
             Vector3 localUp = Quaternion.Inverse(rotation) * placementUp.normalized;
             Vector3 absoluteUp = new(
                 Mathf.Abs(localUp.x),
                 Mathf.Abs(localUp.y),
                 Mathf.Abs(localUp.z));
-            float lowestPoint = Vector3.Dot(bounds.center, localUp) -
-                Vector3.Dot(bounds.extents, absoluteUp);
-            return -lowestPoint * Mathf.Max(0f, scale);
+            float halfExtent = Vector3.Dot(bounds.extents, absoluteUp);
+            float lowestPoint = Vector3.Dot(bounds.center, localUp) - halfExtent;
+            float embed = halfExtent * 2f * Mathf.Clamp01(embedFraction);
+            return (-lowestPoint - embed) * Mathf.Max(0f, scale);
         }
 
         void ResolveComponents()

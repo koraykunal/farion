@@ -178,9 +178,12 @@ namespace Farion.Gameplay.Flight
             Vector3 shipVelocity = preStepLinearVelocity + Vector3.Cross(
                 preStepAngularVelocity,
                 point - Rigidbody.worldCenterOfMass);
-            pendingImpactSpeed = Mathf.Max(
-                pendingImpactSpeed,
-                (shipVelocity - otherVelocity).magnitude);
+            RegisterImpact((shipVelocity - otherVelocity).magnitude);
+        }
+
+        public void RegisterImpact(float impactSpeed)
+        {
+            pendingImpactSpeed = Mathf.Max(pendingImpactSpeed, impactSpeed);
         }
 
         static CelestialBody ResolveCelestialBody(Collider collider)

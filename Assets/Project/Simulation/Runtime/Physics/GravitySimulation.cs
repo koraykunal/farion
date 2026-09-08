@@ -481,8 +481,9 @@ namespace Farion.Simulation.Physics
                     ? anchorWorld
                     : anchorWorld + referenceFrameRotation *
                         (body.SystemPosition - anchorSystem);
-                Quaternion worldRotation = referenceFrameRotation *
-                    body.EvaluateAnalyticRotation(simulationTime);
+                Quaternion worldRotation = body == referenceBody
+                    ? referenceBodyWorldRotation
+                    : referenceFrameRotation * body.EvaluateAnalyticRotation(simulationTime);
                 body.ApplyAnalyticPose(worldPosition, worldRotation);
             }
 

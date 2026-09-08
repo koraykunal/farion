@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Flight;
+using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Navigation;
 using Farion.Gameplay.Session;
@@ -617,7 +618,8 @@ namespace Farion.UI.Gameplay
             SetVisible(
                 pilotContext != null &&
                 pilotContext.CurrentMode == PlayerPossessionMode.Spacecraft &&
-                motor != null);
+                motor != null &&
+                PlayerViewPreferences.FlightHudVisible);
         }
 
         static void SetText(TMP_Text target, StringBuilder builder)

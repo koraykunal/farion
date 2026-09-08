@@ -184,7 +184,7 @@ MonoBehaviour:
     talusReach: 2.4
     talusScaleFalloff: 0.45
     yawJitterDegrees: 32
-    tiltJitterDegrees: 22
+    tiltJitterDegrees: 8
     surfaceNormalAlignment: 0.5
     surfaceTintStrength: 0.7
     snowResponse: 1
@@ -333,10 +333,634 @@ MonoBehaviour:
     talusReach: 2
     talusScaleFalloff: 0.5
     yawJitterDegrees: 34
-    tiltJitterDegrees: 26
+    tiltJitterDegrees: 10
     surfaceNormalAlignment: 0.55
     surfaceTintStrength: 0.7
     snowResponse: 1
     mossResponse: 1
     collisionDistance: 150
     influenceRadius: 50
+  - stableId: surfaceformation.frozenspires
+    displayName: Frozen Spire Field
+    kit:
+      outcrop:
+      - prefab: {fileID: 5848316272764729089, guid: e1e9d22250eae174abdc9adc0019ea02, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 1.1070096
+        embedFraction: 0.1
+        pieceHeight: 6.810146
+      - prefab: {fileID: 3968361463709166297, guid: f5f245436acbed1429d909b45bdab5b5, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.5640786
+        embedFraction: 0.1
+        pieceHeight: 7.0187006
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 0.7
+        baseScale: 2.6
+        footprintRadius: 2.19198
+        embedFraction: 0.1
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 0.7
+        baseScale: 2.6
+        footprintRadius: 2.0075507
+        embedFraction: 0.1
+        pieceHeight: 2.5468566
+      buttress:
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.19198
+        embedFraction: 0.12
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.0075507
+        embedFraction: 0.12
+        pieceHeight: 2.5468566
+      - prefab: {fileID: 2255044700778968936, guid: 3f638165bab51ef4599d2a2ae51e0750, type: 3}
+        weight: 0.6
+        baseScale: 3
+        footprintRadius: 0.6175121
+        embedFraction: 0.12
+        pieceHeight: 1.0490711
+      - prefab: {fileID: 7907787692901684189, guid: 260623cced0865b44aaf5a05a4ab1d6f, type: 3}
+        weight: 0.6
+        baseScale: 3
+        footprintRadius: 0.48547822
+        embedFraction: 0.12
+        pieceHeight: 1.0563353
+      talus:
+      - prefab: {fileID: 2255044700778968936, guid: 3f638165bab51ef4599d2a2ae51e0750, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.6175121
+        embedFraction: 0.18
+        pieceHeight: 1.0490711
+      - prefab: {fileID: 4524635487810946913, guid: a4ffdf4793157fd439c834b863a0c4fa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.36126703
+        embedFraction: 0.18
+        pieceHeight: 1.5178463
+      - prefab: {fileID: 7907787692901684189, guid: 260623cced0865b44aaf5a05a4ab1d6f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.48547822
+        embedFraction: 0.18
+        pieceHeight: 1.0563353
+      debris:
+      - prefab: {fileID: 1048870084681727038, guid: d31b7a2a7454a77478a67640a885d57f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.13661331
+        embedFraction: 0.15
+        pieceHeight: 0.1628272
+      - prefab: {fileID: 4561038242749128491, guid: 1443c44101855534fb5a4b162271b076, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.12609729
+        embedFraction: 0.15
+        pieceHeight: 0.11154056
+      - prefab: {fileID: 6962155819592490607, guid: cca5e15cc022b7c4cabbe78da30fb3aa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.16000426
+        embedFraction: 0.15
+        pieceHeight: 0.1908771
+    suitability:
+      allowedBiomes:
+      - {fileID: 11400000, guid: ec69e337fda94e90b1e1d0900b3536ed, type: 2}
+      allowedSurfaceMaterials: []
+      allowedTerrainFeatures: []
+      requireDryLand: 1
+      limitHeightAboveOcean: 0
+      heightAboveOceanRange: {x: 0.25, y: 1000000}
+      heightAboveOceanFeather: 1
+      altitudeRange: {x: -1000000, y: 1000000}
+      altitudeFeather: 8
+      slopeRange: {x: 4, y: 40}
+      slopeFeather: 12
+      temperatureRange: {x: -273.15, y: 1000}
+      temperatureFeather: 4
+      moistureRange: {x: 0, y: 1}
+      moistureFeather: 0.08
+      radiationRange: {x: 0, y: 1}
+      radiationFeather: 0.05
+      snowRange: {x: 0, y: 1}
+      snowFeather: 0.08
+      wetnessRange: {x: 0, y: 1}
+      wetnessFeather: 0.08
+      volcanismRange: {x: 0, y: 1}
+      volcanismFeather: 0.05
+    distribution:
+      spacingMeters: 170
+      spawnChance: 1
+      clusterScaleMeters: 900
+      clusterCutoff: 0.4
+      clusterFeather: 0.18
+      nearVisibilityDistance: 200
+      farVisibilityDistance: 620
+      releaseHysteresis: 1.2
+    slopeBreakBias: 0.1
+    slopeBreakSampleMeters: 12
+    geologyRequirement: 0
+    convexityBias: 0
+    preferredConvexity: 0.1
+    featureHeightRatio: 1.8
+    outcropCount: {x: 3, y: 7}
+    outcropSpacingRatio: 0.7
+    buttressCount: {x: 0, y: 2}
+    talusCount: {x: 1, y: 3}
+    debrisCount: {x: 4, y: 8}
+    formationRadius: 42
+    uniformScaleRange: {x: 1.6, y: 3.4}
+    scaleVariation: 0.45
+    shapeVariation: 0.4
+    talusReach: 2
+    talusScaleFalloff: 0.5
+    yawJitterDegrees: 40
+    tiltJitterDegrees: 5
+    surfaceNormalAlignment: 0.15
+    surfaceTintStrength: 0.5
+    snowResponse: 1.6
+    mossResponse: 1
+    collisionDistance: 150
+    influenceRadius: 50
+  - stableId: surfaceformation.basaltcolumns
+    displayName: Basalt Column Cluster
+    kit:
+      outcrop:
+      - prefab: {fileID: 5848316272764729089, guid: e1e9d22250eae174abdc9adc0019ea02, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 1.1070096
+        embedFraction: 0.1
+        pieceHeight: 6.810146
+      - prefab: {fileID: 3968361463709166297, guid: f5f245436acbed1429d909b45bdab5b5, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.5640786
+        embedFraction: 0.1
+        pieceHeight: 7.0187006
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 0.7
+        baseScale: 2.6
+        footprintRadius: 2.19198
+        embedFraction: 0.1
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 0.7
+        baseScale: 2.6
+        footprintRadius: 2.0075507
+        embedFraction: 0.1
+        pieceHeight: 2.5468566
+      buttress:
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.19198
+        embedFraction: 0.12
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.0075507
+        embedFraction: 0.12
+        pieceHeight: 2.5468566
+      - prefab: {fileID: 2255044700778968936, guid: 3f638165bab51ef4599d2a2ae51e0750, type: 3}
+        weight: 0.6
+        baseScale: 3
+        footprintRadius: 0.6175121
+        embedFraction: 0.12
+        pieceHeight: 1.0490711
+      - prefab: {fileID: 7907787692901684189, guid: 260623cced0865b44aaf5a05a4ab1d6f, type: 3}
+        weight: 0.6
+        baseScale: 3
+        footprintRadius: 0.48547822
+        embedFraction: 0.12
+        pieceHeight: 1.0563353
+      talus:
+      - prefab: {fileID: 2255044700778968936, guid: 3f638165bab51ef4599d2a2ae51e0750, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.6175121
+        embedFraction: 0.18
+        pieceHeight: 1.0490711
+      - prefab: {fileID: 4524635487810946913, guid: a4ffdf4793157fd439c834b863a0c4fa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.36126703
+        embedFraction: 0.18
+        pieceHeight: 1.5178463
+      - prefab: {fileID: 7907787692901684189, guid: 260623cced0865b44aaf5a05a4ab1d6f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.48547822
+        embedFraction: 0.18
+        pieceHeight: 1.0563353
+      debris:
+      - prefab: {fileID: 1048870084681727038, guid: d31b7a2a7454a77478a67640a885d57f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.13661331
+        embedFraction: 0.15
+        pieceHeight: 0.1628272
+      - prefab: {fileID: 4561038242749128491, guid: 1443c44101855534fb5a4b162271b076, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.12609729
+        embedFraction: 0.15
+        pieceHeight: 0.11154056
+      - prefab: {fileID: 6962155819592490607, guid: cca5e15cc022b7c4cabbe78da30fb3aa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.16000426
+        embedFraction: 0.15
+        pieceHeight: 0.1908771
+    suitability:
+      allowedBiomes:
+      - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+      allowedSurfaceMaterials: []
+      allowedTerrainFeatures:
+      - {fileID: 11400000, guid: 80cc1a16133e4e088f92214ffa7df15e, type: 2}
+      requireDryLand: 1
+      limitHeightAboveOcean: 0
+      heightAboveOceanRange: {x: 0.25, y: 1000000}
+      heightAboveOceanFeather: 1
+      altitudeRange: {x: -1000000, y: 1000000}
+      altitudeFeather: 8
+      slopeRange: {x: 6, y: 60}
+      slopeFeather: 12
+      temperatureRange: {x: -273.15, y: 1000}
+      temperatureFeather: 4
+      moistureRange: {x: 0, y: 1}
+      moistureFeather: 0.08
+      radiationRange: {x: 0, y: 1}
+      radiationFeather: 0.05
+      snowRange: {x: 0, y: 0.9}
+      snowFeather: 0.08
+      wetnessRange: {x: 0, y: 1}
+      wetnessFeather: 0.08
+      volcanismRange: {x: 0, y: 1}
+      volcanismFeather: 0.05
+    distribution:
+      spacingMeters: 140
+      spawnChance: 1
+      clusterScaleMeters: 500
+      clusterCutoff: 0.38
+      clusterFeather: 0.18
+      nearVisibilityDistance: 200
+      farVisibilityDistance: 620
+      releaseHysteresis: 1.2
+    slopeBreakBias: 0.4
+    slopeBreakSampleMeters: 12
+    geologyRequirement: 0
+    convexityBias: 0
+    preferredConvexity: 0.1
+    featureHeightRatio: 1.8
+    outcropCount: {x: 6, y: 12}
+    outcropSpacingRatio: 0.35
+    buttressCount: {x: 2, y: 4}
+    talusCount: {x: 2, y: 4}
+    debrisCount: {x: 6, y: 10}
+    formationRadius: 34
+    uniformScaleRange: {x: 1.3, y: 2.4}
+    scaleVariation: 0.12
+    shapeVariation: 0.1
+    talusReach: 2
+    talusScaleFalloff: 0.5
+    yawJitterDegrees: 10
+    tiltJitterDegrees: 2
+    surfaceNormalAlignment: 0.1
+    surfaceTintStrength: 0.8
+    snowResponse: 1
+    mossResponse: 1
+    collisionDistance: 150
+    influenceRadius: 50
+  - stableId: surfaceformation.ejectafield
+    displayName: Crater Ejecta Field
+    kit:
+      outcrop:
+      - prefab: {fileID: 5848316272764729089, guid: e1e9d22250eae174abdc9adc0019ea02, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 1.1070096
+        embedFraction: 0.1
+        pieceHeight: 6.810146
+      - prefab: {fileID: 3968361463709166297, guid: f5f245436acbed1429d909b45bdab5b5, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.5640786
+        embedFraction: 0.1
+        pieceHeight: 7.0187006
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 0.7
+        baseScale: 2.6
+        footprintRadius: 2.19198
+        embedFraction: 0.1
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 0.7
+        baseScale: 2.6
+        footprintRadius: 2.0075507
+        embedFraction: 0.1
+        pieceHeight: 2.5468566
+      buttress:
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.19198
+        embedFraction: 0.12
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.0075507
+        embedFraction: 0.12
+        pieceHeight: 2.5468566
+      - prefab: {fileID: 2255044700778968936, guid: 3f638165bab51ef4599d2a2ae51e0750, type: 3}
+        weight: 0.6
+        baseScale: 3
+        footprintRadius: 0.6175121
+        embedFraction: 0.12
+        pieceHeight: 1.0490711
+      - prefab: {fileID: 7907787692901684189, guid: 260623cced0865b44aaf5a05a4ab1d6f, type: 3}
+        weight: 0.6
+        baseScale: 3
+        footprintRadius: 0.48547822
+        embedFraction: 0.12
+        pieceHeight: 1.0563353
+      talus:
+      - prefab: {fileID: 2255044700778968936, guid: 3f638165bab51ef4599d2a2ae51e0750, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.6175121
+        embedFraction: 0.18
+        pieceHeight: 1.0490711
+      - prefab: {fileID: 4524635487810946913, guid: a4ffdf4793157fd439c834b863a0c4fa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.36126703
+        embedFraction: 0.18
+        pieceHeight: 1.5178463
+      - prefab: {fileID: 7907787692901684189, guid: 260623cced0865b44aaf5a05a4ab1d6f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.48547822
+        embedFraction: 0.18
+        pieceHeight: 1.0563353
+      debris:
+      - prefab: {fileID: 1048870084681727038, guid: d31b7a2a7454a77478a67640a885d57f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.13661331
+        embedFraction: 0.15
+        pieceHeight: 0.1628272
+      - prefab: {fileID: 4561038242749128491, guid: 1443c44101855534fb5a4b162271b076, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.12609729
+        embedFraction: 0.15
+        pieceHeight: 0.11154056
+      - prefab: {fileID: 6962155819592490607, guid: cca5e15cc022b7c4cabbe78da30fb3aa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.16000426
+        embedFraction: 0.15
+        pieceHeight: 0.1908771
+    suitability:
+      allowedBiomes:
+      - {fileID: 11400000, guid: efc4474a4cfc46739600e347366c7f8c, type: 2}
+      - {fileID: 11400000, guid: ec69e337fda94e90b1e1d0900b3536ed, type: 2}
+      - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+      allowedSurfaceMaterials: []
+      allowedTerrainFeatures:
+      - {fileID: 11400000, guid: 25ddf18c485e48228be69c75dd094a1b, type: 2}
+      requireDryLand: 1
+      limitHeightAboveOcean: 0
+      heightAboveOceanRange: {x: 0.25, y: 1000000}
+      heightAboveOceanFeather: 1
+      altitudeRange: {x: -1000000, y: 1000000}
+      altitudeFeather: 8
+      slopeRange: {x: 0, y: 30}
+      slopeFeather: 12
+      temperatureRange: {x: -273.15, y: 1000}
+      temperatureFeather: 4
+      moistureRange: {x: 0, y: 1}
+      moistureFeather: 0.08
+      radiationRange: {x: 0, y: 1}
+      radiationFeather: 0.05
+      snowRange: {x: 0, y: 0.9}
+      snowFeather: 0.08
+      wetnessRange: {x: 0, y: 1}
+      wetnessFeather: 0.08
+      volcanismRange: {x: 0, y: 1}
+      volcanismFeather: 0.05
+    distribution:
+      spacingMeters: 120
+      spawnChance: 1
+      clusterScaleMeters: 600
+      clusterCutoff: 0.36
+      clusterFeather: 0.18
+      nearVisibilityDistance: 200
+      farVisibilityDistance: 620
+      releaseHysteresis: 1.2
+    slopeBreakBias: 0
+    slopeBreakSampleMeters: 12
+    geologyRequirement: 0
+    convexityBias: 0
+    preferredConvexity: 0.1
+    featureHeightRatio: 1.8
+    outcropCount: {x: 0, y: 2}
+    outcropSpacingRatio: 0.6
+    buttressCount: {x: 1, y: 2}
+    talusCount: {x: 4, y: 8}
+    debrisCount: {x: 22, y: 40}
+    formationRadius: 70
+    uniformScaleRange: {x: 0.9, y: 2}
+    scaleVariation: 0.4
+    shapeVariation: 0.3
+    talusReach: 4
+    talusScaleFalloff: 0.6
+    yawJitterDegrees: 90
+    tiltJitterDegrees: 12
+    surfaceNormalAlignment: 0.6
+    surfaceTintStrength: 0.75
+    snowResponse: 1
+    mossResponse: 1
+    collisionDistance: 150
+    influenceRadius: 50
+  - stableId: surfaceformation.monolith
+    displayName: Highland Monolith
+    kit:
+      outcrop:
+      - prefab: {fileID: 8344907733216060400, guid: 84dffe25740d0ab428a716ea35e3d80e, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.523635
+        embedFraction: 0.1
+        pieceHeight: 13.272869
+      - prefab: {fileID: 640514170050231027, guid: 3670b42c8e7bd3f4eb17e9323f10010b, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 1.9810537
+        embedFraction: 0.1
+        pieceHeight: 11.994789
+      - prefab: {fileID: 5848316272764729089, guid: e1e9d22250eae174abdc9adc0019ea02, type: 3}
+        weight: 0.6
+        baseScale: 1.9
+        footprintRadius: 1.1070096
+        embedFraction: 0.1
+        pieceHeight: 6.810146
+      - prefab: {fileID: 3968361463709166297, guid: f5f245436acbed1429d909b45bdab5b5, type: 3}
+        weight: 0.6
+        baseScale: 1.9
+        footprintRadius: 2.5640786
+        embedFraction: 0.1
+        pieceHeight: 7.0187006
+      buttress:
+      - prefab: {fileID: 5848316272764729089, guid: e1e9d22250eae174abdc9adc0019ea02, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 1.1070096
+        embedFraction: 0.12
+        pieceHeight: 6.810146
+      - prefab: {fileID: 3968361463709166297, guid: f5f245436acbed1429d909b45bdab5b5, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.5640786
+        embedFraction: 0.12
+        pieceHeight: 7.0187006
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 0.5
+        baseScale: 2.4
+        footprintRadius: 2.19198
+        embedFraction: 0.12
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 0.5
+        baseScale: 2.4
+        footprintRadius: 2.0075507
+        embedFraction: 0.12
+        pieceHeight: 2.5468566
+      talus:
+      - prefab: {fileID: 928534136181268103, guid: 53793d9979f20cd4787ff3ddb5aff286, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.19198
+        embedFraction: 0.18
+        pieceHeight: 2.552809
+      - prefab: {fileID: 8334119361435487733, guid: 547f9291281e3a846a1caecc607f3c3f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 2.0075507
+        embedFraction: 0.18
+        pieceHeight: 2.5468566
+      - prefab: {fileID: 4524635487810946913, guid: a4ffdf4793157fd439c834b863a0c4fa, type: 3}
+        weight: 0.7
+        baseScale: 2.6
+        footprintRadius: 0.36126703
+        embedFraction: 0.18
+        pieceHeight: 1.5178463
+      debris:
+      - prefab: {fileID: 2255044700778968936, guid: 3f638165bab51ef4599d2a2ae51e0750, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.6175121
+        embedFraction: 0.15
+        pieceHeight: 1.0490711
+      - prefab: {fileID: 4524635487810946913, guid: a4ffdf4793157fd439c834b863a0c4fa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.36126703
+        embedFraction: 0.15
+        pieceHeight: 1.5178463
+      - prefab: {fileID: 7907787692901684189, guid: 260623cced0865b44aaf5a05a4ab1d6f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.48547822
+        embedFraction: 0.15
+        pieceHeight: 1.0563353
+      - prefab: {fileID: 1048870084681727038, guid: d31b7a2a7454a77478a67640a885d57f, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.13661331
+        embedFraction: 0.15
+        pieceHeight: 0.1628272
+      - prefab: {fileID: 4561038242749128491, guid: 1443c44101855534fb5a4b162271b076, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.12609729
+        embedFraction: 0.15
+        pieceHeight: 0.11154056
+      - prefab: {fileID: 6962155819592490607, guid: cca5e15cc022b7c4cabbe78da30fb3aa, type: 3}
+        weight: 1
+        baseScale: 1
+        footprintRadius: 0.16000426
+        embedFraction: 0.15
+        pieceHeight: 0.1908771
+    suitability:
+      allowedBiomes:
+      - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+      - {fileID: 11400000, guid: c592665285094c70830733fb999fc54f, type: 2}
+      - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+      allowedSurfaceMaterials: []
+      allowedTerrainFeatures: []
+      requireDryLand: 1
+      limitHeightAboveOcean: 0
+      heightAboveOceanRange: {x: 0.25, y: 1000000}
+      heightAboveOceanFeather: 1
+      altitudeRange: {x: -1000000, y: 1000000}
+      altitudeFeather: 8
+      slopeRange: {x: 0, y: 24}
+      slopeFeather: 10
+      temperatureRange: {x: -273.15, y: 1000}
+      temperatureFeather: 4
+      moistureRange: {x: 0, y: 1}
+      moistureFeather: 0.08
+      radiationRange: {x: 0, y: 1}
+      radiationFeather: 0.05
+      snowRange: {x: 0, y: 0.85}
+      snowFeather: 0.08
+      wetnessRange: {x: 0, y: 1}
+      wetnessFeather: 0.08
+      volcanismRange: {x: 0, y: 1}
+      volcanismFeather: 0.05
+    distribution:
+      spacingMeters: 1600
+      spawnChance: 0.45
+      clusterScaleMeters: 3000
+      clusterCutoff: 0.3
+      clusterFeather: 0.16
+      nearVisibilityDistance: 900
+      farVisibilityDistance: 2600
+      releaseHysteresis: 1.15
+    slopeBreakBias: 0
+    slopeBreakSampleMeters: 16
+    geologyRequirement: 0
+    convexityBias: 0
+    preferredConvexity: 0.15
+    featureHeightRatio: 3.8
+    outcropCount: {x: 1, y: 1}
+    outcropSpacingRatio: 0.55
+    buttressCount: {x: 0, y: 1}
+    talusCount: {x: 1, y: 2}
+    debrisCount: {x: 3, y: 6}
+    formationRadius: 30
+    uniformScaleRange: {x: 6, y: 9}
+    scaleVariation: 0.15
+    shapeVariation: 0.35
+    talusReach: 2.4
+    talusScaleFalloff: 0.45
+    yawJitterDegrees: 180
+    tiltJitterDegrees: 4
+    surfaceNormalAlignment: 0.05
+    surfaceTintStrength: 0.6
+    snowResponse: 1
+    mossResponse: 1
+    collisionDistance: 400
+    influenceRadius: 220

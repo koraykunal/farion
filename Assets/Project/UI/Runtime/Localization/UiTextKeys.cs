@@ -173,6 +173,8 @@ namespace Farion.UI.Localization
         public const string SettingsDisplayConfirmTitle = "settings.display.confirm.title";
         public const string SettingsFieldOfViewDescription = "settings.field_of_view.description";
         public const string SettingsFieldOfViewTitle = "settings.field_of_view.title";
+        public const string SettingsFlightHudDescription = "settings.flight_hud.description";
+        public const string SettingsFlightHudTitle = "settings.flight_hud.title";
         public const string SettingsInvertLookDescription = "settings.invert_look.description";
         public const string SettingsInvertLookTitle = "settings.invert_look.title";
         public const string SettingsMouseSensitivityDescription = "settings.mouse_sensitivity.description";

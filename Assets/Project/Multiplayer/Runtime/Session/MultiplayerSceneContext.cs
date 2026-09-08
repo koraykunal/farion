@@ -579,6 +579,8 @@ namespace Farion.Multiplayer.Session
                 ownedSpacecraft.Motor,
                 ownedSpacecraft.transform,
                 pilotCameraView);
+            ownedPlayer?.SetSeatedBodyVisibleForOwner(
+                pilotCameraView == SpacecraftPilotCameraView.Exterior);
         }
 
         public void RestoreOwnedExplorer(NetworkStarterShuttle ship)

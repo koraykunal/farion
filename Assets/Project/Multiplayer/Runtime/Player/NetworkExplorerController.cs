@@ -3,8 +3,11 @@ using Farion.Core.Physics;
 using Farion.Core.Persistence;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Character;
+using Farion.Gameplay.Flight;
 using Farion.Gameplay.Interaction;
+using Farion.Gameplay.Presentation.Character;
 using Farion.Multiplayer.Session;
+using Farion.Multiplayer.Spacecraft;
 using Farion.Multiplayer.World;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
@@ -16,6 +19,7 @@ using FishNet.Object.Synchronizing;
 using FishNet.Transporting;
 using FishNet.Utility.Template;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Farion.Multiplayer.Player
 {
@@ -31,7 +35,9 @@ namespace Farion.Multiplayer.Player
         [SerializeField] FirstPersonMotor motor;
         [SerializeField] KeyboardFirstPersonInput input;
         [SerializeField] PlayerInteractionRaycaster interactionRaycaster;
+        [Tooltip("World-model renderers the owner must not see on foot; shadow casters stay as ShadowsOnly.")]
         [SerializeField] Renderer[] ownerHiddenRenderers;
+        [SerializeField] PlayerExplorerSeatedPose seatedPose;
 
         readonly PredictionRigidbody predictionRigidbody = new();
         readonly SyncVar<bool> possessionActive = new(true);
@@ -44,10 +50,19 @@ namespace Farion.Multiplayer.Player
         ZoneOriginState originState;
         MultiplayerSceneContext sceneContext;
         ZonePhysicsTickDriver tickDriver;
-        float accumulatedYaw;
         bool jumpQueued;
         bool previousJumpHeld;
         bool appliedPossessionActive = true;
+        bool seatedBodyVisibleForOwner;
+        RendererVisibility[] rendererVisibility = System.Array.Empty<RendererVisibility>();
+
+        struct RendererVisibility
+        {
+            public Renderer Renderer;
+            public bool Enabled;
+            public bool HideInFirstPerson;
+            public ShadowCastingMode Shadows;
+        }
 
         public FirstPersonMotor Motor => motor;
         public KeyboardFirstPersonInput Input => input;
@@ -86,6 +101,8 @@ namespace Farion.Multiplayer.Player
             input ??= GetComponent<KeyboardFirstPersonInput>();
             interactionRaycaster ??=
                 GetComponent<PlayerInteractionRaycaster>();
+            seatedPose ??= GetComponentInChildren<PlayerExplorerSeatedPose>(true);
+            CacheRendererVisibility();
             body = GetComponent<Rigidbody>();
             capsule = GetComponent<CapsuleCollider>();
             celestialProbe = GetComponent<CelestialActorProbe>();
@@ -135,14 +152,60 @@ namespace Farion.Multiplayer.Player
             }
 
             FirstPersonInputState current = input.CurrentInput;
-            accumulatedYaw +=
-                current.Look.x * motor.YawDegreesPerMouseUnit;
+            motor.AddPendingYaw(current.Look.x * motor.YawDegreesPerMouseUnit);
             if (current.Jump && !previousJumpHeld)
             {
                 jumpQueued = true;
             }
 
             previousJumpHeld = current.Jump;
+        }
+
+        void LateUpdate()
+        {
+            if (appliedPossessionActive || seatedPose == null || seatedPose.IsSeated)
+            {
+                return;
+            }
+
+            seatedPose.SetSeat(ResolvePilotSeatRig());
+        }
+
+        SpacecraftRig ResolvePilotSeatRig()
+        {
+            ulong id = sessionPlayerId.Value;
+            IReadOnlyList<NetworkSessionPlayer> players = NetworkSessionPlayer.ActivePlayers;
+            for (int i = 0; i < players.Count; i++)
+            {
+                NetworkSessionPlayer player = players[i];
+                if (player == null || player.SessionPlayerId != id)
+                {
+                    continue;
+                }
+
+                NetworkStarterShuttle ship =
+                    NetworkStarterShuttle.FindByEntityId(player.ClaimedStarterShuttleId);
+                return ship != null && ship.IsPiloted ? ship.Rig : null;
+            }
+
+            return null;
+        }
+
+        internal void SetSeatedBodyVisibleForOwner(bool visible)
+        {
+            seatedBodyVisibleForOwner = visible;
+            RefreshRendererVisibility();
+        }
+
+        void RefreshRendererVisibility()
+        {
+            bool cockpit = IsOwner && !appliedPossessionActive && !seatedBodyVisibleForOwner;
+            bool firstPerson = IsOwner && appliedPossessionActive;
+            for (int i = 0; i < rendererVisibility.Length; i++)
+            {
+                RendererVisibility state = rendererVisibility[i];
+                ApplyRendererVisibility(state, cockpit || (firstPerson && state.HideInFirstPerson));
+            }
         }
 
         public override void OnStartNetwork()
@@ -170,8 +233,6 @@ namespace Farion.Multiplayer.Player
             }
 
             ApplyPossessionState(possessionActive.Value);
-            SetOwnerRendererVisibility(
-                appliedPossessionActive && !IsOwner);
             if (sceneContext != null && (IsServerStarted || IsOwner))
             {
                 sceneContext.RegisterFormationObserver(transform);
@@ -203,6 +264,11 @@ namespace Farion.Multiplayer.Player
             {
                 sceneContext.UnbindOwnedPlayer(this);
             }
+
+            for (int i = 0; i < rendererVisibility.Length; i++)
+            {
+                ApplyRendererVisibility(rendererVisibility[i], false);
+            }
         }
 
         void OnDestroy()
@@ -220,8 +286,7 @@ namespace Farion.Multiplayer.Player
         {
             ApplyPossessionState(possessionActive.Value);
             ApplyOwnerInterpolation(IsOwner);
-            SetOwnerRendererVisibility(
-                appliedPossessionActive && !IsOwner);
+            RefreshRendererVisibility();
         }
 
         void ApplyOwnerInterpolation(bool owned)
@@ -274,7 +339,7 @@ namespace Farion.Multiplayer.Player
         {
             if (!IsOwner || !appliedPossessionActive || input == null)
             {
-                accumulatedYaw = 0f;
+                motor.ConsumePendingYaw();
                 jumpQueued = false;
                 return default;
             }
@@ -282,13 +347,12 @@ namespace Farion.Multiplayer.Player
             FirstPersonInputState current = input.CurrentInput;
             ExplorerReplicateData data = new(
                 current.Movement,
-                accumulatedYaw,
+                motor.ConsumePendingYaw(),
                 motor.ViewPitchDegrees,
                 jumpQueued,
                 current.Sprint,
                 current.Jump,
                 originState?.CurrentSequence ?? 0);
-            accumulatedYaw = 0f;
             jumpQueued = false;
             return data;
         }
@@ -371,7 +435,7 @@ namespace Farion.Multiplayer.Player
 
             if (!active)
             {
-                accumulatedYaw = 0f;
+                motor.ConsumePendingYaw();
                 jumpQueued = false;
                 previousJumpHeld = false;
                 if (!body.isKinematic)
@@ -387,7 +451,12 @@ namespace Farion.Multiplayer.Player
                 capsule.enabled = active;
             }
 
-            SetOwnerRendererVisibility(active && !IsOwner);
+            if (active)
+            {
+                seatedPose?.SetSeat(null);
+            }
+
+            RefreshRendererVisibility();
         }
 
         void OnPossessionActiveChanged(bool previous, bool next, bool asServer)
@@ -421,20 +490,36 @@ namespace Farion.Multiplayer.Player
 #endif
         }
 
-        void SetOwnerRendererVisibility(bool visible)
+        void CacheRendererVisibility()
         {
-            if (ownerHiddenRenderers == null)
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            rendererVisibility = new RendererVisibility[renderers.Length];
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                rendererVisibility[i] = new RendererVisibility
+                {
+                    Renderer = renderer,
+                    Enabled = renderer.enabled,
+                    HideInFirstPerson = ownerHiddenRenderers != null &&
+                        System.Array.IndexOf(ownerHiddenRenderers, renderer) >= 0,
+                    Shadows = renderer.shadowCastingMode
+                };
+            }
+        }
+
+        static void ApplyRendererVisibility(in RendererVisibility state, bool hidden)
+        {
+            if (state.Renderer == null)
             {
                 return;
             }
 
-            for (int i = 0; i < ownerHiddenRenderers.Length; i++)
-            {
-                if (ownerHiddenRenderers[i] != null)
-                {
-                    ownerHiddenRenderers[i].enabled = visible;
-                }
-            }
+            state.Renderer.enabled = state.Enabled &&
+                (!hidden || state.Shadows != ShadowCastingMode.Off);
+            state.Renderer.shadowCastingMode = hidden && state.Shadows != ShadowCastingMode.Off
+                ? ShadowCastingMode.ShadowsOnly
+                : state.Shadows;
         }
 
         void ApplyPersistentIdentity()

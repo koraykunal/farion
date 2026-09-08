@@ -27,6 +27,25 @@ namespace Farion.Simulation.Planetary
 
         public TerrainFeatureDefinition Feature => feature;
         public float SelectionPriority => Mathf.Max(0f, selectionPriority);
+        public Vector2 FeatureNoiseRange => new(minFeatureNoise, maxFeatureNoise);
+
+        public bool AllowsAnyOf(IReadOnlyList<BiomeDefinition> biomes)
+        {
+            if (allowedBiomes == null || allowedBiomes.Count == 0)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < biomes.Count; i++)
+            {
+                if (allowedBiomes.Contains(biomes[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public float EvaluateSuitability(
             BiomeDefinition biome,

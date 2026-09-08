@@ -80,8 +80,8 @@ namespace Farion.UI.Gameplay
         [Header("Propulsion")]
         [SerializeField] TMP_Text speedValueText;
         [SerializeField] TMP_Text speedUnitText;
-        [SerializeField] TMP_Text assistValueText;
-        [SerializeField] Image assistFrameImage;
+        [FormerlySerializedAs("assistFrameImage")]
+        [SerializeField] Image assistIndicatorImage;
 
         [Header("Throttle")]
         [SerializeField] TMP_Text throttleValueText;
@@ -189,7 +189,6 @@ namespace Farion.UI.Gameplay
 
             SetFont(speedValueText, Theme.InstrumentFont);
             SetFont(speedUnitText, Theme.InstrumentFont);
-            SetFont(assistValueText, Theme.InstrumentFont);
             SetFont(fuelValueText, Theme.InstrumentFont);
             SetTextColor(speedValueText, Theme.PrimaryText);
             SetTextColor(speedUnitText, Theme.SupportingText);
@@ -202,7 +201,6 @@ namespace Farion.UI.Gameplay
             SetColor(fuelArcGlowImage, Theme.Focus, 0.14f);
             SetFont(hullValueText, Theme.InstrumentFont);
             SetColor(hullBarFrameImage, Theme.Focus, 0.18f);
-            SetColor(assistFrameImage, Theme.Focus, 0.72f);
             SetColor(navigationArrowImage, Theme.Focus, 0.94f);
             SetColor(navigationArrowGlowImage, Theme.Focus, 0.32f);
             SetColor(velocityVectorImage, Theme.Focus, 0.86f);
@@ -239,11 +237,6 @@ namespace Farion.UI.Gameplay
             }
 
             flightAssistEnabled = telemetry.FlightAssistEnabled;
-            if (assistValueText != null)
-            {
-                assistValueText.SetText(
-                    flightAssistEnabled ? "ON" : "OFF");
-            }
 
             if (fuelValueText != null)
             {
@@ -494,10 +487,10 @@ namespace Farion.UI.Gameplay
             SetTextColor(fuelValueText, signal);
             SetColor(fuelArcFillImage, signal, signal.a);
 
-            Color assist = flightAssistEnabled
-                    ? Theme.Nominal
-                    : Theme.SupportingText;
-            SetTextColor(assistValueText, assist);
+            SetColor(
+                assistIndicatorImage,
+                flightAssistEnabled ? Theme.Nominal : Theme.Critical,
+                1f);
         }
 
         Color ResolveFuelColor()

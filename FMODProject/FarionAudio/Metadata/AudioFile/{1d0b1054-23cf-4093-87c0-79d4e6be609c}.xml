@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<objects serializationModel="Studio.02.03.00">
-	<object class="AudioFile" id="{1d0b1054-23cf-4093-87c0-79d4e6be609c}">
-		<property name="assetPath">
-			<value>Character/Footsteps/Regolith/footstep_gravel_run_02.wav</value>
-		</property>
-	</object>
-</objects>

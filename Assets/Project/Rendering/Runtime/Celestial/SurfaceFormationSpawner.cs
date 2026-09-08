@@ -33,7 +33,7 @@ namespace Farion.Rendering.Celestial
         readonly List<BiomeWeight> biomeWeights = new();
         readonly List<SurfaceFormationPlacementItem> compositionBuffer = new();
         readonly Dictionary<GameObject, Stack<GameObject>> pool = new();
-        readonly Dictionary<GameObject, float> pivotOffsets = new();
+        readonly Dictionary<GameObject, Bounds> prefabBounds = new();
         readonly List<Renderer> shadingRenderers = new();
         readonly List<Collider> pieceColliders = new();
         MaterialPropertyBlock shadingBlock;
@@ -353,18 +353,26 @@ namespace Farion.Rendering.Celestial
                 return;
             }
 
-            if (anchor.AppliedTransition != committedTransition &&
-                (force || terrainAnchorRefreshBudget > 0))
+            if (anchor.AppliedTransition != committedTransition)
             {
-                if (!force)
+                if (!force &&
+                    anchor.HasSurfaceAnchor &&
+                    patchSystem.IsSurfaceAnchorCurrent(anchor.Direction, anchor.SurfaceAnchor))
                 {
-                    terrainAnchorRefreshBudget--;
+                    anchor.AppliedTransition = committedTransition;
                 }
+                else if (force || terrainAnchorRefreshBudget > 0)
+                {
+                    if (!force)
+                    {
+                        terrainAnchorRefreshBudget--;
+                    }
 
-                anchor.AppliedTransition = committedTransition;
-                anchor.HasSurfaceAnchor = patchSystem.TryResolveSurfaceAnchor(
-                    anchor.Direction,
-                    out anchor.SurfaceAnchor);
+                    anchor.AppliedTransition = committedTransition;
+                    anchor.HasSurfaceAnchor = patchSystem.TryResolveSurfaceAnchor(
+                        anchor.Direction,
+                        out anchor.SurfaceAnchor);
+                }
             }
 
             if (!anchor.HasSurfaceAnchor)
@@ -375,9 +383,7 @@ namespace Farion.Rendering.Celestial
             float observerDistance = Vector3.Distance(
                 observerLocalPosition,
                 anchor.Direction * anchor.SurfaceAnchor.FineRadius);
-            float offset = patchSystem.ResolveAnchorRadius(
-                anchor.SurfaceAnchor,
-                observerDistance) - anchor.AnalyticRadius;
+            float offset = anchor.SurfaceAnchor.ResolveRadius(observerDistance) - anchor.AnalyticRadius;
             if (!force && Mathf.Abs(offset - anchor.AppliedOffset) < TerrainAnchorEpsilon)
             {
                 return;
@@ -706,10 +712,13 @@ namespace Farion.Rendering.Celestial
                 GameObject spawned = Rent(piece.Prefab);
                 Transform pieceTransform = spawned.transform;
                 pieceTransform.SetParent(formationRoot, false);
-                Vector3 pieceUp = item.LocalRotation * Vector3.up;
                 Vector3 baseLocalPosition = item.LocalPosition +
-                    pieceUp * (ResolvePivotOffset(piece.Prefab) * item.Scale.y);
-                PieceAnchor anchor = BuildPieceAnchor(item.LocalPosition, baseLocalPosition);
+                    item.LocalUp * ResolveSeatLift(
+                        piece.Prefab,
+                        item.LocalRotation,
+                        item.Scale,
+                        item.LocalUp);
+                PieceAnchor anchor = BuildPieceAnchor(item.SurfaceLocalPosition, baseLocalPosition);
                 pieceTransform.localPosition = baseLocalPosition;
                 pieceTransform.localRotation = item.LocalRotation;
                 pieceTransform.localScale = item.Scale;
@@ -812,14 +821,32 @@ namespace Farion.Rendering.Celestial
                     : null;
         }
 
-        float ResolvePivotOffset(GameObject prefab)
+        float ResolveSeatLift(GameObject prefab, Quaternion rotation, Vector3 scale, Vector3 up)
         {
-            if (pivotOffsets.TryGetValue(prefab, out float cached))
+            Bounds bounds = ResolvePrefabBounds(prefab);
+            float lowest = float.PositiveInfinity;
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Vector3 local = new(
+                    (corner & 1) == 0 ? bounds.min.x : bounds.max.x,
+                    (corner & 2) == 0 ? bounds.min.y : bounds.max.y,
+                    (corner & 4) == 0 ? bounds.min.z : bounds.max.z);
+                lowest = Mathf.Min(
+                    lowest,
+                    Vector3.Dot(rotation * Vector3.Scale(local, scale), up));
+            }
+
+            return float.IsPositiveInfinity(lowest) ? 0f : -lowest;
+        }
+
+        Bounds ResolvePrefabBounds(GameObject prefab)
+        {
+            if (prefabBounds.TryGetValue(prefab, out Bounds cached))
             {
                 return cached;
             }
 
-            float lowest = 0f;
+            Bounds bounds = default;
             bool measured = false;
             MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>(true);
             for (int i = 0; i < filters.Length; i++)
@@ -830,14 +857,21 @@ namespace Farion.Rendering.Celestial
                     continue;
                 }
 
-                float bottom = mesh.bounds.min.y + filters[i].transform.localPosition.y;
-                lowest = measured ? Mathf.Min(lowest, bottom) : bottom;
-                measured = true;
+                Bounds meshBounds = mesh.bounds;
+                meshBounds.center += filters[i].transform.localPosition;
+                if (measured)
+                {
+                    bounds.Encapsulate(meshBounds);
+                }
+                else
+                {
+                    bounds = meshBounds;
+                    measured = true;
+                }
             }
 
-            float offset = measured ? -lowest : 0f;
-            pivotOffsets.Add(prefab, offset);
-            return offset;
+            prefabBounds.Add(prefab, bounds);
+            return bounds;
         }
 
         static void ApplySurfaceLayer(Transform root)

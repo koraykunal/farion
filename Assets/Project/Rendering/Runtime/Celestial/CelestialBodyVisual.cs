@@ -2,6 +2,7 @@ using Farion.Core.Physics;
 using Farion.Simulation.Celestial;
 using Farion.Simulation.Physics;
 using Farion.Simulation.Planetary;
+using System.Collections.Generic;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -50,7 +51,8 @@ namespace Farion.Rendering.Celestial
 
         Mesh[] renderMeshes;
         PlanetSurfaceWeightMap surfaceWeightMap;
-        MaterialPropertyBlock propertyBlock;
+        readonly Dictionary<Vector4, Material> surfaceMaterials = new();
+        Material surfaceMaterialSource;
         CelestialShapeProfile shapeProfile;
         PlanetSurfaceModel subscribedSurfaceModel;
         CelestialShapeProfile subscribedShapeProfile;
@@ -300,6 +302,7 @@ namespace Farion.Rendering.Celestial
                 terrainMeshRenderer = GetOrCreateMeshObject().GetComponent<MeshRenderer>();
             }
 
+            RewriteSurfaceMaterials();
             ApplyMaterialProperties(terrainMeshRenderer);
             MaterialPropertiesChanged?.Invoke();
         }
@@ -309,12 +312,6 @@ namespace Farion.Rendering.Celestial
             if (meshRenderer == null)
             {
                 return;
-            }
-
-            Material resolvedMaterial = ResolveMaterial();
-            if (resolvedMaterial != null)
-            {
-                meshRenderer.sharedMaterial = resolvedMaterial;
             }
 
             ApplyMaterialProperties(meshRenderer, morphRange);
@@ -550,58 +547,123 @@ namespace Farion.Rendering.Celestial
 
         void ApplyMaterialProperties(MeshRenderer meshRenderer, Vector4 morphRange)
         {
-            if (surfaceProfile == null)
+            Material target = ResolveSurfaceMaterial(morphRange);
+            if (meshRenderer.sharedMaterial != target)
             {
-                meshRenderer.SetPropertyBlock(null);
-                return;
+                meshRenderer.sharedMaterial = target;
+            }
+        }
+
+        Material ResolveSurfaceMaterial(Vector4 morphRange)
+        {
+            Material source = ResolveMaterial();
+            if (source == null || surfaceProfile == null)
+            {
+                ReleaseSurfaceMaterials();
+                return source;
             }
 
-            propertyBlock ??= new MaterialPropertyBlock();
-            propertyBlock.Clear();
-            propertyBlock.SetVector(MorphRangePropertyId, morphRange);
+            if (surfaceMaterialSource != source)
+            {
+                ReleaseSurfaceMaterials();
+                surfaceMaterialSource = source;
+            }
+
+            if (surfaceMaterials.TryGetValue(morphRange, out Material cached) && cached != null)
+            {
+                return cached;
+            }
+
+            Material instance = new(source)
+            {
+                name = $"{source.name} (Farion {morphRange.y:0})",
+                hideFlags = HideFlags.DontSave
+            };
+            WriteSurfaceMaterial(instance, morphRange);
+            surfaceMaterials[morphRange] = instance;
+            return instance;
+        }
+
+        void WriteSurfaceMaterial(Material target, Vector4 morphRange)
+        {
+            target.SetVector(MorphRangePropertyId, morphRange);
 
             if (surfaceProfile is TerrestrialSurfaceProfile terrestrialSurface
                 && TryGetComponent(out TerrestrialPlanetVisual terrestrialVisual)
                 && terrestrialVisual.TryGetOceanLevel(out float oceanLevel))
             {
-                terrestrialSurface.ApplyMaterialProperties(propertyBlock, Body.Radius, renderRadiusMinMax, oceanLevel);
+                terrestrialSurface.ApplyMaterialProperties(target, Body.Radius, renderRadiusMinMax, oceanLevel);
             }
             else
             {
-                surfaceProfile.ApplyMaterialProperties(propertyBlock, Body.Radius, renderRadiusMinMax);
+                surfaceProfile.ApplyMaterialProperties(target, Body.Radius, renderRadiusMinMax);
             }
 
             if (surfaceWeightMap != null)
             {
-                surfaceWeightMap.Apply(propertyBlock);
+                surfaceWeightMap.Apply(target);
             }
             else
             {
-                PlanetSurfaceWeightMap.Clear(propertyBlock);
+                PlanetSurfaceWeightMap.Clear(target);
+            }
+        }
+
+        void RewriteSurfaceMaterials()
+        {
+            if (surfaceProfile == null || ResolveMaterial() != surfaceMaterialSource)
+            {
+                ReleaseSurfaceMaterials();
+                return;
             }
 
-            meshRenderer.SetPropertyBlock(propertyBlock);
+            foreach (KeyValuePair<Vector4, Material> pair in surfaceMaterials)
+            {
+                if (pair.Value != null)
+                {
+                    WriteSurfaceMaterial(pair.Value, pair.Key);
+                }
+            }
+        }
+
+        void ReleaseSurfaceMaterials()
+        {
+            foreach (Material instance in surfaceMaterials.Values)
+            {
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(instance);
+                }
+                else
+                {
+                    DestroyImmediate(instance);
+                }
+            }
+
+            surfaceMaterials.Clear();
+            surfaceMaterialSource = null;
         }
 
         void RebuildSurfaceWeightMap()
         {
             ReplaceSurfaceWeightMap();
             surfaceWeightMap = PlanetSurfaceWeightMap.FromBaked(bakedSurfaceMaps);
-            if (surfaceWeightMap != null)
+            if (surfaceWeightMap == null &&
+                surfaceModel != null &&
+                surfaceProfile is TerrestrialSurfaceProfile terrestrialSurface &&
+                terrestrialSurface.SurfaceVisualProfile != null)
             {
-                return;
+                surfaceWeightMap = PlanetSurfaceWeightMap.Build(
+                    surfaceModel,
+                    terrestrialSurface.SurfaceVisualProfile);
             }
 
-            if (surfaceModel == null ||
-                surfaceProfile is not TerrestrialSurfaceProfile terrestrialSurface ||
-                terrestrialSurface.SurfaceVisualProfile == null)
-            {
-                return;
-            }
-
-            surfaceWeightMap = PlanetSurfaceWeightMap.Build(
-                surfaceModel,
-                terrestrialSurface.SurfaceVisualProfile);
+            RewriteSurfaceMaterials();
         }
 
         void ApplyAuthoringCleanup(CelestialBody sourceBody)
@@ -682,6 +744,7 @@ namespace Farion.Rendering.Celestial
         {
             UnsubscribeFromProfiles();
             ReplaceSurfaceWeightMap();
+            ReleaseSurfaceMaterials();
 
             if (Application.isPlaying)
             {

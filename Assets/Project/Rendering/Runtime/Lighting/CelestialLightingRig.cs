@@ -35,6 +35,8 @@ namespace Farion.Rendering.Lighting
         [SerializeField] bool updateEveryFrame = true;
 
         readonly CelestialSkyReflectionBuilder skyReflectionBuilder = new();
+        Quaternion heldLightRotation;
+        bool hasHeldLightRotation;
 
         public CelestialLightingProfile Profile => profile;
 
@@ -160,7 +162,15 @@ namespace Farion.Rendering.Lighting
             Vector3 lightForward = profile.InvertLightDirection
                 ? -state.LightTravelDirection
                 : state.LightTravelDirection;
-            directionalLight.transform.rotation = Quaternion.LookRotation(lightForward, ResolveStableUp(lightForward));
+            Quaternion targetRotation = Quaternion.LookRotation(lightForward, ResolveStableUp(lightForward));
+            if (!hasHeldLightRotation
+                || Quaternion.Angle(heldLightRotation, targetRotation) >= profile.ShadowDirectionStepDegrees)
+            {
+                heldLightRotation = targetRotation;
+                hasHeldLightRotation = true;
+            }
+
+            directionalLight.transform.rotation = heldLightRotation;
             directionalLight.color = profile.LightColor;
             directionalLight.useColorTemperature = profile.UseColorTemperature;
             directionalLight.colorTemperature = state.ColorTemperature;

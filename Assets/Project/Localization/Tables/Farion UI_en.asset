@@ -997,6 +997,22 @@ MonoBehaviour:
     m_Localized: Camera view
     m_Metadata:
       m_Items: []
+  - m_Id: 8380430224457748
+    m_Localized: Floodlights
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457749
+    m_Localized: Flight HUD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457750
+    m_Localized: Flight HUD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 8380430224457751
+    m_Localized: Show the flight display while piloting. The Flight HUD key toggles it in flight.
+    m_Metadata:
+      m_Items: []
   - m_Id: 8447561943220224
     m_Localized: HULL
     m_Metadata:

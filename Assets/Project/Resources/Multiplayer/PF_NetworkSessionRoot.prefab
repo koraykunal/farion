@@ -312,7 +312,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Multiplayer.Runtime::Farion.Multiplayer.Session.NetworkStatusReporter
   networkManager: {fileID: 0}
   refreshInterval: 0.5
-  showDiagnostics: 1
+  showDiagnostics: 0
   maximumFrameTicks: 3
 --- !u!114 &2066685435580944708
 MonoBehaviour:

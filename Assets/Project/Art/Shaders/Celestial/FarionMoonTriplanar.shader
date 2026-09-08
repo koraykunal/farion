@@ -31,6 +31,7 @@ Shader "Farion/Celestial/Moon Triplanar"
         _EjectaSmoothness("Ejecta Smoothness", Range(0, 1)) = 0.12
         _BodyRadius("Body Radius", Float) = 1
         _RadiusMinMax("Radius Min Max", Vector) = (1, 1, 0, 0)
+        [HideInInspector] _FarionMorphRange("Morph Range", Vector) = (0, 0, 0, 0)
     }
 
     SubShader
@@ -66,6 +67,8 @@ Shader "Farion/Celestial/Moon Triplanar"
             #pragma multi_compile_fragment _ _LIGHT_COOKIES
             #pragma multi_compile _ _LIGHT_LAYERS
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -81,28 +84,7 @@ Shader "Farion/Celestial/Moon Triplanar"
             TEXTURE2D(_NormalMapSteep);
             SAMPLER(sampler_NormalMapSteep);
 
-            CBUFFER_START(UnityPerMaterial)
-                half4 _BaseColor;
-                half4 _SecondaryColor;
-                half4 _SteepColor;
-                half4 _EjectaColor;
-                half _SteepColorStrength;
-                half _Metallic;
-                half _Smoothness;
-                half _SpecularAntialiasing;
-                half _EjectaSmoothness;
-                float _BodyRadius;
-                float4 _RadiusMinMax;
-                float _SurfaceNoiseWorldTileSize;
-                float _NormalFlatWorldTileSize;
-                float _NormalSteepWorldTileSize;
-                half _NormalStrength;
-                half _AmbientHemisphere;
-                half _BiomeBlendStrength;
-                half _EjectaStrength;
-                float _EjectaRayFrequency;
-                half _UseEjectaRayTex;
-            CBUFFER_END
+            #include "FarionMoonInput.hlsl"
 
             half4 _FarionAmbientColor;
 
@@ -115,6 +97,7 @@ Shader "Farion/Celestial/Moon Triplanar"
                 float4 texcoord : TEXCOORD0;
                 float4 morphOffsetOS : TEXCOORD1;
                 float4 morphNormalOS : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
@@ -128,11 +111,16 @@ Shader "Farion/Celestial/Moon Triplanar"
 #if defined(_ADDITIONAL_LIGHTS_VERTEX)
                 half3 vertexLighting : TEXCOORD5;
 #endif
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             Varyings Vertex(Attributes input)
             {
-                Varyings output;
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 float morphWeight = FarionResolveMorphWeight(input.positionOS.xyz);
                 float3 positionOS = input.positionOS.xyz +
                     input.morphOffsetOS.xyz * morphWeight;
@@ -219,6 +207,7 @@ Shader "Farion/Celestial/Moon Triplanar"
 
             half4 Fragment(Varyings input) : SV_Target
             {
+                UNITY_SETUP_INSTANCE_ID(input);
                 float3 normalOS = normalize(input.normalOS);
                 float3 radialOS = normalize(input.positionOS);
 
@@ -324,6 +313,7 @@ Shader "Farion/Celestial/Moon Triplanar"
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
+            #include "FarionMoonInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
@@ -345,6 +335,7 @@ Shader "Farion/Celestial/Moon Triplanar"
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
+            #include "FarionMoonInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
@@ -363,6 +354,7 @@ Shader "Farion/Celestial/Moon Triplanar"
             #pragma multi_compile _ LOD_FADE_CROSSFADE
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #include "FarionMoonInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }
@@ -383,7 +375,9 @@ Shader "Farion/Celestial/Moon Triplanar"
             #pragma fragment FarionGeomorphShadowFragment
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
 
+            #include "FarionMoonInput.hlsl"
             #include "FarionSurfaceGeomorphPasses.hlsl"
             ENDHLSL
         }

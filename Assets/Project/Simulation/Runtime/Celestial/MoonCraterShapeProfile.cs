@@ -419,22 +419,17 @@ namespace Farion.Simulation.Celestial
                 return 0f;
             }
 
-            float x = distance / crater.Radius;
-            float cavity = x * x - 1f;
-            float rimX = Mathf.Min(x - 1f - rimWidth, 0f);
-            float rim = rimSteepness * rimX * rimX;
-
-            float craterShape = FarionMath.SmoothMax(cavity, crater.FloorHeight, crater.Smoothness);
-            craterShape = FarionMath.SmoothMin(craterShape, rim, crater.Smoothness);
-            return craterShape * crater.Radius;
+            return CraterShape.Evaluate(
+                distance / crater.Radius,
+                crater.FloorHeight,
+                crater.Smoothness,
+                rimWidth,
+                rimSteepness) * crater.Radius;
         }
 
         float GetCraterInfluenceRadius(Crater crater)
         {
-            float influenceScale = Mathf.Max(
-                1f + rimWidth,
-                Mathf.Sqrt(1f + crater.Smoothness));
-            return crater.Radius * influenceScale;
+            return crater.Radius * CraterShape.InfluenceScale(crater.Smoothness, rimWidth);
         }
 
         static int GetCraterCellIndex(Vector3 direction)

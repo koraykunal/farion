@@ -44,6 +44,34 @@ namespace Farion.Simulation.Planetary
             rules ??= new List<TerrainFeatureDistributionRule>();
         }
 
+        public TerrainSculptSet BuildSculpts(int planetSeed, IReadOnlyList<BiomeDefinition> hostedBiomes)
+        {
+            int featureSeed = SeedUtility.Derive(planetSeed, seedSalt, "terrain.feature");
+            List<TerrainSculptLayer> layers = new();
+            for (int i = 0; i < rules.Count; i++)
+            {
+                TerrainFeatureDistributionRule rule = rules[i];
+                TerrainFeatureDefinition feature = rule?.Feature;
+                if (feature == null ||
+                    feature.SculptStyle == TerrainSculptStyle.None ||
+                    rule.SelectionPriority <= 0f ||
+                    !rule.AllowsAnyOf(hostedBiomes))
+                {
+                    continue;
+                }
+
+                layers.Add(new TerrainSculptLayer(
+                    feature.SculptStyle,
+                    feature.SculptAmplitudeMeters,
+                    feature.SculptFootprintMeters,
+                    rule.FeatureNoiseRange,
+                    Mathf.Max(NoiseBlend, 0.06f),
+                    SeedUtility.Derive(featureSeed, i, "terrain.sculpt")));
+            }
+
+            return new TerrainSculptSet(featureSeed, FeatureNoiseScale, layers);
+        }
+
         public TerrainFeatureSample SampleFeature(
             PlanetGenerationContext context,
             PlanetClimateSample climate,

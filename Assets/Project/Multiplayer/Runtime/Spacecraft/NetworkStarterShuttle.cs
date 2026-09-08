@@ -5,6 +5,7 @@ using Farion.Core.Persistence;
 using Farion.Gameplay.Actors;
 using Farion.Gameplay.Character;
 using Farion.Gameplay.Flight;
+using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
 using Farion.Gameplay.Presentation.Flight;
 using Farion.Gameplay.Ships;
@@ -88,6 +89,7 @@ namespace Farion.Multiplayer.Spacecraft
         SpacecraftOceanInteractor oceanInteractor;
         SpacecraftSurfaceContactProbe surfaceContactProbe;
         SpacecraftSurfaceContactStabilizer surfaceContactStabilizer;
+        SpacecraftSurfaceGuard surfaceGuard;
         SpacecraftLandingGearAnimator landingGear;
         SpacecraftFloodlights floodlights;
         Rigidbody body;
@@ -169,6 +171,7 @@ namespace Farion.Multiplayer.Spacecraft
             surfaceContactProbe = GetComponent<SpacecraftSurfaceContactProbe>();
             surfaceContactStabilizer =
                 GetComponent<SpacecraftSurfaceContactStabilizer>();
+            surfaceGuard = GetComponent<SpacecraftSurfaceGuard>();
             landingGear = GetComponent<SpacecraftLandingGearAnimator>();
             floodlights = GetComponentInChildren<SpacecraftFloodlights>(true);
             body = GetComponent<Rigidbody>();
@@ -225,6 +228,11 @@ namespace Farion.Multiplayer.Spacecraft
             if (boarding.TogglePilotCamera)
             {
                 sceneContext?.TogglePilotCameraView();
+            }
+
+            if (boarding.ToggleHud)
+            {
+                PlayerViewPreferences.FlightHudVisible = !PlayerViewPreferences.FlightHudVisible;
             }
 
             if (input != null && input.CurrentInput.ToggleLandingGear)
@@ -360,6 +368,7 @@ namespace Farion.Multiplayer.Spacecraft
             oceanInteractor?.SetExternalSimulation(true);
             surfaceContactProbe?.SetExternalSimulation(true);
             surfaceContactStabilizer?.SetExternalSimulation(true);
+            surfaceGuard?.SetExternalSimulation(true);
             hull?.SetExternalSimulation(true);
             body.interpolation = RigidbodyInterpolation.None;
             SetTickCallbacks(TickCallback.Tick | TickCallback.PostTick);
@@ -399,6 +408,7 @@ namespace Farion.Multiplayer.Spacecraft
             oceanInteractor?.SetExternalSimulation(false);
             surfaceContactProbe?.SetExternalSimulation(false);
             surfaceContactStabilizer?.SetExternalSimulation(false);
+            surfaceGuard?.SetExternalSimulation(false);
             hull?.SetExternalSimulation(false);
             ApplyPilotedState(false);
         }
@@ -410,7 +420,9 @@ namespace Farion.Multiplayer.Spacecraft
                 EntityId.IsValid &&
                 sessionPlayer.PossessionMode == PlayerPossessionMode.OnFoot &&
                 sessionPlayer.AssignedStarterShuttleId == EntityId &&
-                (!IsClaimed || IsClaimedBy(sessionPlayer.SessionPlayerId));
+                (!IsClaimed || IsClaimedBy(sessionPlayer.SessionPlayerId)) &&
+                context.Actor != null &&
+                IsWithinClaimDistance(context.Actor.transform.position);
         }
 
         public void Interact(InteractionContext context)
@@ -524,6 +536,7 @@ namespace Farion.Multiplayer.Spacecraft
             atmosphereInteractor?.Simulate(deltaTime, physicsBody);
             oceanInteractor?.Simulate(deltaTime, physicsBody);
             surfaceContactStabilizer?.Simulate(deltaTime, physicsBody);
+            surfaceGuard?.Simulate(deltaTime, physicsBody);
             motor.Simulate(
                 !IsPiloted || invalidServerInput || staleOrigin
                     ? SpacecraftInputState.None

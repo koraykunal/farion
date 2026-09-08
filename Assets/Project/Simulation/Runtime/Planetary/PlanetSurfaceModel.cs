@@ -396,6 +396,22 @@ namespace Farion.Simulation.Planetary
             return TryBuildPlanetSurfaceSample(source, direction, surfaceRadius, out sample);
         }
 
+        public bool TrySampleLocalRadius(Vector3 localDirection, out float surfaceRadius)
+        {
+            surfaceRadius = 0f;
+            CelestialBody source = ResolveBody();
+            if (source == null)
+            {
+                return false;
+            }
+
+            Vector3 direction = localDirection.sqrMagnitude > 0.0001f
+                ? localDirection.normalized
+                : Vector3.up;
+            surfaceRadius = EvaluateSurfaceRadius(source.Radius, direction, ResolveShapeProfile());
+            return true;
+        }
+
         public bool TrySampleLocalTerrain(
             Vector3 localDirection,
             out float surfaceRadius,

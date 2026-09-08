@@ -15,4 +15,5 @@ MonoBehaviour:
   materialId: surface.basalt_regolith
   displayName: Basalt Regolith
   category: 1
+  footstepSurface: 1
   previewColor: {r: 0.19, g: 0.16, b: 0.14, a: 1}

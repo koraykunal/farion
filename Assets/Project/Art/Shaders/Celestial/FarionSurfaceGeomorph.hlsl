@@ -3,7 +3,6 @@
 
 float4 _FarionSurfaceObserverWS;
 float4 _FarionPreviousSurfaceObserverWS;
-float4 _FarionMorphRange;
 
 float FarionResolveMorphWeightWS(float3 positionWS, float3 observerWS)
 {

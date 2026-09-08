@@ -15,3 +15,6 @@ MonoBehaviour:
   featureId: feature.crater_fields
   displayName: Crater Fields
   previewColor: {r: 0.48, g: 0.45, b: 0.39, a: 1}
+  sculptStyle: 1
+  sculptAmplitudeMeters: 14
+  sculptFootprintMeters: 180

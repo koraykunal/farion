@@ -372,6 +372,9 @@ namespace Farion.UI.Settings
                 case UiSettingId.InvertLookY:
                     preferences.SetInvertLookY(!preferences.InvertLookY);
                     break;
+                case UiSettingId.FlightHud:
+                    preferences.SetFlightHudVisible(!preferences.FlightHudVisible);
+                    break;
             }
         }
 
@@ -606,6 +609,13 @@ namespace Farion.UI.Settings
                         UiLocalization.Get(UiTextKeys.SettingsInvertLookTitle),
                         UiLocalization.Get(UiTextKeys.SettingsInvertLookDescription),
                         ResolveBoolean(preferences.InvertLookY));
+                    option.SetAvailable(true);
+                    break;
+                case UiSettingId.FlightHud:
+                    option.ConfigureContent(
+                        UiLocalization.Get(UiTextKeys.SettingsFlightHudTitle),
+                        UiLocalization.Get(UiTextKeys.SettingsFlightHudDescription),
+                        ResolveBoolean(preferences.FlightHudVisible));
                     option.SetAvailable(true);
                     break;
             }

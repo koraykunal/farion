@@ -1,3 +1,4 @@
+using Farion.Simulation.Planetary;
 using UnityEngine;
 
 namespace Farion.Simulation.Celestial
@@ -7,6 +8,10 @@ namespace Farion.Simulation.Celestial
         public event System.Action Changed;
 
         public virtual void PrepareSampling()
+        {
+        }
+
+        public virtual void ApplyTerrainSculpts(TerrainSculptSet sculpts)
         {
         }
 

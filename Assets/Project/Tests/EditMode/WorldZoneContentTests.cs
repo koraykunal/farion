@@ -115,6 +115,60 @@ namespace Farion.Tests.EditMode
                 + "Rules tuned for other climates may legitimately score zero here.");
         }
 
+        [Test]
+        public void StartingPlanetFormationPiecesSeatBelowTheAnalyticSurface()
+        {
+            SurfaceDecorationRenderer renderer = FindDecorationRenderer("Starting Planet");
+            Assert.That(renderer, Is.Not.Null);
+            SurfaceFormationSpawner spawner = renderer.GetComponent<SurfaceFormationSpawner>();
+            Assert.That(spawner, Is.Not.Null);
+            PlanetSurfaceModel surfaceModel = renderer.GetComponent<PlanetSurfaceModel>();
+            CelestialBody body = renderer.GetComponent<CelestialBody>();
+            int planetSeed = surfaceModel.CreateContext(body).PlanetSeed;
+
+            List<SurfaceFormationPlacementItem> items = new();
+            int seated = 0;
+            foreach (SurfaceFormationRule rule in spawner.Profile.Rules)
+            {
+                if (!rule.Kit.HasOutcrop)
+                {
+                    continue;
+                }
+
+                int resolution = SurfaceScatterPlacement.CalculateResolution(
+                    body.Radius,
+                    rule.Distribution.SpacingMeters);
+                for (int i = 0; i < 24 && seated < 40; i++)
+                {
+                    Vector3 direction = Quaternion.Euler(i * 37f, i * 91f, 0f) * Vector3.up;
+                    SurfaceScatterCell cell = SurfaceScatterPlacement.CellFromDirection(direction, resolution);
+                    direction = SurfaceScatterPlacement.CandidateDirection(cell, planetSeed, rule.StableId);
+                    surfaceModel.TrySampleGeology(direction, out CelestialGeologySample geology);
+                    SurfaceFormationPlacement.BuildComposition(
+                        rule,
+                        surfaceModel,
+                        renderer.transform,
+                        direction,
+                        geology,
+                        cell,
+                        planetSeed,
+                        items);
+                    foreach (SurfaceFormationPlacementItem item in items)
+                    {
+                        Vector3 itemDirection = item.SurfaceLocalPosition.normalized;
+                        Assert.That(surfaceModel.TrySampleLocalRadius(itemDirection, out float analytic), Is.True);
+                        Assert.That(item.SurfaceLocalPosition.magnitude, Is.EqualTo(analytic).Within(0.01f));
+                        Assert.That(
+                            Vector3.Dot(item.LocalPosition - item.SurfaceLocalPosition, item.LocalUp),
+                            Is.LessThan(0f));
+                        seated++;
+                    }
+                }
+            }
+
+            Assert.That(seated, Is.GreaterThan(0));
+        }
+
         SurfaceDecorationRenderer FindDecorationRenderer(string bodyName)
         {
             foreach (SurfaceDecorationRenderer candidate in

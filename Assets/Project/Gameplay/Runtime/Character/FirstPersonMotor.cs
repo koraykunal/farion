@@ -65,6 +65,7 @@ namespace Farion.Gameplay.Character
         float pendingYawDegrees;
         Vector3 smoothedGroundNormal = Vector3.up;
         bool hasSmoothedGroundNormal;
+        float groundGap = float.PositiveInfinity;
         ArtificialGravityVolume artificialGravitySource;
         ArtificialWaterVolume artificialWaterSource;
         bool externalSimulation;
@@ -84,6 +85,19 @@ namespace Farion.Gameplay.Character
         public float YawDegreesPerMouseUnit =>
             profile != null ? profile.YawDegreesPerMouseUnit : 0f;
         public float ViewPitchDegrees => viewPitchDegrees;
+        public float PendingYawDegrees => pendingYawDegrees;
+
+        public void AddPendingYaw(float degrees)
+        {
+            pendingYawDegrees += degrees;
+        }
+
+        public float ConsumePendingYaw()
+        {
+            float degrees = pendingYawDegrees;
+            pendingYawDegrees = 0f;
+            return degrees;
+        }
 
         public void SetViewPitchDegrees(float degrees)
         {
@@ -116,10 +130,7 @@ namespace Farion.Gameplay.Character
 
             ResolveInputSource();
             currentInput = resolvedInput?.CurrentInput ?? FirstPersonInputState.None;
-            if (profile != null)
-            {
-                pendingYawDegrees += currentInput.Look.x * profile.YawDegreesPerMouseUnit;
-            }
+            AddPendingYaw(currentInput.Look.x * YawDegreesPerMouseUnit);
 
             if (currentInput.Jump && !previousJumpHeld)
             {
@@ -138,11 +149,10 @@ namespace Farion.Gameplay.Character
 
             FirstPersonMotorInput input = new(
                 currentInput.Movement,
-                pendingYawDegrees,
+                ConsumePendingYaw(),
                 jumpQueued,
                 currentInput.Sprint,
                 currentInput.Jump);
-            pendingYawDegrees = 0f;
             Simulate(input, Time.fixedDeltaTime, offlinePhysicsBody);
         }
 
@@ -198,23 +208,59 @@ namespace Farion.Gameplay.Character
                 hasArtificialGravity,
                 localUp,
                 deltaTime);
-            ApplyGravity(physicsBody, gravityAcceleration, hasArtificialGravity || (applyCelestialGravity && celestialFrame.HasBody));
             bool jumpLaunching = ShouldLaunchJump();
-            StabilizeGroundContact(physicsBody, gravityAcceleration, referenceVelocity, localUp, jumpLaunching, deltaTime);
-            ApplyMovement(physicsBody, referenceVelocity, localUp, input.Movement, input.Sprint, deltaTime);
-            ApplyStandAnchor(
-                physicsBody,
-                celestialFrame,
-                hasArtificialGravity,
-                localUp,
-                input.Movement,
-                jumpLaunching,
-                deltaTime);
-            ApplySteepSlopeSlide(physicsBody, gravityAcceleration);
-            ApplyWaterForces(physicsBody, environmentFrame, localUp, input.SwimAscend);
-            ApplyJump(physicsBody, gravityAcceleration, referenceVelocity, celestialFrame, hasArtificialGravity, localUp, jumpLaunching);
+            if (ShouldRest(physicsBody, referenceVelocity, input.Movement, jumpLaunching))
+            {
+                Rest(physicsBody, referenceVelocity);
+            }
+            else
+            {
+                ApplyGravity(physicsBody, gravityAcceleration, hasArtificialGravity || (applyCelestialGravity && celestialFrame.HasBody));
+                StabilizeGroundContact(physicsBody, gravityAcceleration, referenceVelocity, localUp, jumpLaunching, deltaTime);
+                ApplyMovement(physicsBody, referenceVelocity, localUp, input.Movement, input.Sprint, deltaTime);
+                ApplySteepSlopeSlide(physicsBody, gravityAcceleration);
+                ApplyWaterForces(physicsBody, environmentFrame, localUp, input.SwimAscend);
+                ApplyJump(physicsBody, gravityAcceleration, referenceVelocity, celestialFrame, hasArtificialGravity, localUp, jumpLaunching);
+            }
+
             ApplyOrientation(physicsBody, localUp, input.YawDegrees, deltaTime);
             physicsBody.Commit();
+        }
+
+        const float RestSpeed = 0.15f;
+        const float RestContactGap = 0.03f;
+
+        bool ShouldRest(
+            IFirstPersonPhysicsBody physicsBody,
+            Vector3 referenceVelocity,
+            Vector2 movement,
+            bool jumpLaunching)
+        {
+            return grounded
+                && walkableGround
+                && groundGap <= RestContactGap
+                && !jumpLaunching
+                && !jumpQueued
+                && waterSubmergedFraction < 0.5f
+                && movement.sqrMagnitude <= 0.0001f
+                && (physicsBody.LinearVelocity - referenceVelocity).sqrMagnitude <= RestSpeed * RestSpeed;
+        }
+
+        void Rest(IFirstPersonPhysicsBody physicsBody, Vector3 referenceVelocity)
+        {
+            if (physicsBody.LinearVelocity != referenceVelocity)
+            {
+                physicsBody.LinearVelocity = referenceVelocity;
+            }
+
+            if (physicsBody.AngularVelocity != Vector3.zero)
+            {
+                physicsBody.AngularVelocity = Vector3.zero;
+            }
+
+            surfaceVelocity = Vector3.zero;
+            surfaceSpeed = 0f;
+            verticalSpeed = 0f;
         }
 
         public void SetInputSource(KeyboardFirstPersonInput source)
@@ -236,63 +282,7 @@ namespace Farion.Gameplay.Character
             previousJumpHeld = false;
         }
 
-        const float StandAnchorReleaseDistance = 1.5f;
-        const float StandAnchorRecoveryMetersPerSecond = 4f;
-
-        bool hasStandAnchor;
-        int standAnchorBodyId;
-        Vector3 standAnchorLocalPosition;
-
-        void ApplyStandAnchor(
-            IFirstPersonPhysicsBody physicsBody,
-            in CelestialFrameSample frame,
-            bool hasArtificialGravity,
-            Vector3 up,
-            Vector2 movement,
-            bool jumpLaunching,
-            float deltaTime)
-        {
-            bool wantsAnchor = !hasArtificialGravity
-                && frame.HasBody
-                && grounded
-                && walkableGround
-                && !jumpLaunching
-                && !jumpQueued
-                && movement.sqrMagnitude <= 0.0001f
-                && waterSubmergedFraction < 0.5f;
-            if (!wantsAnchor)
-            {
-                hasStandAnchor = false;
-                return;
-            }
-
-            Transform bodyTransform = frame.Body.transform;
-            Vector3 position = physicsBody.Position;
-            if (!hasStandAnchor || standAnchorBodyId != frame.Body.StableId)
-            {
-                hasStandAnchor = true;
-                standAnchorBodyId = frame.Body.StableId;
-                standAnchorLocalPosition = bodyTransform.InverseTransformPoint(position);
-                return;
-            }
-
-            Vector3 anchorPosition = bodyTransform.TransformPoint(standAnchorLocalPosition);
-            Vector3 tangentialDelta = Vector3.ProjectOnPlane(anchorPosition - position, up);
-            float drift = tangentialDelta.magnitude;
-            if (drift > StandAnchorReleaseDistance)
-            {
-                standAnchorLocalPosition = bodyTransform.InverseTransformPoint(position);
-                return;
-            }
-
-            if (drift <= 0.0001f)
-            {
-                return;
-            }
-
-            float correction = Mathf.Min(drift, StandAnchorRecoveryMetersPerSecond * deltaTime);
-            physicsBody.SetPosition(position + tangentialDelta / drift * correction);
-        }
+        const float UprightSettledDegrees = 0.01f;
 
         public FirstPersonMotorState CaptureState()
         {
@@ -316,10 +306,7 @@ namespace Farion.Gameplay.Character
                 LocalUp = localUp,
                 GroundNormal = groundNormal,
                 SmoothedGroundNormal = smoothedGroundNormal,
-                HasSmoothedGroundNormal = hasSmoothedGroundNormal,
-                HasStandAnchor = hasStandAnchor,
-                StandAnchorBodyId = standAnchorBodyId,
-                StandAnchorLocalPosition = standAnchorLocalPosition
+                HasSmoothedGroundNormal = hasSmoothedGroundNormal
             };
         }
 
@@ -344,9 +331,6 @@ namespace Farion.Gameplay.Character
             groundNormal = state.GroundNormal;
             smoothedGroundNormal = state.SmoothedGroundNormal;
             hasSmoothedGroundNormal = state.HasSmoothedGroundNormal;
-            hasStandAnchor = state.HasStandAnchor;
-            standAnchorBodyId = state.StandAnchorBodyId;
-            standAnchorLocalPosition = state.StandAnchorLocalPosition;
         }
 
         public void SetArtificialGravitySource(ArtificialGravityVolume source)
@@ -435,6 +419,7 @@ namespace Farion.Gameplay.Character
             groundSlopeAngle = 0f;
             groundNormal = up;
             groundLayer = -1;
+            groundGap = float.PositiveInfinity;
             Vector3 detectedGroundNormal = up;
 
             if (profile == null)
@@ -507,6 +492,7 @@ namespace Farion.Gameplay.Character
                 groundLayer = FarionLayers.CelestialSurface;
             }
 
+            groundGap = closestGap;
             grounded = closestGap <= profile.GroundProbeDistance;
             if (!grounded)
             {
@@ -878,7 +864,10 @@ namespace Farion.Gameplay.Character
             float yawDegrees,
             float deltaTime)
         {
-            Vector3 forward = Vector3.ProjectOnPlane(physicsBody.Rotation * Vector3.forward, up);
+            Quaternion yawedRotation = Mathf.Abs(yawDegrees) > 0.0001f
+                ? Quaternion.AngleAxis(yawDegrees, up) * physicsBody.Rotation
+                : physicsBody.Rotation;
+            Vector3 forward = Vector3.ProjectOnPlane(yawedRotation * Vector3.forward, up);
             if (forward.sqrMagnitude <= 0.0001f)
             {
                 forward = Vector3.ProjectOnPlane(transform.forward, up);
@@ -890,12 +879,13 @@ namespace Farion.Gameplay.Character
             }
 
             forward = forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.forward;
-            if (Mathf.Abs(yawDegrees) > 0.0001f)
+            Quaternion targetRotation = Quaternion.LookRotation(forward, up);
+            if (Mathf.Abs(yawDegrees) <= 0.0001f &&
+                Quaternion.Angle(physicsBody.Rotation, targetRotation) <= UprightSettledDegrees)
             {
-                forward = Quaternion.AngleAxis(yawDegrees, up) * forward;
+                return;
             }
 
-            Quaternion targetRotation = Quaternion.LookRotation(forward, up);
             if (profile == null || profile.UprightResponsiveness <= 0f)
             {
                 physicsBody.MoveRotation(targetRotation);
@@ -903,7 +893,7 @@ namespace Farion.Gameplay.Character
             }
 
             float t = FarionMath.SmoothFactor(profile.UprightResponsiveness, deltaTime);
-            physicsBody.MoveRotation(Quaternion.Slerp(physicsBody.Rotation, targetRotation, t));
+            physicsBody.MoveRotation(Quaternion.Slerp(yawedRotation, targetRotation, t));
         }
 
         Vector3 BuildMoveDirection(Vector3 up, Vector2 movement)

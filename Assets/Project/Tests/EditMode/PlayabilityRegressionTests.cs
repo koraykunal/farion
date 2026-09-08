@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Farion.Gameplay.Domain.Systems;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Inventory;
@@ -5,6 +6,7 @@ using Farion.Gameplay.Persistence;
 using Farion.UI.Gameplay;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Farion.Tests.EditMode
 {
@@ -51,6 +53,32 @@ namespace Farion.Tests.EditMode
             finally
             {
                 FarionInputActions.InvertLookY = previous;
+            }
+        }
+
+        [Test]
+        public void PilotingKeyboardBindingsDoNotOverlap()
+        {
+            HashSet<string> seen = new();
+            foreach (string mapName in new[] { "Flight", "Vehicle" })
+            {
+                InputActionMap map = FarionInputActions.Asset.FindActionMap(mapName, true);
+                foreach (InputAction action in map.actions)
+                {
+                    foreach (InputBinding binding in action.bindings)
+                    {
+                        if (binding.isComposite ||
+                            !binding.path.StartsWith("<Keyboard>", System.StringComparison.Ordinal))
+                        {
+                            continue;
+                        }
+
+                        Assert.That(
+                            seen.Add(binding.path),
+                            Is.True,
+                            $"{binding.path} is bound twice while piloting.");
+                    }
+                }
             }
         }
 

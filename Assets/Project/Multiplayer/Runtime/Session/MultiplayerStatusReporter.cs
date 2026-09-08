@@ -1,4 +1,6 @@
+using Farion.Multiplayer.Player;
 using Farion.Multiplayer.World;
+using Farion.Simulation.Physics;
 using Farion.UI.Gameplay;
 using Farion.UI.Localization;
 using FishNet.Managing;
@@ -8,6 +10,7 @@ using UnityEngine;
 
 namespace Farion.Multiplayer.Session
 {
+    [DefaultExecutionOrder(900)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NetworkManager))]
     public sealed class MultiplayerStatusReporter : MonoBehaviour
@@ -38,6 +41,19 @@ namespace Farion.Multiplayer.Session
         ProfilerRecorder presentWaitRecorder;
         ProfilerRecorder drawCallRecorder;
         ProfilerRecorder setPassRecorder;
+        bool jitterInitialized;
+        Vector3 lastCameraPosition;
+        Quaternion lastCameraRotation;
+        Vector3 lastBodyPosition;
+        Vector3 lastRigidbodyPosition;
+        Vector3 lastPlanetPosition;
+        Quaternion lastPlanetRotation;
+        float peakCameraShiftMillimeters;
+        float peakCameraTurnDegrees;
+        float peakBodyShiftMillimeters;
+        float peakRigidbodyShiftMillimeters;
+        float peakPlanetShiftMillimeters;
+        float peakPlanetTurnMicroRadians;
 
         void Awake()
         {
@@ -136,6 +152,82 @@ namespace Farion.Multiplayer.Session
             gameplayUi.SetNetworkStatus(status);
         }
 
+        void LateUpdate()
+        {
+            if (!showDiagnostics || gameplayUi == null)
+            {
+                jitterInitialized = false;
+                return;
+            }
+
+            SampleJitter();
+        }
+
+        void SampleJitter()
+        {
+            NetworkExplorerController explorer = ResolveOwnedExplorer();
+            Camera camera = Camera.main;
+            if (explorer == null || camera == null || explorer.Motor == null)
+            {
+                jitterInitialized = false;
+                return;
+            }
+
+            Transform cameraTransform = camera.transform;
+            Rigidbody body = explorer.Motor.Rigidbody;
+            CelestialBody planet = explorer.Motor.ActorProbe.CurrentSample.Body;
+            Vector3 cameraPosition = cameraTransform.position;
+            Quaternion cameraRotation = cameraTransform.rotation;
+            Vector3 bodyPosition = explorer.transform.position;
+            Vector3 rigidbodyPosition = body != null ? body.position : bodyPosition;
+            Vector3 planetPosition = planet != null ? planet.transform.position : Vector3.zero;
+            Quaternion planetRotation = planet != null ? planet.transform.rotation : Quaternion.identity;
+
+            if (jitterInitialized)
+            {
+                peakCameraShiftMillimeters = Mathf.Max(
+                    peakCameraShiftMillimeters,
+                    Vector3.Distance(cameraPosition, lastCameraPosition) * 1000f);
+                peakCameraTurnDegrees = Mathf.Max(
+                    peakCameraTurnDegrees,
+                    Quaternion.Angle(cameraRotation, lastCameraRotation));
+                peakBodyShiftMillimeters = Mathf.Max(
+                    peakBodyShiftMillimeters,
+                    Vector3.Distance(bodyPosition, lastBodyPosition) * 1000f);
+                peakRigidbodyShiftMillimeters = Mathf.Max(
+                    peakRigidbodyShiftMillimeters,
+                    Vector3.Distance(rigidbodyPosition, lastRigidbodyPosition) * 1000f);
+                peakPlanetShiftMillimeters = Mathf.Max(
+                    peakPlanetShiftMillimeters,
+                    Vector3.Distance(planetPosition, lastPlanetPosition) * 1000f);
+                peakPlanetTurnMicroRadians = Mathf.Max(
+                    peakPlanetTurnMicroRadians,
+                    Quaternion.Angle(planetRotation, lastPlanetRotation) * Mathf.Deg2Rad * 1e6f);
+            }
+
+            lastCameraPosition = cameraPosition;
+            lastCameraRotation = cameraRotation;
+            lastBodyPosition = bodyPosition;
+            lastRigidbodyPosition = rigidbodyPosition;
+            lastPlanetPosition = planetPosition;
+            lastPlanetRotation = planetRotation;
+            jitterInitialized = true;
+        }
+
+        static NetworkExplorerController ResolveOwnedExplorer()
+        {
+            for (int i = 0; i < NetworkExplorerController.ActiveExplorers.Count; i++)
+            {
+                NetworkExplorerController explorer = NetworkExplorerController.ActiveExplorers[i];
+                if (explorer != null && explorer.IsOwner)
+                {
+                    return explorer;
+                }
+            }
+
+            return null;
+        }
+
         void SampleDiagnostics()
         {
             if (networkManager == null || !networkManager.IsClientStarted)
@@ -218,15 +310,25 @@ namespace Farion.Multiplayer.Session
                 return headline;
             }
 
-            return $"{headline}\n" +
+            string status = $"{headline}\n" +
                 $"DROP/5S {recentDroppedFrames}  PEAK/5S {recentPeakMilliseconds:0} MS  " +
                 $"SHIFT {originShifts}  RECON/S {reconcilesPerSecond}\n" +
                 $"FIX {PredictionDiagnostics.LastPositionError:0.000} M  " +
                 $"MAXFIX {PredictionDiagnostics.WorstPositionError:0.00} M  " +
                 $"MAXROT {PredictionDiagnostics.WorstRotationError:0.0} DEG\n" +
+                $"JIT CAM {peakCameraShiftMillimeters:0.00} MM {peakCameraTurnDegrees:0.0000} DEG  " +
+                $"BODY {peakBodyShiftMillimeters:0.00} MM  RB {peakRigidbodyShiftMillimeters:0.00} MM  " +
+                $"PLANET {peakPlanetShiftMillimeters:0.00} MM {peakPlanetTurnMicroRadians:0.00} URAD\n" +
                 $"CPU {AverageMilliseconds(mainThreadRecorder):0.0} MS  " +
                 $"GPUWAIT {AverageMilliseconds(presentWaitRecorder):0.0} MS  " +
                 $"DRAW {drawCallRecorder.LastValue}  SETPASS {setPassRecorder.LastValue}";
+            peakCameraShiftMillimeters = 0f;
+            peakCameraTurnDegrees = 0f;
+            peakBodyShiftMillimeters = 0f;
+            peakRigidbodyShiftMillimeters = 0f;
+            peakPlanetShiftMillimeters = 0f;
+            peakPlanetTurnMicroRadians = 0f;
+            return status;
         }
 
         static float AverageMilliseconds(ProfilerRecorder recorder)

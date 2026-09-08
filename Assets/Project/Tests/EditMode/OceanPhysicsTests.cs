@@ -61,7 +61,7 @@ namespace Farion.Tests.EditMode
         public void WavePhases_StayWrapped()
         {
             Vector3 phases = OceanWaveField.GetPhases(1_000_000.0, 0.7f);
-            for (int i = 0; i < OceanWaveField.WaveCount; i++)
+            for (int i = 0; i < OceanWaveField.GroupCount; i++)
             {
                 Assert.LessOrEqual(Mathf.Abs(phases[i]), Mathf.PI * 2f + 1e-3f);
             }
@@ -70,31 +70,36 @@ namespace Farion.Tests.EditMode
         [Test]
         public void WaveLength_UsesCrestToCrestScale()
         {
-            const float waveLength = 26f;
             const float amplitude = 0.4f;
             Vector3 position = new(6.5f, -2.3f, 4.1f);
             Vector3 phases = new(0.2f, 1.1f, 2.4f);
-            Vector3[] directions =
+
+            float reference = OceanWaveField.SampleHeight(position, 26f, amplitude, phases);
+            float scaled = OceanWaveField.SampleHeight(position * 2f, 52f, amplitude, phases);
+
+            Assert.AreNotEqual(0f, reference);
+            Assert.AreEqual(reference, scaled, 1e-4f);
+        }
+
+        [Test]
+        public void WaveField_IsNotASingleBandPattern()
+        {
+            const float waveLength = 26f;
+            Vector3 phases = OceanWaveField.GetPhases(7.5, 0.7f);
+            Vector3 along = new(0.9438584f, 0f, 0.3303504f);
+            Vector3 across = new(-0.3303504f, 0f, 0.9438584f);
+
+            float crest = OceanWaveField.SampleHeight(Vector3.zero, waveLength, 1f, phases);
+            float maxDrift = 0f;
+            for (int i = 1; i <= 8; i++)
             {
-                new Vector3(1f, 0f, 0.35f).normalized,
-                new Vector3(-0.4f, 0.9f, 0.2f).normalized,
-                new Vector3(0.3f, -0.5f, 0.8f).normalized
-            };
-            float[] frequencies = { 1f, 2.13f, 4.31f };
-            float[] weights = { 1f, 0.55f, 0.3f };
-            float expected = 0f;
-            for (int i = 0; i < directions.Length; i++)
-            {
-                float phase = Vector3.Dot(position, directions[i]) *
-                    (Mathf.PI * 2f / waveLength) * frequencies[i] + phases[i];
-                expected += weights[i] * Mathf.Sin(phase);
+                Vector3 offset = across * (i * waveLength * 0.5f) + along * (i * waveLength);
+                maxDrift = Mathf.Max(
+                    maxDrift,
+                    Mathf.Abs(OceanWaveField.SampleHeight(offset, waveLength, 1f, phases) - crest));
             }
 
-            expected *= amplitude / 1.85f;
-            Assert.AreEqual(
-                expected,
-                OceanWaveField.SampleHeight(position, waveLength, amplitude, phases),
-                1e-5f);
+            Assert.Greater(maxDrift, 0.25f);
         }
 
         [Test]

@@ -25,8 +25,5 @@ namespace Farion.Gameplay.Character
         public Vector3 GroundNormal;
         public Vector3 SmoothedGroundNormal;
         public bool HasSmoothedGroundNormal;
-        public bool HasStandAnchor;
-        public int StandAnchorBodyId;
-        public Vector3 StandAnchorLocalPosition;
     }
 }

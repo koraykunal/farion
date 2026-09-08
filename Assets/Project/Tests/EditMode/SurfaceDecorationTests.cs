@@ -137,6 +137,72 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
+        public void RestingRotationRollsTallSlabsOntoTheirSideAndLeavesSquatRocksAlone()
+        {
+            Bounds slab = new(Vector3.zero, new Vector3(0.6f, 3f, 0.6f));
+            Bounds boulder = new(Vector3.zero, new Vector3(2f, 2.2f, 1.8f));
+            Quaternion upright = Quaternion.AngleAxis(37f, Vector3.up);
+            Vector3 slopeUp = new Vector3(0.2f, 1f, 0.1f).normalized;
+
+            Quaternion rested = SurfaceDecorationRenderer.ResolveRestingRotation(slab, upright, slopeUp);
+            Assert.That(Mathf.Abs(Vector3.Dot(rested * Vector3.up, slopeUp)), Is.LessThan(0.01f));
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveRestingRotation(slab, rested, slopeUp),
+                Is.EqualTo(rested));
+            Assert.That(
+                SurfaceDecorationRenderer.ResolveRestingRotation(boulder, upright, slopeUp),
+                Is.EqualTo(upright));
+        }
+
+        [Test]
+        public void FootprintSeatTiltsToTheTerrainUnderTheWholeFootprintAndSinksToItsLowestEdge()
+        {
+            const float radius = 2000f;
+            Vector3 direction = Vector3.up;
+            Vector3 slopeAxis = Vector3.right;
+            float rise = Mathf.Tan(20f * Mathf.Deg2Rad);
+            float Sloped(Vector3 d) => radius + Vector3.Dot(d, slopeAxis) * radius * rise;
+            float Flat(Vector3 d) => radius;
+
+            bool resolved = SurfaceScatterPlacement.TryResolveFootprintSeat(
+                Sloped, direction, radius, 3f, 1f,
+                out Vector3 normal, out Vector3 up, out float drop);
+            Assert.That(resolved, Is.True);
+            Assert.That(Vector3.Angle(normal, direction), Is.EqualTo(20f).Within(0.5f));
+            Assert.That(Vector3.Dot(normal, slopeAxis), Is.LessThan(0f));
+            Assert.That(up, Is.EqualTo(normal));
+            Assert.That(drop, Is.EqualTo(0f).Within(0.02f));
+
+            SurfaceScatterPlacement.TryResolveFootprintSeat(
+                Sloped, direction, radius, 3f, 0f,
+                out _, out Vector3 radialUp, out float radialDrop);
+            Assert.That(radialUp, Is.EqualTo(direction));
+            Assert.That(radialDrop, Is.EqualTo(-3f * rise).Within(0.05f));
+
+            SurfaceScatterPlacement.TryResolveFootprintSeat(
+                Flat, direction, radius, 3f, 1f,
+                out Vector3 flatNormal, out _, out float flatDrop);
+            Assert.That(Vector3.Angle(flatNormal, direction), Is.LessThan(0.1f));
+            Assert.That(flatDrop, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(
+                SurfaceScatterPlacement.TryResolveFootprintSeat(
+                    Flat, direction, radius, 0f, 1f, out _, out _, out _),
+                Is.False);
+        }
+
+        [Test]
+        public void SurfaceAnchorOnlyMorphsWhenItsPatchDoes()
+        {
+            CelestialSurfaceAnchor pinned = new(6, 2000f, 2003f, Vector4.zero);
+            Assert.That(pinned.ResolveRadius(500f), Is.EqualTo(2000f));
+
+            CelestialSurfaceAnchor morphing = new(6, 2000f, 2004f, new Vector4(50f, 100f, 0f, 0f));
+            Assert.That(morphing.ResolveRadius(10f), Is.EqualTo(2000f));
+            Assert.That(morphing.ResolveRadius(75f), Is.EqualTo(2002f).Within(0.001f));
+            Assert.That(morphing.ResolveRadius(500f), Is.EqualTo(2004f));
+        }
+
+        [Test]
         public void GlobalLodMeshesCanShareOneSurfaceSamplingFootprint()
         {
             FootprintShapeProfile shape = ScriptableObject.CreateInstance<FootprintShapeProfile>();

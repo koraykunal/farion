@@ -176,31 +176,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farion.Audio.Runtime::Farion.Audio.Character.ExplorerAudioController
   footstepEvent:
     Guid:
-      Data1: -511101285
-      Data2: 1113839231
-      Data3: -1309798985
-      Data4: 1877916207
+      Data1: -665431366
+      Data2: 1081359843
+      Data3: 1492927413
+      Data4: -628919184
     Path: event:/Character/Footstep
   jumpEvent:
     Guid:
-      Data1: -1472075592
-      Data2: 1272454549
-      Data3: -776307274
-      Data4: 141485289
+      Data1: -1350224672
+      Data2: 1136413936
+      Data3: -410640497
+      Data4: 2011299417
     Path: event:/Character/Jump
   landEvent:
     Guid:
-      Data1: -1127723649
-      Data2: 1247532624
-      Data3: 748915602
-      Data4: -808819308
+      Data1: -1453634780
+      Data2: 1082735658
+      Data3: 1238289583
+      Data4: 1375179760
     Path: event:/Character/Land
   signals: {fileID: 0}
   motor: {fileID: 0}
   probe: {fileID: 0}
-  footstepIntensityReferenceSpeed: 6
   landIntensityReferenceSpeed: 10
   stepSuppressAfterLandSeconds: 0.2
+  wetnessFullSubmergedFraction: 0.3
 --- !u!1 &2505619140252867353
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,6 +931,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e3d00b01a61991448a383f32fc955664, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8237611702157811124}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e3d00b01a61991448a383f32fc955664, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8237611702157811125}
   m_SourcePrefab: {fileID: 100100000, guid: e3d00b01a61991448a383f32fc955664, type: 3}
 --- !u!1 &3558293042804032612 stripped
 GameObject:
@@ -975,6 +978,27 @@ MonoBehaviour:
   footResponsiveness: 16
   pelvisResponsiveness: 10
   weightResponsiveness: 8
+--- !u!114 &8237611702157811125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3558293042804032612}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c3f1e2a9b4d4f0e8a6c5d2b1e9f3a47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Presentation::Farion.Gameplay.Presentation.Character.PlayerExplorerSeatedPose
+  graphicalRoot: {fileID: 7501087778645050471}
+  animator: {fileID: 7839188960551732388}
+  thighAngle: 85
+  shinAngle: 80
+  spineLean: -6
+  upperArmAngle: 45
+  forearmAngle: 40
+  seatOffset: {x: 0, y: 0, z: 0}
+  seatRig: {fileID: 0}
 --- !u!4 &3607277980408194193 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1130211420890766756, guid: e3d00b01a61991448a383f32fc955664, type: 3}
@@ -985,34 +1009,14 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1062023463908538661, guid: e3d00b01a61991448a383f32fc955664, type: 3}
   m_PrefabInstance: {fileID: 4440814741343516981}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &4038907950935234161 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -8814138089788674236, guid: e3d00b01a61991448a383f32fc955664, type: 3}
-  m_PrefabInstance: {fileID: 4440814741343516981}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4191241602110611166 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e3d00b01a61991448a383f32fc955664, type: 3}
   m_PrefabInstance: {fileID: 4440814741343516981}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &4918087116640214886 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8782159282777548371, guid: e3d00b01a61991448a383f32fc955664, type: 3}
-  m_PrefabInstance: {fileID: 4440814741343516981}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6139112723313158776 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7535211588738896717, guid: e3d00b01a61991448a383f32fc955664, type: 3}
-  m_PrefabInstance: {fileID: 4440814741343516981}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6652468611988951206 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -2165490838445971053, guid: e3d00b01a61991448a383f32fc955664, type: 3}
-  m_PrefabInstance: {fileID: 4440814741343516981}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &7260045142659601120 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -2783174073404904491, guid: e3d00b01a61991448a383f32fc955664, type: 3}
   m_PrefabInstance: {fileID: 4440814741343516981}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &7455929866981725124 stripped
@@ -1023,15 +1027,5 @@ Transform:
 --- !u!95 &7839188960551732388 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: e3d00b01a61991448a383f32fc955664, type: 3}
-  m_PrefabInstance: {fileID: 4440814741343516981}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &8429544850560514073 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -3937497254642269908, guid: e3d00b01a61991448a383f32fc955664, type: 3}
-  m_PrefabInstance: {fileID: 4440814741343516981}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &8709007771454511773 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -4216375203146456152, guid: e3d00b01a61991448a383f32fc955664, type: 3}
   m_PrefabInstance: {fileID: 4440814741343516981}
   m_PrefabAsset: {fileID: 0}

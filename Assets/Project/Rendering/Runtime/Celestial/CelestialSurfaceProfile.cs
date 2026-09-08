@@ -93,51 +93,51 @@ namespace Farion.Rendering.Celestial
         }
 
         public override void ApplyMaterialProperties(
-            MaterialPropertyBlock propertyBlock,
+            Material target,
             float bodyRadius,
             Vector2 radiusMinMax)
         {
-            propertyBlock.SetColor("_BaseColor", baseColor);
-            propertyBlock.SetColor("_SecondaryColor", secondaryColor);
-            propertyBlock.SetColor("_SteepColor", steepColor);
-            propertyBlock.SetColor("_EjectaColor", ejectaColor);
-            propertyBlock.SetFloat("_Metallic", metallic);
-            propertyBlock.SetFloat("_Smoothness", smoothness);
-            propertyBlock.SetFloat("_EjectaSmoothness", ejectaSmoothness);
-            propertyBlock.SetFloat("_BodyRadius", bodyRadius);
-            propertyBlock.SetVector("_RadiusMinMax", radiusMinMax);
-            propertyBlock.SetFloat("_SurfaceNoiseWorldTileSize", surfaceNoiseWorldTileSize);
-            propertyBlock.SetFloat("_NormalFlatWorldTileSize", normalFlatWorldTileSize);
-            propertyBlock.SetFloat("_NormalSteepWorldTileSize", normalSteepWorldTileSize);
-            propertyBlock.SetFloat("_NormalStrength", normalStrength);
-            propertyBlock.SetFloat("_SteepColorStrength", steepColorStrength);
-            propertyBlock.SetFloat("_BiomeBlendStrength", biomeBlendStrength);
-            propertyBlock.SetFloat("_EjectaStrength", ejectaStrength);
-            propertyBlock.SetFloat("_EjectaRayFrequency", ejectaRayFrequency);
+            target.SetColor("_BaseColor", baseColor);
+            target.SetColor("_SecondaryColor", secondaryColor);
+            target.SetColor("_SteepColor", steepColor);
+            target.SetColor("_EjectaColor", ejectaColor);
+            target.SetFloat("_Metallic", metallic);
+            target.SetFloat("_Smoothness", smoothness);
+            target.SetFloat("_EjectaSmoothness", ejectaSmoothness);
+            target.SetFloat("_BodyRadius", bodyRadius);
+            target.SetVector("_RadiusMinMax", radiusMinMax);
+            target.SetFloat("_SurfaceNoiseWorldTileSize", surfaceNoiseWorldTileSize);
+            target.SetFloat("_NormalFlatWorldTileSize", normalFlatWorldTileSize);
+            target.SetFloat("_NormalSteepWorldTileSize", normalSteepWorldTileSize);
+            target.SetFloat("_NormalStrength", normalStrength);
+            target.SetFloat("_SteepColorStrength", steepColorStrength);
+            target.SetFloat("_BiomeBlendStrength", biomeBlendStrength);
+            target.SetFloat("_EjectaStrength", ejectaStrength);
+            target.SetFloat("_EjectaRayFrequency", ejectaRayFrequency);
 
             if (surfaceNoiseTexture != null)
             {
-                propertyBlock.SetTexture("_SurfaceNoiseTex", surfaceNoiseTexture);
+                target.SetTexture("_SurfaceNoiseTex", surfaceNoiseTexture);
             }
 
             if (ejectaRayTexture != null)
             {
-                propertyBlock.SetTexture("_EjectaRayTex", ejectaRayTexture);
-                propertyBlock.SetFloat("_UseEjectaRayTex", 1f);
+                target.SetTexture("_EjectaRayTex", ejectaRayTexture);
+                target.SetFloat("_UseEjectaRayTex", 1f);
             }
             else
             {
-                propertyBlock.SetFloat("_UseEjectaRayTex", 0f);
+                target.SetFloat("_UseEjectaRayTex", 0f);
             }
 
             if (normalMapFlat != null)
             {
-                propertyBlock.SetTexture("_NormalMapFlat", normalMapFlat);
+                target.SetTexture("_NormalMapFlat", normalMapFlat);
             }
 
             if (normalMapSteep != null)
             {
-                propertyBlock.SetTexture("_NormalMapSteep", normalMapSteep);
+                target.SetTexture("_NormalMapSteep", normalMapSteep);
             }
         }
 

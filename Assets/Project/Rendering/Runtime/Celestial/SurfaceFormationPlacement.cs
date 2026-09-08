@@ -10,25 +10,31 @@ namespace Farion.Rendering.Celestial
         public SurfaceFormationPlacementItem(
             SurfaceFormationRole role,
             int pieceIndex,
+            Vector3 surfaceLocalPosition,
             Vector3 localPosition,
             Quaternion localRotation,
             Vector3 scale,
-            Vector3 localDownhill)
+            Vector3 localDownhill,
+            Vector3 localUp)
         {
             Role = role;
             PieceIndex = pieceIndex;
+            SurfaceLocalPosition = surfaceLocalPosition;
             LocalPosition = localPosition;
             LocalRotation = localRotation;
             Scale = scale;
             LocalDownhill = localDownhill;
+            LocalUp = localUp;
         }
 
         public SurfaceFormationRole Role { get; }
         public int PieceIndex { get; }
+        public Vector3 SurfaceLocalPosition { get; }
         public Vector3 LocalPosition { get; }
         public Quaternion LocalRotation { get; }
         public Vector3 Scale { get; }
         public Vector3 LocalDownhill { get; }
+        public Vector3 LocalUp { get; }
     }
 
     internal static class SurfaceFormationPlacement
@@ -186,6 +192,7 @@ namespace Farion.Rendering.Celestial
 
             AppendPieceAt(
                 rule,
+                CreateRadiusSampler(surfaceModel),
                 bodyTransform,
                 anchorDirection,
                 anchorSample,
@@ -275,6 +282,7 @@ namespace Farion.Rendering.Celestial
                 cursorSample = sample;
                 AppendPieceAt(
                     rule,
+                    CreateRadiusSampler(surfaceModel),
                     bodyTransform,
                     cursor,
                     sample,
@@ -309,7 +317,7 @@ namespace Farion.Rendering.Celestial
                     0,
                     outcropCount - 1);
                 SurfaceFormationPlacementItem anchor = results[anchorIndex];
-                Vector3 anchorDirection = anchor.LocalPosition.normalized;
+                Vector3 anchorDirection = anchor.SurfaceLocalPosition.normalized;
                 Vector3 downhill = anchor.LocalDownhill;
                 Vector3 strike = Vector3.Cross(anchorDirection, downhill).normalized;
                 float reach = rule.Kit.AverageFootprint(SurfaceFormationRole.Buttress) *
@@ -319,7 +327,7 @@ namespace Farion.Rendering.Celestial
                 if (!TryResolveOffsetSample(
                         surfaceModel,
                         anchorDirection,
-                        anchor.LocalPosition.magnitude,
+                        anchor.SurfaceLocalPosition.magnitude,
                         strike * lateral + downhill * forward,
                         out Vector3 direction,
                         out PlanetSurfaceSample sample))
@@ -329,6 +337,7 @@ namespace Farion.Rendering.Celestial
 
                 AppendPieceAt(
                     rule,
+                    CreateRadiusSampler(surfaceModel),
                     bodyTransform,
                     direction,
                     sample,
@@ -366,8 +375,8 @@ namespace Farion.Rendering.Celestial
             for (int outcrop = 0; outcrop < outcropCount; outcrop++)
             {
                 SurfaceFormationPlacementItem anchor = results[outcrop];
-                Vector3 anchorDirection = anchor.LocalPosition.normalized;
-                float anchorRadius = anchor.LocalPosition.magnitude;
+                Vector3 anchorDirection = anchor.SurfaceLocalPosition.normalized;
+                float anchorRadius = anchor.SurfaceLocalPosition.magnitude;
                 Vector3 downhill = anchor.LocalDownhill;
                 Vector3 strike = Vector3.Cross(anchorDirection, downhill).normalized;
                 for (int i = 0; i < perOutcrop; i++)
@@ -393,6 +402,7 @@ namespace Farion.Rendering.Celestial
                     float falloff = Mathf.Lerp(1f, rule.TalusScaleFalloff, progress);
                     AppendPieceAt(
                         rule,
+                        CreateRadiusSampler(surfaceModel),
                         bodyTransform,
                         direction,
                         sample,
@@ -436,7 +446,7 @@ namespace Farion.Rendering.Celestial
                     0,
                     outcropCount - 1);
                 SurfaceFormationPlacementItem anchor = results[anchorIndex];
-                Vector3 anchorDirection = anchor.LocalPosition.normalized;
+                Vector3 anchorDirection = anchor.SurfaceLocalPosition.normalized;
                 Vector3 downhill = anchor.LocalDownhill;
                 Vector3 strike = Vector3.Cross(anchorDirection, downhill).normalized;
                 float forward = reach * (0.6f + Hash(rule, cell, planetSeed, channel) * 1.3f);
@@ -445,7 +455,7 @@ namespace Farion.Rendering.Celestial
                 if (!TryResolveOffsetSample(
                         surfaceModel,
                         anchorDirection,
-                        anchor.LocalPosition.magnitude,
+                        anchor.SurfaceLocalPosition.magnitude,
                         downhill * forward + strike * lateral,
                         out Vector3 direction,
                         out PlanetSurfaceSample sample))
@@ -459,6 +469,7 @@ namespace Farion.Rendering.Celestial
                     Mathf.Clamp01(forward / Mathf.Max(0.01f, reach * 1.9f)));
                 AppendPieceAt(
                     rule,
+                    CreateRadiusSampler(surfaceModel),
                     bodyTransform,
                     direction,
                     sample,
@@ -486,6 +497,7 @@ namespace Farion.Rendering.Celestial
 
         static void AppendPieceAt(
             SurfaceFormationRule rule,
+            System.Func<Vector3, float> sampleRadius,
             Transform bodyTransform,
             Vector3 direction,
             PlanetSurfaceSample sample,
@@ -506,30 +518,11 @@ namespace Farion.Rendering.Celestial
             }
 
             SurfaceFormationPiece piece = rule.Kit.Resolve(role)[pieceIndex];
-            Vector3 normalLocal = bodyTransform
-                .InverseTransformDirection(sample.Surface.Normal)
-                .normalized;
-            Vector3 up = SurfaceScatterPlacement.ResolvePlacementUp(
-                direction,
-                normalLocal,
-                rule.SurfaceNormalAlignment);
-            Vector3 downhill = ResolveDownhill(direction, normalLocal, geology, up);
             float variation = Mathf.Lerp(
                 1f - rule.ScaleVariation,
                 1f + rule.ScaleVariation,
                 Hash(rule, cell, planetSeed, channel + 3));
             float finalScale = scale * variation * piece.BaseScale;
-
-            Quaternion rotation = Quaternion.LookRotation(downhill, up);
-            float yaw = (Hash(rule, cell, planetSeed, channel + 4) - 0.5f) * 2f *
-                rule.YawJitterDegrees;
-            float tiltX = (Hash(rule, cell, planetSeed, channel + 5) - 0.5f) * 2f *
-                rule.TiltJitterDegrees;
-            float tiltZ = (Hash(rule, cell, planetSeed, channel + 6) - 0.5f) * 2f *
-                rule.TiltJitterDegrees;
-            rotation = Quaternion.AngleAxis(yaw, up) * rotation;
-            rotation *= Quaternion.Euler(tiltX, 0f, tiltZ);
-
             float stretch = Mathf.Lerp(
                 1f - rule.ShapeVariation,
                 1f + rule.ShapeVariation,
@@ -539,15 +532,87 @@ namespace Farion.Rendering.Celestial
                 finalScale * lateral,
                 finalScale * stretch,
                 finalScale * lateral);
-            float embed = piece.PieceHeight * scaleVector.y * piece.EmbedFraction;
-            Vector3 position = direction * sample.SurfaceRadius - up * embed;
+            bool tall = piece.PieceHeight > piece.FootprintRadius * 2f * LayFlatAspectRatio;
+            bool spire = tall && Hash(rule, cell, planetSeed, channel + 9) < SpireChance;
+            bool layFlat = tall && !spire;
+            float embedFraction = spire
+                ? Mathf.Max(piece.EmbedFraction, SpireEmbedFraction)
+                : piece.EmbedFraction;
+            float verticalExtent;
+            float horizontalRadius;
+            if (layFlat)
+            {
+                verticalExtent = piece.FootprintRadius * 2f * Mathf.Max(scaleVector.x, scaleVector.z);
+                horizontalRadius = Mathf.Max(
+                    piece.PieceHeight * scaleVector.y * 0.5f,
+                    piece.FootprintRadius * scaleVector.x);
+            }
+            else
+            {
+                verticalExtent = piece.PieceHeight * scaleVector.y;
+                horizontalRadius = piece.FootprintRadius * Mathf.Max(scaleVector.x, scaleVector.z);
+            }
+
+            Vector3 normalLocal = bodyTransform
+                .InverseTransformDirection(sample.Surface.Normal)
+                .normalized;
+            if (!SurfaceScatterPlacement.TryResolveFootprintSeat(
+                    sampleRadius,
+                    direction,
+                    sample.SurfaceRadius,
+                    horizontalRadius * FootprintRingRatio,
+                    rule.SurfaceNormalAlignment,
+                    out Vector3 fittedNormal,
+                    out Vector3 up,
+                    out float seatDrop))
+            {
+                fittedNormal = normalLocal;
+                up = SurfaceScatterPlacement.ResolvePlacementUp(
+                    direction,
+                    normalLocal,
+                    rule.SurfaceNormalAlignment);
+                seatDrop = 0f;
+            }
+
+            Vector3 downhill = ResolveDownhill(direction, fittedNormal, geology, up);
+            Quaternion rotation = Quaternion.LookRotation(downhill, up);
+            float yaw = (Hash(rule, cell, planetSeed, channel + 4) - 0.5f) * 2f *
+                rule.YawJitterDegrees;
+            float tiltX = (Hash(rule, cell, planetSeed, channel + 5) - 0.5f) * 2f *
+                rule.TiltJitterDegrees;
+            float tiltZ = (Hash(rule, cell, planetSeed, channel + 6) - 0.5f) * 2f *
+                rule.TiltJitterDegrees;
+            rotation = Quaternion.AngleAxis(yaw, up) * rotation;
+            rotation *= Quaternion.Euler(tiltX, 0f, tiltZ);
+            if (layFlat)
+            {
+                rotation *= Quaternion.Euler(90f, 0f, 0f);
+            }
+
+            float embed = ResolveSeatDepth(embedFraction, verticalExtent, seatDrop);
+            Vector3 surfacePosition = direction * sample.SurfaceRadius;
             results.Add(new SurfaceFormationPlacementItem(
                 role,
                 pieceIndex,
-                position,
+                surfacePosition,
+                surfacePosition - up * embed,
                 rotation,
                 scaleVector,
-                downhill));
+                downhill,
+                up));
+        }
+
+        const float LayFlatAspectRatio = 1.25f;
+        const float SpireChance = 0.3f;
+        const float SpireEmbedFraction = 0.45f;
+        const float MaximumSeatFraction = 0.9f;
+        const float FootprintRingRatio = 0.8f;
+
+        static float ResolveSeatDepth(float embedFraction, float verticalExtent, float seatDrop)
+        {
+            return Mathf.Min(
+                verticalExtent * embedFraction - Mathf.Min(0f, seatDrop),
+                verticalExtent * MaximumSeatFraction);
         }
 
         static Vector3 ResolveDownhill(
@@ -597,9 +662,12 @@ namespace Farion.Rendering.Celestial
 
         static void BuildTangentBasis(Vector3 normal, out Vector3 tangent, out Vector3 bitangent)
         {
-            Vector3 reference = Mathf.Abs(normal.y) < 0.95f ? Vector3.up : Vector3.right;
-            tangent = Vector3.Cross(reference, normal).normalized;
-            bitangent = Vector3.Cross(normal, tangent).normalized;
+            SurfaceScatterPlacement.BuildTangentBasis(normal, out tangent, out bitangent);
+        }
+
+        static System.Func<Vector3, float> CreateRadiusSampler(PlanetSurfaceModel surfaceModel)
+        {
+            return direction => surfaceModel.TrySampleLocalRadius(direction, out float radius) ? radius : -1f;
         }
 
         static float Hash(

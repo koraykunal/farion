@@ -125,6 +125,81 @@ namespace Farion.Rendering.Celestial
                 importance * importance);
         }
 
+        public const int FootprintSampleCount = 8;
+
+        public static bool TryResolveFootprintSeat(
+            Func<Vector3, float> sampleRadius,
+            Vector3 direction,
+            float centerRadius,
+            float footprintRadiusMeters,
+            float normalAlignment,
+            out Vector3 surfaceNormal,
+            out Vector3 placementUp,
+            out float seatDrop)
+        {
+            direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.up;
+            surfaceNormal = direction;
+            placementUp = direction;
+            seatDrop = 0f;
+            if (sampleRadius == null || footprintRadiusMeters <= 0.01f || centerRadius <= 0.01f)
+            {
+                return false;
+            }
+
+            BuildTangentBasis(direction, out Vector3 tangent, out Vector3 bitangent);
+            float angularRadius = footprintRadiusMeters / centerRadius;
+            Vector3 center = direction * centerRadius;
+            Span<Vector3> ring = stackalloc Vector3[FootprintSampleCount];
+            for (int i = 0; i < FootprintSampleCount; i++)
+            {
+                float angle = i * (Mathf.PI * 2f / FootprintSampleCount);
+                Vector3 ringDirection = (direction +
+                    (tangent * Mathf.Cos(angle) + bitangent * Mathf.Sin(angle)) * angularRadius).normalized;
+                float radius = sampleRadius(ringDirection);
+                if (radius <= 0f)
+                {
+                    return false;
+                }
+
+                ring[i] = ringDirection * radius;
+            }
+
+            Vector3 normal = Vector3.zero;
+            for (int i = 0; i < FootprintSampleCount; i++)
+            {
+                normal += Vector3.Cross(ring[i] - center, ring[(i + 1) % FootprintSampleCount] - center);
+            }
+
+            if (normal.sqrMagnitude < 0.000001f)
+            {
+                normal = direction;
+            }
+
+            normal.Normalize();
+            if (Vector3.Dot(normal, direction) < 0f)
+            {
+                normal = -normal;
+            }
+
+            surfaceNormal = normal;
+            placementUp = ResolvePlacementUp(direction, normal, normalAlignment);
+            float lowest = 0f;
+            for (int i = 0; i < FootprintSampleCount; i++)
+            {
+                lowest = Mathf.Min(lowest, Vector3.Dot(ring[i] - center, placementUp));
+            }
+
+            seatDrop = lowest;
+            return true;
+        }
+
+        public static void BuildTangentBasis(Vector3 normal, out Vector3 tangent, out Vector3 bitangent)
+        {
+            Vector3 reference = Mathf.Abs(normal.y) < 0.95f ? Vector3.up : Vector3.right;
+            tangent = Vector3.Cross(reference, normal).normalized;
+            bitangent = Vector3.Cross(normal, tangent).normalized;
+        }
+
         public static Vector3 ResolvePlacementUp(
             Vector3 radialUp,
             Vector3 surfaceNormal,

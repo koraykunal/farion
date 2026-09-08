@@ -16,7 +16,7 @@ namespace Farion.Audio.Character
         const string SurfaceParameter = "Surface";
         const string IntensityParameter = "Intensity";
         const string WetnessParameter = "Wetness";
-        const float MetalSurfaceIndex = 4f;
+        const float FallbackSprintSpeed = 4.8f;
 
         [Header("FMOD")]
         [SerializeField] EventReference footstepEvent;
@@ -29,15 +29,15 @@ namespace Farion.Audio.Character
         [SerializeField] CelestialActorProbe probe;
 
         [Header("Response")]
-        [Tooltip("Surface speed mapped to footstep Intensity 1.")]
-        [Min(0.1f)]
-        [SerializeField] float footstepIntensityReferenceSpeed = 6f;
         [Tooltip("Impact speed mapped to landing Intensity 1.")]
         [Min(0.1f)]
         [SerializeField] float landIntensityReferenceSpeed = 10f;
         [Tooltip("Footsteps are muted for this long after a landing so the land event reads clearly.")]
         [Min(0f)]
         [SerializeField] float stepSuppressAfterLandSeconds = 0.2f;
+        [Tooltip("Submerged capsule fraction at which the water layer of footstep, jump and land events reaches full Wetness.")]
+        [Range(0.05f, 1f)]
+        [SerializeField] float wetnessFullSubmergedFraction = 0.3f;
 
         float lastLandTime = float.NegativeInfinity;
         CelestialBody cachedBody;
@@ -97,16 +97,15 @@ namespace Farion.Audio.Character
                 return;
             }
 
-            FirstPersonMotorState state = signals.LastState;
-            float wetness = state.TouchingWater
-                ? Mathf.Clamp01(state.WaterSubmergedFraction)
-                : 0f;
+            float sprintSpeed = motor != null && motor.Profile != null
+                ? motor.Profile.SprintSpeed
+                : FallbackSprintSpeed;
             PlayOneShot(
                 footstepEvent,
                 ref footstepEventDisabled,
                 ResolveSurfaceIndex(),
-                Mathf.Clamp01(speed / footstepIntensityReferenceSpeed),
-                wetness);
+                Mathf.Clamp01(speed / Mathf.Max(0.1f, sprintSpeed)),
+                ResolveWetness());
         }
 
         void HandleLanded(float impactSpeed)
@@ -117,25 +116,33 @@ namespace Farion.Audio.Character
                 ref landEventDisabled,
                 ResolveSurfaceIndex(),
                 Mathf.Clamp01(impactSpeed / landIntensityReferenceSpeed),
-                null);
+                ResolveWetness());
         }
 
         void HandleJumped()
         {
-            PlayOneShot(jumpEvent, ref jumpEventDisabled, null, null, null);
+            PlayOneShot(jumpEvent, ref jumpEventDisabled, ResolveSurfaceIndex(), null, ResolveWetness());
+        }
+
+        float ResolveWetness()
+        {
+            FirstPersonMotorState state = signals.LastState;
+            return state.TouchingWater
+                ? Mathf.Clamp01(state.WaterSubmergedFraction / wetnessFullSubmergedFraction)
+                : 0f;
         }
 
         float ResolveSurfaceIndex()
         {
             if (motor != null && motor.GroundLayer == FarionLayers.SpacecraftInterior)
             {
-                return MetalSurfaceIndex;
+                return (float)FootstepSurface.Metal;
             }
 
             CelestialBody body = probe != null ? probe.CurrentSample.Body : null;
             if (body == null)
             {
-                return 0f;
+                return (float)FootstepSurface.Rock;
             }
 
             if (!ReferenceEquals(body, cachedBody))
@@ -151,21 +158,10 @@ namespace Farion.Audio.Character
                     out PlanetSurfaceSample sample) ||
                 sample.SurfaceMaterial.Material == null)
             {
-                return 0f;
+                return (float)FootstepSurface.Rock;
             }
 
-            return ResolveSurfaceIndex(sample.SurfaceMaterial.Material.Category);
-        }
-
-        internal static float ResolveSurfaceIndex(SurfaceMaterialCategory category)
-        {
-            return category switch
-            {
-                SurfaceMaterialCategory.Regolith => 1f,
-                SurfaceMaterialCategory.Soil => 2f,
-                SurfaceMaterialCategory.Ice => 3f,
-                _ => 0f
-            };
+            return (float)sample.SurfaceMaterial.Material.FootstepSurface;
         }
 
         void PlayOneShot(

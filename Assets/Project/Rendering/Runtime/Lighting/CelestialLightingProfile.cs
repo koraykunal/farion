@@ -33,6 +33,9 @@ namespace Farion.Rendering.Lighting
         [SerializeField] float shadowNearPlane = 0.2f;
         [Range(0f, 10f)]
         [SerializeField] float directionalShadowAngle = 0.55f;
+        [Tooltip("The scene light holds its rotation until the star has moved this many degrees. Zero (default) follows the star continuously; each step lands as a visible hop, so only raise it if shadow edges shimmer even with soft shadows and proper bias.")]
+        [Range(0f, 2f)]
+        [SerializeField] float shadowDirectionStepDegrees;
         [Min(0f)]
         [SerializeField] float bounceIntensity;
 
@@ -98,6 +101,7 @@ namespace Farion.Rendering.Lighting
         public float ShadowStrength => shadowStrength;
         public float ShadowNearPlane => shadowNearPlane;
         public float DirectionalShadowAngle => directionalShadowAngle;
+        public float ShadowDirectionStepDegrees => shadowDirectionStepDegrees;
         public float BounceIntensity => bounceIntensity;
         public bool EnablePlanetshine => enablePlanetshine;
         public Color PlanetshineColor => planetshineColor;

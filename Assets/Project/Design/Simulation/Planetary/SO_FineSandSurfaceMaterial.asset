@@ -15,4 +15,5 @@ MonoBehaviour:
   materialId: surface.fine_sand
   displayName: Fine Sand
   category: 1
+  footstepSurface: 2
   previewColor: {r: 0.62, g: 0.46, b: 0.27, a: 1}

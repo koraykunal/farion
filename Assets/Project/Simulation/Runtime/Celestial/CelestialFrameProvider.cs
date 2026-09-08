@@ -112,6 +112,13 @@ namespace Farion.Simulation.Celestial
             return sample.HasBody;
         }
 
+        public CelestialSurfaceSample SampleSurface(CelestialBody body, Vector3 position)
+        {
+            return body != null
+                ? ResolveSurface(body, position)
+                : CelestialSurfaceSample.Empty;
+        }
+
         CelestialSurfaceSample ResolveSurface(CelestialBody body, Vector3 position)
         {
             for (int i = 0; i < surfaceSources.Count; i++)

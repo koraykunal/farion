@@ -14,7 +14,7 @@ namespace Farion.Rendering.Celestial
         }
 
         public abstract void ApplyMaterialProperties(
-            MaterialPropertyBlock propertyBlock,
+            Material target,
             float bodyRadius,
             Vector2 radiusMinMax);
 

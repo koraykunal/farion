@@ -44,3 +44,15 @@ MonoBehaviour:
     radiationRange: {x: 0, y: 0.8}
     minFeatureNoise: 0.62
     maxFeatureNoise: 1
+  - feature: {fileID: 11400000, guid: 80cc1a16133e4e088f92214ffa7df15e, type: 2}
+    selectionPriority: 1.05
+    allowedBiomes:
+    - {fileID: 11400000, guid: c2e0f30dfae8460b8cd2fd6e2a1bfa71, type: 2}
+    - {fileID: 11400000, guid: 581a81618bfd42d789f6ecdff623de23, type: 2}
+    altitudeRange: {x: 0.5, y: 1000000}
+    slopeRange: {x: 0, y: 70}
+    temperatureRange: {x: -220, y: 120}
+    effectiveMoistureRange: {x: 0, y: 1}
+    radiationRange: {x: 0, y: 1}
+    minFeatureNoise: 0.05
+    maxFeatureNoise: 0.32

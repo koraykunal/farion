@@ -4,17 +4,35 @@ namespace Farion.Rendering.Celestial
 {
     internal readonly struct CelestialSurfaceAnchor
     {
-        public CelestialSurfaceAnchor(int level, float fineRadius, float coarseRadius)
+        public CelestialSurfaceAnchor(
+            int level,
+            float fineRadius,
+            float coarseRadius,
+            Vector4 morphRange)
         {
             Level = level;
             FineRadius = fineRadius;
             CoarseRadius = coarseRadius;
+            MorphRange = morphRange;
         }
 
         public int Level { get; }
         public float FineRadius { get; }
         public float CoarseRadius { get; }
+        public Vector4 MorphRange { get; }
         public bool IsValid => FineRadius > 0f;
+
+        public float ResolveRadius(float observerDistance)
+        {
+            if (MorphRange.y <= 0f)
+            {
+                return FineRadius;
+            }
+
+            float weight = Mathf.Clamp01(
+                (observerDistance - MorphRange.x) / Mathf.Max(MorphRange.y - MorphRange.x, 0.0001f));
+            return Mathf.Lerp(FineRadius, CoarseRadius, weight);
+        }
     }
 
     internal static class CelestialSurfaceGridSampler

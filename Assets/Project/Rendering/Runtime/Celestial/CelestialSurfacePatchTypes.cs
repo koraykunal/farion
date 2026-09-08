@@ -181,6 +181,7 @@ namespace Farion.Rendering.Celestial
             public Mesh Mesh { get; set; }
             public PatchDescriptor Descriptor { get; set; }
             public bool CollisionBaked { get; set; }
+            public Vector4 MorphRange { get; set; }
         }
     }
 }

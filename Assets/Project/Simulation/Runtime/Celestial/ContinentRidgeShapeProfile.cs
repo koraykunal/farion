@@ -1,5 +1,6 @@
-using Farion.Simulation.Planetary;
 using Farion.Core.Numerics;
+using Farion.Simulation.Planetary;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -175,6 +176,18 @@ namespace Farion.Simulation.Celestial
             Elevation = 0.52f
         };
 
+        const float CraterCellRatio = 1.7f;
+        const float CraterRimWidth = 0.45f;
+        const float CraterRimSteepness = 0.45f;
+        const float TerraceSharpness = 4f;
+
+        TerrainSculptSet sculpts;
+
+        public override void ApplyTerrainSculpts(TerrainSculptSet set)
+        {
+            sculpts = set;
+        }
+
         public override CelestialShapeProfile CreateVariant(int variantSeed, float elevationScale)
         {
             ContinentRidgeShapeProfile variant = ProfileVariants.Clone(this);
@@ -302,11 +315,154 @@ namespace Farion.Simulation.Celestial
                         sampleFootprint,
                         featureScale);
 
-            return elevationScaleMeters * (
+            float elevation = elevationScaleMeters * (
                 continentShape +
                 mountainShape * mountainMask +
                 escarpmentShape * escarpmentMask * escarpmentStrength +
                 detail * detailStrength);
+            return sculpts.IsEmpty
+                ? elevation
+                : ApplySculpts(unitDirection, sampleFootprint, featureScale, elevation);
+        }
+
+        float ApplySculpts(Vector3 unitDirection, float sampleFootprint, float featureScale, float elevation)
+        {
+            float bodyRadius = Mathf.Max(1f, featureReferenceRadiusMeters) * featureScale;
+            float regionNoise = -1f;
+            IReadOnlyList<TerrainSculptLayer> layers = sculpts.Layers;
+            for (int i = 0; i < layers.Count; i++)
+            {
+                TerrainSculptLayer layer = layers[i];
+                float angularFootprint = layer.FootprintMeters / bodyRadius;
+                float fade = layer.Style == TerrainSculptStyle.Mesas
+                    ? 1f
+                    : PlanetarySampling.ResolveFootprintFade(angularFootprint, sampleFootprint);
+                if (fade <= 0f)
+                {
+                    continue;
+                }
+
+                if (regionNoise < 0f)
+                {
+                    regionNoise = PlanetarySampling.SampleFractal01(
+                        unitDirection,
+                        sculpts.NoiseScale,
+                        4,
+                        2f,
+                        0.5f,
+                        sculpts.Seed);
+                }
+
+                float mask = PlanetarySampling.EvaluateRange(layer.NoiseRange, regionNoise, layer.NoiseFeather) * fade;
+                if (mask <= 0.0001f)
+                {
+                    continue;
+                }
+
+                switch (layer.Style)
+                {
+                    case TerrainSculptStyle.Craters:
+                        elevation += EvaluateCraters(unitDirection, angularFootprint, layer) * mask;
+                        break;
+                    case TerrainSculptStyle.Mesas:
+                        float landMask = Mathf.Clamp01(elevation / layer.AmplitudeMeters);
+                        elevation = Mathf.Lerp(elevation, Terrace(elevation, layer.AmplitudeMeters), mask * landMask);
+                        break;
+                }
+            }
+
+            return elevation;
+        }
+
+        static float EvaluateCraters(Vector3 unitDirection, float angularDiameter, TerrainSculptLayer layer)
+        {
+            float cell = angularDiameter * CraterCellRatio;
+            float halfDiameter = angularDiameter * 0.5f;
+            Vector3 lattice = unitDirection / cell;
+            int baseX = Mathf.FloorToInt(lattice.x);
+            int baseY = Mathf.FloorToInt(lattice.y);
+            int baseZ = Mathf.FloorToInt(lattice.z);
+            float height = 0f;
+
+            for (int dz = -1; dz <= 1; dz++)
+            for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                int cx = baseX + dx;
+                int cy = baseY + dy;
+                int cz = baseZ + dz;
+                Vector3 raw = new Vector3(
+                    cx + 0.2f + Hash01(cx, cy, cz, layer.Seed, 1) * 0.6f,
+                    cy + 0.2f + Hash01(cx, cy, cz, layer.Seed, 2) * 0.6f,
+                    cz + 0.2f + Hash01(cx, cy, cz, layer.Seed, 3) * 0.6f) * cell;
+                float rawMagnitude = raw.magnitude;
+                if (rawMagnitude < 0.0001f || Mathf.Abs(rawMagnitude - 1f) > cell * 0.5f)
+                {
+                    continue;
+                }
+
+                float sizeT = Hash01(cx, cy, cz, layer.Seed, 4);
+                float radius = halfDiameter * Mathf.Lerp(0.4f, 1f, sizeT * sizeT);
+                float smoothness = Mathf.Lerp(0.25f, 0.7f, Hash01(cx, cy, cz, layer.Seed, 5));
+                float distance = Vector3.Distance(unitDirection, raw / rawMagnitude);
+                if (distance > radius * CraterShape.InfluenceScale(smoothness, CraterRimWidth))
+                {
+                    continue;
+                }
+
+                float floorHeight = Mathf.Lerp(-0.9f, -0.4f, Hash01(cx, cy, cz, layer.Seed, 6));
+                height += CraterShape.Evaluate(
+                    distance / radius,
+                    floorHeight,
+                    smoothness,
+                    CraterRimWidth,
+                    CraterRimSteepness) * (radius / halfDiameter);
+            }
+
+            return height * layer.AmplitudeMeters;
+        }
+
+        static float Terrace(float elevation, float step)
+        {
+            float level = elevation / step;
+            float floor = Mathf.Floor(level);
+            float t = level - floor;
+            float rise = Mathf.Pow(t, TerraceSharpness);
+            float shaped = rise / (rise + Mathf.Pow(1f - t, TerraceSharpness));
+            return (floor + shaped) * step;
+        }
+
+        static float Hash01(int x, int y, int z, int seed, int salt)
+        {
+            unchecked
+            {
+                uint h = (uint)(x * 73856093) ^ (uint)(y * 19349663) ^ (uint)(z * 83492791)
+                    ^ (uint)(seed * 2654435761u) ^ (uint)(salt * 374761393);
+                h ^= h >> 13;
+                h *= 0x5bd1e995;
+                h ^= h >> 15;
+                return (h & 0xffffff) / 16777216f;
+            }
+        }
+
+        float SculptPeakMeters()
+        {
+            if (sculpts.IsEmpty)
+            {
+                return 0f;
+            }
+
+            float peak = 0f;
+            IReadOnlyList<TerrainSculptLayer> layers = sculpts.Layers;
+            for (int i = 0; i < layers.Count; i++)
+            {
+                if (layers[i].Style != TerrainSculptStyle.Mesas)
+                {
+                    peak += layers[i].AmplitudeMeters;
+                }
+            }
+
+            return peak;
         }
 
         public override float EstimatePeakElevationMeters()
@@ -323,7 +479,7 @@ namespace Farion.Simulation.Celestial
                 Mathf.Max(0f, detailStrength);
             return elevationScaleMeters * Mathf.Max(
                 0f,
-                continentPeak + mountainPeak + escarpmentPeak + detailPeak);
+                continentPeak + mountainPeak + escarpmentPeak + detailPeak) + SculptPeakMeters();
         }
 
         public override float EstimateTroughElevationMeters()
@@ -333,7 +489,7 @@ namespace Farion.Simulation.Celestial
             float detailTrough =
                 -(detailRidgeNoise.Elevation + detailFieldNoise.Elevation) *
                 Mathf.Max(0f, detailStrength);
-            return elevationScaleMeters * Mathf.Min(0f, oceanFloor + detailTrough);
+            return elevationScaleMeters * Mathf.Min(0f, oceanFloor + detailTrough) - SculptPeakMeters();
         }
 
         public override bool TrySampleGeology(

@@ -182,7 +182,7 @@ namespace Farion.Rendering.Celestial
                 out float v);
             for (int level = resolvedSubdivisionLevel; level >= 0; level--)
             {
-                if (!activePatches.ContainsKey(ResolvePatchKey(face, level, u, v)))
+                if (!activePatches.TryGetValue(ResolvePatchKey(face, level, u, v), out SurfacePatch patch))
                 {
                     continue;
                 }
@@ -199,32 +199,33 @@ namespace Farion.Rendering.Celestial
                         level - 1,
                         profile.PatchResolution)
                     : fineRadius;
-                anchor = new CelestialSurfaceAnchor(level, fineRadius, coarseRadius);
+                anchor = new CelestialSurfaceAnchor(level, fineRadius, coarseRadius, patch.MorphRange);
                 return true;
             }
 
             return false;
         }
 
-        internal float ResolveAnchorRadius(
-            in CelestialSurfaceAnchor anchor,
-            float observerDistance)
+        internal bool IsSurfaceAnchorCurrent(Vector3 unitDirection, in CelestialSurfaceAnchor anchor)
         {
-            CelestialBody body = bodyVisual != null ? bodyVisual.Body : null;
-            if (body == null || anchor.Level <= 0)
+            if (!anchor.IsValid)
             {
-                return anchor.FineRadius;
+                return false;
             }
 
-            Vector4 range = ResolveMorphRange(Mathf.Max(0.01f, body.Radius), anchor.Level);
-            if (range.y <= 0f)
-            {
-                return anchor.FineRadius;
-            }
+            CelestialCubeProjection.Project(
+                unitDirection.sqrMagnitude > 0.000001f ? unitDirection.normalized : Vector3.up,
+                out CelestialCubeFace face,
+                out float u,
+                out float v);
+            return activePatches.TryGetValue(ResolvePatchKey(face, anchor.Level, u, v), out SurfacePatch patch) &&
+                patch.MorphRange == anchor.MorphRange;
+        }
 
-            float weight = Mathf.Clamp01(
-                (observerDistance - range.x) / Mathf.Max(range.y - range.x, 0.0001f));
-            return Mathf.Lerp(anchor.FineRadius, anchor.CoarseRadius, weight);
+        void ApplyPatchMorph(SurfacePatch patch, Vector4 morphRange)
+        {
+            patch.MorphRange = morphRange;
+            bodyVisual.ConfigureSurfaceRenderer(patch.Renderer, morphRange);
         }
 
         public void SetCamera(Camera camera)
@@ -882,7 +883,7 @@ namespace Farion.Rendering.Celestial
 
         static int ResolveBuildConcurrency()
         {
-            return Mathf.Clamp(SystemInfo.processorCount - 1, 1, 8);
+            return Mathf.Clamp(SystemInfo.processorCount / 2, 1, 6);
         }
 
         void StartPatchSampling(PatchBuildOperation operation)
@@ -941,8 +942,8 @@ namespace Farion.Rendering.Celestial
             DestroyRuntimeObject(previousMesh);
             patch.GameObject.name = mesh.name;
             patch.GameObject.layer = FarionLayers.CelestialSurface;
-            bodyVisual.ConfigureSurfaceRenderer(
-                patch.Renderer,
+            ApplyPatchMorph(
+                patch,
                 ResolveMorphRange(transitionBaseRadius, operation.Descriptor.Key.Level));
             stagedPatches[operation.Descriptor.Key] = patch;
 
@@ -1062,8 +1063,8 @@ namespace Farion.Rendering.Celestial
                 }
 
                 patch.GameObject.SetActive(true);
-                bodyVisual.ConfigureSurfaceRenderer(
-                    patch.Renderer,
+                ApplyPatchMorph(
+                    patch,
                     desiredCollisionKeys.Contains(descriptor.Key)
                         ? Vector4.zero
                         : ResolveMorphRange(
@@ -2754,8 +2755,8 @@ namespace Farion.Rendering.Celestial
                 : 0f;
             foreach (SurfacePatch patch in activePatches.Values)
             {
-                bodyVisual.ConfigureSurfaceRenderer(
-                    patch.Renderer,
+                ApplyPatchMorph(
+                    patch,
                     patch.Collider.enabled
                         ? Vector4.zero
                         : ResolveMorphRange(baseRadius, patch.Descriptor.Key.Level));
@@ -2763,8 +2764,8 @@ namespace Farion.Rendering.Celestial
 
             foreach (SurfacePatch patch in stagedPatches.Values)
             {
-                bodyVisual.ConfigureSurfaceRenderer(
-                    patch.Renderer,
+                ApplyPatchMorph(
+                    patch,
                     desiredCollisionKeys.Contains(patch.Descriptor.Key)
                         ? Vector4.zero
                         : ResolveMorphRange(baseRadius, patch.Descriptor.Key.Level));

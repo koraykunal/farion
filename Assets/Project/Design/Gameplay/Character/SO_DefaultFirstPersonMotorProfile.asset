@@ -42,5 +42,5 @@ MonoBehaviour:
   groundStickGravityMultiplier: 2
   groundedVerticalDamping: 18
   groundNormalResponsiveness: 22
-  yawDegreesPerMouseUnit: 3
+  yawDegreesPerMouseUnit: 0.06
   uprightResponsiveness: 14

@@ -15,4 +15,5 @@ MonoBehaviour:
   materialId: surface.ice
   displayName: Surface Ice
   category: 3
+  footstepSurface: 4
   previewColor: {r: 0.68, g: 0.82, b: 0.9, a: 1}

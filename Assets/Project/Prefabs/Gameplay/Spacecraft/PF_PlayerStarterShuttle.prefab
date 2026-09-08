@@ -108,6 +108,7 @@ MonoBehaviour:
   heatGlowColor: {r: 2.6, g: 0.42, b: 0.06, a: 1}
   heatGlowPower: 2.2
   heatGlowResponse: 1.6
+  teleportDistance: 500
 --- !u!1 &27378606692848115
 GameObject:
   m_ObjectHideFlags: 0
@@ -1240,6 +1241,7 @@ GameObject:
   - component: {fileID: 5592636761040780974}
   - component: {fileID: 7452306353936764123}
   - component: {fileID: 5623287371471938287}
+  - component: {fileID: 357288565708870693}
   m_Layer: 0
   m_Name: PF_PlayerStarterShuttle
   m_TagString: Untagged
@@ -1765,6 +1767,7 @@ MonoBehaviour:
   nearClearance: 4
   fadeInSpeed: 8
   fullOpacitySpeed: 90
+  maximumResponseSpeed: 0
   maximumOpacity: 0.55
   streakWidth: 0.05
   streakLengthPerSpeed: 0.06
@@ -1824,6 +1827,26 @@ MonoBehaviour:
   - {fileID: 5680865136285465172}
   fullFlickerDamage: 60
   alarmActive: 0
+--- !u!114 &357288565708870693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2441852034644142768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19b40705aac07fd43999086b65069a46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftSurfaceGuard
+  celestialProbe: {fileID: 7190813019005924918}
+  hull: {fileID: 5592636761040780974}
+  surfaceClearanceMeters: 1.5
+  penetrationToleranceMeters: 3
+  engaged: 0
+  lastCorrectionMeters: 0
+  lastRemovedClosingSpeed: 0
+  lastImpactSpeed: 0
 --- !u!1 &2667502354368947228
 GameObject:
   m_ObjectHideFlags: 0
@@ -2219,6 +2242,7 @@ MonoBehaviour:
   heatGlowColor: {r: 2.6, g: 0.42, b: 0.06, a: 1}
   heatGlowPower: 2.2
   heatGlowResponse: 1.6
+  teleportDistance: 500
 --- !u!1 &3782451695967674794
 GameObject:
   m_ObjectHideFlags: 0
@@ -2244,7 +2268,7 @@ Transform:
   m_GameObject: {fileID: 3782451695967674794}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.611, y: 1.754, z: -3.396}
+  m_LocalPosition: {x: -0.611, y: 1.25, z: -3.396}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2704,7 +2728,7 @@ Transform:
   m_GameObject: {fileID: 4457010908172445110}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.127, y: 1.485, z: -1.964}
+  m_LocalPosition: {x: -0.127, y: 0.75, z: -1.964}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3697,7 +3721,7 @@ Transform:
   m_GameObject: {fileID: 5857933438477915038}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -4.2, y: 0.8, z: 1.8}
+  m_LocalPosition: {x: -2.6, y: 0.8, z: -1.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4474,7 +4498,7 @@ Transform:
   m_GameObject: {fileID: 8061572453732183919}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -4.2, y: 0.8, z: 1.8}
+  m_LocalPosition: {x: -2.6, y: 0.8, z: -1.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4646,7 +4670,11 @@ GameObject:
   m_Component:
   - component: {fileID: 3571564339876669850}
   - component: {fileID: 3435302029502387006}
-  - component: {fileID: 7570157911492709819}
+  - component: {fileID: 7570157911492709820}
+  - component: {fileID: 7570157911492709821}
+  - component: {fileID: 7570157911492709822}
+  - component: {fileID: 7570157911492709823}
+  - component: {fileID: 7570157911492709824}
   m_Layer: 0
   m_Name: COL_Interior_Walls
   m_TagString: Untagged
@@ -4662,13 +4690,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8574702655607481281}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.70710677, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 1.26, y: 1.06, z: -0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6488069516238421915}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3435302029502387006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4681,8 +4709,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2a35a0a53d74b2c87c537037b383215, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Farion.Gameplay.Runtime::Farion.Gameplay.Flight.SpacecraftInteriorCollider
---- !u!136 &7570157911492709819
-CapsuleCollider:
+--- !u!65 &7570157911492709820
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -4699,11 +4727,93 @@ CapsuleCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.8891776
-  m_Height: 6.68461
-  m_Direction: 1
-  m_Center: {x: -1.1456902, y: -3.4577906, z: 0.07537341}
+  serializedVersion: 3
+  m_Size: {x: 0.1, y: 2.3, z: 4.2}
+  m_Center: {x: 1.65, y: 1.3, z: -3.2}
+--- !u!65 &7570157911492709821
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8574702655607481281}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.1, y: 2.3, z: 3}
+  m_Center: {x: -1.65, y: 1.3, z: -3.8}
+--- !u!65 &7570157911492709822
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8574702655607481281}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.4, y: 2.3, z: 0.1}
+  m_Center: {x: 0, y: 1.3, z: -5.35}
+--- !u!65 &7570157911492709823
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8574702655607481281}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.4, y: 2.3, z: 0.1}
+  m_Center: {x: 0, y: 1.3, z: -1.05}
+--- !u!65 &7570157911492709824
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8574702655607481281}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.4, y: 0.1, z: 4.3}
+  m_Center: {x: 0, y: 2.45, z: -3.2}
 --- !u!1 &8628496774288001051
 GameObject:
   m_ObjectHideFlags: 0

@@ -15,4 +15,5 @@ MonoBehaviour:
   materialId: surface.snow_rock
   displayName: Snow-capped Rock
   category: 0
+  footstepSurface: 3
   previewColor: {r: 0.72, g: 0.76, b: 0.8, a: 1}

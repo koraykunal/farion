@@ -118,6 +118,10 @@ namespace Farion.Simulation.Planetary
             SurfaceMaterialDistributionProfile materials = surfaceMaterialLibrary != null
                 ? Own(DeriveMaterials(hostedBiomes), owned)
                 : null;
+            if (shape != null && shape != shapeProfile && terrainFeatureDistribution != null)
+            {
+                shape.ApplyTerrainSculpts(terrainFeatureDistribution.BuildSculpts(seed, hostedBiomes));
+            }
 
             return new PlanetaryGenerationProfile(
                 name,

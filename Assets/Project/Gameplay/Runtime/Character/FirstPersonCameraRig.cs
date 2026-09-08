@@ -20,8 +20,6 @@ namespace Farion.Gameplay.Character
         [Min(0f)]
         [SerializeField] float positionResponsiveness = 28f;
         [Min(0f)]
-        [SerializeField] float rotationResponsiveness = 36f;
-        [Min(0f)]
         [SerializeField] float snapDistance = 4f;
 
         [Header("Field Of View")]
@@ -38,7 +36,6 @@ namespace Farion.Gameplay.Character
         float pitch;
         float smoothedSprintFovKick;
         Vector3 smoothedLocalOffset;
-        Quaternion smoothedLocalRotation = Quaternion.identity;
         bool snapNextFrame = true;
 
         public FirstPersonMotor Target => target;
@@ -63,7 +60,6 @@ namespace Farion.Gameplay.Character
             eyeHeight = Mathf.Max(0f, eyeHeight);
             pitchLimit = Mathf.Clamp(pitchLimit, 1f, 89f);
             positionResponsiveness = Mathf.Max(0f, positionResponsiveness);
-            rotationResponsiveness = Mathf.Max(0f, rotationResponsiveness);
             snapDistance = Mathf.Max(0f, snapDistance);
         }
 
@@ -77,19 +73,22 @@ namespace Farion.Gameplay.Character
             ResolveInputSource();
             ApplyFieldOfView();
             FirstPersonInputState input = resolvedInput?.CurrentInput ?? FirstPersonInputState.None;
-            pitch = Mathf.Clamp(pitch - input.Look.y, -pitchLimit, pitchLimit);
+            pitch = Mathf.Clamp(
+                pitch - input.Look.y * target.YawDegreesPerMouseUnit,
+                -pitchLimit,
+                pitchLimit);
             target.SetViewPitchDegrees(pitch);
 
             Vector3 up = target.LocalUp.sqrMagnitude > 0.0001f ? target.LocalUp : target.transform.up;
             Vector3 targetPosition = target.transform.position;
-            Vector3 desiredLocalOffset = up * eyeHeight;
-            Quaternion targetRotation = target.transform.rotation;
+            Quaternion targetRotation =
+                target.transform.rotation * Quaternion.AngleAxis(target.PendingYawDegrees, Vector3.up);
             Quaternion desiredLocalRotation = Quaternion.AngleAxis(pitch, Vector3.right);
+            Vector3 desiredLocalOffset = up * eyeHeight;
 
             if (snapNextFrame || Vector3.Distance(smoothedLocalOffset, desiredLocalOffset) > snapDistance)
             {
                 smoothedLocalOffset = desiredLocalOffset;
-                smoothedLocalRotation = desiredLocalRotation;
                 transform.SetPositionAndRotation(
                     targetPosition + desiredLocalOffset,
                     targetRotation * desiredLocalRotation);
@@ -98,23 +97,19 @@ namespace Farion.Gameplay.Character
             }
 
             float positionT = FarionMath.SmoothFactor(positionResponsiveness, UnityEngine.Time.deltaTime);
-            float rotationT = FarionMath.SmoothFactor(rotationResponsiveness, UnityEngine.Time.deltaTime);
             smoothedLocalOffset = Vector3.Lerp(
                 smoothedLocalOffset,
                 desiredLocalOffset,
                 positionT);
-            smoothedLocalRotation = Quaternion.Slerp(
-                smoothedLocalRotation,
-                desiredLocalRotation,
-                rotationT);
             transform.SetPositionAndRotation(
                 targetPosition + smoothedLocalOffset,
-                targetRotation * smoothedLocalRotation);
+                targetRotation * desiredLocalRotation);
         }
 
         public void SetTarget(FirstPersonMotor nextTarget)
         {
             target = nextTarget;
+            resolvedInput = null;
             pitch = 0f;
             smoothedSprintFovKick = 0f;
             snapNextFrame = true;
@@ -192,6 +187,5 @@ namespace Farion.Gameplay.Character
                 resolvedInput ??= target.GetComponent<KeyboardFirstPersonInput>();
             }
         }
-
     }
 }
