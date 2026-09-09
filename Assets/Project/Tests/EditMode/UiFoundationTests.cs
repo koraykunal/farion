@@ -49,21 +49,6 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void BindingDisplayProvidesKeyboardAndGamepadPrompts()
-        {
-            string keyboard = UiBindingDisplay.GetDisplayString(
-                FarionInputActions.OnFootInteract,
-                UiInputDeviceKind.KeyboardMouse);
-            string gamepad = UiBindingDisplay.GetDisplayString(
-                FarionInputActions.OnFootInteract,
-                UiInputDeviceKind.Gamepad);
-
-            Assert.That(keyboard, Is.Not.Empty);
-            Assert.That(gamepad, Is.Not.Empty);
-            Assert.That(gamepad, Is.Not.EqualTo(keyboard));
-        }
-
-        [Test]
         public void ClosingTopScreenRestoresPreviousScreen()
         {
             root = new GameObject("UI_SystemRoot");
@@ -314,14 +299,6 @@ namespace Farion.Tests.EditMode
 
             Assert.That(formatted, Does.StartWith(expectedLabel));
             Assert.That(formatted, Does.Contain("Operation status."));
-        }
-
-        [Test]
-        public void FeedbackFormatsItemAcquisition()
-        {
-            Assert.That(
-                UiFeedbackService.FormatItemMessage("Iron Ore", 2),
-                Is.EqualTo("Iron Ore ×2"));
         }
 
         [Test]

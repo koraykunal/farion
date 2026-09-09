@@ -1,5 +1,6 @@
 using System;
 using Farion.Core.Persistence;
+using Farion.Gameplay.Character;
 using Farion.Gameplay.Commands;
 using Farion.Gameplay.Input;
 using Farion.Gameplay.Interaction;
@@ -36,6 +37,7 @@ namespace Farion.UI.Gameplay
 
         [Header("HUD")]
         [SerializeField] PlayerInteractionRaycaster interactionRaycaster;
+        [SerializeField] ExplorerTool explorerTool;
         [SerializeField] TMP_Text interactionPromptText;
         [SerializeField] string interactionPromptPrefix = "E";
         [SerializeField] TMP_Text networkStatusText;
@@ -51,6 +53,12 @@ namespace Farion.UI.Gameplay
         string saveSlotName;
         string displayedInteractionPrompt;
         UiInputDeviceKind displayedPromptDevice = (UiInputDeviceKind)(-1);
+
+        public void SetExplorerTool(ExplorerTool tool)
+        {
+            explorerTool = tool;
+            RefreshHud();
+        }
 
         public void SetInteractionRaycaster(PlayerInteractionRaycaster raycaster)
         {
@@ -105,6 +113,7 @@ namespace Farion.UI.Gameplay
                 UiGameplayMenuAction.Options => screenRouter != null &&
                     screenRouter.TryGetScreen(UiScreenId.Settings, out _),
                 UiGameplayMenuAction.Save => saveAction != null,
+                UiGameplayMenuAction.Ship => observedCommandEvents is IGameplayCommandGateway,
                 UiGameplayMenuAction.ExitToMainMenu => returnToMainMenuAction != null,
                 UiGameplayMenuAction.QuitGame => quitGameAction != null,
                 _ => false
@@ -243,9 +252,15 @@ namespace Farion.UI.Gameplay
                         UiLocalization.Get(UiTextKeys.CommonQuit),
                         () => quitGameAction?.Invoke());
                     break;
+                case UiGameplayMenuAction.Ship:
+                    RequestConfirmation(
+                        UiLocalization.Get(UiTextKeys.DialogRecallTitle),
+                        UiLocalization.Get(UiTextKeys.DialogRecallBody),
+                        UiLocalization.Get(UiTextKeys.DialogRecallConfirm),
+                        RequestShuttleRecall);
+                    break;
                 case UiGameplayMenuAction.Blueprints:
                 case UiGameplayMenuAction.Journal:
-                case UiGameplayMenuAction.Ship:
                 case UiGameplayMenuAction.Map:
                     break;
                 case UiGameplayMenuAction.Options:
@@ -322,10 +337,51 @@ namespace Farion.UI.Gameplay
             if (observedCommandEvents != null)
             {
                 observedCommandEvents.ItemAcquired += HandleItemAcquired;
+                observedCommandEvents.HarvestCompleted += HandleHarvestCompleted;
                 observedCommandEvents.CargoTransferCompleted +=
                     HandleCargoTransferCompleted;
                 observedCommandEvents.FleetProcessingCompleted +=
                     HandleFleetProcessingCompleted;
+                observedCommandEvents.ShuttleRecallCompleted +=
+                    HandleShuttleRecallCompleted;
+            }
+
+            GetComponentInChildren<UiGameplayMenuListPresenter>(true)?.Rebuild();
+        }
+
+        void RequestShuttleRecall()
+        {
+            if (observedCommandEvents is not IGameplayCommandGateway gateway ||
+                !gateway.RequestShuttleRecall())
+            {
+                ShowFeedback(
+                    UiLocalization.Get(UiTextKeys.FeedbackRecallFailed),
+                    UiFeedbackSeverity.Error);
+            }
+        }
+
+        void HandleShuttleRecallCompleted(ShuttleRecallResult result)
+        {
+            switch (result)
+            {
+                case ShuttleRecallResult.Pending:
+                    return;
+                case ShuttleRecallResult.Succeeded:
+                    ShowFeedback(
+                        UiLocalization.Get(UiTextKeys.FeedbackRecallCompleted),
+                        UiFeedbackSeverity.Success);
+                    CloseActiveScreen();
+                    return;
+                case ShuttleRecallResult.NotStranded:
+                    ShowFeedback(
+                        UiLocalization.Get(UiTextKeys.FeedbackRecallRejected),
+                        UiFeedbackSeverity.Caution);
+                    return;
+                default:
+                    ShowFeedback(
+                        UiLocalization.Get(UiTextKeys.FeedbackRecallFailed),
+                        UiFeedbackSeverity.Error);
+                    return;
             }
         }
 
@@ -334,10 +390,13 @@ namespace Farion.UI.Gameplay
             if (observedCommandEvents != null)
             {
                 observedCommandEvents.ItemAcquired -= HandleItemAcquired;
+                observedCommandEvents.HarvestCompleted -= HandleHarvestCompleted;
                 observedCommandEvents.CargoTransferCompleted -=
                     HandleCargoTransferCompleted;
                 observedCommandEvents.FleetProcessingCompleted -=
                     HandleFleetProcessingCompleted;
+                observedCommandEvents.ShuttleRecallCompleted -=
+                    HandleShuttleRecallCompleted;
                 observedCommandEvents = null;
             }
         }
@@ -346,8 +405,36 @@ namespace Farion.UI.Gameplay
         {
             if (item != null && amount > 0)
             {
-                feedbackService?.ShowItem(item.DisplayName, amount, item.Icon);
+                feedbackService?.ShowItem(
+                    UiLocalization.GetOrFallback(item.ItemId, item.DisplayName),
+                    amount,
+                    item.Icon);
             }
+        }
+
+        void HandleHarvestCompleted(ResourceHarvestResult result)
+        {
+            if (result == ResourceHarvestResult.Succeeded ||
+                result == ResourceHarvestResult.Pending)
+            {
+                return;
+            }
+
+            ShowFeedback(
+                UiLocalization.Get(result switch
+                {
+                    ResourceHarvestResult.InsufficientCapacity =>
+                        UiTextKeys.FeedbackHarvestInventoryFull,
+                    ResourceHarvestResult.Depleted => UiTextKeys.FeedbackHarvestDepleted,
+                    ResourceHarvestResult.MissingSource => UiTextKeys.FeedbackHarvestUnreachable,
+                    ResourceHarvestResult.StaleDestination => UiTextKeys.FeedbackHarvestStale,
+                    _ => UiTextKeys.FeedbackHarvestFailed
+                }),
+                result == ResourceHarvestResult.InsufficientCapacity ||
+                result == ResourceHarvestResult.Depleted ||
+                result == ResourceHarvestResult.MissingSource
+                    ? UiFeedbackSeverity.Caution
+                    : UiFeedbackSeverity.Error);
         }
 
         void HandleCargoTransferCompleted(CargoTransferReceipt receipt)
@@ -492,6 +579,26 @@ namespace Farion.UI.Gameplay
                 return;
             }
 
+            string scanReadout = currentScreen == UiScreenId.GameplayHud
+                ? ResolveScanReadout()
+                : null;
+            if (scanReadout != null)
+            {
+                if (!interactionPromptText.gameObject.activeSelf)
+                {
+                    interactionPromptText.gameObject.SetActive(true);
+                }
+
+                if (scanReadout != displayedInteractionPrompt)
+                {
+                    interactionPromptText.text = scanReadout;
+                    displayedInteractionPrompt = scanReadout;
+                    displayedPromptDevice = (UiInputDeviceKind)(-1);
+                }
+
+                return;
+            }
+
             bool showPrompt = currentScreen == UiScreenId.GameplayHud &&
                 interactionRaycaster != null &&
                 interactionRaycaster.isActiveAndEnabled &&
@@ -539,6 +646,38 @@ namespace Farion.UI.Gameplay
             interactionPromptText.text = string.IsNullOrWhiteSpace(binding)
                 ? prompt
                 : $"{binding.Trim()}  {prompt}";
+        }
+
+        string ResolveScanReadout()
+        {
+            if (explorerTool == null || !explorerTool.Equipped)
+            {
+                return null;
+            }
+
+            ResourceNodeInteractable node = explorerTool.ScanTarget;
+            if (node == null)
+            {
+                return explorerTool.IsUsing
+                    ? UiLocalization.Get(UiTextKeys.HudScanNothing)
+                    : null;
+            }
+
+            if (!explorerTool.ScanComplete)
+            {
+                return string.Format(
+                    UiLocalization.Get(UiTextKeys.HudScanProgress),
+                    Mathf.RoundToInt(explorerTool.ScanProgress * 100f));
+            }
+
+            string name = node.Definition != null
+                ? UiLocalization.GetOrFallback(node.Definition.NodeId, node.Definition.DisplayName)
+                : string.Empty;
+            return string.Format(
+                UiLocalization.Get(UiTextKeys.HudScanResult),
+                UiLocalization.ToDisplayUpper(name),
+                node.RemainingQuantity,
+                node.InitialQuantity);
         }
 
         void OpenSaveGameScreen()

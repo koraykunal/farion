@@ -15,7 +15,7 @@ namespace Farion.UI.Gameplay
     public sealed class UiGameplaySceneShellController : MonoBehaviour
     {
         [SerializeField] SpacecraftCameraRig spacecraftCameraRig;
-        [SerializeField] FirstPersonCameraRig firstPersonCameraRig;
+        [SerializeField] ExplorerCameraRig explorerCameraRig;
         [SerializeField] Camera gameplayCamera;
         [SerializeField] PlayerControlLock controlLock;
         [SerializeField] UiGameplayController gameplayUi;
@@ -28,7 +28,7 @@ namespace Farion.UI.Gameplay
         WorldOriginRebaser boundOriginRebaser;
 
         public SpacecraftCameraRig SpacecraftCameraRig => spacecraftCameraRig;
-        public FirstPersonCameraRig FirstPersonCameraRig => firstPersonCameraRig;
+        public ExplorerCameraRig ExplorerCameraRig => explorerCameraRig;
         public Camera Camera => gameplayCamera;
         public Transform ViewReference => gameplayCamera != null
             ? gameplayCamera.transform
@@ -46,7 +46,7 @@ namespace Farion.UI.Gameplay
             {
                 ResolvePresentation();
                 return spacecraftCameraRig != null &&
-                    firstPersonCameraRig != null &&
+                    explorerCameraRig != null &&
                     gameplayCamera != null &&
                     controlLock != null &&
                     gameplayUi != null &&
@@ -78,7 +78,7 @@ namespace Farion.UI.Gameplay
             {
                 boundOriginRebaser.Rebased -= OnWorldOriginRebased;
                 boundOriginRebaser.UnregisterShiftRoot(ShiftRootOf(spacecraftCameraRig));
-                boundOriginRebaser.UnregisterShiftRoot(ShiftRootOf(firstPersonCameraRig));
+                boundOriginRebaser.UnregisterShiftRoot(ShiftRootOf(explorerCameraRig));
             }
 
             boundOriginRebaser = rebaser;
@@ -88,7 +88,7 @@ namespace Farion.UI.Gameplay
             }
 
             boundOriginRebaser.RegisterShiftRoot(ShiftRootOf(spacecraftCameraRig));
-            boundOriginRebaser.RegisterShiftRoot(ShiftRootOf(firstPersonCameraRig));
+            boundOriginRebaser.RegisterShiftRoot(ShiftRootOf(explorerCameraRig));
             boundOriginRebaser.Rebased += OnWorldOriginRebased;
         }
 
@@ -109,7 +109,7 @@ namespace Farion.UI.Gameplay
         {
             Scene scene = gameObject.scene;
             ResolveInScene(ref spacecraftCameraRig, scene);
-            ResolveInScene(ref firstPersonCameraRig, scene);
+            ResolveInScene(ref explorerCameraRig, scene);
             ResolveInScene(ref gameplayCamera, scene);
             ResolveInScene(ref controlLock, scene);
             ResolveInScene(ref gameplayUi, scene);

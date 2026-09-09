@@ -150,7 +150,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058400
-    m_Localized: Gemi
+    m_Localized: "Gemiyi geri \u00E7a\u011F\u0131r"
     m_Metadata:
       m_Items: []
   - m_Id: 1264058401
@@ -1166,6 +1166,222 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 14092742173909022
     m_Localized: --/-- YUVA
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909023
+    m_Localized: "YATAK T\u00DCKEND\u0130."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909024
+    m_Localized: "TOPLAMA BA\u015EARISIZ."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909025
+    m_Localized: "ENVANTER KAPAS\u0130TES\u0130 YETERS\u0130Z."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909026
+    m_Localized: "ENVANTER DE\u011E\u0130\u015ET\u0130; TEKRAR DENEY\u0130N."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909027
+    m_Localized: "YATA\u011EA ER\u0130\u015E\u0130LEM\u0130YOR."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909028
+    m_Localized: "{0} topla"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909029
+    m_Localized: "demir cevheri yata\u011F\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909030
+    m_Localized: "buz kristali yata\u011F\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909031
+    m_Localized: "nikel par\u00E7as\u0131 yata\u011F\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909032
+    m_Localized: "So\u011Futucu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909033
+    m_Localized: "Buz kristali"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909034
+    m_Localized: "Demir k\u00FCl\u00E7e"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909035
+    m_Localized: "Demir cevheri"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909036
+    m_Localized: "Nikel par\u00E7as\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909037
+    m_Localized: "Nikel levha"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909038
+    m_Localized: "G\u00FC\u00E7lendirilmi\u015F g\u00F6vde paneli"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909039
+    m_Localized: "Is\u0131 reg\u00FClat\u00F6r\u00FC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909040
+    m_Localized: "demir eritme"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909041
+    m_Localized: "Yap\u0131sal"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909042
+    m_Localized: "Elektronik"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909043
+    m_Localized: "Enerji"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909044
+    m_Localized: "Kimyasal"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909045
+    m_Localized: "Biyolojik"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909046
+    m_Localized: "Egzotik"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909047
+    m_Localized: "Ham"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909048
+    m_Localized: "Rafine"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909049
+    m_Localized: "Bile\u015Fen"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909050
+    m_Localized: "Sarf"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909051
+    m_Localized: "Ara\u015Ft\u0131rma \u00F6rne\u011Fi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909052
+    m_Localized: "Eser"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909053
+    m_Localized: "Malzeme m\u00FChendisli\u011Fi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909054
+    m_Localized: "Enerji sistemleri"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909055
+    m_Localized: "Elektronik ve bili\u015Fim"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909056
+    m_Localized: "Kimya ve sanayi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909057
+    m_Localized: "Ksenobiyoloji"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909058
+    m_Localized: "Kuantum fizi\u011Fi"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909059
+    m_Localized: "Klavye"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909060
+    m_Localized: "Fare"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909061
+    m_Localized: "Oyun kolu"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909062
+    m_Localized: "Ni\u015Fan al"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909063
+    m_Localized: "Taray\u0131c\u0131"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909064
+    m_Localized: "Taray\u0131c\u0131y\u0131 kullan"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909065
+    m_Localized: "Aray\u00FCz ge\u00E7i\u015Flerinin \u00E7o\u011Funu an\u0131nda durum de\u011Fi\u015Fimiyle de\u011Fi\u015Ftirir; u\u00E7u\u015Ftaki hareket bulan\u0131kl\u0131\u011F\u0131n\u0131 ve renk sapmas\u0131n\u0131 kapat\u0131r."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909066
+    m_Localized: "GEM\u0130Y\u0130 F\u0130LOYA GER\u0130 \u00C7A\u011EIR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909067
+    m_Localized: "Mahsur kalan mekik, yak\u0131t\u0131 doldurulmu\u015F ve onar\u0131lm\u0131\u015F olarak formasyon yuvas\u0131na d\u00F6ner. Kargosu bo\u015Falt\u0131l\u0131r."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909068
+    m_Localized: "GER\u0130 \u00C7A\u011EIR"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909069
+    m_Localized: "MEK\u0130K F\u0130LOYA GER\u0130 \u00C7A\u011ERILDI."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909070
+    m_Localized: "MEK\u0130K MAHSUR DE\u011E\u0130L."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909071
+    m_Localized: "GER\u0130 \u00C7A\u011EIRMA BA\u015EARISIZ."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909072
+    m_Localized: "MEK\u0130\u011EE YAKIT \u0130KMAL\u0130 VE ONARIM YAPILDI."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909073
+    m_Localized: "TARANIYOR %{0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909074
+    m_Localized: "{0}  \u00B7  {1} / {2} KALDI"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909075
+    m_Localized: "MENZ\u0130LDE YATAK YOK"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909076
+    m_Localized: Dal
     m_Metadata:
       m_Items: []
   references:

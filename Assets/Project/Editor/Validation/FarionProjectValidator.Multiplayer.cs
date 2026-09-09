@@ -151,8 +151,7 @@ namespace Farion.Editor.Validation
                 FindSceneComponents<UiGameplaySceneShellController>(scene);
             if (shells.Length != 1 ||
                 FindSceneComponents<Camera>(scene).Length != 1 ||
-                FindSceneComponents<FirstPersonCameraRig>(scene).Length != 1 ||
-                FindSceneComponents<FirstPersonViewEffects>(scene).Length != 1 ||
+                FindSceneComponents<ExplorerCameraRig>(scene).Length != 1 ||
                 FindSceneComponents<SpacecraftCameraRig>(scene).Length != 1 ||
                 FindSceneComponents<PlayerControlLock>(scene).Length != 1 ||
                 FindSceneComponents<UiGameplayController>(scene).Length != 1 ||
@@ -161,7 +160,7 @@ namespace Farion.Editor.Validation
             {
                 report.AddError(
                     $"{scenePath}: gameplay presentation requires exactly one shell controller, " +
-                    "Camera, camera rigs, FirstPersonViewEffects, PlayerControlLock, " +
+                    "Camera, camera rigs, PlayerControlLock, " +
                     "UiGameplayController, CelestialLightingRig, and CelestialLodController.");
             }
             else if (!shells[0].IsValid)
@@ -319,21 +318,11 @@ namespace Farion.Editor.Validation
             NetworkTickSmoother networkSmoother = playerVisual != null
                 ? playerVisual.GetComponent<NetworkTickSmoother>()
                 : null;
-            Renderer[] playerRenderers = playerVisual != null
-                ? playerVisual.GetComponentsInChildren<Renderer>(true)
-                : null;
-            SerializedProperty ownerHiddenRenderers = networkExplorer != null
-                ? new SerializedObject(networkExplorer)
-                    .FindProperty("ownerHiddenRenderers")
-                : null;
             if (networkObject == null ||
                 !networkObject.EnablePrediction ||
                 networkExplorer == null ||
                 playerVisual == null ||
-                playerRenderers == null ||
-                playerRenderers.Length == 0 ||
-                ownerHiddenRenderers == null ||
-                ownerHiddenRenderers.arraySize != playerRenderers.Length ||
+                playerVisual.GetComponentsInChildren<Renderer>(true).Length == 0 ||
                 !HasNetworkTickSmoother(
                     networkObject,
                     networkSmoother,

@@ -45,9 +45,23 @@ namespace Farion.UI.Localization
 
             string template = Get(prompt[..separator].Trim());
             string argument = prompt[(separator + 1)..].Trim();
+            argument = GetOrFallback(argument, argument);
             return template.Contains("{0}")
                 ? string.Format(template, argument)
                 : $"{template} {argument}";
+        }
+
+        public static string GetOrFallback(string entryKey, string fallback)
+        {
+            string value = Get(entryKey);
+            return string.IsNullOrWhiteSpace(value) || value == entryKey ? fallback : value;
+        }
+
+        public static string GetEnum<T>(string prefix, T value)
+            where T : Enum
+        {
+            string name = value.ToString();
+            return GetOrFallback($"{prefix}.{name.ToLowerInvariant()}", name);
         }
 
         public static string ToDisplayUpper(string value)

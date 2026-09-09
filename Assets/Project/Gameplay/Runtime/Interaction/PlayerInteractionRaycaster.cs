@@ -15,7 +15,7 @@ namespace Farion.Gameplay.Interaction
         const int MaxHits = 12;
 
         [Header("Input")]
-        [SerializeField] KeyboardFirstPersonInput inputSource;
+        [SerializeField] ExplorerInput inputSource;
         [SerializeField] PlayerControlLock controlLock;
 
         [Header("Raycast")]
@@ -34,7 +34,7 @@ namespace Farion.Gameplay.Interaction
 
         readonly RaycastHit[] hits = new RaycastHit[MaxHits];
         readonly List<MonoBehaviour> behaviourBuffer = new(8);
-        KeyboardFirstPersonInput resolvedInput;
+        ExplorerInput resolvedInput;
         Collider[] ownColliders;
         IGameplayCommandGateway commandGateway;
         IInteractable currentInteractable;
@@ -72,7 +72,7 @@ namespace Farion.Gameplay.Interaction
 
             RefreshTarget();
 
-            FirstPersonInputState input = resolvedInput?.CurrentInput ?? FirstPersonInputState.None;
+            ExplorerInputState input = resolvedInput?.CurrentInput ?? ExplorerInputState.None;
             if (input.Interact && currentInteractable != null)
             {
                 InteractionContext context = new(
@@ -115,8 +115,15 @@ namespace Farion.Gameplay.Interaction
             ClearTarget();
 
             Transform view = viewReference != null ? viewReference : transform;
-            Ray ray = new(view.position, view.forward);
+            Vector3 origin = view.position;
+            if (viewReference != null)
+            {
+                origin += view.forward * Mathf.Max(0f, Vector3.Dot(transform.position - view.position, view.forward));
+            }
+
+            Ray ray = new(origin, view.forward);
             PhysicsScene physicsScene = gameObject.scene.GetPhysicsScene();
+            int blockingLayers = interactionLayers | FarionLayers.CameraObstacleMask;
             int hitCount = castRadius > 0f
                 ? physicsScene.SphereCast(
                     ray.origin,
@@ -124,50 +131,60 @@ namespace Farion.Gameplay.Interaction
                     ray.direction,
                     hits,
                     maxDistance,
-                    interactionLayers,
+                    blockingLayers,
                     triggerInteraction)
                 : physicsScene.Raycast(
                     ray.origin,
                     ray.direction,
                     hits,
                     maxDistance,
-                    interactionLayers,
+                    blockingLayers,
                     triggerInteraction);
 
+            if (!TryFindNearestHit(hitCount, out RaycastHit nearest))
+            {
+                return;
+            }
+
+            InteractionContext context = new(
+                gameObject,
+                view,
+                nearest,
+                commandGateway);
+            IInteractable interactable = ResolveInteractable(
+                nearest.collider,
+                context);
+            if (interactable == null)
+            {
+                return;
+            }
+
+            currentHit = nearest;
+            currentInteractable = interactable;
+            currentTargetTransform = nearest.collider.transform;
+            currentPrompt = interactable.InteractionPrompt;
+            hasTarget = true;
+        }
+
+        bool TryFindNearestHit(int hitCount, out RaycastHit nearest)
+        {
+            nearest = default;
             float closestDistance = float.PositiveInfinity;
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit hit = hits[i];
-                if (hit.collider == null || IsOwnCollider(hit.collider))
-                {
-                    continue;
-                }
-
-                if (hit.distance >= closestDistance)
-                {
-                    continue;
-                }
-
-                InteractionContext context = new(
-                    gameObject,
-                    view,
-                    hit,
-                    commandGateway);
-                IInteractable interactable = ResolveInteractable(
-                    hit.collider,
-                    context);
-                if (interactable == null)
+                if (hit.collider == null ||
+                    IsOwnCollider(hit.collider) ||
+                    hit.distance >= closestDistance)
                 {
                     continue;
                 }
 
                 closestDistance = hit.distance;
-                currentHit = hit;
-                currentInteractable = interactable;
-                currentTargetTransform = hit.collider.transform;
-                currentPrompt = interactable.InteractionPrompt;
-                hasTarget = true;
+                nearest = hit;
             }
+
+            return closestDistance < float.PositiveInfinity;
         }
 
         void ResolveInputSource()
@@ -178,7 +195,7 @@ namespace Farion.Gameplay.Interaction
                 return;
             }
 
-            resolvedInput ??= GetComponent<KeyboardFirstPersonInput>();
+            resolvedInput ??= GetComponent<ExplorerInput>();
         }
 
         bool IsGameplayInputLocked()

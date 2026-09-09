@@ -15,7 +15,7 @@ namespace Farion.Gameplay.Interaction
         public string InteractionPrompt => recipe != null
             ? InteractionPromptKeys.WithArgument(
                 InteractionPromptKeys.ProcessRecipe,
-                recipe.DisplayName)
+                recipe.RecipeId)
             : InteractionPromptKeys.ProcessMaterials;
 
         void Awake()
@@ -31,10 +31,7 @@ namespace Farion.Gameplay.Interaction
 
         public bool CanInteract(InteractionContext context)
         {
-            return context.Commands != null &&
-                   TryBuildRequest(out FleetProcessingRequest request) &&
-                   context.Commands.CanProcessFleetRecipe(request) ==
-                   FleetProcessingResult.Succeeded;
+            return context.Commands != null && TryBuildRequest(out _);
         }
 
         public void Interact(InteractionContext context)

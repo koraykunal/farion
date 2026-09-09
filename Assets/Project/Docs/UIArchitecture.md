@@ -306,8 +306,7 @@ individual presenters. The presenter remains the domain-to-prefab adapter.
 ## Validation Contract
 
 `Farion/Validation/Validate Project` runs the UI checks as part of the complete
-project validation. `Farion/Validation/Validate UI Foundation` runs only the UI
-contract.
+project validation; there is no separate UI-only menu entry.
 
 The validator blocks a build when:
 

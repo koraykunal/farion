@@ -8,7 +8,7 @@ namespace Farion.Gameplay.Character
     public sealed class ExplorerLocomotionSignals : MonoBehaviour
     {
         [Header("Source")]
-        [SerializeField] FirstPersonMotor motor;
+        [SerializeField] ExplorerMotor motor;
 
         [Header("Stride")]
         [Tooltip("Meters of ground travel per footstep; a full left-right cycle covers twice this.")]
@@ -32,7 +32,7 @@ namespace Farion.Gameplay.Character
         float lastLandingTime = float.NegativeInfinity;
         float lastJumpTime = float.NegativeInfinity;
         bool wasGrounded = true;
-        FirstPersonMotorState lastState;
+        ExplorerMotorState lastState;
 
         public event Action<float> Landed;
         public event Action Jumped;
@@ -40,13 +40,13 @@ namespace Farion.Gameplay.Character
 
         public float CyclePhase01 =>
             strideLength > 0f ? cycleMeters / (strideLength * 2f) : 0f;
-        public FirstPersonMotorState LastState => lastState;
+        public ExplorerMotorState LastState => lastState;
 
         void Awake()
         {
             if (motor == null)
             {
-                motor = GetComponent<FirstPersonMotor>();
+                motor = GetComponent<ExplorerMotor>();
             }
         }
 
@@ -57,7 +57,7 @@ namespace Farion.Gameplay.Character
                 return;
             }
 
-            FirstPersonMotorState state = motor.CaptureState();
+            ExplorerMotorState state = motor.CaptureState();
             lastState = state;
             float deltaTime = Time.deltaTime;
 

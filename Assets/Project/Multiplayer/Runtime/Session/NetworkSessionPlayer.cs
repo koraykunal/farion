@@ -1,6 +1,8 @@
 using Farion.Core.Identity;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Text;
 using Farion.Gameplay.Interaction;
 using Farion.Multiplayer.Spawning;
 using FishNet.Connection;
@@ -13,10 +15,14 @@ namespace Farion.Multiplayer.Session
     public sealed class NetworkSessionPlayer : NetworkBehaviour
     {
         const int MaximumDisplayNameLength = 24;
+        const int MaximumPersistentIdLength = 64;
+        const int MaximumSecretLength = 128;
+        internal const string PlatformOwnerProof = "platform";
 
         readonly SyncVar<ulong> sessionPlayerId = new();
         readonly SyncVar<string> displayName = new(string.Empty);
         string persistentPlayerId = string.Empty;
+        string ownerProof = string.Empty;
         readonly SyncVar<ulong> currentZoneId = new();
         readonly SyncVar<ulong> assignedStarterShuttleId = new();
         readonly SyncVar<ulong> claimedStarterShuttleId = new();
@@ -32,7 +38,8 @@ namespace Farion.Multiplayer.Session
 
         public ulong SessionPlayerId => sessionPlayerId.Value;
         public string DisplayName => displayName.Value;
-        internal string PersistentPlayerId => persistentPlayerId;
+        public string PersistentPlayerId => persistentPlayerId;
+        internal string OwnerProof => ownerProof;
         public GeneratedEntityId CurrentZoneId => ToEntityId(currentZoneId.Value);
         public GeneratedEntityId AssignedStarterShuttleId =>
             ToEntityId(assignedStarterShuttleId.Value);
@@ -91,7 +98,8 @@ namespace Farion.Multiplayer.Session
             {
                 SubmitProfileServerRpc(
                     MultiplayerPlayerProfile.DisplayName,
-                    MultiplayerPlayerProfile.PersistentPlayerId);
+                    MultiplayerPlayerProfile.PersistentPlayerId,
+                    MultiplayerPlayerProfile.ReconnectSecret);
             }
         }
 
@@ -99,6 +107,7 @@ namespace Farion.Multiplayer.Session
         void SubmitProfileServerRpc(
             string requestedName,
             string requestedPersistentId,
+            string requestedSecret,
             NetworkConnection sender = null)
         {
             if (!IsRequestFromOwner(sender))
@@ -110,14 +119,30 @@ namespace Farion.Multiplayer.Session
                 requestedName,
                 MaximumDisplayNameLength,
                 sessionPlayerId.Value);
-            if (persistentPlayerId.Length > 0 ||
-                string.IsNullOrWhiteSpace(requestedPersistentId))
+            if (persistentPlayerId.Length > 0)
             {
                 return;
             }
 
-            string trimmed = requestedPersistentId.Trim();
-            if (IsPersistentIdInUse(trimmed))
+            if (!TryResolveIdentity(
+                    sender,
+                    requestedPersistentId,
+                    requestedSecret,
+                    out string resolvedId,
+                    out string proof))
+            {
+                Debug.LogWarning(
+                    $"Session player {sessionPlayerId.Value} submitted an unusable identity; it will not restore saved state.",
+                    this);
+                return;
+            }
+
+            if (playerSpawner != null)
+            {
+                resolvedId = playerSpawner.ResolveOwnedIdentity(resolvedId, proof);
+            }
+
+            if (IsPersistentIdInUse(resolvedId))
             {
                 Debug.LogWarning(
                     $"Session player {sessionPlayerId.Value} requested a persistent id that is already active; it will not restore saved state.",
@@ -125,8 +150,105 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
-            persistentPlayerId = trimmed;
+            persistentPlayerId = resolvedId;
+            ownerProof = proof;
             playerSpawner?.RestorePlayerState(this);
+        }
+
+        bool TryResolveIdentity(
+            NetworkConnection sender,
+            string requestedPersistentId,
+            string requestedSecret,
+            out string persistentId,
+            out string proof)
+        {
+            if (sender.IsLocalClient)
+            {
+                persistentId = NormalizePersistentId(requestedPersistentId);
+                proof = MultiplayerPlayerProfile.HasPlatformIdentity
+                    ? PlatformOwnerProof
+                    : HashSecret(requestedSecret);
+                return persistentId.Length > 0 && proof.Length > 0;
+            }
+
+            string address = NetworkManager.TransportManager.Transport
+                .GetConnectionAddress(sender.ClientId);
+            if (IsSteamId(address))
+            {
+                persistentId = address;
+                proof = PlatformOwnerProof;
+                return true;
+            }
+
+            persistentId = NormalizePersistentId(requestedPersistentId);
+            proof = HashSecret(requestedSecret);
+            return persistentId.Length > 0 && proof.Length > 0;
+        }
+
+        internal static string NormalizePersistentId(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string trimmed = value.Trim();
+            if (trimmed.Length > MaximumPersistentIdLength)
+            {
+                return string.Empty;
+            }
+
+            for (int i = 0; i < trimmed.Length; i++)
+            {
+                char current = trimmed[i];
+                if (!char.IsLetterOrDigit(current) &&
+                    current != '-' &&
+                    current != '_' &&
+                    current != '.')
+                {
+                    return string.Empty;
+                }
+            }
+
+            return trimmed;
+        }
+
+        internal static bool IsSteamId(string value)
+        {
+            if (string.IsNullOrEmpty(value) ||
+                value.Length != 17 ||
+                !value.StartsWith("7656", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (!char.IsDigit(value[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        internal static string HashSecret(string secret)
+        {
+            if (string.IsNullOrWhiteSpace(secret) || secret.Length > MaximumSecretLength)
+            {
+                return string.Empty;
+            }
+
+            using SHA256 sha = SHA256.Create();
+            byte[] digest = sha.ComputeHash(Encoding.UTF8.GetBytes(secret.Trim()));
+            StringBuilder builder = new(digest.Length * 2);
+            for (int i = 0; i < digest.Length; i++)
+            {
+                builder.Append(digest[i].ToString("x2"));
+            }
+
+            return builder.ToString();
         }
 
         public override void OnOwnershipClient(NetworkConnection prevOwner)

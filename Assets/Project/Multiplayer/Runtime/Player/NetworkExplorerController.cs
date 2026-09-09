@@ -26,24 +26,24 @@ namespace Farion.Multiplayer.Player
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(CelestialActorProbe))]
-    [RequireComponent(typeof(FirstPersonMotor))]
-    [RequireComponent(typeof(KeyboardFirstPersonInput))]
+    [RequireComponent(typeof(ExplorerMotor))]
+    [RequireComponent(typeof(ExplorerInput))]
     public sealed class NetworkExplorerController :
         TickNetworkBehaviour,
         ICelestialSurfaceCollisionObserver
     {
-        [SerializeField] FirstPersonMotor motor;
-        [SerializeField] KeyboardFirstPersonInput input;
+        [SerializeField] ExplorerMotor motor;
+        [SerializeField] ExplorerInput input;
         [SerializeField] PlayerInteractionRaycaster interactionRaycaster;
-        [Tooltip("World-model renderers the owner must not see on foot; shadow casters stay as ShadowsOnly.")]
-        [SerializeField] Renderer[] ownerHiddenRenderers;
         [SerializeField] PlayerExplorerSeatedPose seatedPose;
+        [SerializeField] ExplorerTool tool;
 
         readonly PredictionRigidbody predictionRigidbody = new();
         readonly SyncVar<bool> possessionActive = new(true);
         readonly SyncVar<bool> insideShip = new(false);
         readonly SyncVar<ulong> sessionPlayerId = new();
-        PredictionRigidbodyFirstPersonPhysicsBody physicsBody;
+        readonly SyncVar<byte> toolState = new();
+        PredictionRigidbodyExplorerPhysicsBody physicsBody;
         Rigidbody body;
         CapsuleCollider capsule;
         CelestialActorProbe celestialProbe;
@@ -60,12 +60,12 @@ namespace Farion.Multiplayer.Player
         {
             public Renderer Renderer;
             public bool Enabled;
-            public bool HideInFirstPerson;
             public ShadowCastingMode Shadows;
         }
 
-        public FirstPersonMotor Motor => motor;
-        public KeyboardFirstPersonInput Input => input;
+        public ExplorerMotor Motor => motor;
+        public ExplorerInput Input => input;
+        public ExplorerTool Tool => tool;
         public PlayerInteractionRaycaster InteractionRaycaster =>
             interactionRaycaster;
         public ulong SessionPlayerId => sessionPlayerId.Value;
@@ -97,11 +97,19 @@ namespace Farion.Multiplayer.Player
 
         void Awake()
         {
-            motor ??= GetComponent<FirstPersonMotor>();
-            input ??= GetComponent<KeyboardFirstPersonInput>();
+            motor ??= GetComponent<ExplorerMotor>();
+            input ??= GetComponent<ExplorerInput>();
             interactionRaycaster ??=
                 GetComponent<PlayerInteractionRaycaster>();
             seatedPose ??= GetComponentInChildren<PlayerExplorerSeatedPose>(true);
+            tool ??= GetComponent<ExplorerTool>();
+            if (tool != null)
+            {
+                tool.SetControl(false, false);
+                tool.LocalStateChanged += HandleLocalToolState;
+            }
+
+            toolState.OnChange += HandleToolStateChanged;
             CacheRendererVisibility();
             body = GetComponent<Rigidbody>();
             capsule = GetComponent<CapsuleCollider>();
@@ -113,7 +121,7 @@ namespace Farion.Multiplayer.Player
             }
 
             predictionRigidbody.Initialize(body);
-            physicsBody = new PredictionRigidbodyFirstPersonPhysicsBody(
+            physicsBody = new PredictionRigidbodyExplorerPhysicsBody(
                 predictionRigidbody);
             possessionActive.OnChange += OnPossessionActiveChanged;
             insideShip.OnChange += OnInsideShipChanged;
@@ -151,8 +159,7 @@ namespace Farion.Multiplayer.Player
                 return;
             }
 
-            FirstPersonInputState current = input.CurrentInput;
-            motor.AddPendingYaw(current.Look.x * motor.YawDegreesPerMouseUnit);
+            ExplorerInputState current = input.CurrentInput;
             if (current.Jump && !previousJumpHeld)
             {
                 jumpQueued = true;
@@ -200,11 +207,9 @@ namespace Farion.Multiplayer.Player
         void RefreshRendererVisibility()
         {
             bool cockpit = IsOwner && !appliedPossessionActive && !seatedBodyVisibleForOwner;
-            bool firstPerson = IsOwner && appliedPossessionActive;
             for (int i = 0; i < rendererVisibility.Length; i++)
             {
-                RendererVisibility state = rendererVisibility[i];
-                ApplyRendererVisibility(state, cockpit || (firstPerson && state.HideInFirstPerson));
+                ApplyRendererVisibility(rendererVisibility[i], cockpit);
             }
         }
 
@@ -255,6 +260,7 @@ namespace Farion.Multiplayer.Player
 
         public override void OnStopClient()
         {
+            tool?.SetControl(false, false);
             if (sceneContext != null)
             {
                 sceneContext.UnregisterFormationObserver(transform);
@@ -273,7 +279,26 @@ namespace Farion.Multiplayer.Player
 
         void OnDestroy()
         {
+            if (tool != null) tool.LocalStateChanged -= HandleLocalToolState;
+            toolState.OnChange -= HandleToolStateChanged;
             activeExplorers.Remove(this);
+        }
+
+        void HandleLocalToolState(byte value)
+        {
+            if (IsOwner && IsClientStarted) RequestToolState(value);
+        }
+
+        [ServerRpc]
+        void RequestToolState(byte value)
+        {
+            if (value > ExplorerTool.Using) return;
+            toolState.Value = appliedPossessionActive ? value : ExplorerTool.Stowed;
+        }
+
+        void HandleToolStateChanged(byte previous, byte next, bool asServer)
+        {
+            tool?.ApplyRemoteState(next);
         }
 
         public override void OnStopNetwork()
@@ -339,19 +364,19 @@ namespace Farion.Multiplayer.Player
         {
             if (!IsOwner || !appliedPossessionActive || input == null)
             {
-                motor.ConsumePendingYaw();
                 jumpQueued = false;
                 return default;
             }
 
-            FirstPersonInputState current = input.CurrentInput;
+            ExplorerInputState current = input.CurrentInput;
             ExplorerReplicateData data = new(
-                current.Movement,
-                motor.ConsumePendingYaw(),
-                motor.ViewPitchDegrees,
-                jumpQueued,
-                current.Sprint,
-                current.Jump,
+                motor.BuildInput(
+                    current.Movement,
+                    current.Aim || (tool != null && tool.Equipped),
+                    jumpQueued,
+                    current.Sprint,
+                    current.Jump,
+                    current.Dive),
                 originState?.CurrentSequence ?? 0);
             jumpQueued = false;
             return data;
@@ -368,30 +393,12 @@ namespace Farion.Multiplayer.Player
                 return;
             }
 
-            ExplorerReplicateData clamped = new(
-                data.Movement,
-                data.YawDegrees,
-                data.PitchDegrees,
-                data.Jump,
-                data.Sprint,
-                data.SwimAscend,
-                data.OriginSequence);
-            if (!IsOwner)
-            {
-                motor.SetViewPitchDegrees(clamped.PitchDegrees);
-            }
-
             bool staleOrigin = IsServerStarted &&
                 originState != null &&
-                !originState.SharesReferenceFrame(clamped.OriginSequence);
-            FirstPersonMotorInput motorInput = staleOrigin
-                ? FirstPersonMotorInput.None
-                : new FirstPersonMotorInput(
-                    clamped.Movement,
-                    clamped.YawDegrees,
-                    clamped.Jump,
-                    clamped.Sprint,
-                    clamped.SwimAscend);
+                !originState.SharesReferenceFrame(data.OriginSequence);
+            ExplorerMotorInput motorInput = staleOrigin
+                ? ExplorerMotorInput.None
+                : data.ToMotorInput();
             celestialProbe.RefreshSample(tickDriver != null
                 ? tickDriver.ResolveSimulationSeconds(data.GetTick())
                 : data.GetTick() * TimeManager.TickDelta);
@@ -423,6 +430,13 @@ namespace Farion.Multiplayer.Player
         internal void ApplyPossessionState(bool active)
         {
             appliedPossessionActive = active;
+            tool?.SetControl(IsOwner, active);
+            tool?.ApplyRemoteState(toolState.Value);
+            if (!active && IsServerStarted)
+            {
+                toolState.Value = ExplorerTool.Stowed;
+            }
+
             if (input != null)
             {
                 input.enabled = active && IsOwner;
@@ -435,7 +449,6 @@ namespace Farion.Multiplayer.Player
 
             if (!active)
             {
-                motor.ConsumePendingYaw();
                 jumpQueued = false;
                 previousJumpHeld = false;
                 if (!body.isKinematic)
@@ -501,8 +514,6 @@ namespace Farion.Multiplayer.Player
                 {
                     Renderer = renderer,
                     Enabled = renderer.enabled,
-                    HideInFirstPerson = ownerHiddenRenderers != null &&
-                        System.Array.IndexOf(ownerHiddenRenderers, renderer) >= 0,
                     Shadows = renderer.shadowCastingMode
                 };
             }

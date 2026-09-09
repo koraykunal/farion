@@ -43,8 +43,8 @@ The project currently provides:
 - gameplay HUD, inventory, pause, settings, and save/load presentation;
 - FMOD spacecraft presentation and authored thruster VFX.
 
-The production capital-ship visual alignment, processing result presentation,
-upgrade application, and multiplayer gameplay replication are not complete yet.
+The production capital-ship visual alignment and upgrade application are not
+complete yet.
 Every session now runs on the FishNet/Tugboat listen server: solo is a private
 host, co-op adds up to three predicted clients, and both share one save format
 and one zone-keyed floating origin.
@@ -122,9 +122,9 @@ Only after the local loop is stable:
 2. Define capital-ship services and rooms from real workflows.
 3. Add unique equipment only if installed-instance identity is actually needed.
 4. Add research choice presentation around Fleet Knowledge.
-5. Wrap proven commands with host-authoritative networking.
-6. Validate the existing two-to-four-player Tugboat explorer foundation before
-   adding Steam transport or gameplay-state replication.
+5. Run the two-peer acceptance (connect, claim, board, fly, exit, reboard,
+   harvest, dock, unload, process, reconnect) on two machines; every gameplay
+   command is already host-authoritative and the Steam transport is in place.
 
 ## Engineering Gates
 

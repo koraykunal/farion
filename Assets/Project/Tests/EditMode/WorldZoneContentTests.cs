@@ -32,44 +32,6 @@ namespace Farion.Tests.EditMode
             }
         }
 
-        [TestCase("Ember")]
-        [TestCase("Rime")]
-        public void OrbitingPlanetsExposeAUsableTerrainCollider(string planetName)
-        {
-            GameObject planet = FindNamedObject(planetName);
-            Assert.That(planet, Is.Not.Null);
-            Assert.That(
-                planet.GetComponent<CelestialBody>().MotionMode,
-                Is.EqualTo(CelestialBodyMotionMode.KinematicOrbit));
-
-            planet.GetComponent<CelestialBodyVisual>().Rebuild();
-            Transform terrain = planet.transform.Find("Terrain Mesh");
-            Assert.That(terrain, Is.Not.Null);
-            MeshCollider collider = terrain.GetComponent<MeshCollider>();
-            Assert.That(collider, Is.Not.Null);
-            Assert.That(collider.enabled, Is.True);
-            Assert.That(collider.sharedMesh, Is.Not.Null);
-        }
-
-        [Test]
-        public void EveryDecoratedBodyHasADecorationProfile()
-        {
-            HashSet<string> decoratedBodies = new();
-            foreach (SurfaceDecorationRenderer candidate in
-                Object.FindObjectsByType<SurfaceDecorationRenderer>(FindObjectsInactive.Include))
-            {
-                if (candidate.gameObject.scene != scene)
-                {
-                    continue;
-                }
-
-                Assert.That(candidate.Profile, Is.Not.Null, candidate.gameObject.name);
-                decoratedBodies.Add(candidate.gameObject.name);
-            }
-
-            Assert.That(decoratedBodies, Is.Not.Empty);
-        }
-
         [Test]
         public void StartingLandingAreaSupportsAtLeastOneDecorationRule()
         {

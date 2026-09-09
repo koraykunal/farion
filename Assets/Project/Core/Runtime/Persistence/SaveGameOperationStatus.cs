@@ -12,6 +12,7 @@ namespace Farion.Core.Persistence
         IoError = 7,
         UnsupportedVersion = 8,
         ApplyFailed = 9,
-        RollbackFailed = 10
+        RollbackFailed = 10,
+        IncompatibleContent = 11
     }
 }

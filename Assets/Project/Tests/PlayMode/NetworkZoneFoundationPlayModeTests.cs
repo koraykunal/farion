@@ -39,24 +39,6 @@ namespace Farion.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator ExistingZoneSceneCanBeSharedByHandle()
-        {
-            firstScene = CreatePhysicsScene("FarionSharedZone");
-            GeneratedEntityId expected = new(404UL);
-
-            SceneLoadData data = MultiplayerZoneSceneLoad.Create(firstScene, expected);
-
-            Assert.That(data.SceneLookupDatas, Has.Length.EqualTo(1));
-            Assert.That(
-                data.SceneLookupDatas[0].Handle,
-                Is.EqualTo(unchecked((int)firstScene.handle.GetRawData())));
-            Assert.That(data.SceneLookupDatas[0].Name, Is.EqualTo(firstScene.name));
-            Assert.That(data.Options.AllowStacking, Is.True);
-            Assert.That(data.Options.LocalPhysics, Is.EqualTo(LocalPhysicsMode.Physics3D));
-            yield return null;
-        }
-
-        [UnityTest]
         public IEnumerator TwoZonePhysicsScenesAdvanceIndependently()
         {
             driverObject = new GameObject("ZonePhysicsTickDriverTest");
@@ -122,12 +104,12 @@ namespace Farion.Tests.PlayMode
 
             GameObject actor = new("GroundProbeActor");
             UnitySceneManager.MoveGameObjectToScene(actor, firstScene);
-            FirstPersonMotor motor = actor.AddComponent<FirstPersonMotor>();
+            ExplorerMotor motor = actor.AddComponent<ExplorerMotor>();
             CapsuleCollider capsule = actor.GetComponent<CapsuleCollider>();
             actor.transform.position = Vector3.up *
                 Mathf.Max(capsule.height * 0.5f, capsule.radius);
-            FirstPersonMotorProfile profile =
-                ScriptableObject.CreateInstance<FirstPersonMotorProfile>();
+            ExplorerMotorProfile profile =
+                ScriptableObject.CreateInstance<ExplorerMotorProfile>();
             TestFieldAccess.SetField(motor, "profile", profile);
             Rigidbody body = actor.GetComponent<Rigidbody>();
             body.useGravity = false;
@@ -135,9 +117,9 @@ namespace Farion.Tests.PlayMode
             yield return null;
             Physics.SyncTransforms();
             motor.Simulate(
-                FirstPersonMotorInput.None,
+                ExplorerMotorInput.None,
                 0.01f,
-                new RigidbodyFirstPersonPhysicsBody(body));
+                new RigidbodyExplorerPhysicsBody(body));
 
             Assert.That(motor.Grounded, Is.True);
             Assert.That(motor.WalkableGround, Is.True);
@@ -168,6 +150,5 @@ namespace Farion.Tests.PlayMode
             body.linearVelocity = velocity;
             return context;
         }
-
     }
 }

@@ -98,10 +98,10 @@ namespace Farion.Editor.Validation
 
             SerializedObject serialized = new(driver);
             if (serialized.FindProperty("motor").objectReferenceValue == null ||
-                prefab.GetComponent<FirstPersonMotor>() == null)
+                prefab.GetComponent<ExplorerMotor>() == null)
             {
                 report.AddError(
-                    $"{prefabPath}: PlayerExplorerAnimator needs the FirstPersonMotor reference.");
+                    $"{prefabPath}: PlayerExplorerAnimator needs the ExplorerMotor reference.");
             }
 
             if (serialized.FindProperty("animator").objectReferenceValue != animator)
@@ -139,6 +139,45 @@ namespace Farion.Editor.Validation
             {
                 report.AddError(
                     $"{prefabPath}: VisorEyes missing; run Farion/Character/Install Visor Eyes.");
+            }
+        }
+
+        static void ValidateExplorerTool(FarionValidationReport report)
+        {
+            string prefabPath = FarionAssetPaths.CoreExplorerPrefab;
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+            {
+                return;
+            }
+
+            if (prefab.GetComponent<ExplorerTool>() == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: root is missing ExplorerTool; run Farion/Character/Build Third Person Setup.");
+            }
+
+            if (prefab.transform.Find("CameraAnchor") != null)
+            {
+                report.AddError(
+                    $"{prefabPath}: CameraAnchor is a first-person leftover; run Farion/Character/Build Third Person Setup.");
+            }
+
+            ExplorerToolView view = prefab.GetComponentInChildren<ExplorerToolView>(true);
+            if (view == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: VisualRoot is missing ExplorerToolView; run Farion/Character/Build Third Person Setup.");
+                return;
+            }
+
+            SerializedObject serialized = new(view);
+            if (serialized.FindProperty("toolModel").objectReferenceValue == null ||
+                serialized.FindProperty("tip").objectReferenceValue == null ||
+                serialized.FindProperty("beam").objectReferenceValue == null)
+            {
+                report.AddError(
+                    $"{prefabPath}: ExplorerToolView must reference the scanner model, its tip and the scan beam.");
             }
         }
 
@@ -208,7 +247,7 @@ namespace Farion.Editor.Validation
             if (solver == null)
             {
                 report.AddError(
-                    $"{prefabPath}: the Animator needs PlayerExplorerFootIK beside it; run Farion/Character/Build Foot IK.");
+                    $"{prefabPath}: the Animator needs PlayerExplorerFootIK beside it; run Farion/Character/Build Third Person Setup.");
                 return;
             }
 

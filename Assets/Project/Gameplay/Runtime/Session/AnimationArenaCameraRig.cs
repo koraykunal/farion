@@ -8,8 +8,8 @@ namespace Farion.Gameplay.Session
     [DefaultExecutionOrder(-100)]
     public sealed class AnimationArenaCameraRig : MonoBehaviour
     {
-        [SerializeField] FirstPersonMotor target;
-        [SerializeField] KeyboardFirstPersonInput inputSource;
+        [SerializeField] ExplorerMotor target;
+        [SerializeField] ExplorerInput inputSource;
         [SerializeField, Min(0f)] float pivotHeight = 0.65f;
         [SerializeField, Min(0.1f)] float distance = 6.5f;
         [SerializeField] Vector2 distanceRange = new(2.5f, 12f);
@@ -105,7 +105,7 @@ namespace Farion.Gameplay.Session
         {
             if (inputSource == null && target != null)
             {
-                inputSource = target.GetComponent<KeyboardFirstPersonInput>();
+                inputSource = target.GetComponent<ExplorerInput>();
             }
         }
     }

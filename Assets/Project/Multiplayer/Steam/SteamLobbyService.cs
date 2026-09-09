@@ -102,7 +102,6 @@ namespace Farion.Multiplayer.Steam
             if (IsAvailable)
             {
                 SteamMatchmaking.LeaveLobby(currentLobby);
-                SteamFriends.ClearRichPresence();
             }
 
             currentLobby = CSteamID.Nil;
@@ -128,7 +127,6 @@ namespace Farion.Multiplayer.Steam
                     HostAddressKey,
                     hostAddress);
                 SteamMatchmaking.SetLobbyData(currentLobby, GameNameKey, GameName);
-                SteamFriends.SetRichPresence("connect", hostAddress);
             }
 
             Action<bool> completed = hostCompleted;
@@ -166,7 +164,6 @@ namespace Farion.Multiplayer.Steam
                 return;
             }
 
-            SteamFriends.SetRichPresence("connect", hostAddress);
             JoinRequested?.Invoke(hostAddress);
         }
 

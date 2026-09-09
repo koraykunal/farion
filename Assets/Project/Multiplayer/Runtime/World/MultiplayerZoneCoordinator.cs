@@ -258,10 +258,38 @@ namespace Farion.Multiplayer.World
             NetworkConnection connection,
             CelestialBody targetBody)
         {
+            if (targetBody == null)
+            {
+                return false;
+            }
+
+            return BeginHandoffToZone(
+                connection,
+                MultiplayerZoneCatalog.ZoneIdForBody(
+                    targetBody.StableId,
+                    ResolveStartingBodyStableId()),
+                targetBody.StableId,
+                returnToFormation: false);
+        }
+
+        public bool BeginReturnToStartingZone(NetworkConnection connection)
+        {
+            return BeginHandoffToZone(
+                connection,
+                MultiplayerZoneCatalog.StartingZoneId,
+                ResolveStartingBodyStableId(),
+                returnToFormation: true);
+        }
+
+        bool BeginHandoffToZone(
+            NetworkConnection connection,
+            GeneratedEntityId targetZoneId,
+            int bodyStableId,
+            bool returnToFormation)
+        {
             if (!networkManager.IsServerStarted ||
                 connection == null ||
                 !connection.IsActive ||
-                targetBody == null ||
                 playerSpawner == null ||
                 string.IsNullOrEmpty(zoneSceneName))
             {
@@ -275,9 +303,6 @@ namespace Farion.Multiplayer.World
                 return false;
             }
 
-            GeneratedEntityId targetZoneId = MultiplayerZoneCatalog.ZoneIdForBody(
-                targetBody.StableId,
-                ResolveStartingBodyStableId());
             if (!targetZoneId.IsValid || targetZoneId == sourceContext.ZoneId)
             {
                 return false;
@@ -286,7 +311,8 @@ namespace Farion.Multiplayer.World
             if (!playerSpawner.PrepareHandoff(
                     connection,
                     sourceContext,
-                    targetZoneId))
+                    targetZoneId,
+                    returnToFormation))
             {
                 return false;
             }
@@ -303,7 +329,7 @@ namespace Farion.Multiplayer.World
                 existing.Scene.isLoaded;
             if (!zoneReady)
             {
-                pendingPinBodies[targetZoneId] = targetBody.StableId;
+                pendingPinBodies[targetZoneId] = bodyStableId;
             }
 
             QueueZoneLoad(connection, targetZoneId);

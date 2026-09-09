@@ -86,6 +86,7 @@ namespace Farion.Editor.Validation
             ValidateMultiplayerAssets(report);
             ValidateCharacterAnimation(report);
             ValidateExplorerFeel(report);
+            ValidateExplorerTool(report);
             FarionUiValidator.ValidateProject(report);
             FarionCelestialVisualProjectValidator.ValidateProjectAssets(report);
             return report;
@@ -344,7 +345,7 @@ namespace Farion.Editor.Validation
                         ValidateRequiredReference(
                             scenePath,
                             multiplayerContext,
-                            "firstPersonCameraRig",
+                            "explorerCameraRig",
                             report);
                         ValidateRequiredReference(
                             scenePath,

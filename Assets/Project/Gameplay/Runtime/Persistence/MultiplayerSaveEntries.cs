@@ -19,6 +19,7 @@ namespace Farion.Gameplay.Persistence
         [SerializeField] ulong zoneId;
         [SerializeField] PlayerPossessionMode possessionMode =
             PlayerPossessionMode.OnFoot;
+        [SerializeField] string ownerProof;
 
         public MultiplayerPlayerSaveEntry()
         {
@@ -44,7 +45,13 @@ namespace Farion.Gameplay.Persistence
         public bool HasExplorerPose => hasExplorerPose;
         public PlayerPossessionMode PossessionMode => possessionMode;
         public ulong ZoneId => zoneId;
+        public string OwnerProof => ownerProof ?? string.Empty;
         public bool IsValid => !string.IsNullOrWhiteSpace(persistentPlayerId);
+
+        public void SetOwnerProof(string proof)
+        {
+            ownerProof = proof ?? string.Empty;
+        }
 
         public void SetExplorerPose(TransformPoseSnapshot pose)
         {
@@ -118,6 +125,12 @@ namespace Farion.Gameplay.Persistence
         {
             shipPose = pose;
             hasShipPose = true;
+        }
+
+        public void ClearShipPose()
+        {
+            shipPose = default;
+            hasShipPose = false;
         }
 
         public void SetZone(ulong value)

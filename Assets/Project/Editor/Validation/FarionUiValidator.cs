@@ -71,7 +71,6 @@ namespace Farion.Editor.Validation
         const float MinimumTextContrast = 4.5f;
         const float MinimumSurfaceLuminanceStep = 1.5f;
 
-        [MenuItem("Farion/Validation/Validate UI Foundation")]
         public static void ValidateFromMenu()
         {
             FarionValidationReport report = new();
@@ -157,7 +156,8 @@ namespace Farion.Editor.Validation
             foreach (FieldInfo field in typeof(UiTextKeys).GetFields(
                          BindingFlags.Public | BindingFlags.Static))
             {
-                if (field.FieldType != typeof(string))
+                if (field.FieldType != typeof(string) ||
+                    field.Name.EndsWith("Prefix", StringComparison.Ordinal))
                 {
                     continue;
                 }

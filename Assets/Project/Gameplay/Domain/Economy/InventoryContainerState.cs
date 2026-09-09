@@ -44,6 +44,16 @@ namespace Farion.Gameplay.Domain.Economy
         public int FreeSlots => Math.Max(0, SlotCapacity - UsedSlots);
         public bool HasAnyStackCapacity => FreeSlots > 0 || HasPartialStack();
 
+        public void AdoptRevision(long revision)
+        {
+            if (revision < 0L)
+            {
+                throw new ArgumentOutOfRangeException(nameof(revision));
+            }
+
+            Revision = revision;
+        }
+
         public bool MatchesRevision(long expectedRevision)
         {
             return expectedRevision == AnyRevision || expectedRevision == Revision;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ namespace Farion.Gameplay.Ships
 
         public IReadOnlyList<ShuttleRuntimeBinding> DockedShuttles =>
             dockedShuttles;
+
+        public event Action<ShuttleRuntimeBinding> ShuttleDocked;
         public bool HasValidAuthoring =>
             TryGetComponent(out BoxCollider boundary) && boundary.isTrigger;
 
@@ -44,6 +47,7 @@ namespace Farion.Gameplay.Ships
                 shuttleColliders = new HashSet<Collider>();
                 occupants.Add(shuttle, shuttleColliders);
                 dockedShuttles.Add(shuttle);
+                ShuttleDocked?.Invoke(shuttle);
             }
 
             shuttleColliders.Add(other);

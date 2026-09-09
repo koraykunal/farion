@@ -16,6 +16,17 @@ namespace Farion.Tests.PlayMode
         {
             SaveGameFileService.DeleteSlot(slotName);
             SaveGameStartupRequest.RequestNewGame(slotName);
+            yield return StartRequested();
+        }
+
+        public static IEnumerator StartFromSave(string slotName)
+        {
+            SaveGameStartupRequest.RequestLoad(slotName);
+            yield return StartRequested();
+        }
+
+        static IEnumerator StartRequested()
+        {
             Assert.That(
                 MultiplayerSessionLauncher.TryCreateSession(
                     out MultiplayerSessionController session),
@@ -38,9 +49,13 @@ namespace Farion.Tests.PlayMode
             yield return null;
         }
 
-        public static IEnumerator Stop(string slotName)
+        public static IEnumerator Stop(string slotName, bool deleteSlot = true)
         {
-            SaveGameFileService.DeleteSlot(slotName);
+            if (deleteSlot)
+            {
+                SaveGameFileService.DeleteSlot(slotName);
+            }
+
             MultiplayerSessionController session = MultiplayerSessionController.Active;
             if (session == null)
             {

@@ -14,7 +14,6 @@ namespace Farion.Gameplay.Input
         const string MouseSensitivityKey = "farion.input.mouse-sensitivity";
         const string InvertLookKey = "farion.input.invert-look";
         const float ReferenceGamepadLookRate = 120f;
-        const float ReferenceGamepadFrameRate = 60f;
 
         static InputActionAsset asset;
         static float mouseSensitivityScale = float.NaN;
@@ -91,6 +90,10 @@ namespace Farion.Gameplay.Input
         public static InputAction OnFootJump => Find("OnFoot", "Jump");
         public static InputAction OnFootSprint => Find("OnFoot", "Sprint");
         public static InputAction OnFootInteract => Find("OnFoot", "Interact");
+        public static InputAction OnFootAim => Find("OnFoot", "Aim");
+        public static InputAction OnFootToggleTool => Find("OnFoot", "ToggleTool");
+        public static InputAction OnFootUseTool => Find("OnFoot", "UseTool");
+        public static InputAction OnFootDive => Find("OnFoot", "Dive");
 
         public static InputAction FlightTranslate => Find("Flight", "Translate");
         public static InputAction FlightVertical => Find("Flight", "Vertical");
@@ -143,17 +146,31 @@ namespace Farion.Gameplay.Input
             return ApplyLookInversion(scaled);
         }
 
-        public static Vector2 ReadLookDelta(
+        public static Vector2 ReadLookDegrees(
             InputAction action,
-            float mouseSensitivity,
+            float mouseDegreesPerCount,
             float gamepadDegreesPerSecond)
         {
             Vector2 value = action?.ReadValue<Vector2>() ?? Vector2.zero;
-            Vector2 scaled = action?.activeControl?.device is Mouse
-                ? ScaleMouseLook(value, mouseSensitivity * MouseSensitivityScale)
-                : ScaleGamepadLook(value, gamepadDegreesPerSecond) *
-                    (Time.deltaTime * ReferenceGamepadFrameRate);
-            return ApplyLookInversion(scaled);
+            return ApplyLookInversion(
+                ScaleLookDegrees(
+                    value,
+                    action?.activeControl?.device is Mouse,
+                    mouseDegreesPerCount * MouseSensitivityScale,
+                    gamepadDegreesPerSecond,
+                    Time.deltaTime));
+        }
+
+        internal static Vector2 ScaleLookDegrees(
+            Vector2 value,
+            bool mouse,
+            float mouseDegreesPerCount,
+            float gamepadDegreesPerSecond,
+            float deltaTime)
+        {
+            return mouse
+                ? value * Mathf.Max(0f, mouseDegreesPerCount)
+                : value * (Mathf.Max(0f, gamepadDegreesPerSecond) * Mathf.Max(0f, deltaTime));
         }
 
         internal static Vector2 ApplyLookInversion(Vector2 scaled)
@@ -247,6 +264,10 @@ namespace Farion.Gameplay.Input
             AddButton(map, "Jump", "<Keyboard>/space", "<Gamepad>/buttonSouth");
             AddButton(map, "Sprint", "<Keyboard>/leftShift", "<Gamepad>/leftStickPress");
             AddButton(map, "Interact", "<Keyboard>/e", "<Gamepad>/buttonWest");
+            AddButton(map, "Aim", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
+            AddButton(map, "ToggleTool", "<Keyboard>/t", "<Gamepad>/dpad/right");
+            AddButton(map, "UseTool", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
+            AddButton(map, "Dive", "<Keyboard>/leftCtrl", "<Gamepad>/buttonEast");
         }
 
         static void BuildFlightMap(InputActionAsset inputAsset)

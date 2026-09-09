@@ -28,7 +28,7 @@ namespace Farion.Editor.Validation
             }
 
             SpacecraftMotor[] motors = FindSceneComponents<SpacecraftMotor>(scene);
-            FirstPersonMotor[] explorers = FindSceneComponents<FirstPersonMotor>(scene);
+            ExplorerMotor[] explorers = FindSceneComponents<ExplorerMotor>(scene);
 
             for (int i = 0; i < bodies.Length; i++)
             {
@@ -45,7 +45,7 @@ namespace Farion.Editor.Validation
             string scenePath,
             CelestialBody body,
             SpacecraftMotor[] motors,
-            FirstPersonMotor[] explorers,
+            ExplorerMotor[] explorers,
             FarionValidationReport report)
         {
             if (body == null || body.Radius <= 0f || body.SurfaceGravity <= 0f)
@@ -221,13 +221,13 @@ namespace Farion.Editor.Validation
             string label,
             float radius,
             float gravity,
-            FirstPersonMotor[] explorers,
+            ExplorerMotor[] explorers,
             FarionValidationReport report)
         {
             float escapeSpeed = Mathf.Sqrt(2f * gravity * radius);
             for (int i = 0; i < explorers.Length; i++)
             {
-                FirstPersonMotorProfile profile = explorers[i] != null
+                ExplorerMotorProfile profile = explorers[i] != null
                     ? explorers[i].Profile
                     : null;
                 if (profile == null || profile.JumpHeight <= 0f)

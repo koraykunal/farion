@@ -9,7 +9,7 @@ namespace Farion.Gameplay.Character
     {
         [SerializeField] Rigidbody referenceBody;
 
-        readonly HashSet<FirstPersonMotor> occupants = new();
+        readonly HashSet<ExplorerMotor> occupants = new();
         BoxCollider cachedVolume;
 
         BoxCollider Volume => cachedVolume != null
@@ -48,7 +48,7 @@ namespace Farion.Gameplay.Character
 
         void OnTriggerEnter(Collider other)
         {
-            FirstPersonMotor motor = other.GetComponentInParent<FirstPersonMotor>();
+            ExplorerMotor motor = other.GetComponentInParent<ExplorerMotor>();
             if (motor != null && occupants.Add(motor))
             {
                 motor.SetArtificialWaterSource(this);
@@ -57,7 +57,7 @@ namespace Farion.Gameplay.Character
 
         void OnTriggerExit(Collider other)
         {
-            FirstPersonMotor motor = other.GetComponentInParent<FirstPersonMotor>();
+            ExplorerMotor motor = other.GetComponentInParent<ExplorerMotor>();
             if (motor != null && occupants.Remove(motor))
             {
                 motor.ClearArtificialWaterSource(this);
@@ -66,7 +66,7 @@ namespace Farion.Gameplay.Character
 
         void OnDisable()
         {
-            foreach (FirstPersonMotor motor in occupants)
+            foreach (ExplorerMotor motor in occupants)
             {
                 if (motor != null)
                 {

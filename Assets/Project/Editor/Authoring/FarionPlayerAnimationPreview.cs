@@ -13,18 +13,18 @@ namespace Farion.Editor.Authoring
         private const string ControllerPath =
             "Assets/Project/Art/Animations/Characters/PlayerExplorer/Controllers/AC_PlayerExplorer.controller";
         private const string MotorProfilePath =
-            "Assets/Project/Design/Gameplay/Character/SO_DefaultFirstPersonMotorProfile.asset";
+            "Assets/Project/Design/Gameplay/Character/SO_DefaultExplorerMotorProfile.asset";
         private const string PreviewObjectName = "Player Animation Preview";
         private const float PreviewLandingDuration = 0.8f;
 
-        private static FirstPersonMotorProfile motorProfile;
+        private static ExplorerMotorProfile motorProfile;
 
-        private static FirstPersonMotorProfile MotorProfile
+        private static ExplorerMotorProfile MotorProfile
         {
             get
             {
                 if (motorProfile == null)
-                    motorProfile = AssetDatabase.LoadAssetAtPath<FirstPersonMotorProfile>(MotorProfilePath);
+                    motorProfile = AssetDatabase.LoadAssetAtPath<ExplorerMotorProfile>(MotorProfilePath);
                 return motorProfile;
             }
         }

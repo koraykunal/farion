@@ -25,7 +25,7 @@ namespace Farion.Audio.Character
 
         [Header("Sources")]
         [SerializeField] ExplorerLocomotionSignals signals;
-        [SerializeField] FirstPersonMotor motor;
+        [SerializeField] ExplorerMotor motor;
         [SerializeField] CelestialActorProbe probe;
 
         [Header("Response")]
@@ -81,7 +81,7 @@ namespace Farion.Audio.Character
 
             if (motor == null)
             {
-                motor = GetComponent<FirstPersonMotor>();
+                motor = GetComponent<ExplorerMotor>();
             }
 
             if (probe == null)
@@ -126,7 +126,7 @@ namespace Farion.Audio.Character
 
         float ResolveWetness()
         {
-            FirstPersonMotorState state = signals.LastState;
+            ExplorerMotorState state = signals.LastState;
             return state.TouchingWater
                 ? Mathf.Clamp01(state.WaterSubmergedFraction / wetnessFullSubmergedFraction)
                 : 0f;

@@ -379,6 +379,10 @@ MonoBehaviour:
     title: SAVE
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671008, type: 3}
     available: 1
+  - action: 40
+    title: RECALL SHIP
+    icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671007, type: 3}
+    available: 1
   - action: 80
     title: EXIT TO MAIN MENU
     icon: {fileID: 21300000, guid: c24f1d4ea3aa4f66bc6b2d42af671009, type: 3}

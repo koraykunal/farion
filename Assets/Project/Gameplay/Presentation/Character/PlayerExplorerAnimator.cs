@@ -1,3 +1,4 @@
+using Farion.Core.Numerics;
 using Farion.Gameplay.Character;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace Farion.Gameplay.Presentation.Character
         static readonly int VerticalSpeedId = Animator.StringToHash("VerticalSpeed");
 
         [Header("Bindings")]
-        [SerializeField] FirstPersonMotor motor;
+        [SerializeField] ExplorerMotor motor;
         [SerializeField] Animator animator;
 
         [Header("Clip Calibration")]
@@ -29,10 +30,26 @@ namespace Farion.Gameplay.Presentation.Character
         [SerializeField] float runClipSpeed = 4.8f;
         [Tooltip("Ground speed in metres per second that the swim clip was authored for. Reaching it blends fully from treading water to swimming.")]
         [SerializeField] float swimClipSpeed = 1.4f;
+        [Tooltip("Planar speed below which the swimmer keeps treading water. Wave drift and drag noise stay under this so the pose does not flicker between upright and prone.")]
+        [Min(0f)]
+        [SerializeField] float swimBlendDeadZone = 0.35f;
+        [Tooltip("Seconds of smoothing on the tread-to-swim blend.")]
+        [Min(0f)]
+        [SerializeField] float swimBlendDamping = 0.3f;
         [Tooltip("Lower bound for the playback multiplier that keeps footfalls in step with real speed. Raise it when slow movement looks like slow motion.")]
         [SerializeField] float minimumStrideScale = 0.65f;
         [Tooltip("Upper bound for the playback multiplier that keeps footfalls in step with real speed. Raise it when the character outruns its stride, lower it when the legs blur.")]
         [SerializeField] float maximumStrideScale = 1.5f;
+
+        [Header("Swim Lean")]
+        [Tooltip("Degrees the body pitches at full vertical swim speed: back while surfacing, forward while diving.")]
+        [Range(0f, 80f)]
+        [SerializeField] float swimLeanDegrees = 35f;
+        [Tooltip("Vertical speed in metres per second that produces the full lean.")]
+        [Min(0.1f)]
+        [SerializeField] float swimLeanReferenceSpeed = 1.5f;
+        [Min(0f)]
+        [SerializeField] float swimLeanResponsiveness = 5f;
 
         [Header("Response")]
         [Tooltip("Seconds of smoothing applied to the movement axes so direction changes do not snap the blend tree.")]
@@ -40,8 +57,11 @@ namespace Farion.Gameplay.Presentation.Character
         [Tooltip("Seconds the animator keeps reporting solid ground after the motor loses contact. Absorbs single-frame probe dropouts on rough terrain without delaying a real jump.")]
         [SerializeField] float groundedCoyoteTime = 0.08f;
 
+        const float SwimLeanDeadZone = 0.35f;
+
         float groundedHoldRemaining;
         bool swimming;
+        float swimLean;
 
         void Reset()
         {
@@ -59,7 +79,7 @@ namespace Farion.Gameplay.Presentation.Character
 
         void ResolveBindings()
         {
-            motor ??= GetComponentInParent<FirstPersonMotor>();
+            motor ??= GetComponentInParent<ExplorerMotor>();
             animator ??= GetComponentInChildren<Animator>(true);
         }
 
@@ -70,7 +90,7 @@ namespace Farion.Gameplay.Presentation.Character
                 return;
             }
 
-            FirstPersonMotorState state = motor.CaptureState();
+            ExplorerMotorState state = motor.CaptureState();
             float deltaTime = Time.deltaTime;
             Vector3 localVelocity =
                 motor.transform.InverseTransformDirection(state.SurfaceVelocity);
@@ -88,19 +108,12 @@ namespace Farion.Gameplay.Presentation.Character
                 deltaTime);
             animator.SetFloat(
                 SwimSpeed01Id,
-                Mathf.Clamp01(speed / Mathf.Max(0.01f, swimClipSpeed)),
-                directionDamping,
+                Mathf.InverseLerp(swimBlendDeadZone, Mathf.Max(swimBlendDeadZone + 0.01f, swimClipSpeed), speed),
+                swimBlendDamping,
                 deltaTime);
             animator.SetFloat(PlanarSpeedId, speed);
             animator.SetBool(GroundedId, ResolveGrounded(state, deltaTime));
-            if (state.WaterSubmergedFraction > 0.5f)
-            {
-                swimming = true;
-            }
-            else if (!state.TouchingWater || state.Grounded)
-            {
-                swimming = false;
-            }
+            swimming = state.Swimming;
 
             animator.SetFloat(
                 SubmergedId,
@@ -108,9 +121,32 @@ namespace Farion.Gameplay.Presentation.Character
                 directionDamping,
                 deltaTime);
             animator.SetFloat(VerticalSpeedId, state.VerticalSpeed);
+            ApplySwimLean(state, deltaTime);
         }
 
-        bool ResolveGrounded(in FirstPersonMotorState state, float deltaTime)
+        void ApplySwimLean(in ExplorerMotorState state, float deltaTime)
+        {
+            float vertical = Mathf.Abs(state.VerticalSpeed) < SwimLeanDeadZone ? 0f : state.VerticalSpeed;
+            float target = swimming
+                ? Mathf.Clamp(-vertical / swimLeanReferenceSpeed, -1f, 1f) * swimLeanDegrees
+                : 0f;
+            if (!swimming && Mathf.Abs(swimLean) < 0.01f)
+            {
+                return;
+            }
+
+            swimLean = swimLeanResponsiveness > 0f
+                ? Mathf.Lerp(swimLean, target, FarionMath.SmoothFactor(swimLeanResponsiveness, deltaTime))
+                : target;
+            if (!swimming && Mathf.Abs(swimLean) < 0.01f)
+            {
+                swimLean = 0f;
+            }
+
+            animator.transform.localRotation = Quaternion.Euler(swimLean, 0f, 0f);
+        }
+
+        bool ResolveGrounded(in ExplorerMotorState state, float deltaTime)
         {
             if (state.Grounded)
             {

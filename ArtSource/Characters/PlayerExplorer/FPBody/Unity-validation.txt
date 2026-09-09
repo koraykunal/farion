@@ -1,1 +1,0 @@
-PASS: Humanoid avatar; 3 full 2-second looping clips; 3 skinned renderers; material remaps; finite baked vertices; matching hand loop endpoints. Runtime possession, locomotion, equipment and multiplayer not tested.

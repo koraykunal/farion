@@ -10,7 +10,7 @@ namespace Farion.Gameplay.Interaction
         public PlayerExplorerPlacementContext(
             GameObject explorerRoot,
             Rigidbody explorerRigidbody,
-            FirstPersonMotor explorerMotor,
+            ExplorerMotor explorerMotor,
             CelestialActorProbe explorerCelestialProbe,
             Transform spacecraftRoot,
             Rigidbody spacecraftRigidbody,
@@ -35,7 +35,7 @@ namespace Farion.Gameplay.Interaction
 
         public GameObject ExplorerRoot { get; }
         public Rigidbody ExplorerRigidbody { get; }
-        public FirstPersonMotor ExplorerMotor { get; }
+        public ExplorerMotor ExplorerMotor { get; }
         public CelestialActorProbe ExplorerCelestialProbe { get; }
         public Transform SpacecraftRoot { get; }
         public Rigidbody SpacecraftRigidbody { get; }
@@ -101,6 +101,28 @@ namespace Farion.Gameplay.Interaction
 
             ApplyPose(context, position, rotation, inheritSpacecraftVelocity: true);
             context.ExplorerMotor?.ResetMotorState();
+        }
+
+        public static void PlaceAtPose(
+            GameObject explorerRoot,
+            Vector3 position,
+            Quaternion rotation)
+        {
+            if (explorerRoot == null)
+            {
+                return;
+            }
+
+            if (explorerRoot.TryGetComponent(out Rigidbody body))
+            {
+                body.position = position;
+                body.rotation = rotation;
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+
+            explorerRoot.transform.SetPositionAndRotation(position, rotation);
+            explorerRoot.GetComponent<ExplorerMotor>()?.ResetMotorState();
         }
 
         public static void SnapToExteriorSurface(

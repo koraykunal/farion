@@ -147,7 +147,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1264058400
-    m_Localized: Ship
+    m_Localized: "Recall ship"
     m_Metadata:
       m_Items: []
   - m_Id: 1264058401
@@ -1155,6 +1155,222 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 14092742173909022
     m_Localized: --/-- SLOTS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909023
+    m_Localized: "THE DEPOSIT IS DEPLETED."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909024
+    m_Localized: "HARVEST FAILED."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909025
+    m_Localized: "INVENTORY HAS INSUFFICIENT CAPACITY."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909026
+    m_Localized: "INVENTORY CHANGED; TRY AGAIN."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909027
+    m_Localized: "THE DEPOSIT IS OUT OF REACH."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909028
+    m_Localized: "Collect {0}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909029
+    m_Localized: "iron ore deposit"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909030
+    m_Localized: "ice crystal deposit"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909031
+    m_Localized: "nickel fragment deposit"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909032
+    m_Localized: "Coolant"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909033
+    m_Localized: "Ice crystal"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909034
+    m_Localized: "Iron ingot"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909035
+    m_Localized: "Iron ore"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909036
+    m_Localized: "Nickel fragment"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909037
+    m_Localized: "Nickel plate"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909038
+    m_Localized: "Reinforced hull panel"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909039
+    m_Localized: "Thermal regulator"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909040
+    m_Localized: "iron smelting"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909041
+    m_Localized: "Structural"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909042
+    m_Localized: "Electronic"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909043
+    m_Localized: "Energy"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909044
+    m_Localized: "Chemical"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909045
+    m_Localized: "Biological"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909046
+    m_Localized: "Exotic"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909047
+    m_Localized: "Raw"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909048
+    m_Localized: "Refined"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909049
+    m_Localized: "Component"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909050
+    m_Localized: "Consumable"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909051
+    m_Localized: "Research sample"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909052
+    m_Localized: "Artifact"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909053
+    m_Localized: "Materials engineering"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909054
+    m_Localized: "Energy systems"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909055
+    m_Localized: "Electronics and computing"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909056
+    m_Localized: "Chemistry and industry"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909057
+    m_Localized: "Xenobiology"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909058
+    m_Localized: "Quantum physics"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909059
+    m_Localized: "Keyboard"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909060
+    m_Localized: "Mouse"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909061
+    m_Localized: "Gamepad"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909062
+    m_Localized: "Aim"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909063
+    m_Localized: "Scanner"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909064
+    m_Localized: "Use scanner"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909065
+    m_Localized: "Replace most interface transitions with immediate state changes and disable flight motion blur and chromatic aberration."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909066
+    m_Localized: "RECALL SHIP TO THE FLEET"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909067
+    m_Localized: "The stranded shuttle returns to its formation slot, refuelled and repaired. Its cargo is jettisoned."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909068
+    m_Localized: "RECALL"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909069
+    m_Localized: "SHUTTLE RECALLED TO THE FLEET."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909070
+    m_Localized: "THE SHUTTLE IS NOT STRANDED."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909071
+    m_Localized: "RECALL FAILED."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909072
+    m_Localized: "SHUTTLE REFUELLED AND REPAIRED."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909073
+    m_Localized: "SCANNING {0}%"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909074
+    m_Localized: "{0}  \u00B7  {1} / {2} REMAINING"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909075
+    m_Localized: "NO DEPOSIT IN RANGE"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909076
+    m_Localized: Dive
     m_Metadata:
       m_Items: []
   references:

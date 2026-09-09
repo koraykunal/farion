@@ -1,6 +1,7 @@
 using System;
 using Farion.Gameplay.Inventory;
 using Farion.UI.Common;
+using Farion.UI.Localization;
 using Farion.UI.Foundation;
 using Farion.UI.Styling;
 using TMPro;
@@ -76,9 +77,14 @@ namespace Farion.UI.Gameplay
             SetText(
                 nameText,
                 item != null
-                    ? item.DisplayName
+                    ? UiLocalization.GetOrFallback(item.ItemId, item.DisplayName)
                     : string.Empty);
-            SetText(detailText, item != null ? $"{item.Category} / {item.Form}" : string.Empty);
+            SetText(
+                detailText,
+                item != null
+                    ? $"{UiLocalization.GetEnum(UiTextKeys.InventoryCategoryPrefix, item.Category)} / " +
+                      UiLocalization.GetEnum(UiTextKeys.InventoryFormPrefix, item.Form)
+                    : string.Empty);
             SetText(quantityText, hasItem ? $"\u00D7{stack.Quantity}" : string.Empty);
 
             if (iconImage != null)

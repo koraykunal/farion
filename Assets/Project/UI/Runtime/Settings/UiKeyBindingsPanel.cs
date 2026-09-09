@@ -14,6 +14,14 @@ namespace Farion.UI.Settings
     public sealed class UiKeyBindingsPanel : MonoBehaviour
     {
         static readonly string[] RebindableMaps = { "OnFoot", "Flight", "Vehicle" };
+        const float RebindTimeoutSeconds = 6f;
+
+        enum BindingDevice
+        {
+            Keyboard,
+            Mouse,
+            Gamepad
+        }
 
         readonly struct BindingRow
         {
@@ -21,25 +29,35 @@ namespace Farion.UI.Settings
                 InputAction action,
                 int bindingIndex,
                 string labelKey,
-                string fallbackLabel)
+                string fallbackLabel,
+                BindingDevice device)
             {
                 Action = action;
                 BindingIndex = bindingIndex;
                 LabelKey = labelKey;
                 FallbackLabel = fallbackLabel;
+                Device = device;
             }
 
             public InputAction Action { get; }
             public int BindingIndex { get; }
             public string LabelKey { get; }
             public string FallbackLabel { get; }
+            public BindingDevice Device { get; }
 
             public string Label
             {
                 get
                 {
                     string localized = UiLocalization.Get(LabelKey);
-                    return localized == LabelKey ? FallbackLabel : localized;
+                    string name = localized == LabelKey ? FallbackLabel : localized;
+                    string device = UiLocalization.Get(Device switch
+                    {
+                        BindingDevice.Mouse => UiTextKeys.SettingsBindingsDeviceMouse,
+                        BindingDevice.Gamepad => UiTextKeys.SettingsBindingsDeviceGamepad,
+                        _ => UiTextKeys.SettingsBindingsDeviceKeyboard
+                    });
+                    return $"{name}  ({device})";
                 }
             }
         }
@@ -136,7 +154,9 @@ namespace Farion.UI.Settings
             for (int i = 0; i < action.bindings.Count; i++)
             {
                 InputBinding binding = action.bindings[i];
-                if (binding.isComposite || !IsRebindablePath(binding.effectivePath))
+                if (binding.isComposite ||
+                    !TryResolveDevice(binding.effectivePath, out BindingDevice device) ||
+                    !IsButtonBinding(action, binding))
                 {
                     continue;
                 }
@@ -145,14 +165,54 @@ namespace Farion.UI.Settings
                     action,
                     i,
                     BuildLabelKey(action, binding),
-                    BuildFallbackLabel(action, binding)));
+                    BuildFallbackLabel(action, binding),
+                    device));
             }
         }
 
-        static bool IsRebindablePath(string path)
+        static bool TryResolveDevice(string path, out BindingDevice device)
         {
-            return !string.IsNullOrEmpty(path) &&
-                path.StartsWith("<Keyboard>", StringComparison.Ordinal);
+            device = BindingDevice.Keyboard;
+            if (string.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+
+            if (path.StartsWith("<Keyboard>", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (path.StartsWith("<Mouse>", StringComparison.Ordinal))
+            {
+                device = BindingDevice.Mouse;
+                return true;
+            }
+
+            if (path.StartsWith("<Gamepad>", StringComparison.Ordinal))
+            {
+                device = BindingDevice.Gamepad;
+                return true;
+            }
+
+            return false;
+        }
+
+        static bool IsButtonBinding(InputAction action, InputBinding binding)
+        {
+            return binding.isPartOfComposite ||
+                action.type == InputActionType.Button ||
+                string.Equals(action.expectedControlType, "Button", StringComparison.Ordinal);
+        }
+
+        static string DevicePath(BindingDevice device)
+        {
+            return device switch
+            {
+                BindingDevice.Mouse => "<Mouse>",
+                BindingDevice.Gamepad => "<Gamepad>",
+                _ => "<Keyboard>"
+            };
         }
 
         static string BuildLabelKey(InputAction action, InputBinding binding)
@@ -270,15 +330,18 @@ namespace Farion.UI.Settings
             InputActionRebindingExtensions.RebindingOperation operation =
                 row.Action
                     .PerformInteractiveRebinding(row.BindingIndex)
-                    .WithControlsExcluding("<Mouse>")
+                    .WithControlsHavingToMatchPath(DevicePath(row.Device))
+                    .WithControlsExcluding("<Pointer>/position")
+                    .WithControlsExcluding("<Pointer>/delta")
+                    .WithControlsExcluding("<Mouse>/scroll")
+                    .WithControlsExcluding("<Gamepad>/leftStick")
+                    .WithControlsExcluding("<Gamepad>/rightStick")
                     .WithCancelingThrough("<Keyboard>/escape")
+                    .WithTimeout(RebindTimeoutSeconds)
                     .WithMatchingEventsBeingSuppressed()
+                    .WithExpectedControlType("Button")
                     .OnComplete(_ => CompleteRebind(row, rowIndex))
                     .OnCancel(_ => CancelRebind(row));
-            if (binding.isPartOfComposite)
-            {
-                operation = operation.WithExpectedControlType("Button");
-            }
 
             activeRebind = operation;
             operation.Start();

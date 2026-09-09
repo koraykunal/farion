@@ -52,9 +52,9 @@ namespace Farion.Editor.Authoring
             player.transform.SetPositionAndRotation(
                 new Vector3(0f, 1.5f, 0f),
                 Quaternion.identity);
-            if (player.GetComponent<KeyboardFirstPersonInput>() == null)
+            if (player.GetComponent<ExplorerInput>() == null)
             {
-                player.AddComponent<KeyboardFirstPersonInput>();
+                player.AddComponent<ExplorerInput>();
             }
 
             GameObject arenaCamera = new("ArenaCamera");
@@ -65,16 +65,16 @@ namespace Farion.Editor.Authoring
             arenaCamera.tag = "MainCamera";
             SerializedObject cameraSerialized = new(cameraRig);
             cameraSerialized.FindProperty("target").objectReferenceValue =
-                player.GetComponent<FirstPersonMotor>();
+                player.GetComponent<ExplorerMotor>();
             cameraSerialized.FindProperty("inputSource").objectReferenceValue =
-                player.GetComponent<KeyboardFirstPersonInput>();
+                player.GetComponent<ExplorerInput>();
             cameraSerialized.ApplyModifiedPropertiesWithoutUndo();
 
             AnimationArenaBootstrap bootstrap =
                 new GameObject("ArenaBootstrap").AddComponent<AnimationArenaBootstrap>();
             SerializedObject serialized = new(bootstrap);
             serialized.FindProperty("player").objectReferenceValue =
-                player.GetComponent<FirstPersonMotor>();
+                player.GetComponent<ExplorerMotor>();
             SerializedProperty points = serialized.FindProperty("teleportPoints");
             points.arraySize = 3;
             points.GetArrayElementAtIndex(0).objectReferenceValue =

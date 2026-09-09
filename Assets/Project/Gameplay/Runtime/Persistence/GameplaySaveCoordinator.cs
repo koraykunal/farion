@@ -91,13 +91,21 @@ namespace Farion.Gameplay.Persistence
         public SaveGameOperationResult Load(string requestedSlotName)
         {
             string resolvedSlotName = SaveGameSlotCatalog.ResolveSlotName(requestedSlotName);
-            if (!TryReadSaveData(
+            if (!CanCaptureSaveData())
+            {
+                lastLoadResult = SaveGameOperationResult.Failure(
+                    SaveGameOperationStatus.MissingRuntimeReference,
+                    SaveGameSlotCatalog.GetSlotPath(resolvedSlotName));
+                return lastLoadResult;
+            }
+
+            if (!TryReadApplicableSaveData(
                     resolvedSlotName,
                     useBackup: false,
                     out GameplaySaveData saveData,
                     out SaveGameOperationResult readResult))
             {
-                if (!TryReadSaveData(
+                if (!TryReadApplicableSaveData(
                         resolvedSlotName,
                         useBackup: true,
                         out saveData,
@@ -112,15 +120,7 @@ namespace Farion.Gameplay.Persistence
                 readResult = backupReadResult;
             }
 
-            if (!CanApplySaveData(saveData))
-            {
-                lastLoadResult = SaveGameOperationResult.Failure(
-                    SaveGameOperationStatus.MissingRuntimeReference,
-                    readResult.Path);
-                return lastLoadResult;
-            }
-
-            GameplaySaveData rollbackData = CanCaptureSaveData() ? CaptureSaveData() : null;
+            GameplaySaveData rollbackData = CaptureSaveData();
             if (!ApplySaveData(saveData))
             {
                 bool rollbackSucceeded = rollbackData != null && ApplySaveData(rollbackData);
@@ -170,6 +170,29 @@ namespace Farion.Gameplay.Persistence
             }
 
             return true;
+        }
+
+        bool TryReadApplicableSaveData(
+            string slotName,
+            bool useBackup,
+            out GameplaySaveData saveData,
+            out SaveGameOperationResult result)
+        {
+            if (!TryReadSaveData(slotName, useBackup, out saveData, out result))
+            {
+                return false;
+            }
+
+            if (CanApplySaveData(saveData))
+            {
+                return true;
+            }
+
+            result = SaveGameOperationResult.Failure(
+                SaveGameOperationStatus.IncompatibleContent,
+                result.Path);
+            saveData = null;
+            return false;
         }
 
         bool TryReadSaveData(
@@ -231,7 +254,11 @@ namespace Farion.Gameplay.Persistence
                 }
             }
 
-            return true;
+            return multiplayerSource == null ||
+                multiplayerSource.CanApply(
+                    saveData.MultiplayerPlayers,
+                    saveData.MultiplayerShipCargo,
+                    context.Definitions);
         }
 
         bool ApplySaveData(GameplaySaveData saveData)

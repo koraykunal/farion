@@ -8,7 +8,7 @@ namespace Farion.Gameplay.Session
     [DefaultExecutionOrder(-500)]
     public sealed class AnimationArenaBootstrap : MonoBehaviour
     {
-        [SerializeField] FirstPersonMotor player;
+        [SerializeField] ExplorerMotor player;
         [Tooltip("Targets for the digit keys: pressing 1, 2 or 3 teleports the explorer to the matching entry, R returns to spawn.")]
         [SerializeField] Transform[] teleportPoints;
         [Tooltip("Falling below this world height teleports the explorer back to its spawn point.")]
@@ -22,7 +22,7 @@ namespace Farion.Gameplay.Session
             Physics.simulationMode = SimulationMode.FixedUpdate;
             if (player == null)
             {
-                player = FindAnyObjectByType<FirstPersonMotor>();
+                player = FindAnyObjectByType<ExplorerMotor>();
             }
 
             if (player != null)

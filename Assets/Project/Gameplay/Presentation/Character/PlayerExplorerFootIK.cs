@@ -9,10 +9,9 @@ namespace Farion.Gameplay.Presentation.Character
     [RequireComponent(typeof(Animator))]
     public sealed class PlayerExplorerFootIK : MonoBehaviour
     {
-        const float SubmergedCutoff = 0.5f;
 
         [Header("Bindings")]
-        [SerializeField] FirstPersonMotor motor;
+        [SerializeField] ExplorerMotor motor;
         [SerializeField] Animator animator;
 
         [Header("Probe")]
@@ -24,6 +23,8 @@ namespace Farion.Gameplay.Presentation.Character
         [SerializeField] float soleOffset = 0.02f;
         [Tooltip("Slope angle in degrees above which the ground is treated as a wall and the foot returns to its animated pose.")]
         [SerializeField] float maximumGroundAngle = 55f;
+        [Tooltip("Animated lift above the model floor over which a foot is treated as swinging and released from the ground. Keeps walk cycles from being dragged flat.")]
+        [SerializeField] float swingLift = 0.08f;
 
         [Header("Response")]
         [Tooltip("Furthest the hips may sink so the lower foot can reach the ground. Beyond this the character crouches unnaturally on steep terrain.")]
@@ -40,6 +41,7 @@ namespace Farion.Gameplay.Presentation.Character
             public Vector3 Target;
             public Vector3 Normal;
             public float Drop;
+            public float Weight;
         }
 
         FootPlant leftPlant;
@@ -60,7 +62,7 @@ namespace Farion.Gameplay.Presentation.Character
         void ResolveBindings()
         {
             animator ??= GetComponent<Animator>();
-            motor ??= GetComponentInParent<FirstPersonMotor>();
+            motor ??= GetComponentInParent<ExplorerMotor>();
         }
 
         void OnAnimatorIK(int layerIndex)
@@ -70,10 +72,10 @@ namespace Farion.Gameplay.Presentation.Character
                 return;
             }
 
-            FirstPersonMotorState state = motor.CaptureState();
+            ExplorerMotorState state = motor.CaptureState();
             float deltaTime = Time.deltaTime;
             bool planted =
-                state.Grounded && state.WaterSubmergedFraction < SubmergedCutoff;
+                state.Grounded && !state.Swimming;
             currentWeight = FarionMath.Smooth(
                 currentWeight,
                 planted ? 1f : 0f,
@@ -107,7 +109,7 @@ namespace Farion.Gameplay.Presentation.Character
                 ref rightPlant);
 
             float desiredPelvisDrop = Mathf.Clamp(
-                Mathf.Min(Mathf.Min(leftPlant.Drop, rightPlant.Drop), 0f),
+                Mathf.Min(Mathf.Min(leftPlant.Drop * leftPlant.Weight, rightPlant.Drop * rightPlant.Weight), 0f),
                 -Mathf.Abs(maximumPelvisDrop),
                 0f);
             pelvisDrop = FarionMath.Smooth(
@@ -130,6 +132,8 @@ namespace Farion.Gameplay.Presentation.Character
             ref FootPlant plant)
         {
             Vector3 ankle = animator.GetIKPosition(goal);
+            float lift = Vector3.Dot(ankle - animator.transform.position, up) - soleHeight;
+            float plantedWeight = 1f - Mathf.Clamp01(lift / Mathf.Max(0.001f, swingLift));
             float drop = 0f;
             Vector3 normal = up;
             if (physicsScene.Raycast(
@@ -147,6 +151,7 @@ namespace Farion.Gameplay.Presentation.Character
             }
 
             float blend = FarionMath.SmoothFactor(footResponsiveness, deltaTime);
+            plant.Weight = Mathf.Lerp(plant.Weight, plantedWeight, blend);
             plant.Drop = Mathf.Lerp(plant.Drop, drop, blend);
             plant.Normal = plant.Normal.sqrMagnitude > 0.0001f
                 ? Vector3.Slerp(plant.Normal, normal, blend)
@@ -156,8 +161,9 @@ namespace Farion.Gameplay.Presentation.Character
 
         void ApplyGoal(AvatarIKGoal goal, Vector3 up, in FootPlant plant)
         {
-            animator.SetIKPositionWeight(goal, currentWeight);
-            animator.SetIKRotationWeight(goal, currentWeight);
+            float weight = currentWeight * plant.Weight;
+            animator.SetIKPositionWeight(goal, weight);
+            animator.SetIKRotationWeight(goal, weight);
             animator.SetIKPosition(goal, plant.Target);
             animator.SetIKRotation(
                 goal,
@@ -173,6 +179,8 @@ namespace Farion.Gameplay.Presentation.Character
             animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, 0f);
             leftPlant.Drop = 0f;
             rightPlant.Drop = 0f;
+            leftPlant.Weight = 0f;
+            rightPlant.Weight = 0f;
             pelvisDrop = 0f;
         }
 

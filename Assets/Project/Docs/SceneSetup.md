@@ -919,27 +919,27 @@ Landing, orbit, and ocean telemetry are currently inspected from the
 ship components. Surface these values through the gameplay HUD only after the
 resource/inventory/crafting loop is readable.
 
-## First-Person Explorer
+## Third-Person Explorer
 
-The first on-foot actor is a physics actor, not a `CharacterController`. It uses
-the same `CelestialActorProbe` contract as the spacecraft, so local up, surface
+The on-foot actor is a physics actor, not a `CharacterController`. It uses the
+same `CelestialActorProbe` contract as the spacecraft, so local up, surface
 slope, ocean state, and atmosphere state come from the authored celestial
-simulation.
+simulation. The player sees the full astronaut from an over-the-shoulder camera.
 
 Create a test explorer under `Actors`:
 
 1. Create a capsule named `Player Explorer`.
 2. Add `Rigidbody`.
 3. Add `CapsuleCollider`.
-4. Add `KeyboardFirstPersonInput`.
+4. Add `ExplorerInput`.
 5. Add `CelestialActorProbe`.
 6. Assign `Simulation > CelestialFrameProvider` to `Frame Provider`.
-7. Add `FirstPersonMotor`.
-8. Assign `Assets/Project/Design/Gameplay/Character/SO_DefaultFirstPersonMotorProfile.asset`
+7. Add `ExplorerMotor`.
+8. Assign `Assets/Project/Design/Gameplay/Character/SO_DefaultExplorerMotorProfile.asset`
    to `Profile`.
-9. Assign the same `KeyboardFirstPersonInput` to `Input Source`.
-10. Assign the main camera transform to `View Reference` after adding the camera
-    rig below.
+9. Assign the same `ExplorerInput` to `Input Source`.
+10. Leave `View Reference` empty; the session binds the gameplay camera at
+    possession time. Movement is camera-relative through that reference.
 11. Keep `Apply Celestial Gravity` enabled.
 12. On the `Rigidbody`, keep `Use Gravity` disabled.
 13. Start with `Rigidbody > Mass = 80`, `Drag = 0`, and `Angular Drag = 0.05`.
@@ -949,21 +949,24 @@ Create a test explorer under `Actors`:
     collider. The body may retain `KinematicOrbit`; do not move its collider
     through Unity space while it is the exploration reference.
 
-For the first-person camera:
+For the third-person camera:
 
 1. Select the scene camera or a camera under `CameraRig`.
 2. Disable or remove `SpacecraftCameraRig` while testing on-foot movement.
-3. Add `FirstPersonCameraRig`.
-4. Assign `Player Explorer > FirstPersonMotor` to `Target`.
-5. Assign `Player Explorer > KeyboardFirstPersonInput` to `Input Source`.
-6. Start with `Eye Height = 0.65`; the explorer transform is the centre of its
-   two-metre capsule, so this places the camera about `1.65 m` above its feet.
-7. Keep `Lock Cursor On Enable` enabled in Play Mode.
+3. Add `ExplorerCameraRig`.
+4. Assign `Player Explorer > ExplorerMotor` to `Target`.
+5. Assign `Player Explorer > ExplorerInput` to `Input Source`.
+6. Start with `Pivot Height = 0.5`, `Explore Distance = 3.2`,
+   `Explore Shoulder = 0.45`, `Aim Distance = 1.7`, `Aim Shoulder = 0.6`.
 
-`FirstPersonCameraRig` smooths only the eye offset relative to the interpolated
-player pose. Do not reintroduce absolute world-position smoothing: it turns
-planetary translation and origin rebases into visible camera lag against the
-ground.
+`ExplorerCameraRig` orbits a pivot on the tick-smoothed `VisualRoot`. Yaw and
+pitch belong to the camera, never to the body: while exploring the body turns
+toward the movement direction at `Turn Degrees Per Second`; while aiming (right
+mouse, left trigger, or a raised scanner) the body turns toward the camera and
+the camera pulls in over the shoulder. Camera collision is a sphere cast from the
+pivot; pushing in is instant, backing out is smoothed. Do not reintroduce
+absolute world-position smoothing: it turns planetary translation and origin
+rebases into visible camera lag against the ground.
 
 On `Simulation > WorldOriginRebaser`, keep `Actors` and `CameraRig` in
 `Shifted Roots`. While testing the explorer alone, set `Tracking Target` to
@@ -971,13 +974,20 @@ On `Simulation > WorldOriginRebaser`, keep `Actors` and `CameraRig` in
 
 Controls:
 
-- `W/S`: forward/back along the local surface frame.
-- `A/D`: strafe along the local surface frame.
-- `Mouse`: yaw/pitch.
+- `W/S`, `A/D`: move relative to the camera on the local surface frame.
+- `Mouse`: orbit the camera.
+- `Right Mouse`: aim; the body faces the camera.
+- `T`: raise or stow the scanner (raised also aims).
+- `Left Mouse`: use the raised scanner.
 - `Space`: jump.
 - `Left Shift`: sprint.
-- `E`: reserved for interaction/boarding; it is captured by input but does not
-  trigger gameplay until the boarding layer is added.
+- `E`: interact/boarding.
+
+The scanner is built by `Farion > Character > Build Third Person Setup`: it
+removes the first-person leftovers, sockets `SM_Tool_Scanner_A` on the right
+hand bone through `ExplorerToolView`, and adds the scan beam. Tune
+`Grip Position` / `Grip Euler` on `VisualRoot > ExplorerToolView` in Play Mode
+with the scanner raised; the values apply live.
 
 In Play Mode, check `Player Explorer > CelestialActorProbe > Runtime Sample`:
 
@@ -986,19 +996,14 @@ In Play Mode, check `Player Explorer > CelestialActorProbe > Runtime Sample`:
 - `Surface Slope` should change over terrain.
 - `Local Up` should follow the planet surface normal.
 
-Then check `FirstPersonMotor > Runtime Movement`:
+Then check `ExplorerMotor > Runtime Movement`:
 
 - `Grounded` should be true while standing on the terrain mesh collider.
 - `Walkable Ground` should become false on slopes above
-  `SO_DefaultFirstPersonMotorProfile > Max Walkable Slope Angle`.
+  `SO_DefaultExplorerMotorProfile > Max Walkable Slope Angle`.
 - `Surface Speed` should rise while walking or sprinting and fall when input is
   released.
 - The capsule should rotate upright against the current celestial local up.
-
-Do not add inventory, tools, resource collection, health, or co-op replication
-until this basic explorer can walk, jump, and camera-look reliably on the
-planet surface. The next gameplay layer is possession/boarding: a single active
-control owner that switches between `Player Explorer` and `Player Starter Shuttle`.
 
 ## Player Possession And Boarding
 
@@ -1204,7 +1209,7 @@ Runtime behavior:
 - `HudRoot` stays active during gameplay. The interaction prompt text is shown
   only when `PlayerInteractionRaycaster` has a valid target and no blocking
   gameplay panel is open.
-- While a panel is open, first-person look/move, spacecraft input, and
+- While a panel is open, on-foot look/move, spacecraft input, and
   interaction raycasts read `PlayerControlLock` and return empty input.
 - `Time.timeScale` must stay unchanged.
 
@@ -1272,7 +1277,7 @@ convenience.
 
 `SC_GameplayShell` owns presentation only:
 
-- `CameraRig/Camera` with `SpacecraftCameraRig`, `FirstPersonCameraRig`,
+- `CameraRig/Camera` with `SpacecraftCameraRig`, `ExplorerCameraRig`,
   `StudioListener`, a camera-local `Volume`, and `SpacecraftPostProcessRig`.
 - `Lighting` with the single `Directional Light`, `CelestialLightingRig`,
   `StarDomeController`, `CelestialLodController`, `CelestialOrbitLineRenderer`,

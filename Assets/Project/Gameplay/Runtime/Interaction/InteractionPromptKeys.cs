@@ -4,6 +4,7 @@ namespace Farion.Gameplay.Interaction
     {
         public const char ArgumentSeparator = '|';
 
+        public const string Harvest = "interact.harvest";
         public const string EnterShip = "interact.enter_ship";
         public const string PilotSeat = "interact.pilot_seat";
         public const string ToggleRamp = "interact.toggle_ramp";

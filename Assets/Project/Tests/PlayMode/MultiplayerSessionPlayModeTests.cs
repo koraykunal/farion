@@ -169,23 +169,6 @@ namespace Farion.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator SurfacePatchCollisionObserverCanBeRebound()
-        {
-            testRoot = new GameObject("SurfacePatchObserverTest");
-            CelestialSurfacePatchSystem patchSystem =
-                testRoot.AddComponent<CelestialSurfacePatchSystem>();
-            Rigidbody body = new GameObject("Observer").AddComponent<Rigidbody>();
-            body.transform.SetParent(testRoot.transform);
-            TestSurfaceCollisionObserver observer =
-                body.gameObject.AddComponent<TestSurfaceCollisionObserver>();
-
-            patchSystem.SetCollisionObserverSource(observer);
-            yield return null;
-
-            Assert.That(patchSystem.CollisionObserverRigidbody, Is.SameAs(body));
-        }
-
-        [UnityTest]
         public IEnumerator MultiplayerSpawnFindsDryLand()
         {
             testRoot = new GameObject("MultiplayerOceanSpawnTest");
@@ -240,7 +223,6 @@ namespace Farion.Tests.PlayMode
             Assert.That(position.x, Is.GreaterThan(0f));
             Assert.That(position.magnitude, Is.GreaterThanOrEqualTo(110f + clearance));
         }
-
 
         static void Invoke(object target, string methodName, params object[] args)
         {

@@ -136,7 +136,7 @@ namespace Farion.Editor.Authoring
 
                 SerializedObject serialized = new(driver);
                 serialized.FindProperty("motor").objectReferenceValue =
-                    root.GetComponent<FirstPersonMotor>();
+                    root.GetComponent<ExplorerMotor>();
                 serialized.FindProperty("rig").objectReferenceValue = rig;
                 serialized.FindProperty("aimTarget").objectReferenceValue =
                     targetObject.transform;

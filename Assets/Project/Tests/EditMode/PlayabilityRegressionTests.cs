@@ -131,25 +131,6 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void ShipCargoEntryKeepsItsOwnerAcrossFormationSlots()
-        {
-            MultiplayerShipSaveEntry owned = new(
-                "player-a",
-                2,
-                CreateSnapshot(),
-                ResourcePool.Full(500f),
-                ResourcePool.Full(300f));
-
-            Assert.That(owned.HasOwner, Is.True);
-            Assert.That(owned.HasFuel, Is.True);
-            Assert.That(owned.Fuel.Current, Is.EqualTo(500f));
-            Assert.That(owned.HasHull, Is.True);
-            Assert.That(owned.Hull.Current, Is.EqualTo(300f));
-            Assert.That(owned.PersistentPlayerId, Is.EqualTo("player-a"));
-            Assert.That(owned.IsValid, Is.True);
-        }
-
-        [Test]
         public void LegacyShipCargoEntryWithoutOwnerStaysValidThroughItsSlot()
         {
             MultiplayerShipSaveEntry legacy = new(

@@ -7,37 +7,37 @@ namespace Farion.Gameplay.Session
     public static class LocalPlayerCameraBinding
     {
         public static void FollowExplorer(
-            FirstPersonCameraRig firstPersonRig,
+            ExplorerCameraRig explorerRig,
             SpacecraftCameraRig spacecraftRig,
-            FirstPersonMotor motor,
-            KeyboardFirstPersonInput input)
+            ExplorerMotor motor,
+            ExplorerInput input)
         {
             if (spacecraftRig != null)
             {
                 spacecraftRig.enabled = false;
             }
 
-            if (firstPersonRig == null)
+            if (explorerRig == null)
             {
                 return;
             }
 
-            firstPersonRig.enabled = true;
-            firstPersonRig.SetTarget(motor);
-            firstPersonRig.SetInputSource(input);
+            explorerRig.enabled = true;
+            explorerRig.SetTarget(motor);
+            explorerRig.SetInputSource(input);
         }
 
         public static void FollowSpacecraft(
-            FirstPersonCameraRig firstPersonRig,
+            ExplorerCameraRig explorerRig,
             SpacecraftCameraRig spacecraftCameraRig,
             SpacecraftRig rig,
             SpacecraftMotor motor,
             Transform fallbackTarget,
             SpacecraftPilotCameraView view)
         {
-            if (firstPersonRig != null)
+            if (explorerRig != null)
             {
-                firstPersonRig.enabled = false;
+                explorerRig.enabled = false;
             }
 
             if (spacecraftCameraRig == null)
@@ -54,12 +54,12 @@ namespace Farion.Gameplay.Session
         }
 
         public static void Release(
-            FirstPersonCameraRig firstPersonRig,
+            ExplorerCameraRig explorerRig,
             SpacecraftCameraRig spacecraftCameraRig)
         {
-            if (firstPersonRig != null)
+            if (explorerRig != null)
             {
-                firstPersonRig.SetTarget(null);
+                explorerRig.SetTarget(null);
             }
 
             if (spacecraftCameraRig != null)

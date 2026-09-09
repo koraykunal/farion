@@ -29,7 +29,6 @@ namespace Farion.Editor.Authoring
             }
 
             InstallOnCorePrefab(material);
-            HideForOwner();
             AssetDatabase.SaveAssets();
         }
 
@@ -165,43 +164,6 @@ namespace Farion.Editor.Authoring
             }
 
             return false;
-        }
-
-        static void HideForOwner()
-        {
-            string prefabPath = FarionAssetPaths.NetworkExplorerPrefab;
-            GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
-            try
-            {
-                var controller = root.GetComponent<NetworkExplorerController>();
-                VisorEyes eyes = root.GetComponentInChildren<VisorEyes>(true);
-                if (controller == null || eyes == null)
-                {
-                    Debug.LogError(
-                        $"{prefabPath}: NetworkExplorerController or VisorEyes missing.");
-                    return;
-                }
-
-                Renderer renderer = eyes.GetComponent<Renderer>();
-                var serialized = new SerializedObject(controller);
-                SerializedProperty list = serialized.FindProperty("ownerHiddenRenderers");
-                for (int i = 0; i < list.arraySize; i++)
-                {
-                    if (list.GetArrayElementAtIndex(i).objectReferenceValue == renderer)
-                    {
-                        return;
-                    }
-                }
-
-                list.InsertArrayElementAtIndex(list.arraySize);
-                list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = renderer;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(root);
-            }
         }
 
         static Transform FindChild(Transform root, string name)

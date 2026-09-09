@@ -1,5 +1,6 @@
 using Farion.Core.Numerics;
 using Farion.Gameplay.Flight;
+using Farion.Gameplay.Input;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -110,9 +111,10 @@ namespace Farion.Gameplay.Presentation.Flight
                 responseSharpness,
                 Time.deltaTime);
 
+            float motionScale = PlayerViewPreferences.ReducedMotion ? 0f : responseBlend;
             vignette.intensity.value = Mathf.Lerp(restVignette, maximumVignette, responseBlend);
-            chromaticAberration.intensity.value = maximumChromaticAberration * responseBlend;
-            motionBlur.intensity.value = maximumMotionBlur * responseBlend;
+            chromaticAberration.intensity.value = maximumChromaticAberration * motionScale;
+            motionBlur.intensity.value = maximumMotionBlur * motionScale;
         }
 
         void BuildProfile()

@@ -13,17 +13,19 @@ namespace Farion.Tests.EditMode
     public sealed class MultiplayerFoundationTests
     {
         [Test]
-        public void MotorInputClampsUntrustedMovementAndYaw()
+        public void MotorInputClampsUntrustedMovementAndLook()
         {
-            FirstPersonMotorInput input = new(
-                new Vector2(10f, -10f),
-                float.PositiveInfinity,
+            ExplorerMotorInput input = new(
+                new Vector3(10f, 0f, -10f),
+                new Vector3(float.PositiveInfinity, 0f, 0f),
+                true,
                 true,
                 true,
                 true);
 
             Assert.That(input.Movement.magnitude, Is.EqualTo(1f).Within(0.0001f));
-            Assert.That(input.YawDegrees, Is.Zero);
+            Assert.That(input.LookDirection, Is.EqualTo(Vector3.zero));
+            Assert.That(input.Aim, Is.True);
             Assert.That(input.Jump, Is.True);
             Assert.That(input.Sprint, Is.True);
             Assert.That(input.SwimAscend, Is.True);
@@ -38,8 +40,8 @@ namespace Farion.Tests.EditMode
                 gameObject.AddComponent<Rigidbody>();
                 gameObject.AddComponent<CapsuleCollider>();
                 gameObject.AddComponent<Farion.Gameplay.Actors.CelestialActorProbe>();
-                FirstPersonMotor motor = gameObject.AddComponent<FirstPersonMotor>();
-                FirstPersonMotorState expected = new()
+                ExplorerMotor motor = gameObject.AddComponent<ExplorerMotor>();
+                ExplorerMotorState expected = new()
                 {
                     SimulationTime = 12.5f,
                     LastJumpTime = 4f,
@@ -52,7 +54,7 @@ namespace Farion.Tests.EditMode
                 };
 
                 motor.RestoreState(expected);
-                FirstPersonMotorState actual = motor.CaptureState();
+                ExplorerMotorState actual = motor.CaptureState();
 
                 Assert.That(actual.SimulationTime, Is.EqualTo(expected.SimulationTime));
                 Assert.That(actual.LastJumpTime, Is.EqualTo(expected.LastJumpTime));

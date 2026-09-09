@@ -7,7 +7,29 @@ namespace Farion.Multiplayer.Session
     {
         const string DisplayNameKey = "farion.player.name";
         const string PersistentIdKey = "farion.player.id";
+        const string ReconnectSecretKey = "farion.player.secret";
         const int MaximumLength = 24;
+
+        public static bool HasPlatformIdentity =>
+            MultiplayerLobbyGateway.IsAvailable &&
+            !string.IsNullOrWhiteSpace(MultiplayerLobbyGateway.Service.LocalPersistentId);
+
+        public static string ReconnectSecret
+        {
+            get
+            {
+                string stored = PlayerPrefs.GetString(ReconnectSecretKey, string.Empty);
+                if (!string.IsNullOrWhiteSpace(stored))
+                {
+                    return stored;
+                }
+
+                string created = System.Guid.NewGuid().ToString("N");
+                PlayerPrefs.SetString(ReconnectSecretKey, created);
+                PlayerPrefs.Save();
+                return created;
+            }
+        }
 
         public static string DisplayName
         {

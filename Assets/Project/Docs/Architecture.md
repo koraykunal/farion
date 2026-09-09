@@ -243,9 +243,14 @@ absent until a real equipment workflow is selected.
 its `SpacecraftMotor` and `ShuttleCargoInventory`. Flight physics remains in the
 flight system.
 
-Hull, fuel, repair, module slots, and upgrade stats are not modeled by a
-placeholder shuttle aggregate. Each will receive an explicit owner only when
-its first playable use case is implemented.
+`SpacecraftMotor` owns fuel and `SpacecraftHull` owns integrity; both are
+saved per starter ship. Two recovery paths close the failure loop: entering the
+fleet docking boundary refuels and repairs the ship on the server, and the pause
+menu "Recall ship" action (available only while the assigned ship is stranded:
+fuel at or below two percent, or a breached hull) despawns the ship, jettisons
+its cargo, refills it, and re-forms it at its formation slot in the starting
+zone. A recall from another zone is a return-to-formation handoff of the
+explorer. Module slots and upgrade stats still have no owner.
 
 ### Fleet
 
@@ -269,22 +274,34 @@ mutable capital-ship state.
 ### Resources and Commands
 
 Deterministic resource deposits separate generated base data from extraction
-deltas. `ResourceNodeInteractable` submits harvest intent through
-`IGameplayCommandGateway`. `GameplayCommandService` and
-`InventoryCommandHandler` validate the active session and execute the harvest
-transaction.
+deltas. Interactables submit intent through `IGameplayCommandGateway`, which
+`NetworkGameplayCommands` implements on the session player: the client
+validates locally, sends one server RPC carrying the deposit or recipe id and
+the inventory revisions it saw, and the server re-validates ownership, distance,
+line of sight for harvests, and every expected revision before committing the
+domain transaction. A stale revision is rejected as `StaleDestination`,
+`StaleState`, or `StaleStorage`; one command is in flight per player at a time;
+full session-state snapshot requests are rate limited per player.
 
-`FleetCargoCommandHandler` resolves only the session-assigned shuttle cargo and
-the local carried inventory or active Fleet Storage.
+`PlayerInteractionRaycaster` targets the nearest blocking hit (terrain and ship
+colliders block), so a valid interactable behind a wall is not selectable.
+`IInteractable.CanInteract` answers "can this be attempted", not "will it
+succeed": a full inventory or missing materials keep the prompt visible and the
+failure reason arrives through `IGameplayCommandEvents` as HUD feedback.
+
 `CargoTransferTransaction` validates definition compatibility and commits the
-complete transfer atomically.
+complete transfer atomically. `ShuttleCargoHatchInteractable` loads the
+assigned shuttle, `FleetCargoUnloadInteractable` unloads it inside the authored
+docking boundary, and `FleetProcessingInteractable` submits a typed recipe for
+one atomic Fleet-Storage exchange. `ExplorerTool` is the scanner: holding the
+beam on a deposit for the scan duration reveals its identity and remaining
+reserve on the HUD; the readout is local presentation and is not replicated or
+saved. There are no inactive crafting, research, equipment, queue, or power
+commands in the facade.
 
-`ShuttleCargoHatchInteractable` loads the assigned shuttle.
-`FleetCargoUnloadInteractable` exposes unload only through the authored docking
-boundary. `FleetProcessingInteractable` submits a typed processing recipe
-through the same session command facade; the handler commits one atomic
-Fleet-Storage exchange. There are no inactive crafting, research, equipment,
-repair, queue, power, or maintenance commands in the application facade.
+Inventory snapshots carry the server revision; clients adopt it when a snapshot
+is applied, so the revision a client reports back is the revision the server
+issued.
 
 ## Persistence
 
@@ -301,8 +318,29 @@ Schema `9` persists:
 Solo and co-op write the same format; `multiplayerSession` only marks saves
 that held more than one player. Older schemas are rejected as unsupported.
 
+Player identity: the server never trusts the persistent id a client sends. A
+connection that arrived through the Steam transport is identified by the
+transport's Steam id; any other connection keeps its requested id but must
+present a reconnect secret whose hash is stored on its save entry
+(`ownerProof`). A mismatching proof continues as a derived identity and cannot
+touch the saved entry. Saved container snapshots are retargeted to the live
+container id on restore, because explorer and ship ids are session scoped.
+
+Restore results are checked: an entry whose snapshot cannot be applied stays
+pending, is logged as an error, and is never overwritten by the live player or
+ship in later saves. A profile that arrives after the explorer spawned still
+receives its saved on-foot pose.
+
+Zone policy: only the starting zone is loaded on session start, so entries saved
+in another zone return to the fleet: the explorer spawns at its formation slot,
+the ship at its formation pose, inventory and cargo intact. Resource deltas are
+applied to every loaded copy of a zone.
+
 The save system uses participants composed from `GameplayRuntimeRoot`, validates
-before applying, and restores a pre-load snapshot if application fails.
+before applying, and restores a pre-load snapshot if application fails. A save
+that parses but cannot be applied (`IncompatibleContent`) falls back to the
+`.bak` file the same way a truncated file does; a missing runtime reference
+never triggers the backup.
 
 Capital-ship state, shuttle upgrades, and equipment are not in schema `9`. A
 new schema is allowed only after those runtime owners exist.

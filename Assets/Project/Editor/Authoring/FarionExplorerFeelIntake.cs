@@ -14,7 +14,6 @@ namespace Farion.Editor.Authoring
         public static void Run()
         {
             InstallPrefabComponents();
-            InstallViewEffects();
             AssetDatabase.SaveAssets();
         }
 
@@ -95,36 +94,5 @@ namespace Farion.Editor.Authoring
             return true;
         }
 
-        static void InstallViewEffects()
-        {
-            Scene scene = EditorSceneManager.OpenScene(
-                FarionAssetPaths.GameplayShellScene,
-                OpenSceneMode.Single);
-            FirstPersonCameraRig rig = null;
-            foreach (GameObject rootObject in scene.GetRootGameObjects())
-            {
-                rig = rootObject.GetComponentInChildren<FirstPersonCameraRig>(true);
-                if (rig != null)
-                {
-                    break;
-                }
-            }
-
-            if (rig == null)
-            {
-                Debug.LogError(
-                    $"{FarionAssetPaths.GameplayShellScene}: FirstPersonCameraRig not found.");
-                return;
-            }
-
-            if (rig.GetComponent<FirstPersonViewEffects>() != null)
-            {
-                return;
-            }
-
-            rig.gameObject.AddComponent<FirstPersonViewEffects>();
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-        }
     }
 }

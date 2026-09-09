@@ -100,7 +100,9 @@ namespace Farion.Rendering.Celestial
         bool transitionLocalCollisionCoverageReady;
         int transitionMaximumLevel;
         int nextPendingPatchBuild;
-        int collisionBakesThisFrame;
+        static int collisionBakesThisFrame;
+        static int collisionBakeFrame = -1;
+        double patchBuildDeadline;
         float transitionBaseRadius;
         Vector3 transitionLeadLocalPosition;
         CelestialSurfaceSampler transitionSampler;
@@ -788,11 +790,17 @@ namespace Farion.Rendering.Celestial
 
         void ProcessPatchTransition()
         {
-            collisionBakesThisFrame = 0;
-            DispatchQueuedPatchBuilds();
+            if (collisionBakeFrame != Time.frameCount)
+            {
+                collisionBakeFrame = Time.frameCount;
+                collisionBakesThisFrame = 0;
+            }
 
             double deadline = Time.realtimeSinceStartupAsDouble +
                 profile.PatchBuildBudgetMilliseconds / 1000d;
+            patchBuildDeadline = deadline;
+            DispatchQueuedPatchBuilds();
+
             int uploadedThisFrame = 0;
             int remaining = 0;
 
@@ -988,7 +996,8 @@ namespace Farion.Rendering.Celestial
 
             if (profile.BakeCollisionMeshes)
             {
-                if (collisionBakesThisFrame >= MaximumCollisionBakesPerFrame)
+                if (collisionBakesThisFrame >= MaximumCollisionBakesPerFrame ||
+                    Time.realtimeSinceStartupAsDouble >= patchBuildDeadline)
                 {
                     operation.Stage = PatchBuildStage.CollisionPending;
                     return false;

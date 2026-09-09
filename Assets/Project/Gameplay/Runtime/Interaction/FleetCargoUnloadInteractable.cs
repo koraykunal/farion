@@ -75,26 +75,16 @@ namespace Farion.Gameplay.Interaction
                     continue;
                 }
 
-                CargoTransferRequest candidateRequest = new(
-                    candidate.ContainerId,
-                    candidate.Revision);
-                if (CanAttempt(
-                        commands.CanUnloadAssignedShuttleCargo(candidateRequest)))
+                if (commands.IsAssignedShuttleCargo(candidate.ContainerId))
                 {
-                    request = candidateRequest;
+                    request = new CargoTransferRequest(
+                        candidate.ContainerId,
+                        candidate.Revision);
                     return true;
                 }
             }
 
             return false;
-        }
-
-        static bool CanAttempt(CargoTransferResult result)
-        {
-            return result != CargoTransferResult.MissingSource &&
-                   result != CargoTransferResult.MissingDestination &&
-                   result != CargoTransferResult.UnauthorizedSource &&
-                   result != CargoTransferResult.UnauthorizedDestination;
         }
     }
 }

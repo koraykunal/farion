@@ -60,7 +60,7 @@ namespace Farion.Multiplayer.Session
         MultiplayerWorldOriginAuthority originAuthority;
         ZoneOriginState zoneOrigin;
         SpacecraftCameraRig spacecraftCameraRig;
-        FirstPersonCameraRig firstPersonCameraRig;
+        ExplorerCameraRig explorerCameraRig;
         Transform viewReference;
         PlayerControlLock controlLock;
         Camera presentationCamera;
@@ -192,7 +192,7 @@ namespace Farion.Multiplayer.Session
             }
 
             spacecraftCameraRig = bindings.SpacecraftCameraRig;
-            firstPersonCameraRig = bindings.FirstPersonCameraRig;
+            explorerCameraRig = bindings.ExplorerCameraRig;
             viewReference = bindings.ViewReference;
             controlLock = bindings.ControlLock;
             presentationCamera = bindings.Camera;
@@ -480,7 +480,7 @@ namespace Farion.Multiplayer.Session
             }
 
             MultiplayerSessionController.Active?.NotifyLocalZone(this);
-            if (firstPersonCameraRig == null ||
+            if (explorerCameraRig == null ||
                 viewReference == null ||
                 controlLock == null)
             {
@@ -497,10 +497,11 @@ namespace Farion.Multiplayer.Session
             player.InteractionRaycaster?.SetViewReference(viewReference);
             player.InteractionRaycaster?.SetControlLock(controlLock);
             gameplayUi?.SetInteractionRaycaster(player.InteractionRaycaster);
+            gameplayUi?.SetExplorerTool(player.Tool);
             gameplayUi?.SetPlayerInventory(
                 player.GetComponentInChildren<InventoryContainerComponent>(true));
             LocalPlayerCameraBinding.FollowExplorer(
-                firstPersonCameraRig,
+                explorerCameraRig,
                 spacecraftCameraRig,
                 player.Motor,
                 player.Input);
@@ -527,7 +528,7 @@ namespace Farion.Multiplayer.Session
             if (ship == null ||
                 ownedPlayer == null ||
                 spacecraftCameraRig == null ||
-                firstPersonCameraRig == null)
+                explorerCameraRig == null)
             {
                 return false;
             }
@@ -573,7 +574,7 @@ namespace Farion.Multiplayer.Session
         void ApplyPilotCameraView()
         {
             LocalPlayerCameraBinding.FollowSpacecraft(
-                firstPersonCameraRig,
+                explorerCameraRig,
                 spacecraftCameraRig,
                 ownedSpacecraft.Rig,
                 ownedSpacecraft.Motor,
@@ -606,9 +607,9 @@ namespace Farion.Multiplayer.Session
             ownedSpacecraft = null;
             postProcessRig?.SetMotor(null);
             LocalPlayerCameraBinding.Release(null, spacecraftCameraRig);
-            if (firstPersonCameraRig != null)
+            if (explorerCameraRig != null)
             {
-                firstPersonCameraRig.enabled = true;
+                explorerCameraRig.enabled = true;
             }
 
             if (ownedPlayer != null)
@@ -693,8 +694,9 @@ namespace Farion.Multiplayer.Session
             player.Input.SetControlLock(null);
             player.InteractionRaycaster?.SetControlLock(null);
             gameplayUi?.SetInteractionRaycaster(null);
+            gameplayUi?.SetExplorerTool(null);
             gameplayUi?.SetPlayerInventory(null);
-            LocalPlayerCameraBinding.Release(firstPersonCameraRig, null);
+            LocalPlayerCameraBinding.Release(explorerCameraRig, null);
             LocalPlayerCameraBinding.SetCursorCaptured(false);
             ModeChanged?.Invoke(CurrentMode);
         }

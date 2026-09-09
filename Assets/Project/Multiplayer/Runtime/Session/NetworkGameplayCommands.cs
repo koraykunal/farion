@@ -1,4 +1,5 @@
 using Farion.Core.Identity;
+using Farion.Core.Physics;
 using System;
 using System.Collections.Generic;
 using Farion.Gameplay.Commands;
@@ -13,6 +14,7 @@ using Farion.Gameplay.ResourceNodes;
 using Farion.Gameplay.Session;
 using Farion.Multiplayer.Player;
 using Farion.Multiplayer.Spawning;
+using Farion.Multiplayer.World;
 using FishNet.Connection;
 using FishNet.Object;
 using UnityEngine;
@@ -30,16 +32,24 @@ namespace Farion.Multiplayer.Session
         [SerializeField, Min(0.1f)] float maximumHarvestDistance = 6f;
         [SerializeField, Min(0.1f)] float maximumCargoDistance = 12f;
         [SerializeField, Min(0.1f)] float maximumDockingDistance = 60f;
+        [Tooltip("Minimum seconds between full session-state snapshot requests from one client.")]
+        [SerializeField, Min(0f)] float sessionStateRequestInterval = 1f;
+
+        const float HarvestEyeHeight = 1.4f;
 
         NetworkSessionPlayer sessionPlayer;
+        bool commandInFlight;
+        double lastSessionStateRequestTime = double.NegativeInfinity;
         NetworkExplorerController ownerExplorer;
         MultiplayerSceneContext ownerContext;
         InventoryContainerComponent ownerInventory;
         NetworkStarterShuttle ownerCargo;
 
         public event Action<InventoryItemDefinition, int> ItemAcquired;
+        public event Action<ResourceHarvestResult> HarvestCompleted;
         public event Action<CargoTransferReceipt> CargoTransferCompleted;
         public event Action<FleetProcessingResult> FleetProcessingCompleted;
+        public event Action<ShuttleRecallResult> ShuttleRecallCompleted;
 
         void Awake()
         {
@@ -60,10 +70,20 @@ namespace Farion.Multiplayer.Session
             ownerInventory =
                 player.GetComponentInChildren<InventoryContainerComponent>(true);
             ownerCargo = null;
+            commandInFlight = false;
             PlayerInteractionRaycaster raycaster =
                 player.GetComponentInChildren<PlayerInteractionRaycaster>(true);
             raycaster?.SetCommandGateway(this);
             RequestSessionStateServerRpc();
+        }
+
+        public bool IsAssignedShuttleCargo(PersistentEntityId cargoId)
+        {
+            ShuttleCargoInventory cargo = ResolveOwnerCargo();
+            return cargo != null &&
+                ownerInventory != null &&
+                cargoId.IsValid &&
+                cargo.ContainerId == cargoId;
         }
 
         GameplayRuntimeBindings ZoneBindings
@@ -117,13 +137,22 @@ namespace Farion.Multiplayer.Session
                 return ResourceHarvestResult.MissingDestination;
             }
 
+            if (commandInFlight)
+            {
+                return ResourceHarvestResult.Pending;
+            }
+
             ResourceHarvestResult validation = CanHarvest(request);
             if (validation != ResourceHarvestResult.Succeeded)
             {
+                HarvestCompleted?.Invoke(validation);
                 return validation;
             }
 
-            HarvestServerRpc(request.DepositId.Value);
+            commandInFlight = true;
+            HarvestServerRpc(
+                request.DepositId.Value,
+                request.ExpectedDestinationRevision);
             return ResourceHarvestResult.Pending;
         }
 
@@ -143,13 +172,22 @@ namespace Farion.Multiplayer.Session
         public CargoTransferResult TryLoadAssignedShuttleCargo(
             CargoTransferRequest request)
         {
-            CargoTransferResult validation = CanLoadAssignedShuttleCargo(request);
-            if (!IsOwner || validation != CargoTransferResult.Succeeded)
+            if (!IsOwner || commandInFlight)
             {
+                return CargoTransferResult.Pending;
+            }
+
+            CargoTransferResult validation = CanLoadAssignedShuttleCargo(request);
+            if (validation != CargoTransferResult.Succeeded)
+            {
+                RaiseLocalCargoResult(CargoTransferKind.LoadShuttle, validation);
                 return validation;
             }
 
-            LoadShuttleCargoServerRpc();
+            commandInFlight = true;
+            LoadShuttleCargoServerRpc(
+                ownerInventory.Revision,
+                request.ExpectedShuttleCargoRevision);
             return CargoTransferResult.Pending;
         }
 
@@ -175,14 +213,79 @@ namespace Farion.Multiplayer.Session
         public CargoTransferResult TryUnloadAssignedShuttleCargo(
             CargoTransferRequest request)
         {
-            CargoTransferResult validation = CanUnloadAssignedShuttleCargo(request);
-            if (!IsOwner || validation != CargoTransferResult.Succeeded)
+            if (!IsOwner || commandInFlight)
             {
+                return CargoTransferResult.Pending;
+            }
+
+            CargoTransferResult validation = CanUnloadAssignedShuttleCargo(request);
+            if (validation != CargoTransferResult.Succeeded)
+            {
+                RaiseLocalCargoResult(CargoTransferKind.UnloadToFleet, validation);
                 return validation;
             }
 
-            UnloadShuttleCargoServerRpc();
+            commandInFlight = true;
+            UnloadShuttleCargoServerRpc(
+                request.ExpectedShuttleCargoRevision,
+                ZoneFleetStorage.Revision);
             return CargoTransferResult.Pending;
+        }
+
+        public bool RequestShuttleRecall()
+        {
+            if (!IsOwner || commandInFlight)
+            {
+                return false;
+            }
+
+            commandInFlight = true;
+            RecallShuttleServerRpc();
+            return true;
+        }
+
+        [ServerRpc]
+        void RecallShuttleServerRpc(NetworkConnection sender = null)
+        {
+            if (sender == null || !sender.IsActive || sender.ClientId != OwnerId)
+            {
+                return;
+            }
+
+            MultiplayerPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
+            ShuttleRecallResult result = ShuttleRecallResult.Failed;
+            if (spawner != null)
+            {
+                spawner.TryRecallStarterShuttle(
+                    sessionPlayer,
+                    spawner.GetComponent<MultiplayerZoneCoordinator>(),
+                    out result);
+            }
+
+            ShuttleRecallResultTargetRpc(sender, (byte)result);
+        }
+
+        [TargetRpc]
+        void ShuttleRecallResultTargetRpc(NetworkConnection connection, byte result)
+        {
+            commandInFlight = false;
+            ownerCargo = null;
+            ShuttleRecallCompleted?.Invoke((ShuttleRecallResult)result);
+        }
+
+        void RaiseLocalCargoResult(CargoTransferKind kind, CargoTransferResult result)
+        {
+            ShuttleCargoInventory cargo = ResolveOwnerCargo();
+            CargoTransferCompleted?.Invoke(
+                new CargoTransferReceipt(
+                    kind,
+                    result,
+                    kind == CargoTransferKind.LoadShuttle
+                        ? ownerInventory?.CaptureContainerSnapshot()
+                        : cargo?.CaptureContainerSnapshot(),
+                    kind == CargoTransferKind.LoadShuttle
+                        ? cargo?.CaptureContainerSnapshot()
+                        : ZoneFleetStorage?.CaptureContainerSnapshot()));
         }
 
         public FleetProcessingResult CanProcessFleetRecipe(
@@ -230,13 +333,22 @@ namespace Farion.Multiplayer.Session
         public FleetProcessingResult TryProcessFleetRecipe(
             FleetProcessingRequest request)
         {
-            FleetProcessingResult validation = CanProcessFleetRecipe(request);
-            if (!IsOwner || validation != FleetProcessingResult.Succeeded)
+            if (!IsOwner || commandInFlight)
             {
+                return FleetProcessingResult.Pending;
+            }
+
+            FleetProcessingResult validation = CanProcessFleetRecipe(request);
+            if (validation != FleetProcessingResult.Succeeded)
+            {
+                FleetProcessingCompleted?.Invoke(validation);
                 return validation;
             }
 
-            ProcessFleetRecipeServerRpc(request.RecipeId.Value);
+            commandInFlight = true;
+            ProcessFleetRecipeServerRpc(
+                request.RecipeId.Value,
+                request.ExpectedFleetStorageRevision);
             return FleetProcessingResult.Pending;
         }
 
@@ -298,6 +410,7 @@ namespace Farion.Multiplayer.Session
         [ServerRpc]
         void HarvestServerRpc(
             ulong depositId,
+            long expectedDestinationRevision,
             NetworkConnection sender = null)
         {
             if (sender == null ||
@@ -313,6 +426,17 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
+            if (destinationInventory.Revision != expectedDestinationRevision)
+            {
+                HarvestResultTargetRpc(
+                    sender,
+                    (byte)ResourceHarvestResult.StaleDestination,
+                    string.Empty,
+                    0,
+                    JsonUtility.ToJson(destinationInventory.CaptureContainerSnapshot()));
+                return;
+            }
+
             GeneratedEntityId resolvedDepositId = new(depositId);
             int carriedBefore = 0;
             if (!TryResolveHarvestNode(
@@ -320,7 +444,11 @@ namespace Farion.Multiplayer.Session
                     explorer.transform.position,
                     resolvedDepositId,
                     maximumHarvestDistance,
-                    out ResourceNodeInteractable node))
+                    out ResourceNodeInteractable node) ||
+                !HasLineOfSight(
+                    explorer.gameObject.scene.GetPhysicsScene(),
+                    explorer.transform.position + explorer.transform.up * HarvestEyeHeight,
+                    node))
             {
                 HarvestResultTargetRpc(
                     sender,
@@ -364,7 +492,10 @@ namespace Farion.Multiplayer.Session
         }
 
         [ServerRpc]
-        void LoadShuttleCargoServerRpc(NetworkConnection sender = null)
+        void LoadShuttleCargoServerRpc(
+            long expectedExplorerRevision,
+            long expectedCargoRevision,
+            NetworkConnection sender = null)
         {
             if (!TryResolveServerTransfer(
                     sender,
@@ -378,6 +509,16 @@ namespace Farion.Multiplayer.Session
                     sender,
                     CargoTransferKind.LoadShuttle,
                     failure);
+                return;
+            }
+
+            if (explorerInventory.Revision != expectedExplorerRevision ||
+                cargo.Revision != expectedCargoRevision)
+            {
+                ReportCargoFailure(
+                    sender,
+                    CargoTransferKind.LoadShuttle,
+                    CargoTransferResult.StaleState);
                 return;
             }
 
@@ -397,7 +538,10 @@ namespace Farion.Multiplayer.Session
         }
 
         [ServerRpc]
-        void UnloadShuttleCargoServerRpc(NetworkConnection sender = null)
+        void UnloadShuttleCargoServerRpc(
+            long expectedCargoRevision,
+            long expectedStorageRevision,
+            NetworkConnection sender = null)
         {
             if (!TryResolveServerTransfer(
                     sender,
@@ -432,6 +576,16 @@ namespace Farion.Multiplayer.Session
                 return;
             }
 
+            if (cargo.Revision != expectedCargoRevision ||
+                storage.Revision != expectedStorageRevision)
+            {
+                ReportCargoFailure(
+                    sender,
+                    CargoTransferKind.UnloadToFleet,
+                    CargoTransferResult.StaleState);
+                return;
+            }
+
             CargoTransferResult result =
                 CargoTransferTransaction.TryExecute(cargo, storage);
             CargoTransferResultTargetRpc(
@@ -451,6 +605,7 @@ namespace Farion.Multiplayer.Session
         [ServerRpc]
         void ProcessFleetRecipeServerRpc(
             string recipeId,
+            long expectedStorageRevision,
             NetworkConnection sender = null)
         {
             if (sender == null || !sender.IsActive || sender.ClientId != OwnerId)
@@ -483,6 +638,14 @@ namespace Farion.Multiplayer.Session
             if (recipeFailure != FleetProcessingResult.Succeeded)
             {
                 FleetProcessingResultTargetRpc(sender, (byte)recipeFailure);
+                return;
+            }
+
+            if (bindings.FleetStorage.Revision != expectedStorageRevision)
+            {
+                FleetProcessingResultTargetRpc(
+                    sender,
+                    (byte)FleetProcessingResult.StaleStorage);
                 return;
             }
 
@@ -530,6 +693,7 @@ namespace Farion.Multiplayer.Session
             NetworkConnection connection,
             byte result)
         {
+            commandInFlight = false;
             FleetProcessingCompleted?.Invoke((FleetProcessingResult)result);
         }
 
@@ -685,6 +849,7 @@ namespace Farion.Multiplayer.Session
             byte result,
             string inventorySnapshotJson)
         {
+            commandInFlight = false;
             if (!IsServerStarted &&
                 result == (byte)CargoTransferResult.Succeeded &&
                 ownerInventory != null)
@@ -752,6 +917,13 @@ namespace Farion.Multiplayer.Session
         void RequestSessionStateServerRpc(NetworkConnection sender = null)
         {
             MultiplayerPlayerSpawner spawner = sessionPlayer.PlayerSpawner;
+            double now = Time.unscaledTimeAsDouble;
+            if (now - lastSessionStateRequestTime < sessionStateRequestInterval)
+            {
+                return;
+            }
+
+            lastSessionStateRequestTime = now;
             if (sender == null ||
                 !sender.IsActive ||
                 sender.ClientId != OwnerId ||
@@ -886,19 +1058,19 @@ namespace Farion.Multiplayer.Session
             int acquiredAmount,
             string snapshotJson)
         {
-            if (result != (byte)ResourceHarvestResult.Succeeded)
-            {
-                Debug.LogWarning(
-                    $"NetworkGameplayCommands: harvest failed with result {(ResourceHarvestResult)result}.");
-                return;
-            }
-
+            commandInFlight = false;
             if (!IsServerStarted)
             {
                 ApplySnapshot(ownerInventory, snapshotJson);
             }
 
-            RaiseItemAcquired(itemId, acquiredAmount);
+            ResourceHarvestResult resolved = (ResourceHarvestResult)result;
+            if (resolved == ResourceHarvestResult.Succeeded)
+            {
+                RaiseItemAcquired(itemId, acquiredAmount);
+            }
+
+            HarvestCompleted?.Invoke(resolved);
         }
 
         void RaiseItemAcquired(string itemId, int amount)
@@ -991,11 +1163,29 @@ namespace Farion.Multiplayer.Session
                 ResourceDepositRuntimeSpawner.RegisteredSpawners;
             for (int i = 0; i < streamers.Count; i++)
             {
-                if (streamers[i].ApplyAuthoritativeDelta(depositId, extractedAmount))
-                {
-                    return;
-                }
+                streamers[i].ApplyAuthoritativeDelta(depositId, extractedAmount);
             }
+        }
+
+        static bool HasLineOfSight(
+            PhysicsScene physics,
+            Vector3 eye,
+            ResourceNodeInteractable node)
+        {
+            Collider target = node.GetComponentInChildren<Collider>();
+            Vector3 point = target != null ? target.ClosestPoint(eye) : node.transform.position;
+            point += (eye - point).normalized * 0.02f;
+            Vector3 toPoint = point - eye;
+            float distance = toPoint.magnitude;
+            return distance <= 0.001f ||
+                   !physics.Raycast(
+                       eye,
+                       toPoint / distance,
+                       out RaycastHit hit,
+                       distance,
+                       FarionLayers.CameraObstacleMask,
+                       QueryTriggerInteraction.Ignore) ||
+                   hit.collider.transform.IsChildOf(node.transform);
         }
 
         static bool TryFindLoadedNode(

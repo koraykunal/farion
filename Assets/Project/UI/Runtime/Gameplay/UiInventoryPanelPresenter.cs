@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Farion.Gameplay.Inventory;
 using Farion.UI.Localization;
 using Farion.UI.Navigation;
@@ -235,14 +234,14 @@ namespace Farion.UI.Gameplay
 
             tooltipSlot = slot;
             InventoryItemDefinition item = slot.Stack.Item;
-            SetText(tooltipTitleText, UiLocalization.ToDisplayUpper(item.DisplayName));
+            SetText(tooltipTitleText, UiLocalization.ToDisplayUpper(UiLocalization.GetOrFallback(item.ItemId, item.DisplayName)));
             SetText(
                 tooltipBodyText,
-                $"{FormatEnum(item.Category)}  /  {FormatEnum(item.Form)}\n" +
+                $"{UiLocalization.GetEnum(UiTextKeys.InventoryCategoryPrefix, item.Category)}  /  {UiLocalization.GetEnum(UiTextKeys.InventoryFormPrefix, item.Form)}\n" +
                 $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryStack))}  " +
                 $"{slot.Stack.Quantity} / {item.MaxStackSize}\n" +
                 $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryDomain))}  " +
-                FormatEnum(item.PrimaryTechDomain));
+                UiLocalization.GetEnum(UiTextKeys.InventoryDomainPrefix, item.PrimaryTechDomain));
 
             tooltipRoot.SetAsLastSibling();
             tooltipRoot.gameObject.SetActive(true);
@@ -337,10 +336,10 @@ namespace Farion.UI.Gameplay
                 detailIconImage.raycastTarget = false;
             }
 
-            SetText(detailTitleText, UiLocalization.ToDisplayUpper(item.DisplayName));
+            SetText(detailTitleText, UiLocalization.ToDisplayUpper(UiLocalization.GetOrFallback(item.ItemId, item.DisplayName)));
             SetText(
                 detailMetaText,
-                $"{FormatEnum(item.Category)}  /  {FormatEnum(item.Form)}");
+                $"{UiLocalization.GetEnum(UiTextKeys.InventoryCategoryPrefix, item.Category)}  /  {UiLocalization.GetEnum(UiTextKeys.InventoryFormPrefix, item.Form)}");
             SetText(
                 detailStackText,
                 $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryStack))}  " +
@@ -348,7 +347,7 @@ namespace Farion.UI.Gameplay
             SetText(
                 detailDomainText,
                 $"{UiLocalization.ToDisplayUpper(UiLocalization.Get(UiTextKeys.InventoryDomain))}\n" +
-                FormatEnum(item.PrimaryTechDomain));
+                UiLocalization.GetEnum(UiTextKeys.InventoryDomainPrefix, item.PrimaryTechDomain));
         }
 
         void ResolveReferences()
@@ -401,32 +400,6 @@ namespace Farion.UI.Gameplay
             {
                 tooltipRoot.gameObject.SetActive(false);
             }
-        }
-
-        static string FormatEnum<T>(T value)
-            where T : Enum
-        {
-            string source = value.ToString();
-            if (string.IsNullOrEmpty(source))
-            {
-                return string.Empty;
-            }
-
-            StringBuilder builder = new(source.Length + 4);
-            for (int i = 0; i < source.Length; i++)
-            {
-                char character = source[i];
-                if (i > 0 &&
-                    char.IsUpper(character) &&
-                    !char.IsUpper(source[i - 1]))
-                {
-                    builder.Append(' ');
-                }
-
-                builder.Append(char.ToUpperInvariant(character));
-            }
-
-            return builder.ToString();
         }
 
         static void SetText(TMP_Text target, string value)

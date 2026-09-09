@@ -322,15 +322,12 @@ Naming: `AN_<Character>_<Motion>_<Variant>.fbx`, `AC_<Character>.controller`.
 
 Download Mixamo clips as FBX for Unity, without skin, 30 fps, no keyframe
 reduction, In Place on, and one FBX per clip. Right-hand strafes and turns are
-not downloaded: `FarionPlayerAnimationIntake` emits them as mirrored clips out
-of the left-hand source file.
+not downloaded; the controller mirrors the left-hand clips.
 
-Run `Farion.Editor.Authoring.FarionPlayerAnimationIntake.Run` in batchmode after
-dropping new clips in. It sets every clip to humanoid with the avatar copied
-from `SM_PlayerExplorer_A`, rebuilds `AC_PlayerExplorer` from scratch, and binds
-the controller plus `PlayerExplorerAnimator` onto `PF_PlayerExplorerCore`, which
-the network variant inherits. Editing the controller by hand works
-until the next run of the intake, which overwrites it.
+Run `Farion > Character > Rebuild Locomotion` after dropping new clips in. It
+measures every clip, calibrates the gait speeds on `PlayerExplorerAnimator`, and
+rebuilds `AC_PlayerExplorer` from scratch. Editing the controller by hand works
+until the next run, which overwrites it.
 
 `PlayerExplorerAnimator` reads the motor's body-relative surface velocity, never
 `Rigidbody.linearVelocity`, so a spinning planet or a moving ship does not make

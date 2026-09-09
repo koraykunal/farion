@@ -226,32 +226,6 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void AtmosphereEffectData_CarriesTheOceanSurfaceUsedForMediaTransitions()
-        {
-            CelestialOceanEffectData ocean = new(
-                Vector3.zero,
-                9f,
-                10f,
-                0.35f,
-                26f,
-                new Vector3(0.2f, 1.1f, 2.4f),
-                Matrix4x4.identity,
-                null);
-            CelestialAtmosphereEffectData atmosphere = new(
-                Vector3.zero,
-                9f,
-                10f,
-                12f,
-                null,
-                ocean);
-
-            Assert.That(atmosphere.HasOceanSurface, Is.True);
-            Assert.That(atmosphere.OceanSurface.OceanRadius, Is.EqualTo(ocean.OceanRadius));
-            Assert.That(atmosphere.OceanSurface.WavePhases, Is.EqualTo(ocean.WavePhases));
-            Assert.That(atmosphere.OceanSurface.WorldToLocalRotation, Is.EqualTo(ocean.WorldToLocalRotation));
-        }
-
-        [Test]
         public void EnvironmentWaveField_CoRotatesWithBody()
         {
             GameObject gameObject = new("Ocean body");

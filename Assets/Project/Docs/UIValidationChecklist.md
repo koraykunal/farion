@@ -7,8 +7,7 @@ changes. A successful C# build is required but does not replace these checks.
 
 1. Wait for Unity script compilation to finish.
 2. Confirm Console has no compiler or missing-prefab errors.
-3. Run `Farion > Validation > Validate UI Foundation`.
-4. Run `Farion > Validation > Validate Project` before a Player build.
+3. Run `Farion > Validation > Validate Project` before a Player build.
 
 Record the date, Unity version, target platform, and failing validation when a
 gate fails.

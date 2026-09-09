@@ -10,7 +10,7 @@ namespace Farion.Gameplay.Character
         [SerializeField, Min(0f)] float acceleration = 9.81f;
         [SerializeField] Rigidbody referenceBody;
 
-        readonly HashSet<FirstPersonMotor> occupants = new();
+        readonly HashSet<ExplorerMotor> occupants = new();
 
         public Vector3 Up => transform.up;
         public Vector3 GravityAcceleration => -Up * acceleration;
@@ -39,7 +39,7 @@ namespace Farion.Gameplay.Character
 
         void OnTriggerEnter(Collider other)
         {
-            FirstPersonMotor motor = other.GetComponentInParent<FirstPersonMotor>();
+            ExplorerMotor motor = other.GetComponentInParent<ExplorerMotor>();
             if (motor != null && occupants.Add(motor))
             {
                 motor.SetArtificialGravitySource(this);
@@ -48,7 +48,7 @@ namespace Farion.Gameplay.Character
 
         void OnTriggerExit(Collider other)
         {
-            FirstPersonMotor motor = other.GetComponentInParent<FirstPersonMotor>();
+            ExplorerMotor motor = other.GetComponentInParent<ExplorerMotor>();
             if (motor != null && occupants.Remove(motor))
             {
                 motor.ClearArtificialGravitySource(this);
@@ -57,7 +57,7 @@ namespace Farion.Gameplay.Character
 
         void OnDisable()
         {
-            foreach (FirstPersonMotor motor in occupants)
+            foreach (ExplorerMotor motor in occupants)
             {
                 if (motor != null)
                 {

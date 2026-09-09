@@ -82,9 +82,8 @@ namespace Farion.Gameplay.Interaction
         public bool CanInteract(InteractionContext context)
         {
             return context.Commands != null &&
-                   TryBuildHarvestRequest(context, out ResourceHarvestRequest request) &&
-                   context.Commands.CanHarvest(request) ==
-                   ResourceHarvestResult.Succeeded;
+                   !depleted &&
+                   TryBuildHarvestRequest(context, out _);
         }
 
         public void Interact(InteractionContext context)
@@ -235,7 +234,9 @@ namespace Farion.Gameplay.Interaction
             }
 
             return definition != null
-                ? $"{definition.PromptVerb} {definition.DisplayName}"
+                ? InteractionPromptKeys.WithArgument(
+                    InteractionPromptKeys.Harvest,
+                    definition.NodeId)
                 : string.Empty;
         }
 

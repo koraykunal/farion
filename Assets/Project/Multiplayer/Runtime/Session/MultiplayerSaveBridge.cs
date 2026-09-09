@@ -78,6 +78,14 @@ namespace Farion.Multiplayer.Session
                         SaveGameSlotCatalog.ResolveSlotName(requestedSlotName)));
         }
 
+        public bool CanApply(
+            IReadOnlyList<MultiplayerPlayerSaveEntry> players,
+            IReadOnlyList<MultiplayerShipSaveEntry> shipCargo,
+            GameplayDefinitionRegistry definitions)
+        {
+            return MultiplayerPlayerSpawner.CanRestore(players, shipCargo, definitions);
+        }
+
         public void Capture(
             List<MultiplayerPlayerSaveEntry> players,
             List<MultiplayerShipSaveEntry> shipCargo)

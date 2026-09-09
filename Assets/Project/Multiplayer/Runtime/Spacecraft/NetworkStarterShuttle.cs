@@ -33,6 +33,7 @@ namespace Farion.Multiplayer.Spacecraft
         ICelestialSurfaceCollisionObserver
     {
         const float UnwrittenHullIntegrity = -1f;
+        const float StrandedFuelFraction = 0.02f;
         const float ParkSpeedThreshold = 0.5f;
 
         readonly SyncVar<ulong> entityId = new();
@@ -147,6 +148,10 @@ namespace Farion.Multiplayer.Spacecraft
         public ShuttleCargoInventory Cargo => cargo;
         public SpacecraftMotor Motor => motor;
         public SpacecraftHull Hull => hull;
+        public bool IsStranded =>
+            motor != null &&
+            (motor.FuelNormalized <= StrandedFuelFraction ||
+             (hull != null && hull.IsBreached));
         public KeyboardSpacecraftInput Input => input;
         public KeyboardBoardingInput BoardingInput => boardingInput;
         public string InteractionPrompt => InteractionPromptKeys.EnterShip;
@@ -703,6 +708,18 @@ namespace Farion.Multiplayer.Spacecraft
             }
         }
 
+        internal void ServiceAtDock()
+        {
+            if (!IsServerStarted)
+            {
+                return;
+            }
+
+            motor?.RefillFuel();
+            hull?.RefillIntegrity();
+            PublishHullIntegrity();
+        }
+
         internal bool ReleaseClaim(int connectionId)
         {
             if (claimedConnectionId != connectionId)
@@ -881,7 +898,7 @@ namespace Farion.Multiplayer.Spacecraft
             return new PlayerExplorerPlacementContext(
                 explorer.gameObject,
                 explorer.GetComponent<Rigidbody>(),
-                explorer.GetComponent<FirstPersonMotor>(),
+                explorer.GetComponent<ExplorerMotor>(),
                 explorer.GetComponent<CelestialActorProbe>(),
                 transform,
                 body,
@@ -921,7 +938,7 @@ namespace Farion.Multiplayer.Spacecraft
             }
 
             explorer.transform.SetPositionAndRotation(position, rotation);
-            explorer.GetComponent<FirstPersonMotor>()?.ResetMotorState();
+            explorer.GetComponent<ExplorerMotor>()?.ResetMotorState();
         }
 
         internal void BindScene(

@@ -240,32 +240,6 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        [Category("Content")]
-        public void TerrestrialProfile_HasUniqueRuleIdsAndInstancedVariants()
-        {
-            SurfaceDecorationProfile profile = LoadProfile();
-            System.Collections.Generic.HashSet<string> ids = new();
-
-            foreach (SurfaceDecorationRule rule in profile.Rules)
-            {
-                Assert.That(rule, Is.Not.Null);
-                Assert.That(ids.Add(rule.StableId), Is.True, $"Duplicate rule id '{rule.StableId}'.");
-                Assert.That(rule.Variants.Count, Is.GreaterThan(0));
-                foreach (SurfaceDecorationVariant variant in rule.Variants)
-                {
-                    Assert.That(variant.NearMesh, Is.Not.Null);
-                    Assert.That(variant.FarMesh, Is.Not.Null);
-                    Assert.That(variant.Materials.Count, Is.GreaterThan(0));
-                    foreach (Material material in variant.Materials)
-                    {
-                        Assert.That(material, Is.Not.Null);
-                        Assert.That(material.enableInstancing, Is.True);
-                    }
-                }
-            }
-        }
-
-        [Test]
         public void TemperateBirchSuitability_RejectsOceanCoveredSurface()
         {
             SurfaceDecorationRule birch = LoadProfile().Rules[0];

@@ -41,6 +41,9 @@ namespace Farion.Editor.Authoring
         static readonly Dictionary<string, AnimationClip> clipCache = new();
         static readonly Dictionary<string, float> speedCache = new();
 
+        const float JumpStartLaunchOffset = 0.575f;
+        const float JumpStartExitTime = 0.9f;
+
         [MenuItem("Farion/Character/Rebuild Locomotion")]
         internal static void Run()
         {
@@ -249,17 +252,19 @@ namespace Farion.Editor.Authoring
             Shape(toSwim, 0.25f);
             toSwim.AddCondition(AnimatorConditionMode.Greater, 0.5f, "Submerged");
 
-            AnimatorStateTransition toJump = machine.AddAnyStateTransition(jump);
-            Shape(toJump, 0.05f);
-            toJump.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
-            toJump.AddCondition(AnimatorConditionMode.Greater, 0.5f, "VerticalSpeed");
-            toJump.AddCondition(AnimatorConditionMode.Less, 0.5f, "Submerged");
+            foreach (AnimatorState groundState in new[] { idle, move, moveStop, land })
+            {
+                AnimatorStateTransition toJump = Shape(groundState.AddTransition(jump), 0.05f);
+                toJump.offset = JumpStartLaunchOffset;
+                toJump.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
+                toJump.AddCondition(AnimatorConditionMode.Greater, 0.5f, "VerticalSpeed");
+                toJump.AddCondition(AnimatorConditionMode.Less, 0.5f, "Submerged");
 
-            AnimatorStateTransition toAirborne = machine.AddAnyStateTransition(airborne);
-            Shape(toAirborne, 0.2f);
-            toAirborne.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
-            toAirborne.AddCondition(AnimatorConditionMode.Less, 0.5f, "VerticalSpeed");
-            toAirborne.AddCondition(AnimatorConditionMode.Less, 0.5f, "Submerged");
+                AnimatorStateTransition toFall = Shape(groundState.AddTransition(airborne), 0.2f);
+                toFall.AddCondition(AnimatorConditionMode.IfNot, 0f, "Grounded");
+                toFall.AddCondition(AnimatorConditionMode.Less, 0.5f, "VerticalSpeed");
+                toFall.AddCondition(AnimatorConditionMode.Less, 0.5f, "Submerged");
+            }
 
             Moving(Shape(idle.AddTransition(move), 0.12f), true);
             Moving(Shape(move.AddTransition(moveStop), 0.1f), false);
@@ -267,6 +272,8 @@ namespace Farion.Editor.Authoring
 
             Shape(moveStop.AddTransition(idle), 0.15f, ExitAfter(moveStop, 0.55f, 0.3f, 0.9f));
 
+            Shape(jump.AddTransition(airborne), 0.2f, JumpStartExitTime);
+            Shape(jump.AddTransition(airborne), 0.2f).AddCondition(AnimatorConditionMode.Less, 0.5f, "VerticalSpeed");
             Grounded(Shape(jump.AddTransition(land), 0.08f), true);
             Grounded(Shape(airborne.AddTransition(land), 0.1f), true);
 

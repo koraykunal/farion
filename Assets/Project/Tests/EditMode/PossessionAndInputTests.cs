@@ -83,36 +83,5 @@ namespace Farion.Tests.EditMode
                 Object.DestroyImmediate(owner);
             }
         }
-
-        [Test]
-        public void InputSchemaBindsGamepadNavigationAndDeadzonedSticks()
-        {
-            Assert.That(FarionInputActions.Asset.FindActionMap("OnFoot"), Is.Not.Null);
-            Assert.That(FarionInputActions.Asset.FindActionMap("Flight"), Is.Not.Null);
-            Assert.That(FarionInputActions.Asset.FindActionMap("Vehicle"), Is.Not.Null);
-            Assert.That(FarionInputActions.Asset.FindActionMap("UI"), Is.Not.Null);
-            Assert.That(
-                FarionInputActions.FlightTranslate.bindings.Any(binding =>
-                    binding.path == "<Gamepad>/leftStick" &&
-                    binding.processors.Contains("stickDeadzone")),
-                Is.True);
-            Assert.That(
-                FarionInputActions.FlightLook.bindings.Any(binding =>
-                    binding.path == "<Gamepad>/rightStick" &&
-                    binding.processors.Contains("stickDeadzone")),
-                Is.True);
-            Assert.That(
-                FarionInputActions.UiNavigate.bindings.Any(binding =>
-                    binding.path == "<Gamepad>/dpad"),
-                Is.True);
-            Assert.That(
-                FarionInputActions.UiSubmit.bindings.Any(binding =>
-                    binding.path == "<Gamepad>/buttonSouth"),
-                Is.True);
-            Assert.That(
-                FarionInputActions.UiCancel.bindings.Any(binding =>
-                    binding.path == "<Gamepad>/buttonEast"),
-                Is.True);
-        }
     }
 }

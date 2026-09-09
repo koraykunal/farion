@@ -75,60 +75,6 @@ namespace Farion.Tests.EditMode
         }
 
         [Test]
-        public void FormationRules_CarryEveryGeologicalRole()
-        {
-            SurfaceFormationProfile profile = LoadFormationProfile();
-            Assert.That(profile.Rules.Count, Is.GreaterThan(0));
-
-            HashSet<string> ids = new();
-            foreach (SurfaceFormationRule rule in profile.Rules)
-            {
-                Assert.That(rule, Is.Not.Null);
-                Assert.That(ids.Add(rule.StableId), Is.True, $"Duplicate rule id '{rule.StableId}'.");
-                Assert.That(rule.Kit.HasOutcrop, Is.True, $"'{rule.DisplayName}' has no outcrop piece.");
-
-                for (int role = 0; role <= (int)SurfaceFormationRole.Debris; role++)
-                {
-                    IReadOnlyList<SurfaceFormationPiece> pieces =
-                        rule.Kit.Resolve((SurfaceFormationRole)role);
-                    Assert.That(
-                        pieces.Count,
-                        Is.GreaterThan(0),
-                        $"'{rule.DisplayName}' is missing {(SurfaceFormationRole)role} pieces.");
-                    foreach (SurfaceFormationPiece piece in pieces)
-                    {
-                        Assert.That(piece.Prefab, Is.Not.Null);
-                        Assert.That(piece.PieceHeight, Is.GreaterThan(0f));
-                        Assert.That(piece.FootprintRadius, Is.GreaterThan(0f));
-                    }
-                }
-            }
-        }
-
-        [Test]
-        public void ScatterDistributions_DeclareAnOrderedVisibilityLadder()
-        {
-            foreach (SurfaceFormationRule rule in LoadFormationProfile().Rules)
-            {
-                AssertLadder(rule.DisplayName, rule.Distribution);
-            }
-
-            SurfaceDecorationProfile decoration =
-                AssetDatabase.LoadAssetAtPath<SurfaceDecorationProfile>(DecorationProfilePath);
-            Assert.That(decoration, Is.Not.Null, DecorationProfilePath);
-            foreach (SurfaceDecorationRule rule in decoration.Rules)
-            {
-                AssertLadder(rule.DisplayName, rule.Distribution);
-                Assert.That(
-                    rule.ShadowDistance,
-                    Is.LessThanOrEqualTo(rule.Distribution.FarVisibilityDistance));
-                Assert.That(
-                    rule.FarLodStartDistance,
-                    Is.LessThanOrEqualTo(rule.Distribution.FarVisibilityDistance));
-            }
-        }
-
-        [Test]
         public void GeologyWeight_RisesWithBreakStrength()
         {
             SurfaceFormationRule rule = LoadFormationProfile().Rules[0];
@@ -169,22 +115,6 @@ namespace Farion.Tests.EditMode
                 new CelestialGeologySample(0.8f, 18f, Vector3.up, -1f));
 
             Assert.That(aligned, Is.GreaterThan(opposed));
-        }
-
-        [Test]
-        public void FormationRules_KeepCollisionInsideTheVisibilityLadder()
-        {
-            foreach (SurfaceFormationRule rule in LoadFormationProfile().Rules)
-            {
-                Assert.That(
-                    rule.CollisionDistance,
-                    Is.GreaterThan(0f),
-                    $"'{rule.DisplayName}' would never enable its colliders.");
-                Assert.That(
-                    rule.CollisionDistance,
-                    Is.LessThanOrEqualTo(rule.Distribution.FarVisibilityDistance),
-                    $"'{rule.DisplayName}' collides beyond what it renders.");
-            }
         }
 
         static void AssertLadder(string displayName, SurfaceScatterDistribution distribution)

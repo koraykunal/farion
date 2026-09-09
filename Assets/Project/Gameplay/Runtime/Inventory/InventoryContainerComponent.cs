@@ -243,7 +243,8 @@ namespace Farion.Gameplay.Inventory
             return new InventoryContainerSnapshot(
                 ContainerId.Value,
                 SlotCapacity,
-                CaptureStackSnapshot());
+                CaptureStackSnapshot(),
+                Revision);
         }
 
         public bool CanApplyContainerSnapshot(
@@ -268,14 +269,16 @@ namespace Farion.Gameplay.Inventory
                        snapshot.SlotCapacity,
                        snapshot.Stacks,
                        definitions,
-                       notify);
+                       notify,
+                       snapshot.Revision);
         }
 
         protected bool TryApplyStackSnapshot(
             int snapshotSlotCapacity,
             IReadOnlyList<InventoryStackSnapshot> snapshotStacks,
             GameplayDefinitionRegistry definitions,
-            bool notify)
+            bool notify,
+            long revision = InventoryContainerSnapshot.NoRevision)
         {
             if (!TryBuildSnapshotState(
                     snapshotSlotCapacity,
@@ -286,6 +289,11 @@ namespace Farion.Gameplay.Inventory
                     out List<DefinitionId> candidateOrder))
             {
                 return false;
+            }
+
+            if (revision >= 0L)
+            {
+                candidate.AdoptRevision(revision);
             }
 
             state = candidate;

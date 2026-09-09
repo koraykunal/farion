@@ -1,0 +1,172 @@
+using UnityEngine;
+using UnityEngine.Serialization;
+
+namespace Farion.Gameplay.Character
+{
+    [CreateAssetMenu(menuName = "Farion/Gameplay/Character/Explorer Motor Profile", fileName = "SO_ExplorerMotorProfile")]
+    public sealed class ExplorerMotorProfile : ScriptableObject
+    {
+        [Header("Movement")]
+        [Min(0f)]
+        [SerializeField] float walkSpeed = 5f;
+        [Min(0f)]
+        [SerializeField] float sprintSpeed = 8f;
+        [Min(0f)]
+        [SerializeField] float groundAcceleration = 28f;
+        [Min(0f)]
+        [SerializeField] float airAcceleration = 8f;
+        [Min(0f)]
+        [SerializeField] float brakingAcceleration = 16f;
+        [Min(0f)]
+        [SerializeField] float steepSlopeControlAcceleration = 16f;
+        [Min(0f)]
+        [SerializeField] float steepSlopeSlideAcceleration = 14f;
+
+        [Header("Water")]
+        [Min(0f)]
+        [SerializeField] float underwaterMoveSpeed = 2.8f;
+        [Min(0f)]
+        [SerializeField] float underwaterAcceleration = 10f;
+        [Min(0f)]
+        [SerializeField] float underwaterAscendAcceleration = 14f;
+        [Tooltip("Fraction of the capsule that stays under water when floating. 0.5 puts the surface at the capsule centre; 0.7 keeps the head clear.")]
+        [Range(0.5f, 1f)]
+        [SerializeField] float swimFloatSubmergedFraction = 0.7f;
+        [Tooltip("Fraction of the capsule under water while swimming forward at full speed. The prone swim pose keeps the head at hip height, so the hips ride higher than when treading.")]
+        [Range(0.3f, 1f)]
+        [SerializeField] float swimForwardSubmergedFraction = 0.58f;
+        [Tooltip("Extra damping on vertical motion while swimming, per second. Keeps the float depth from bobbing.")]
+        [Min(0f)]
+        [SerializeField] float swimVerticalDamping = 6f;
+        [Min(0f)]
+        [SerializeField] float underwaterLinearDrag = 4f;
+
+        [Header("Surface Penetration")]
+        [Tooltip("How far the capsule may sit below the analytic surface before it is pushed out. Must exceed the collision mesh's own deviation from that surface, or the explorer is corrected every frame and jitters against its own ground.")]
+        [Min(0f)]
+        [SerializeField] float surfacePenetrationSlop = 0.35f;
+        [Tooltip("Rate at which deeper penetration is recovered, in metres per second. Zero teleports out in a single step.")]
+        [Min(0f)]
+        [SerializeField] float surfacePenetrationRecoverySpeed = 4f;
+
+        [Header("Jump")]
+        [Tooltip("Jump height reached under the reference gravity below. The take-off speed derived from this pair is what stays constant, so the same legs carry the explorer far higher on a low gravity body.")]
+        [Min(0f)]
+        [SerializeField] float jumpHeight = 1.4f;
+        [Tooltip("Gravity the authored jump height refers to. Keep at Earth gravity so designers can reason about the jump in familiar terms.")]
+        [Min(0.01f)]
+        [SerializeField] float jumpReferenceGravity = 9.81f;
+        [Min(0f)]
+        [FormerlySerializedAs("jumpSpeed")]
+        [SerializeField] float maximumJumpSpeed = 8f;
+        [Min(0f)]
+        [SerializeField] float minimumJumpSpeed = 1.2f;
+        [Range(0f, 1f)]
+        [SerializeField] float maxJumpEscapeSpeedRatio = 0.45f;
+        [Min(0f)]
+        [SerializeField] float jumpCooldown = 0.15f;
+        [Min(0f)]
+        [SerializeField] float jumpBufferTime = 0.12f;
+        [Min(0f)]
+        [SerializeField] float coyoteTime = 0.1f;
+        [Min(0f)]
+        [SerializeField] float postJumpGroundingSuppressionTime = 0.16f;
+
+        [Header("Grounding")]
+        [Range(0f, 89f)]
+        [SerializeField] float maxWalkableSlopeAngle = 48f;
+        [Min(0.01f)]
+        [SerializeField] float groundProbeDistance = 0.35f;
+        [Min(0.01f)]
+        [SerializeField] float groundProbeRadius = 0.32f;
+        [Min(0f)]
+        [SerializeField] float groundStickAcceleration = 18f;
+        [Min(0f)]
+        [SerializeField] float groundStickGravityMultiplier = 2f;
+        [Min(0f)]
+        [SerializeField] float groundedVerticalDamping = 18f;
+        [Min(0f)]
+        [SerializeField] float groundNormalResponsiveness = 22f;
+
+        [Header("Orientation")]
+        [Min(0f)]
+        [Tooltip("How fast the body turns toward the movement direction, or toward the camera while aiming. Zero snaps.")]
+        [SerializeField] float turnDegreesPerSecond = 540f;
+        [Min(0f)]
+        [SerializeField] float uprightResponsiveness = 14f;
+
+        public float WalkSpeed => walkSpeed;
+        public float SprintSpeed => sprintSpeed;
+        public float GroundAcceleration => groundAcceleration;
+        public float AirAcceleration => airAcceleration;
+        public float BrakingAcceleration => brakingAcceleration;
+        public float SteepSlopeControlAcceleration => steepSlopeControlAcceleration;
+        public float SteepSlopeSlideAcceleration => steepSlopeSlideAcceleration;
+        public float UnderwaterMoveSpeed => underwaterMoveSpeed;
+        public float UnderwaterAcceleration => underwaterAcceleration;
+        public float UnderwaterAscendAcceleration => underwaterAscendAcceleration;
+        public float SwimFloatSubmergedFraction => swimFloatSubmergedFraction;
+        public float SwimForwardSubmergedFraction => swimForwardSubmergedFraction;
+        public float SwimVerticalDamping => swimVerticalDamping;
+        public float UnderwaterLinearDrag => underwaterLinearDrag;
+        public float SurfacePenetrationSlop => Mathf.Max(0f, surfacePenetrationSlop);
+        public float SurfacePenetrationRecoverySpeed =>
+            Mathf.Max(0f, surfacePenetrationRecoverySpeed);
+        public float JumpHeight => jumpHeight;
+        public float JumpReferenceGravity => Mathf.Max(0.01f, jumpReferenceGravity);
+        public float MaximumJumpSpeed => maximumJumpSpeed;
+        public float MinimumJumpSpeed => minimumJumpSpeed;
+        public float MaxJumpEscapeSpeedRatio => maxJumpEscapeSpeedRatio;
+        public float JumpCooldown => jumpCooldown;
+        public float JumpBufferTime => jumpBufferTime;
+        public float CoyoteTime => coyoteTime;
+        public float PostJumpGroundingSuppressionTime => postJumpGroundingSuppressionTime;
+        public float MaxWalkableSlopeAngle => maxWalkableSlopeAngle;
+        public float GroundProbeDistance => groundProbeDistance;
+        public float GroundProbeRadius => groundProbeRadius;
+        public float GroundStickAcceleration => groundStickAcceleration;
+        public float GroundStickGravityMultiplier => groundStickGravityMultiplier;
+        public float GroundedVerticalDamping => groundedVerticalDamping;
+        public float GroundNormalResponsiveness => groundNormalResponsiveness;
+        public float TurnDegreesPerSecond => turnDegreesPerSecond;
+        public float UprightResponsiveness => uprightResponsiveness;
+
+        void OnValidate()
+        {
+            walkSpeed = Mathf.Max(0f, walkSpeed);
+            sprintSpeed = Mathf.Max(walkSpeed, sprintSpeed);
+            groundAcceleration = Mathf.Max(0f, groundAcceleration);
+            airAcceleration = Mathf.Max(0f, airAcceleration);
+            brakingAcceleration = Mathf.Max(0f, brakingAcceleration);
+            steepSlopeControlAcceleration = Mathf.Max(0f, steepSlopeControlAcceleration);
+            steepSlopeSlideAcceleration = Mathf.Max(0f, steepSlopeSlideAcceleration);
+            underwaterMoveSpeed = Mathf.Max(0f, underwaterMoveSpeed);
+            underwaterAcceleration = Mathf.Max(0f, underwaterAcceleration);
+            underwaterAscendAcceleration = Mathf.Max(0f, underwaterAscendAcceleration);
+            swimFloatSubmergedFraction = Mathf.Clamp(swimFloatSubmergedFraction, 0.5f, 1f);
+            swimForwardSubmergedFraction = Mathf.Clamp(swimForwardSubmergedFraction, 0.3f, 1f);
+            swimVerticalDamping = Mathf.Max(0f, swimVerticalDamping);
+            underwaterLinearDrag = Mathf.Max(0f, underwaterLinearDrag);
+            surfacePenetrationSlop = Mathf.Max(0f, surfacePenetrationSlop);
+            surfacePenetrationRecoverySpeed = Mathf.Max(0f, surfacePenetrationRecoverySpeed);
+            jumpHeight = Mathf.Max(0f, jumpHeight);
+            jumpReferenceGravity = Mathf.Max(0.01f, jumpReferenceGravity);
+            maximumJumpSpeed = Mathf.Max(0f, maximumJumpSpeed);
+            minimumJumpSpeed = Mathf.Max(0f, minimumJumpSpeed);
+            maxJumpEscapeSpeedRatio = Mathf.Clamp01(maxJumpEscapeSpeedRatio);
+            jumpCooldown = Mathf.Max(0f, jumpCooldown);
+            jumpBufferTime = Mathf.Max(0f, jumpBufferTime);
+            coyoteTime = Mathf.Max(0f, coyoteTime);
+            postJumpGroundingSuppressionTime = Mathf.Max(0f, postJumpGroundingSuppressionTime);
+            maxWalkableSlopeAngle = Mathf.Clamp(maxWalkableSlopeAngle, 0f, 89f);
+            groundProbeDistance = Mathf.Max(0.01f, groundProbeDistance);
+            groundProbeRadius = Mathf.Max(0.01f, groundProbeRadius);
+            groundStickAcceleration = Mathf.Max(0f, groundStickAcceleration);
+            groundStickGravityMultiplier = Mathf.Max(0f, groundStickGravityMultiplier);
+            groundedVerticalDamping = Mathf.Max(0f, groundedVerticalDamping);
+            groundNormalResponsiveness = Mathf.Max(0f, groundNormalResponsiveness);
+            turnDegreesPerSecond = Mathf.Max(0f, turnDegreesPerSecond);
+            uprightResponsiveness = Mathf.Max(0f, uprightResponsiveness);
+        }
+    }
+}

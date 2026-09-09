@@ -1151,6 +1151,222 @@ MonoBehaviour:
     m_Key: feedback.cargo.slots_unknown
     m_Metadata:
       m_Items: []
+  - m_Id: 14092742173909023
+    m_Key: feedback.harvest.depleted
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909024
+    m_Key: feedback.harvest.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909025
+    m_Key: feedback.harvest.inventory_full
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909026
+    m_Key: feedback.harvest.stale
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909027
+    m_Key: feedback.harvest.unreachable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909028
+    m_Key: interact.harvest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909029
+    m_Key: resource.iron_ore
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909030
+    m_Key: resource.ice_crystal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909031
+    m_Key: resource.nickel_fragment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909032
+    m_Key: item.coolant
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909033
+    m_Key: item.ice_crystal
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909034
+    m_Key: item.iron_ingot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909035
+    m_Key: item.iron_ore
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909036
+    m_Key: item.nickel_fragment
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909037
+    m_Key: item.nickel_plate
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909038
+    m_Key: item.reinforced_hull_panel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909039
+    m_Key: item.thermal_regulator
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909040
+    m_Key: process.iron_ore
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909041
+    m_Key: inventory.category.structural
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909042
+    m_Key: inventory.category.electronic
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909043
+    m_Key: inventory.category.energy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909044
+    m_Key: inventory.category.chemical
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909045
+    m_Key: inventory.category.biological
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909046
+    m_Key: inventory.category.exotic
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909047
+    m_Key: inventory.form.raw
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909048
+    m_Key: inventory.form.refined
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909049
+    m_Key: inventory.form.component
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909050
+    m_Key: inventory.form.consumable
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909051
+    m_Key: inventory.form.researchsample
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909052
+    m_Key: inventory.form.artifact
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909053
+    m_Key: inventory.domain.materialsengineering
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909054
+    m_Key: inventory.domain.energysystems
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909055
+    m_Key: inventory.domain.electronicscomputing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909056
+    m_Key: inventory.domain.chemistryindustry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909057
+    m_Key: inventory.domain.xenobiology
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909058
+    m_Key: inventory.domain.quantumphysics
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909059
+    m_Key: settings.bindings.device.keyboard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909060
+    m_Key: settings.bindings.device.mouse
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909061
+    m_Key: settings.bindings.device.gamepad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909062
+    m_Key: input.onfoot.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909063
+    m_Key: input.onfoot.toggletool
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909064
+    m_Key: input.onfoot.usetool
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909065
+    m_Key: settings.reduced_motion.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909066
+    m_Key: dialog.recall.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909067
+    m_Key: dialog.recall.body
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909068
+    m_Key: dialog.recall.confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909069
+    m_Key: feedback.recall.completed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909070
+    m_Key: feedback.recall.rejected
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909071
+    m_Key: feedback.recall.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909072
+    m_Key: feedback.dock.serviced
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909073
+    m_Key: hud.scan.progress
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909074
+    m_Key: hud.scan.result
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909075
+    m_Key: hud.scan.nothing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14092742173909076
+    m_Key: input.onfoot.dive
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

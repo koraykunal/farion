@@ -6,8 +6,10 @@ namespace Farion.Gameplay.Commands
     public interface IGameplayCommandEvents
     {
         event Action<InventoryItemDefinition, int> ItemAcquired;
+        event Action<ResourceHarvestResult> HarvestCompleted;
         event Action<CargoTransferReceipt> CargoTransferCompleted;
         event Action<FleetProcessingResult> FleetProcessingCompleted;
+        event Action<ShuttleRecallResult> ShuttleRecallCompleted;
     }
 
     public enum CargoTransferKind
@@ -38,6 +40,8 @@ namespace Farion.Gameplay.Commands
 
     public interface IGameplayCommandGateway
     {
+        bool IsAssignedShuttleCargo(Farion.Core.Identity.PersistentEntityId cargoId);
+
         ResourceHarvestResult CanHarvest(ResourceHarvestRequest request);
 
         ResourceHarvestResult TryHarvest(ResourceHarvestRequest request);
@@ -53,5 +57,7 @@ namespace Farion.Gameplay.Commands
         FleetProcessingResult CanProcessFleetRecipe(FleetProcessingRequest request);
 
         FleetProcessingResult TryProcessFleetRecipe(FleetProcessingRequest request);
+
+        bool RequestShuttleRecall();
     }
 }
